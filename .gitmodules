@@ -2,3 +2,7 @@
 	path = assets/shared
 	url = https://github.com/giloushaker/nr-shared
 	branch = main
+[submodule "shared_components"]
+	path = shared_components
+	url = https://github.com/vflam/nr-components
+	branch = main

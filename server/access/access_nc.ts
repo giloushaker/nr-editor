@@ -16,7 +16,6 @@ export default class CAccessNc {
     this.event = event;
     this.request = req;
     this.session = event.context.session;
-    const app = useNuxtApp();
   }
 
   async test() {
