@@ -17,7 +17,9 @@
       <span class="grey">authorName:</span> {{ catalogue.catalogue.authorName }}
     </div>
 
-    <button class="bouton">Edit Catalogue</button>
+    <button class="bouton" @click="$emit('edit', catalogue)">
+      Edit Catalogue
+    </button>
   </div>
 </template>
 
@@ -27,6 +29,7 @@ import { NamedItem } from "../IconContainer.vue";
 import { BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
+  emits: ["edit"],
   props: {
     catalogue: {
       type: Object as PropType<BSIDataCatalogue>,

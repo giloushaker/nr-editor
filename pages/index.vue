@@ -15,7 +15,9 @@
           />
         </template>
         <template #right v-if="selectedItem">
-          <div><CataloguesDetail :catalogue="selectedItem" /></div>
+          <div>
+            <CataloguesDetail @edit="editCatalogue" :catalogue="selectedItem" />
+          </div>
         </template>
       </SplitView>
     </div>
@@ -100,10 +102,23 @@ export default defineComponent({
       }
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
       for (const catalogue of catalogues) {
-        this.getSystem(catalogue.catalogue.gameSystemId).catalogueFiles[
-          catalogue.catalogue.id
-        ] = catalogue;
+        const systemId = catalogue.catalogue.gameSystemId;
+        const catalogueId = catalogue.catalogue.id;
+        this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
       }
+    },
+    async editCatalogue(file: BSIData) {
+      const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
+      const systemId = file.catalogue
+        ? file.catalogue.gameSystemId
+        : file.gameSystem?.id;
+      if (!id || !systemId) {
+        throw Error("Cant edit this");
+      }
+      const loaded = await this.gameSystems[systemId].loadCatalogue({
+        targetId: id,
+      });
+      console.log("loaded catalogue", loaded.getName());
     },
   },
 });
