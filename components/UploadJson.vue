@@ -10,8 +10,6 @@ async function onFileSelected(event: any) {
   if (!event_files) return;
 
   for (const current_file of event_files) {
-    console.log(current_file);
-
     // Check if the file extension is allowed
     const fileExtension = current_file.name.split(".").pop()!.toLowerCase();
     if (!allowedExtensions.includes(fileExtension)) {
