@@ -21,6 +21,9 @@
         </template>
       </SplitView>
     </div>
+    <div v-if="msg">
+      {{ msg }}
+    </div>
   </div>
 </template>
 
@@ -55,8 +58,11 @@ export class GameSystemFiles extends BSCatalogueManager {
       return this.catalogueFiles[catalogueLink.targetId];
     }
 
+    const errorPart = catalogueLink.name
+      ? `name ${catalogueLink.name}`
+      : `id ${catalogueLink.targetId}`;
     throw Error(
-      `Couldn't import catalogue with id ${catalogueLink.targetId}, perhaps it wasnt uploaded?`
+      `Couldn't import catalogue with ${errorPart}, perhaps it wasnt uploaded?`
     );
   }
 }
@@ -78,7 +84,7 @@ export default defineComponent({
           name: "Vampire Counts",
         },
       ],
-
+      msg: "",
       selectedItem: null as NamedItem | null,
       gameSystems: {} as Record<string, GameSystemFiles>,
     };
@@ -108,17 +114,23 @@ export default defineComponent({
       }
     },
     async editCatalogue(file: BSIData) {
-      const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
-      const systemId = file.catalogue
-        ? file.catalogue.gameSystemId
-        : file.gameSystem?.id;
-      if (!id || !systemId) {
-        throw Error("Cant edit this");
+      try {
+        const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
+        const systemId = file.catalogue
+          ? file.catalogue.gameSystemId
+          : file.gameSystem?.id;
+        if (!id || !systemId) {
+          throw Error("Cant edit this");
+        }
+        const loaded = await this.gameSystems[systemId].loadCatalogue({
+          targetId: id,
+        });
+        console.log("loaded catalogue", loaded.getName(), loaded);
+        this.msg = "Loaded catalogue: " + loaded.getName();
+        this.selectedItem = null;
+      } catch (e: any) {
+        this.msg = e.message;
       }
-      const loaded = await this.gameSystems[systemId].loadCatalogue({
-        targetId: id,
-      });
-      console.log("loaded catalogue", loaded.getName());
     },
   },
 });
