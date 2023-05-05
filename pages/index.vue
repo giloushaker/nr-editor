@@ -3,6 +3,7 @@
     <h3>My Catalogues</h3>
     <div class="boutons">
       <button class="bouton">Import Catalogue</button>
+      <UploadJson @uploaded="filesUploaded" />
     </div>
     <div class="section">
       <SplitView :split="true" :double="true" :showRight="selectedItem != null">
@@ -21,7 +22,7 @@
 import CollapsibleBox from "~/shared_components/CollapsibleBox.vue";
 import { NamedItem } from "@/components/IconContainer.vue";
 
-export default {
+export default defineComponent({
   components: { CollapsibleBox },
   data() {
     return {
@@ -48,6 +49,7 @@ export default {
     itemClicked(item: NamedItem) {
       this.selectedItem = item;
     },
+    filesUploaded(files: any[]) {},
   },
-};
+});
 </script>

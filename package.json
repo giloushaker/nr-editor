@@ -18,7 +18,9 @@
     "@nuxt/types": "^2.16.3",
     "@sidebase/nuxt-session": "^0.2.7",
     "dexie": "^3.2.3",
+    "fast-xml-parser": "^4.2.2",
     "mongodb": "^4.16.0",
-    "unzipit": "^1.4.3"
+    "unzipit": "^1.4.3",
+    "vite-plugin-commonjs": "^0.7.0"
   }
 }

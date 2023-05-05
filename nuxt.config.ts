@@ -11,4 +11,8 @@ export default defineNuxtConfig({
     "~/shared_components/css/vars.scss",
     "~/shared_components/css/style.scss",
   ],
+
+  vite: {
+    plugins: [require("vite-plugin-commonjs")()],
+  },
 });
