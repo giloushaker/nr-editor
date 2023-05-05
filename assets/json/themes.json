@@ -1,0 +1,150 @@
+{
+  "themes": [
+    {
+      "name": "Classic",
+      "preset": true,
+      "id": "preset_golden",
+      "css": {
+        "forcesBackground": "#dcd189",
+        "background": "#fbf2da",
+        "bga": 0.7,
+        "title": "#f1eb94",
+        "colorGray": "#555555",
+        "dropdownStyle": 1
+      }
+    },
+    {
+      "name": "Winter",
+      "preset": true,
+      "id": "preset_winter",
+      "css": {
+        "forcesBackground": "#c4b8ff",
+        "background": "#f0f5ff",
+        "bga": 0.7,
+        "title": "#b5ddf4",
+        "colorGray": "#555555",
+        "dropdownStyle": 3
+      }
+    },
+    {
+      "name": "Dark",
+      "preset": true,
+      "id": "preset_dark",
+      "css": {
+        "background": "#000000",
+        "bga": 0.9,
+        "title": "#00576e",
+        "highlight": "#fffef1",
+        "inputRadius": 0,
+        "inputBackground": "#555555",
+        "fontColor": "#ffffff",
+        "colorGray": "#aaaaaa",
+        "colorBlue": "#2d9ce1",
+        "costColor": "#86ff24",
+        "inputHighlights": "#86ff24",
+        "dropdownStyle": 2,
+        "invertImagesBrightness": "100",
+        "font": "Bahnschrift",
+        "fontButton": "Bahnschrift",
+        "fontHeader": "Bahnschrift"
+      }
+    },
+    {
+      "name": "Ghost",
+      "preset": true,
+      "id": "preset_dark_plus",
+      "css": {
+        "background": "#333333",
+        "bga": "100",
+        "borderColor": "#5e5e5e",
+        "colorGray": "#b0b0b0",
+        "colorBlue": "#2d9ce1",
+        "colorRed": "#c74343",
+        "costColor": "#5dabdf",
+        "dropdownStyle": 2,
+        "fontColor": "#ababab",
+        "inputBackground": "#333333",
+        "inputHighlights": "#333333",
+        "invertImagesBrightness": "65",
+        "lightblue": "#009cbd",
+        "title": "#333333",
+        "font": "Bahnschrift",
+        "fontButton": "Bahnschrift",
+        "fontHeader": "Bahnschrift"
+      }
+    },
+    {
+      "name": "GhostStripes",
+      "preset": true,
+      "id": "preset_ghost_stripes",
+      "css": {
+        "background": "#333333",
+        "backgroundTexture": "url(/assets/backgrounds/stripes.jpg)",
+        "bga": "84",
+        "title": "#333333",
+        "inputBackground": "#333333",
+        "inputHighlights": "#333333",
+        "invertImagesBrightness": "65",
+        "font": "Bahnschrift",
+        "fontSize": 14,
+        "fontHeader": "Bahnschrift",
+        "fontButton": "Bahnschrift",
+        "fontColor": "#c1c7c6",
+        "borderColor": "#67939e",
+        "colorGray": "#b0b0b0",
+        "colorBlue": "#2d9ce1",
+        "colorRed": "#ee2b2b",
+        "costColor": "#5dabdf",
+        "lightblue": "#009cbd"
+      }
+    },
+    {
+      "name": "Paper",
+      "preset": true,
+      "id": "paper",
+      "css": {
+        "background": "#fff2b3",
+        "backgroundTexture": "url(/assets/backgrounds/crumpledpaper.jpg)",
+        "bga": "26",
+        "title": "#d1d1d1",
+        "dropdownStyle": 3,
+        "font": "Comic Sans MS",
+        "fontSize": 14,
+        "fontHeader": "Bahnschrift",
+        "fontButton": "Bahnschrift",
+        "fontColor": "#6b6b6b",
+        "colorGray": "#8c8ec5",
+        "lightblue": "#009cbd"
+      }
+    },
+    {
+      "name": "Dragon",
+      "preset": false,
+      "css": {
+        "background": "#000000",
+        "backgroundTexture": "url('https://i.imgur.com/s9Ze64D.jpg')",
+        "backgroundSize": "cover",
+        "bga": "53",
+        "hue": "0",
+        "title": "#333333",
+        "inputBackground": "#333333",
+        "inputHighlights": "#333333",
+        "invertImagesBrightness": "65",
+        "font": "Comic Sans MS",
+        "fontSize": 14,
+        "fontHeader": "Teko-Bold",
+        "fontHeaderSize": 18,
+        "headerTransform": "uppercase",
+        "fontButton": "Teko-Bold",
+        "fontButtonSize": 17,
+        "fontColor": "#ababab",
+        "borderColor": "#5e5e5e",
+        "colorGray": "#b0b0b0",
+        "colorBlue": "#2d9ce1",
+        "colorRed": "#c74343",
+        "costColor": "#eaba66",
+        "lightblue": "#009cbd"
+      }
+    }
+  ]
+}

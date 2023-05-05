@@ -12,4 +12,11 @@ export class GameSystem extends BsGameSystem {
   ) {
     super(systemRow, lang, fetchStrategy);
   }
+
+  // public static loadFromGst(gstData: File): GameSystem {}
+  // public addCatalogue(catData: File): void;
+  // public toJson(): JsonGameSystem;
+  // public static fromJson(system: JsonGameSystem): GameSystem;
+  // public exportGst
+  // public exportCat
 }
