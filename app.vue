@@ -1,5 +1,7 @@
 <template>
-  <div>{{ val }}</div>
+  <div>
+    <NuxtPage id="app" :keepalive="true" />
+  </div>
 </template>
 
 <script>

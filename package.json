@@ -11,7 +11,8 @@
   "devDependencies": {
     "@types/node": "^18",
     "nuxt": "^3.4.3",
-    "nuxt-windicss": "^2.6.1"
+    "nuxt-windicss": "^2.6.1",
+    "sass": "^1.62.1"
   },
   "dependencies": {
     "@nuxt/types": "^2.16.3",

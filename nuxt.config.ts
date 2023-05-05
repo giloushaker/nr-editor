@@ -7,4 +7,8 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
+  css: [
+    "~/shared_components/css/vars.scss",
+    "~/shared_components/css/style.scss",
+  ],
 });
