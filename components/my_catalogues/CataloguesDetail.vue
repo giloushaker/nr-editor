@@ -16,6 +16,18 @@
     <div>
       <span class="grey">authorName:</span> {{ catalogue.catalogue.authorName }}
     </div>
+    <div>
+      <span class="grey">imports:</span>
+      <div
+        v-if="catalogue.catalogue.catalogueLinks?.length"
+        v-for="link in catalogue.catalogue.catalogueLinks"
+      >
+        {{ link.name }}
+        <span class="grey">{{ link.targetId }}</span> importRootEntries={{
+          link.importRootEntries ? "true" : "false"
+        }}
+      </div>
+    </div>
 
     <button class="bouton" @click="$emit('edit', catalogue)">
       Edit Catalogue
