@@ -6,7 +6,7 @@
       <UploadJson @uploaded="filesUploaded" />
     </div>
     <div class="section" v-for="gst in gameSystems">
-      {{ gst.gameSystem?.gameSystem.name || "Unknown" }}
+      <h3>{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</h3>
       <SplitView :split="true" :double="true" :showRight="selectedItem != null">
         <template #middle>
           <IconContainer
@@ -15,7 +15,7 @@
           />
         </template>
         <template #right v-if="selectedItem">
-          <div><MyCataloguesDetail :catalogue="selectedItem" /></div>
+          <div><CataloguesDetail :catalogue="selectedItem" /></div>
         </template>
       </SplitView>
     </div>
@@ -36,6 +36,8 @@ import { string_of_bool } from "~/assets/shared/blossomJs/pervasives";
 import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
+import UploadJson from "~/components/UploadJson.vue";
+import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
@@ -57,7 +59,7 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
 }
 export default defineComponent({
-  components: { CollapsibleBox },
+  components: { CollapsibleBox, UploadJson, CataloguesDetail },
   data() {
     return {
       items: [

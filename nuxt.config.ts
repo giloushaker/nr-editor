@@ -15,5 +15,5 @@ export default defineNuxtConfig({
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
   },
-  components: [{ path: "~/shared-components" }],
+  components: [{ path: "~/shared_components" }, { path: "~/components" }],
 });
