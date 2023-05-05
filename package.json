@@ -18,6 +18,7 @@
     "@nuxt/types": "^2.16.3",
     "@sidebase/nuxt-session": "^0.2.7",
     "dexie": "^3.2.3",
-    "mongodb": "^4.16.0"
+    "mongodb": "^4.16.0",
+    "unzipit": "^1.4.3"
   }
 }
