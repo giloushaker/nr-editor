@@ -2,7 +2,7 @@
 import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
-  modules: ["nuxt-windicss", "@sidebase/nuxt-session"],
+  modules: ["@sidebase/nuxt-session"],
   ssr: false,
   typescript: {
     strict: true,
