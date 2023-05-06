@@ -11,45 +11,33 @@
 </template>
 
 <script setup lang="ts">
-import { convertToJson } from "~/assets/shared/battlescribe/bs_convert";
-const allowedExtensions = ["gst", "gstz", "xml", "zip", "cat", "catz", "json"];
+import {
+  convertToJson,
+  getExtension,
+  isAllowedExtension,
+} from "~/assets/shared/battlescribe/bs_convert";
+const fileinput = ref(null);
 const emit = defineEmits<{
-  (e: "uploaded", files: any[]): void;
+  (e: "uploaded", files: Object[]): void;
 }>();
 
 async function onFileSelected(event: any) {
-  const files = [];
-  const event_files = event.target?.files as FileList | null;
-  if (!event_files) return;
+  const input_files = [...((event.target?.files as FileList | null) || [])];
+  if (!input_files) return;
 
-  for (const current_file of event_files) {
-    // Check if the file extension is allowed
-    const fileExtension = current_file.name.split(".").pop()!.toLowerCase();
-    if (!allowedExtensions.includes(fileExtension)) {
-      alert(
-        "Invalid file type. Allowed file types: .gst, .gstz, .xml, .zip, .cat, .catz, .json"
-      );
-      return;
-    }
+  const result_files = [] as Object[];
+  for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
     const asJson = await convertToJson(
-      await current_file.arrayBuffer(),
-      fileExtension
+      await file.arrayBuffer(),
+      getExtension(file.name)
     );
-    files.push(asJson);
+    result_files.push(asJson);
   }
-  if (files.length) emit("uploaded", files);
+  if (result_files.length) emit("uploaded", result_files);
 }
-</script>
-<script lang="ts">
-export default {
-  methods: {
-    async popFileInput() {
-      if (this.$refs.fileinput) {
-        (this.$refs.fileinput as any).click();
-      }
-    },
-  },
-};
+async function popFileInput() {
+  (fileinput.value as any).click();
+}
 </script>
 <style scoped lang="scss">
 .invisible {

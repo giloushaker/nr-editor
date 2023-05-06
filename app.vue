@@ -1,7 +1,7 @@
 <template>
   <TitleBar />
-  <div class="container">
-    <NuxtPage id="app" :keepalive="true" />
+  <div class="container" id="app">
+    <NuxtPage :keepalive="true" />
   </div>
 </template>
 

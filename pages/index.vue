@@ -3,6 +3,7 @@
     <h3>My Catalogues</h3>
     <div class="boutons">
       <UploadJson @uploaded="filesUploaded" />
+      <ImportFromGithub @uploaded="filesUploaded" />
     </div>
     <div class="section" v-for="gst in gameSystems">
       <h3>{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</h3>
@@ -44,6 +45,7 @@ import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 import { db } from "~/assets/ts/dexie";
 import { NamedItem } from "~/components/IconContainer.vue";
+import ImportFromGithub from "./ImportFromGithub.vue";
 
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
@@ -68,7 +70,12 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
 }
 export default defineComponent({
-  components: { CollapsibleBox, UploadJson, CataloguesDetail },
+  components: {
+    CollapsibleBox,
+    UploadJson,
+    CataloguesDetail,
+    ImportFromGithub,
+  },
   data() {
     return {
       msg: "",
