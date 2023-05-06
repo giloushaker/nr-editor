@@ -1,4 +1,5 @@
 <template>
+  <TitleBar />
   <div class="container">
     <NuxtPage id="app" :keepalive="true" />
   </div>
@@ -8,6 +9,7 @@
 import { rpc } from "@/assets/ts/rpc";
 import { AppearanceTheme } from "./assets/shared/types/stateOptions";
 import { updateCssVars } from "./assets/shared/js/util";
+import TitleBar from "./components/TitleBar.vue";
 
 export const defaultAppearence: AppearanceTheme = {
   background: "#f0f5ff",
@@ -55,17 +57,16 @@ export default defineComponent({
       val: "",
     };
   },
-
   async setup() {
     const session = await useSession();
     return {
       session,
     };
   },
-
   async created() {
     updateCssVars(defaultAppearence, {});
   },
+  components: { TitleBar },
 });
 </script>
 

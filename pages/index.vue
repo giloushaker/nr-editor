@@ -23,6 +23,9 @@
     <div v-if="msg">
       {{ msg }}
     </div>
+    <Teleport to="#titlebar-content" v-if="editingItem">
+      Editing {{ editingItem.name }}
+    </Teleport>
   </div>
 </template>
 
@@ -70,6 +73,7 @@ export default defineComponent({
     return {
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
+      editingItem: null as BSIData | null,
       gameSystems: {} as Record<string, GameSystemFiles>,
     };
   },
@@ -146,6 +150,7 @@ export default defineComponent({
         console.log("loaded catalogue", loaded.getName(), loaded);
         this.msg = "Loaded catalogue: " + loaded.getName();
         this.selectedItem = null;
+        this.editingItem = file;
       } catch (e: any) {
         this.msg = e.message;
       }
