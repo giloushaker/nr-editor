@@ -49,6 +49,8 @@ export default {
   box-shadow: $box_shadow;
   color: $fontColor;
   cursor: pointer;
+  width: 100px;
+  text-align: center;
 }
 
 .items {

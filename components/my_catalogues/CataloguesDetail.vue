@@ -1,26 +1,24 @@
 <template>
   <div class="details">
     <h4>{{ catalogue.name }}</h4>
-    <div>
-      <span class="grey">Library:</span> {{ catalogue.catalogue.library }}
-    </div>
+    <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
     <div><span class="grey">Playable:</span> {{ catalogue.playable }}</div>
-    <div><span class="grey">Id:</span> {{ catalogue.catalogue.id }}</div>
+    <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
     <div>
-      <span class="grey">authorUrl:</span> {{ catalogue.catalogue.authorUrl }}
+      <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }}
     </div>
     <div>
       <span class="grey">authorContact:</span>
-      {{ catalogue.catalogue.authorContact }}
+      {{ cataloguedata.authorContact }}
     </div>
     <div>
-      <span class="grey">authorName:</span> {{ catalogue.catalogue.authorName }}
+      <span class="grey">authorName:</span> {{ cataloguedata.authorName }}
     </div>
     <div>
       <span class="grey">imports:</span>
       <div
-        v-if="catalogue.catalogue.catalogueLinks?.length"
-        v-for="link in catalogue.catalogue.catalogueLinks"
+        v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length"
+        v-for="link in (cataloguedata as BSICatalogue).catalogueLinks"
       >
         {{ link.name }}
         <span class="grey">{{ link.targetId }}</span> importRootEntries={{
@@ -37,15 +35,26 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { NamedItem } from "../IconContainer.vue";
-import { BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
+import {
+  BSIDataCatalogue,
+  BSIDataSystem,
+  BSICatalogue,
+  BSIGameSystem,
+} from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["edit"],
   props: {
     catalogue: {
-      type: Object as PropType<BSIDataCatalogue>,
+      type: Object as PropType<BSIDataCatalogue | BSIDataSystem>,
       required: true,
+    },
+  },
+
+  computed: {
+    cataloguedata(): BSICatalogue | BSIGameSystem {
+      let cat = this.catalogue as any;
+      return cat.gameSystem || cat.catalogue;
     },
   },
 };

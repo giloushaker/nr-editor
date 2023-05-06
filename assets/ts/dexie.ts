@@ -1,16 +1,20 @@
 // db.ts
 import Dexie, { Table } from "dexie";
+import {
+  BSIDataCatalogue,
+  BSIDataSystem,
+} from "../shared/battlescribe/bs_types";
 
 export class MySubClassedDexie extends Dexie {
-  //catalogue_sets!: Table<ListRow>;
+  catalogues!: Table<BSIDataCatalogue>;
+  systems!: Table<BSIDataSystem>;
 
   constructor() {
     super("nr-editor");
-    /*     this.version(1).stores({
-      reports: "_id, id_tourny",
-      tourny_lists: "list_key, id_tourny",
-      lists: "list_key",
-    }); */
+    this.version(2).stores({
+      catalogues: "id",
+      systems: "id",
+    });
   }
 }
 

@@ -2,7 +2,6 @@
   <div class="box">
     <h3>My Catalogues</h3>
     <div class="boutons">
-      <button class="bouton">Import Catalogue</button>
       <UploadJson @uploaded="filesUploaded" />
     </div>
     <div class="section" v-for="gst in gameSystems">
@@ -10,7 +9,7 @@
       <SplitView :split="true" :double="true" :showRight="selectedItem != null">
         <template #middle>
           <IconContainer
-            :items="gst.catalogueFiles"
+            :items="systemAndCatalogues(gst)"
             @itemClicked="itemClicked"
           />
         </template>
@@ -29,20 +28,19 @@
 
 <script lang="ts">
 import CollapsibleBox from "~/shared_components/CollapsibleBox.vue";
-import { NamedItem } from "@/components/IconContainer.vue";
-import { groupBy } from "~/assets/shared/battlescribe/bs_helpers";
+
 import {
   BSICatalogueLink,
   BSIData,
   BSIDataCatalogue,
   BSIDataSystem,
 } from "~/assets/shared/battlescribe/bs_types";
-import { string_of_bool } from "~/assets/shared/blossomJs/pervasives";
 import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
+import { db } from "~/assets/ts/dexie";
+import { NamedItem } from "~/components/IconContainer.vue";
 
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
@@ -85,15 +83,30 @@ export default defineComponent({
         },
       ],
       msg: "",
-      selectedItem: null as NamedItem | null,
+      selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
       gameSystems: {} as Record<string, GameSystemFiles>,
     };
   },
 
+  created() {
+    this.loadSystemsFromDB();
+  },
+
   methods: {
-    itemClicked(item: NamedItem) {
+    systemAndCatalogues(gst: GameSystemFiles): NamedItem[] {
+      let res: NamedItem[] = [];
+      if (!gst.gameSystem) {
+        return [];
+      }
+      res.push(gst.gameSystem);
+      res.push(...Object.values(gst.catalogueFiles));
+      return res;
+    },
+
+    itemClicked(item: BSIDataCatalogue) {
       this.selectedItem = item;
     },
+
     getSystem(id: string) {
       if (!(id in this.gameSystems)) {
         this.gameSystems[id] = new GameSystemFiles();
@@ -105,14 +118,32 @@ export default defineComponent({
       const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
       for (const system of systems) {
         this.getSystem(system.gameSystem.id).gameSystem = system;
+        db.systems.add(system);
       }
+
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
         const catalogueId = catalogue.catalogue.id;
         this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
+        db.catalogues.add(catalogue);
       }
     },
+
+    async loadSystemsFromDB() {
+      let systems = await db.systems.toArray();
+      let catalogues = await db.catalogues.toArray();
+
+      for (let system of systems) {
+        this.getSystem(system.gameSystem.id).gameSystem = system;
+      }
+      for (let catalogue of catalogues) {
+        const systemId = catalogue.catalogue.gameSystemId;
+        const catalogueId = catalogue.catalogue.id;
+        this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
+      }
+    },
+
     async editCatalogue(file: BSIData) {
       try {
         const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;

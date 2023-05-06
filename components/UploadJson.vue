@@ -1,9 +1,22 @@
+<template>
+  <input
+    type="file"
+    accept=".gst, .gstz, .xml, .zip, .cat, .catz, .json"
+    multiple
+    @change="onFileSelected"
+    class="invisible"
+    ref="fileinput"
+  />
+  <button @click="popFileInput" class="bouton">Import Catalogues</button>
+</template>
+
 <script setup lang="ts">
 import { convertToJson } from "~/assets/shared/battlescribe/bs_convert";
 const allowedExtensions = ["gst", "gstz", "xml", "zip", "cat", "catz", "json"];
 const emit = defineEmits<{
   (e: "uploaded", files: any[]): void;
 }>();
+
 async function onFileSelected(event: any) {
   const files = [];
   const event_files = event.target?.files as FileList | null;
@@ -27,11 +40,21 @@ async function onFileSelected(event: any) {
   if (files.length) emit("uploaded", files);
 }
 </script>
-<template>
-  <input
-    type="file"
-    accept=".gst, .gstz, .xml, .zip, .cat, .catz, .json"
-    multiple
-    @change="onFileSelected"
-  />
-</template>
+<script lang="ts">
+export default {
+  methods: {
+    async popFileInput() {
+      if (this.$refs.fileinput) {
+        (this.$refs.fileinput as any).click();
+      }
+    },
+  },
+};
+</script>
+<style scoped lang="scss">
+.invisible {
+  opacity: 0; /* make transparent */
+  z-index: -1; /* move under anything else */
+  position: absolute; /* don't let it take up space */
+}
+</style>
