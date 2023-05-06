@@ -16,6 +16,7 @@ Interface:
 
 
 Editor:
+
     Features:
         ☐ text Search 
         ☐ copy, paste, move, delete
@@ -29,10 +30,13 @@ Editor:
         ☐ references to
         ☐ move back/forward (like browser navigation)
         ☐ save
+        ☐ export xml
+        ☐ upload to github
+        ☐ download from github (needs proxy)
         ☐ view old versions, changes
         ☐ load a roster in ui
 
-        
+
             
 
         
