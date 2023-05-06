@@ -24,7 +24,7 @@
       {{ msg }}
     </div>
     <Teleport to="#titlebar-content" v-if="editingItem">
-      Editing {{ editingItem.name }}
+      <div>Editing {{ editingItem.name }}</div>
     </Teleport>
   </div>
 </template>

@@ -26,4 +26,7 @@
   height: 100%;
   padding: 0 10px;
 }
+.titlebar-content > * {
+  margin: 4px;
+}
 </style>
