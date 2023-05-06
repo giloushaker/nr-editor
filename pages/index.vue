@@ -68,20 +68,6 @@ export default defineComponent({
   components: { CollapsibleBox, UploadJson, CataloguesDetail },
   data() {
     return {
-      items: [
-        {
-          name: "Orcs and Goblins",
-        },
-        {
-          name: "Warriors of Chaos",
-        },
-        {
-          name: "Highborn Elves",
-        },
-        {
-          name: "Vampire Counts",
-        },
-      ],
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
       gameSystems: {} as Record<string, GameSystemFiles>,
@@ -151,6 +137,7 @@ export default defineComponent({
           ? file.catalogue.gameSystemId
           : file.gameSystem?.id;
         if (!id || !systemId) {
+          this.msg = "Cant edit this";
           throw Error("Cant edit this");
         }
         const loaded = await this.gameSystems[systemId].loadCatalogue({
