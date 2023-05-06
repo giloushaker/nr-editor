@@ -114,8 +114,9 @@ export default defineComponent({
       console.log("Uploaded", files.length, "files", files);
       const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
       for (const system of systems) {
-        this.getSystem(system.gameSystem.id).gameSystem = system;
-        db.systems.add(system);
+        const systemId = system.gameSystem.id;
+        this.getSystem(systemId).gameSystem = system;
+        db.systems.put(system, systemId);
       }
 
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
@@ -123,7 +124,7 @@ export default defineComponent({
         const systemId = catalogue.catalogue.gameSystemId;
         const catalogueId = catalogue.catalogue.id;
         this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
-        db.catalogues.add(catalogue);
+        db.catalogues.put(catalogue, catalogueId);
       }
     },
 

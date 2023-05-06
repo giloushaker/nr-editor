@@ -13,6 +13,7 @@ Interface:
             Errors within the catalogue
             Unsaved?
             Unreferenced + unplayable
+        ☐ Indication that catalogue has been modified by the user
 
 
 Editor:
@@ -30,7 +31,7 @@ Editor:
         ☐ references to
         ☐ move back/forward (like browser navigation)
         ☐ save
-        ☐ export xml
+        ☐ export xml/zip
         ☐ upload to github
         ☐ download from github (needs proxy)
         ☐ view old versions, changes
