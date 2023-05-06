@@ -7,19 +7,18 @@ import {
   unzipFolder,
 } from "~/assets/shared/battlescribe/bs_convert";
 
-const url = ref("");
+const inputUrl = ref("");
+const busy = ref(false);
 const emit = defineEmits<{
   (e: "uploaded", files: Object[]): void;
 }>();
-async function submit(url: string) {
-  if (!url) {
+async function submit(url: string | null) {
+  if (!url || normalizeGithubRepoUrl(url) !== url) {
+    console.log("bad url", url);
     return;
   }
   try {
-    // Check if url is valid
-    new URL(url);
-    url = removeSuffix(url, "/");
-
+    busy.value = true;
     // Get the zip of the repo's zip:
     // https://github.com/BSData/wh40k -> https://github.com/BSData/wh40k/archive/refs/heads/master.zip
     const repoPath = url.split("/").slice(-2).join("/"); // BSData/wh40k
@@ -42,18 +41,45 @@ async function submit(url: string) {
     if (result_files.length) {
       emit("uploaded", result_files);
     }
+    inputUrl.value = "";
   } catch (e) {
     console.error(e);
+
     // Invalid url
+  } finally {
+    busy.value = false;
   }
+}
+function normalizeGithubRepoUrl(input: string): string | null {
+  const githubUrlRegex =
+    /^(?:(http(s?)?:\/\/)?github.com\/)?([^\/]+)\/([^\/]+)$/;
+  const match = input.match(githubUrlRegex);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, protocol = "https://", _, user, repo] = match;
+
+  if (!user || !repo) {
+    return null;
+  }
+
+  return `${protocol}github.com/${user}/${repo}`;
 }
 </script>
 <template>
   <input
     type="url"
     class="bouton"
-    v-model="url"
-    placeholder="https://github.com/BSData/wh40k"
+    v-model="inputUrl"
+    placeholder="BSData/wh40k"
   />
-  <button @click="submit(url)" class="bouton">Submit</button>
+  <button
+    @click="submit(normalizeGithubRepoUrl(inputUrl))"
+    class="bouton"
+    :disabled="normalizeGithubRepoUrl(inputUrl) == null || busy"
+  >
+    {{ busy ? "..." : "Import from github" }}
+  </button>
 </template>
