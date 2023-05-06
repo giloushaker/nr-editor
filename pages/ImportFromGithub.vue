@@ -4,6 +4,7 @@ import {
   convertToJson,
   getExtension,
   isAllowedExtension,
+  isZipExtension,
   unzipFolder,
 } from "~/assets/shared/battlescribe/bs_convert";
 
@@ -34,8 +35,9 @@ async function submit(url: string | null) {
     // Extract the useful files
     const result_files = [] as Object[];
     for (const [name, content] of Object.entries(folder)) {
-      if (isAllowedExtension(name)) {
-        result_files.push(await convertToJson(content, getExtension(name)));
+      const extension = getExtension(name);
+      if (isAllowedExtension(extension)) {
+        result_files.push(await convertToJson(content, extension));
       }
     }
     if (result_files.length) {

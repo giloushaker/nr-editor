@@ -116,7 +116,7 @@ export default defineComponent({
       for (const system of systems) {
         const systemId = system.gameSystem.id;
         this.getSystem(systemId).gameSystem = system;
-        db.systems.put(system, systemId);
+        db.systems.put({ content: system, id: systemId });
       }
 
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
@@ -124,13 +124,16 @@ export default defineComponent({
         const systemId = catalogue.catalogue.gameSystemId;
         const catalogueId = catalogue.catalogue.id;
         this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
-        db.catalogues.put(catalogue, catalogueId);
+        db.catalogues.put({
+          content: catalogue,
+          id: `${systemId}-${catalogueId}`,
+        });
       }
     },
 
     async loadSystemsFromDB() {
-      let systems = await db.systems.toArray();
-      let catalogues = await db.catalogues.toArray();
+      let systems = (await db.systems.toArray()).map((o) => o.content);
+      let catalogues = (await db.catalogues.toArray()).map((o) => o.content);
 
       for (let system of systems) {
         this.getSystem(system.gameSystem.id).gameSystem = system;

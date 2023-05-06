@@ -6,12 +6,12 @@ import {
 } from "../shared/battlescribe/bs_types";
 
 export class MySubClassedDexie extends Dexie {
-  catalogues!: Table<BSIDataCatalogue>;
-  systems!: Table<BSIDataSystem>;
+  catalogues!: Table<{ id: string; content: BSIDataCatalogue }>;
+  systems!: Table<{ id: string; content: BSIDataSystem }>;
 
   constructor() {
     super("nr-editor");
-    this.version(2).stores({
+    this.version(4).stores({
       catalogues: "id",
       systems: "id",
     });
