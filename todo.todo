@@ -1,0 +1,39 @@
+
+
+
+Interface:
+    Main Menu:
+        ☐ Add System
+        ☐ Add Catalogue
+        ☐ Edit Catalogue
+        ☐ Delete Catalogue
+        ☐ Errors icon on catalogues
+            Errrors:
+            Missing imports
+            Errors within the catalogue
+            Unsaved?
+            Unreferenced + unplayable
+
+
+Editor:
+    Features:
+        ☐ text Search 
+        ☐ copy, paste, move, delete
+        ☐ undo/redo
+        ☐ move to
+            Would allow the used to right click on an entry to move it somewhere else, 
+            like an imported catalogue for example, 
+            we would do that automatically without breaking previous links
+        ☐ errors
+        ☐ references from
+        ☐ references to
+        ☐ move back/forward (like browser navigation)
+        ☐ save
+        ☐ view old versions, changes
+        ☐ load a roster in ui
+
+        
+            
+
+        
+
