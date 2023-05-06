@@ -1,13 +1,10 @@
 <template>
   <div class="titlebar">
-    <div class="titlebar-content titlebar-left inline" id="titlebar-content">
+    <div class="titlebar-content titlebar-left" id="titlebar-content">
       <h1>NR-Editor</h1>
       <slot />
     </div>
-    <div
-      class="titlebar-content titlebar-right inline"
-      id="titlebar-content-right"
-    >
+    <div class="titlebar-content titlebar-right" id="titlebar-content-right">
       <div>Right1</div>
       <div>Right2</div>
     </div>
@@ -24,24 +21,21 @@
   height: 50px;
   background-color: #333;
   color: #fff;
-  padding: 10px;
+  padding: 8px;
   box-sizing: border-box;
   z-index: 1;
 }
 .titlebar-left {
+  height: 100%;
   display: flex;
   align-items: center;
-  height: 100%;
-  padding: 0 10px;
 }
 .titlebar-right {
-  margin-left: auto;
-  display: flex;
-  flex-flow: row-reverse;
-  flex-direction: row-reverse;
-  align-items: center;
   height: 100%;
-  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-direction: row-reverse;
 }
 .titlebar-content > * {
   margin: 4px;
