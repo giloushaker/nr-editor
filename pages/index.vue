@@ -46,6 +46,7 @@ import {
 } from "~/assets/shared/battlescribe/bs_types";
 import {
   BSCatalogueManager,
+  getDataId,
   getDataObject,
 } from "~/assets/shared/battlescribe/bs_system";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
@@ -156,7 +157,7 @@ export default defineComponent({
     async editCatalogue(file: BSIData) {
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataObject(file).id },
+        query: { id: getDataId(file) },
       });
     },
   },
