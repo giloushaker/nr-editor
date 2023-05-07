@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { removeSuffix } from "~/assets/shared/battlescribe/bs_helpers";
 import {
   convertToJson,
   getExtension,
   isAllowedExtension,
-  isZipExtension,
   unzipFolder,
 } from "~/assets/shared/battlescribe/bs_convert";
 

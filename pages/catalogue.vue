@@ -51,11 +51,7 @@ export default {
         throw "No catalogue ID";
       }
 
-      let catData = await db.catalogues
-        .where({
-          id: idCat,
-        })
-        .first();
+      let catData = await db.catalogues.get(idCat);
 
       // what if the user wants to edit the gst file?
       if (!catData) {
@@ -71,7 +67,7 @@ export default {
         throw Error("Unable to open this catalogue");
       }
 
-      const systemID = file.catalogue.gameSystemId;
+      const systemID = file.catalogue?.gameSystemId;
       if (!systemID) {
         throw "This catalogue does not belong to any a game system";
       }
