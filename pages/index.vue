@@ -44,7 +44,10 @@ import {
   BSIDataCatalogue,
   BSIDataSystem,
 } from "~/assets/shared/battlescribe/bs_types";
-import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
+import {
+  BSCatalogueManager,
+  getDataObject,
+} from "~/assets/shared/battlescribe/bs_system";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
@@ -151,8 +154,10 @@ export default defineComponent({
     },
 
     async editCatalogue(file: BSIData) {
-      const id = file.gameSystem?.id || file.catalogue?.id;
-      this.$router.push({ name: "catalogue", query: { id: id } });
+      this.$router.push({
+        name: "catalogue",
+        query: { id: getDataObject(file).id },
+      });
     },
   },
 });
