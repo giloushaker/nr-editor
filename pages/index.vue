@@ -7,7 +7,12 @@
     </div>
     <div class="section" v-for="gst in gameSystems">
       <h3>{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</h3>
-      <SplitView :split="true" :double="true" :showRight="selectedItem != null">
+      <SplitView
+        :split="true"
+        :double="true"
+        :showRight="selectedItem != null"
+        :viewStyle="{ 'grid-template-columns': 'auto 30%' }"
+      >
         <template #middle>
           <IconContainer
             :items="systemAndCatalogues(gst)"
@@ -146,25 +151,7 @@ export default defineComponent({
     },
 
     async editCatalogue(file: BSIData) {
-      try {
-        const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
-        const systemId = file.catalogue
-          ? file.catalogue.gameSystemId
-          : file.gameSystem?.id;
-        if (!id || !systemId) {
-          this.msg = "Cant edit this";
-          throw Error("Cant edit this");
-        }
-        const loaded = await this.gameSystems[systemId].loadCatalogue({
-          targetId: id,
-        });
-        console.log("loaded catalogue", loaded.getName(), loaded);
-        this.msg = "Loaded catalogue: " + loaded.getName();
-        this.selectedItem = null;
-        this.editingItem = file;
-      } catch (e: any) {
-        this.msg = e.message;
-      }
+      this.$router.push({ name: "catalogue", query: { id: file.id } });
     },
   },
 });

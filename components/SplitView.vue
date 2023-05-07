@@ -6,6 +6,7 @@
       doubleSplitView: double,
       tripleSplitView: triple,
     }"
+    :style="viewStyle"
   >
     <div class="leftMost scrollable" v-if="triple">
       <slot name="left"></slot>
@@ -33,7 +34,7 @@
 
 <script>
 export default {
-  props: ["split", "double", "triple", "showRight"],
+  props: ["split", "double", "triple", "showRight", "viewStyle"],
 };
 </script>
 
@@ -52,7 +53,7 @@ export default {
   }
 
   &.doubleSplitView {
-    grid-template-columns: auto fit-content(30%);
+    grid-template-columns: auto fit-content(50%);
   }
 }
 

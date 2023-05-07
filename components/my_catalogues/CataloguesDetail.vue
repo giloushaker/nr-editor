@@ -1,6 +1,6 @@
 <template>
-  <div class="details">
-    <h4>{{ catalogue.name }}</h4>
+  <fieldset class="details">
+    <legend>{{ catalogue.name }}</legend>
     <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
     <div><span class="grey">Playable:</span> {{ catalogue.playable }}</div>
     <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
@@ -30,7 +30,7 @@
     <button class="bouton" @click="$emit('edit', catalogue)">
       Edit Catalogue
     </button>
-  </div>
+  </fieldset>
 </template>
 
 <script lang="ts">
