@@ -5,6 +5,9 @@
     </span>
     <div v-if="catalogue">{{ catalogue.name }} loaded!</div>
   </div>
+  <Teleport to="#titlebar-content" v-if="catalogue">
+    <div>Editing {{ catalogue.name }}</div>
+  </Teleport>
 </template>
 
 <script lang="ts">
@@ -12,6 +15,7 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { db } from "~/assets/ts/dexie";
 import { GameSystemFiles } from "./index.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 
 export default {
   data() {
@@ -53,6 +57,7 @@ export default {
         })
         .first();
 
+      // what if the user wants to edit the gst file?
       if (!catData) {
         throw "No catalogue exists with this ID";
       }
@@ -66,7 +71,7 @@ export default {
         throw Error("Unable to open this catalogue");
       }
 
-      const systemID = catData.content.gameSystemId;
+      const systemID = file.catalogue.gameSystemId;
       if (!systemID) {
         throw "This catalogue does not belong to any a game system";
       }
@@ -74,14 +79,13 @@ export default {
       if (!systemData) {
         throw "The Game System File (gst) for this catalogue is not loaded";
       }
-
-      debugger;
       const system = systemData.content;
       const systemFiles = new GameSystemFiles();
       systemFiles.gameSystem = system;
 
       const loaded = await systemFiles.loadCatalogue({
-        targetId: id,
+        targetId: getDataObject(file).id,
+        name: getDataObject(file).name,
       });
 
       this.catalogue = loaded;

@@ -29,9 +29,6 @@
     <div v-if="msg">
       {{ msg }}
     </div>
-    <Teleport to="#titlebar-content" v-if="editingItem">
-      <div>Editing {{ editingItem.name }}</div>
-    </Teleport>
   </div>
 </template>
 
@@ -46,7 +43,7 @@ import {
 } from "~/assets/shared/battlescribe/bs_types";
 import {
   BSCatalogueManager,
-  getDataId,
+  getDataDbId,
   getDataObject,
 } from "~/assets/shared/battlescribe/bs_system";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
@@ -68,6 +65,23 @@ export class GameSystemFiles extends BSCatalogueManager {
     }
     if (catalogueLink.targetId in this.catalogueFiles) {
       return this.catalogueFiles[catalogueLink.targetId];
+    }
+
+    let catalogue = await db.catalogues
+      .where({
+        "content.catalogue.id": catalogueLink.targetId,
+      })
+      .first();
+    if (catalogue) {
+      return catalogue.content;
+    }
+    let system = await db.systems
+      .where({
+        id: catalogueLink.targetId,
+      })
+      .first();
+    if (system) {
+      return system.content;
     }
 
     const errorPart = catalogueLink.name
@@ -157,7 +171,7 @@ export default defineComponent({
     async editCatalogue(file: BSIData) {
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataId(file) },
+        query: { id: getDataDbId(file) },
       });
     },
   },

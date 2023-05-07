@@ -11,8 +11,8 @@ export class MySubClassedDexie extends Dexie {
 
   constructor() {
     super("nr-editor");
-    this.version(4).stores({
-      catalogues: "id",
+    this.version(5).stores({
+      catalogues: "id, content.catalogue.id",
       systems: "id",
     });
   }
