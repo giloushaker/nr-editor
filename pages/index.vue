@@ -151,7 +151,8 @@ export default defineComponent({
     },
 
     async editCatalogue(file: BSIData) {
-      this.$router.push({ name: "catalogue", query: { id: file.id } });
+      const id = file.gameSystem?.id || file.catalogue?.id;
+      this.$router.push({ name: "catalogue", query: { id: id } });
     },
   },
 });

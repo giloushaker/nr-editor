@@ -49,7 +49,7 @@ export default {
 
       let catData = await db.catalogues
         .where({
-          "content.id": parseInt(idCat),
+          id: idCat,
         })
         .first();
 
