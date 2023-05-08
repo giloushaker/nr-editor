@@ -17,7 +17,7 @@
           <CatalogueRightPanel
             :item="item"
             :catalogue="data"
-            @catalogueChanged="on_changed"
+            @catalogueChanged="onChanged"
           />
         </template>
       </SplitView>
@@ -77,7 +77,14 @@ export default {
       }
     });
   },
+  mounted() {
+    console.log("mounted");
+    window.addEventListener("beforeunload", this.beforeUnload);
+  },
 
+  unmounted() {
+    window.removeEventListener("beforeunload", this.beforeUnload);
+  },
   async created() {
     try {
       await this.load(this.$route.query?.id as string);
@@ -88,7 +95,14 @@ export default {
   },
 
   methods: {
-    on_changed() {
+    beforeUnload(event: Event) {
+      if (this.unsaved) {
+        const message = "You have unsaved changes that will be lost";
+        event.returnValue = message;
+        return false;
+      }
+    },
+    onChanged() {
       this.changed = true;
       this.unsaved = true;
       if (!this.savingPromise) {
