@@ -22,7 +22,7 @@ export default {
   methods: {
     select() {
       this.selected = true;
-      this.$emit("selected", this.item);
+      this.$emit("selected", this.item, this);
     },
 
     unselect(val: any) {

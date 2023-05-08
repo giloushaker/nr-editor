@@ -1,5 +1,5 @@
 <template>
-  <EditorCollapsibleBox nobox :collapsible="items && items.length">
+  <EditorCollapsibleBox nobox :collapsible="items && items.length > 0">
     <template #title> <slot /> </template>
     <template #content v-if="items">
       <CatalogueEntry
@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType, VueElement } from "nuxt/dist/app/compat/capi";
 import {
   escapeRegex,
   sortByAscending,
@@ -22,7 +22,7 @@ import {
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
-
+import { CatalogueEntry } from "~/.nuxt/components";
 export default {
   components: { EditorCollapsibleBox },
   props: {
@@ -39,7 +39,9 @@ export default {
       default: "",
     },
   },
-
+  data() {
+    return { selected: [] as (typeof CatalogueEntry)[] };
+  },
   computed: {
     sorted() {
       const items = (this.catalogue[this.type] || []) as Base[];
@@ -57,7 +59,11 @@ export default {
   },
 
   methods: {
-    itemSelected(item: any) {
+    itemSelected(item: any, $el: typeof CatalogueEntry) {
+      for (const selected of this.selected) {
+        selected.unselect(item);
+      }
+      this.selected.push($el);
       this.$emit("selected", { type: this.type, item: item });
     },
   },

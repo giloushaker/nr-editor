@@ -13,21 +13,21 @@
     </div>
 
     <div
-      class="leftSide h-full"
+      class="leftSide"
       :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
     >
       <slot name="middle"></slot>
     </div>
 
     <div
-      class="rightSide h-full"
+      class="rightSide"
       :class="{
         hidden: !split && showRight == false,
         hideOnSmallScreen: showRight == false,
       }"
       v-if="showRight"
     >
-      <slot name="right h-full"></slot>
+      <slot name="right"></slot>
     </div>
   </div>
 </template>

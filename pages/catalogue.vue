@@ -136,6 +136,7 @@ export default {
     },
 
     itemSelected(item: any) {
+      console.log("selected", item);
       this.item = item;
     },
 
