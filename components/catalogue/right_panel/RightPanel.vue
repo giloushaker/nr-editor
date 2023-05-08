@@ -20,6 +20,18 @@
     >
     </CatalogueRightPanelProfileTypesPanel>
 
+    <CatalogueRightPanelCategoryEntriesPanel
+      v-if="item.type == 'categoryEntries'"
+      :item="item.item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
+    <CatalogueRightPanelForceEntriesPanel
+      v-if="item.type == 'forceEntries'"
+      :item="item.item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
     <CatalogueRightPanelSharedProfilesPanel
       v-if="item.type == 'sharedProfiles'"
       :item="item.item"

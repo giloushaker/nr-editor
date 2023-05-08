@@ -35,6 +35,14 @@ export default {
           name: "Profile Types",
         },
         {
+          type: "categoryEntries",
+          name: "Category Entries",
+        },
+        {
+          type: "forceEntries",
+          name: "Force Entries",
+        },
+        {
           type: "sharedProfiles",
           name: "Shared Profiles",
         },
