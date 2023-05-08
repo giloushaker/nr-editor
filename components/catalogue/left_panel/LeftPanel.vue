@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   data() {

@@ -3,15 +3,15 @@
     <span v-if="error">
       {{ error }}
     </span>
-    <div v-if="catalogue">
+    <div v-if="data">
       <SplitView
         :split="true"
         :double="true"
         :showRight="item != null"
         :viewStyle="{ 'grid-template-columns': '400px auto' }"
       >
-        <template #middle v-if="catalogue">
-          <LeftPanel :catalogue="catalogue" @selected="itemSelected" />
+        <template #middle v-if="data">
+          <LeftPanel :catalogue="data" @selected="itemSelected" />
         </template>
         <template #right>
           <CatalogueRightPanel :item="item" @catalogueChanged="changed" />
@@ -19,8 +19,8 @@
       </SplitView>
     </div>
   </div>
-  <Teleport to="#titlebar-content" v-if="catalogue">
-    <div>Editing {{ catalogue.name }}</div>
+  <Teleport to="#titlebar-content" v-if="data">
+    <div>Editing {{ data.name }}</div>
   </Teleport>
 </template>
 
@@ -31,13 +31,15 @@ import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { GameSystemFiles } from "./index.vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
-
+import { GameSystem } from "~/assets/ts/systems/game_system";
+import { rootCertificates } from "tls";
 export default {
   components: { LeftPanel },
   data() {
     return {
       error: null as string | null,
-      catalogue: null as Catalogue | null,
+      data: null as Catalogue | null,
+      raw: null as BSIData | null,
       item: null as any,
     };
   },
@@ -65,7 +67,64 @@ export default {
   methods: {
     changed() {
       // TODO: Save the catalogue in indexed DB
-      console.log(this.catalogue);
+      if (!this.data) return;
+      const badKeys = new Set([
+        "loaded",
+        "loaded2",
+        "units",
+        "categories",
+        "forces",
+        "childs",
+        "roster_constraints",
+        "extra_constraints",
+        "costIndex",
+        "imports",
+        "index",
+        "catalogue",
+        "gameSystem",
+        "main_catalogue",
+        "collective_recursive",
+        "limited_to_one",
+        "associations",
+        "associationConstraints",
+        "book",
+        "short",
+        "version",
+        "nrversion",
+        "lastUpdated",
+        "costIndex",
+        "target",
+      ]);
+      const root: any = {
+        ...this.raw,
+        catalogue: undefined,
+        gameSystem: undefined,
+      };
+      const copy = { ...this.data }; // this is to make sure there is no recursive imports by only having the copy in the json
+      if (this.data.isGameSystem()) {
+        root.gameSystem = copy;
+      } else if (this.data.isCatalogue()) {
+        root.catalogue = copy;
+      }
+      const stringed = JSON.stringify(root, (k, v) => {
+        if (v === copy || !badKeys.has(k)) return v;
+        return undefined;
+      });
+      debugger;
+      if (root.catalogue) {
+        db.catalogues.put({
+          content: JSON.parse(stringed),
+          id: `${root.catalogue.gameSystemId}-${root.catalogue.id}`,
+        });
+        console.log("saved");
+      }
+      if (root.gameSystem) {
+        db.systems.put({
+          content: JSON.parse(stringed),
+          id: root.gameSystem.id,
+        });
+        console.log("saved");
+      }
     },
 
     itemSelected(item: any) {
@@ -77,25 +136,26 @@ export default {
         throw "No catalogue ID";
       }
 
-      let catData: { content: BSIData; id: string } | undefined =
+      let dbobj: { content: BSIData; id: string } | undefined =
         await db.catalogues.get(idCat);
 
-      if (!catData) {
-        catData = await db.systems.get(idCat);
+      if (!dbobj) {
+        dbobj = await db.systems.get(idCat);
       }
-      // what if the user wants to edit the gst file?
-      if (!catData) {
+      if (!dbobj) {
         throw "No catalogue exists with this ID";
       }
-      const file = catData.content as BSIData;
 
+      const file = dbobj.content as BSIData;
       const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
       const systemId = file.catalogue
         ? file.catalogue.gameSystemId
         : file.gameSystem?.id;
+
       if (!id || !systemId) {
         throw Error("Unable to open this catalogue");
       }
+
       let system: BSIDataSystem;
       if (file.catalogue) {
         const systemID = file.catalogue.gameSystemId;
@@ -110,7 +170,7 @@ export default {
 
         system = systemData.content;
       } else {
-        system = catData.content as BSIDataSystem;
+        system = dbobj.content as BSIDataSystem;
       }
       const systemFiles = new GameSystemFiles();
       systemFiles.gameSystem = system;
@@ -119,8 +179,8 @@ export default {
         targetId: getDataObject(file).id,
         name: getDataObject(file).name,
       });
-
-      this.catalogue = loaded;
+      this.raw = file;
+      this.data = loaded;
     },
   },
 };

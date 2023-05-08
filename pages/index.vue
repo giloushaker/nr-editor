@@ -67,19 +67,14 @@ export class GameSystemFiles extends BSCatalogueManager {
       return this.catalogueFiles[catalogueLink.targetId];
     }
 
-    let catalogue = await db.catalogues
-      .where({
-        "content.catalogue.id": catalogueLink.targetId,
-      })
-      .first();
+    const catalogue = await db.catalogues.get({
+      "content.catalogue.id": catalogueLink.targetId,
+    });
     if (catalogue) {
       return catalogue.content;
     }
-    let system = await db.systems
-      .where({
-        id: catalogueLink.targetId,
-      })
-      .first();
+
+    const system = await db.systems.get(catalogueLink.targetId);
     if (system) {
       return system.content;
     }
