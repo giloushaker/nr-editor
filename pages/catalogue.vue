@@ -13,10 +13,10 @@
         <template #middle v-if="data">
           <LeftPanel :catalogue="data" @selected="itemSelected" />
         </template>
-        <template #right>
+        <template #right v-if="data">
           <CatalogueRightPanel
             :item="item"
-            :catalogue="catalogue"
+            :catalogue="data"
             @catalogueChanged="changed"
           />
         </template>
@@ -35,8 +35,7 @@ import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { GameSystemFiles } from "./index.vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
-import { GameSystem } from "~/assets/ts/systems/game_system";
-import { rootCertificates } from "tls";
+
 export default {
   components: { LeftPanel },
   data() {
