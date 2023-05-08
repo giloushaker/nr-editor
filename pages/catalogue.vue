@@ -110,7 +110,6 @@ export default {
         if (v === copy || !badKeys.has(k)) return v;
         return undefined;
       });
-      debugger;
       if (root.catalogue) {
         db.catalogues.put({
           content: JSON.parse(stringed),
