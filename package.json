@@ -19,6 +19,7 @@
     "@sidebase/nuxt-session": "^0.2.7",
     "dexie": "^3.2.3",
     "fast-xml-parser": "^4.2.2",
+    "jszip": "^3.10.1",
     "mongodb": "^4.16.0",
     "unzipit": "^1.4.3",
     "vite-plugin-commonjs": "^0.7.0"

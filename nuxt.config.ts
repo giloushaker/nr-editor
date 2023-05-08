@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
+  buildModules: ["nuxt-windicss"],
   css: [
     "~/shared_components/css/vars.scss",
     "~/shared_components/css/style.scss",

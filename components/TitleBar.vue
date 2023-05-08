@@ -1,7 +1,9 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <h1>NR-Editor</h1>
+      <NuxtLink :to="{ name: 'index' }">
+        <h1>NR-Editor</h1>
+      </NuxtLink>
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
