@@ -17,7 +17,7 @@
           <CatalogueRightPanel
             :item="item"
             :catalogue="data"
-            @catalogueChanged="changed"
+            @catalogueChanged="on_changed"
           />
         </template>
       </SplitView>
