@@ -17,6 +17,7 @@ import { PropType } from "nuxt/dist/app/compat/capi";
 import {
   escapeRegex,
   sortByAscending,
+  textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -48,9 +49,7 @@ export default {
       if (!this.filter) {
         return this.sorted;
       }
-      const words = escapeRegex(this.filter).split(" ");
-      const regexStr = `^(?=.*\\b${words.join(".*)(?=.*\\b")}).*$`;
-      const regx = new RegExp(regexStr, "i");
+      const regx = textSearchRegex(this.filter);
       return this.sorted.filter(
         (o) => !o.getName || !o.getName() || o.getName().match(regx)
       );
