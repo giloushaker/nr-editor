@@ -1,7 +1,7 @@
 <template>
   <fieldset>
     <legend>Publication</legend>
-    <table>
+    <table class="editorTable">
       <tr>
         <td>Short Name</td>
         <td>
@@ -23,7 +23,7 @@
       <tr>
         <td>Publication URL:</td>
         <td>
-          <input type="text" v-model="item.publicationUrl" @change="changed" />
+          <input type="text" v-model="item.publisherUrl" @change="changed" />
         </td>
       </tr>
     </table>

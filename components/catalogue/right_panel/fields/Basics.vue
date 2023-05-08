@@ -1,7 +1,7 @@
 <template>
   <fieldset>
     <legend>Basics</legend>
-    <table>
+    <table class="editorTable">
       <tr>
         <td>Unique ID:</td>
         <td><input type="text" v-model="item.id" @change="changed" /></td>

@@ -14,7 +14,11 @@
           <LeftPanel :catalogue="catalogue" @selected="itemSelected" />
         </template>
         <template #right>
-          <CatalogueRightPanel :item="item" @catalogueChanged="changed" />
+          <CatalogueRightPanel
+            :item="item"
+            :catalogue="catalogue"
+            @catalogueChanged="changed"
+          />
         </template>
       </SplitView>
     </div>
