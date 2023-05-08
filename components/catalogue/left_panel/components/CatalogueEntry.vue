@@ -1,5 +1,10 @@
 <template>
-  <div class="item" :class="{ selected: selected }" @click="select">
+  <div
+    class="item unselectable"
+    :class="{ selected: selected }"
+    @click.shift.prevent="select($event)"
+    @click="select($event)"
+  >
     {{ item.name }}
   </div>
 </template>
@@ -20,9 +25,11 @@ export default {
   },
 
   methods: {
-    select() {
+    select(evt: Event) {
       this.selected = true;
-      this.$emit("selected", this.item, this);
+      if (evt) {
+        this.$emit("selected", this.item, this, evt);
+      }
     },
 
     unselect(val: any) {
