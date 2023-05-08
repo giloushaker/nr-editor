@@ -23,6 +23,7 @@
     <CatalogueRightPanelSharedProfilesPanel
       v-if="item.type == 'sharedProfiles'"
       :item="item.item"
+      :catalogue="catalogue"
       @catalogueChanged="changed"
     >
     </CatalogueRightPanelSharedProfilesPanel>

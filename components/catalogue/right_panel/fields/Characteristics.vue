@@ -2,10 +2,12 @@
   <fieldset>
     <legend>Characteristics</legend>
     <table class="editorTable">
-      <tr>
+      <tr v-if="catalogue.profileTypes">
         <td>Profile Type</td>
-        <select>
-          <option />
+        <select v-model="item.typeId">
+          <option :value="ptype.id" v-for="ptype of catalogue.profileTypes">
+            {{ ptype.name }}
+          </option>
         </select>
       </tr>
     </table>

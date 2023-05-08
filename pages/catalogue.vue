@@ -13,11 +13,11 @@
         <template #middle v-if="data">
           <LeftPanel :catalogue="data" @selected="itemSelected" />
         </template>
-        <template #right>
+        <template #right v-if="data">
           <CatalogueRightPanel
             :item="item"
             :catalogue="data"
-            @catalogueChanged="on_changed"
+            @catalogueChanged="changed"
           />
         </template>
       </SplitView>
