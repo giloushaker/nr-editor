@@ -1,13 +1,24 @@
 <template>
-  <EditorCollapsibleBox nobox>
+  <EditorCollapsibleBox nobox :collapsible="items && items.length">
     <template #title> <slot /> </template>
     <template #content v-if="items">
-      <CatalogueEntryList :entries="items" @selected="itemSelected" />
+      <CatalogueEntry
+        v-for="entry of items"
+        :item="entry"
+        :filter="filter"
+        @selected="itemSelected"
+      />
     </template>
   </EditorCollapsibleBox>
 </template>
 
 <script lang="ts">
+import { PropType } from "nuxt/dist/app/compat/capi";
+import {
+  escapeRegex,
+  sortByAscending,
+} from "~/assets/shared/battlescribe/bs_helpers";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
 
@@ -19,14 +30,30 @@ export default {
       required: true,
     },
     type: {
-      type: String,
+      type: String as PropType<keyof Catalogue>,
       required: true,
+    },
+    filter: {
+      type: String,
+      default: "",
     },
   },
 
   computed: {
+    sorted() {
+      const items = (this.catalogue[this.type] || []) as Base[];
+      return sortByAscending(items, (o) => o.getName());
+    },
     items() {
-      return (this.catalogue as any)[this.type];
+      if (!this.filter) {
+        return this.sorted;
+      }
+      const words = escapeRegex(this.filter).split(" ");
+      const regexStr = `^(?=.*\\b${words.join(".*)(?=.*\\b")}).*$`;
+      const regx = new RegExp(regexStr, "i");
+      return this.sorted.filter(
+        (o) => !o.getName || !o.getName() || o.getName().match(regx)
+      );
     },
   },
 

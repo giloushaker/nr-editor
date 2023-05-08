@@ -1,12 +1,11 @@
 <template>
-  <TitleBar />
-  <div class="container" id="app">
+  <div id="app">
+    <TitleBar />
     <NuxtPage :keepalive="true" />
   </div>
 </template>
 
 <script lang="ts">
-import { rpc } from "@/assets/ts/rpc";
 import { AppearanceTheme } from "./assets/shared/types/stateOptions";
 import { updateCssVars } from "./assets/shared/js/util";
 import TitleBar from "./components/TitleBar.vue";
@@ -70,15 +69,17 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.container {
-  padding: 10px;
-}
-</style>
+<style scoped></style>
 
 <style lang="scss">
 @import "@/shared_components/css/vars.scss";
 
+#app {
+  padding: 0 !important;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 html {
   font-family: sans-serif;
   background-image: linear-gradient(

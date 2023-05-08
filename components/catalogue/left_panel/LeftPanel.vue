@@ -1,13 +1,24 @@
 <template>
   <div class="leftPanel">
-    <CatalogueCollapsibleBox
-      v-for="item of items"
-      :type="item.type"
-      :catalogue="catalogue"
-      @selected="selected"
-    >
-      {{ item.name }}
-    </CatalogueCollapsibleBox>
+    <div>
+      <CatalogueCollapsibleBox
+        v-for="item of items"
+        :type="item.type"
+        :catalogue="catalogue"
+        :filter="filter"
+        @selected="selected"
+      >
+        {{ item.name }}
+      </CatalogueCollapsibleBox>
+    </div>
+    <div class="bottom">
+      <input
+        v-model="filter"
+        type="text"
+        placeholder="search..."
+        class="w-full"
+      />
+    </div>
   </div>
 </template>
 
@@ -17,6 +28,7 @@ import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 export default {
   data() {
     return {
+      filter: "",
       items: [
         {
           type: "catalogueLinks",
@@ -70,5 +82,12 @@ export default {
 
 .leftPanel {
   border: 1px $gray solid;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.bottom {
+  margin-top: auto;
 }
 </style>

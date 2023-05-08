@@ -13,21 +13,21 @@
     </div>
 
     <div
-      class="leftSide"
+      class="leftSide h-full"
       :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
     >
       <slot name="middle"></slot>
     </div>
 
     <div
-      class="rightSide"
+      class="rightSide h-full"
       :class="{
         hidden: !split && showRight == false,
         hideOnSmallScreen: showRight == false,
       }"
       v-if="showRight"
     >
-      <slot name="right"></slot>
+      <slot name="right h-full"></slot>
     </div>
   </div>
 </template>
@@ -82,7 +82,7 @@ export default {
   }
 
   .leftSide {
-    overflow-y: scroll;
+    overflow-y: auto;
 
     & > .EditorCollapsibleBox {
       border-top: none;

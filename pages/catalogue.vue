@@ -1,28 +1,29 @@
 <template>
-  <div>
-    <span v-if="error">
+  <template v-if="error">
+    <span>
       {{ error }}
     </span>
-    <div v-if="data">
-      <SplitView
-        :split="true"
-        :double="true"
-        :showRight="item != null"
-        :viewStyle="{ 'grid-template-columns': '400px auto' }"
-      >
-        <template #middle v-if="data">
-          <LeftPanel :catalogue="data" @selected="itemSelected" />
-        </template>
-        <template #right v-if="data">
-          <CatalogueRightPanel
-            :item="item"
-            :catalogue="data"
-            @catalogueChanged="onChanged"
-          />
-        </template>
-      </SplitView>
-    </div>
-  </div>
+  </template>
+  <template v-else-if="data">
+    <SplitView
+      :split="true"
+      :double="true"
+      :showRight="item != null"
+      :viewStyle="{ 'grid-template-columns': '400px auto' }"
+    >
+      <template #middle v-if="data">
+        <LeftPanel :catalogue="data" @selected="itemSelected" />
+      </template>
+      <template #right v-if="data">
+        <CatalogueRightPanel
+          :item="item"
+          :catalogue="data"
+          @catalogueChanged="onChanged"
+        />
+      </template>
+    </SplitView>
+  </template>
+
   <Teleport to="#titlebar-content" v-if="data">
     <div>
       Editing {{ data.name }}
