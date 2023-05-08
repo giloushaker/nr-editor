@@ -89,7 +89,10 @@ export default {
       this.changed = true;
       this.unsaved = true;
       if (!this.savingPromise) {
-        this.savingPromise = setTimeout(() => this.save(), 2000);
+        this.savingPromise = setTimeout(
+          () => this.unsaved && this.save(),
+          30000
+        );
         console.log("timeout", this.savingPromise);
       }
     },
