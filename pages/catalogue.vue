@@ -47,8 +47,11 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
-import { GameSystemFiles } from "./index.vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import {
+  GameSystemFiles,
+  saveCatalogue,
+} from "~/assets/ts/systems/game_system";
 export default {
   components: { LeftPanel },
   data() {
@@ -103,62 +106,7 @@ export default {
         console.log("couldn't save: no data");
         return;
       }
-      const badKeys = new Set([
-        "loaded",
-        "loaded2",
-        "units",
-        "categories",
-        "forces",
-        "childs",
-        "roster_constraints",
-        "extra_constraints",
-        "costIndex",
-        "imports",
-        "index",
-        "catalogue",
-        "gameSystem",
-        "main_catalogue",
-        "collective_recursive",
-        "limited_to_one",
-        "associations",
-        "associationConstraints",
-        "book",
-        "short",
-        "version",
-        "nrversion",
-        "lastUpdated",
-        "costIndex",
-        "target",
-      ]);
-      const root: any = {
-        ...this.raw,
-        catalogue: undefined,
-        gameSystem: undefined,
-      };
-      const copy = { ...this.data }; // this is to make sure there is no recursive imports by only having the copy in the json
-      if (this.data.isGameSystem()) {
-        root.gameSystem = copy;
-      } else if (this.data.isCatalogue()) {
-        root.catalogue = copy;
-      }
-      const stringed = JSON.stringify(root, (k, v) => {
-        if (v === copy || !badKeys.has(k)) return v;
-        return undefined;
-      });
-      if (root.catalogue) {
-        db.catalogues.put({
-          content: JSON.parse(stringed),
-          id: `${root.catalogue.gameSystemId}-${root.catalogue.id}`,
-        });
-        console.log("saved");
-      }
-      if (root.gameSystem) {
-        db.systems.put({
-          content: JSON.parse(stringed),
-          id: root.gameSystem.id,
-        });
-        console.log("saved");
-      }
+      saveCatalogue(this.data, this.raw);
       this.unsaved = false;
       this.savingPromise = null;
       this.saving = false;
@@ -218,6 +166,7 @@ export default {
       });
       this.raw = file;
       this.data = loaded;
+      (globalThis as any).$catalogue = this.data;
     },
   },
 };

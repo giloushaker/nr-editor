@@ -19,7 +19,9 @@ Interface:
 Editor:
 
     Features:
-        ☐ text Search 
+        ✔ text Search @done(23-05-08 21:18)
+            Catalogue.findOptionsByName(query) then filter 
+            ☐ add in ui
         ☐ copy, paste, move, delete
         ☐ undo/redo
         ☐ move to

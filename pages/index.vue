@@ -52,41 +52,8 @@ import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 import { db } from "~/assets/ts/dexie";
 import { NamedItem } from "~/components/IconContainer.vue";
 import ImportFromGithub from "./ImportFromGithub.vue";
+import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 
-export class GameSystemFiles extends BSCatalogueManager {
-  gameSystem: BSIDataSystem | null = null;
-  catalogueFiles: Record<string, BSIDataCatalogue> = {};
-  async getData(
-    catalogueLink: BSICatalogueLink,
-    booksDate?: BooksDate
-  ): Promise<BSIData> {
-    if (catalogueLink.targetId == this.gameSystem?.gameSystem.id) {
-      return this.gameSystem;
-    }
-    if (catalogueLink.targetId in this.catalogueFiles) {
-      return this.catalogueFiles[catalogueLink.targetId];
-    }
-
-    const catalogue = await db.catalogues.get({
-      "content.catalogue.id": catalogueLink.targetId,
-    });
-    if (catalogue) {
-      return catalogue.content;
-    }
-
-    const system = await db.systems.get(catalogueLink.targetId);
-    if (system) {
-      return system.content;
-    }
-
-    const errorPart = catalogueLink.name
-      ? `name ${catalogueLink.name}`
-      : `id ${catalogueLink.targetId}`;
-    throw Error(
-      `Couldn't import catalogue with ${errorPart}, perhaps it wasnt uploaded?`
-    );
-  }
-}
 export default defineComponent({
   components: {
     EditorCollapsibleBox,
@@ -133,19 +100,15 @@ export default defineComponent({
       const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
       for (const system of systems) {
         const systemId = system.gameSystem.id;
-        this.getSystem(systemId).gameSystem = system;
-        db.systems.put({ content: system, id: systemId });
+        this.getSystem(systemId).setSystem(system);
+        db.systems.put({ content: system, id: getDataDbId(system) });
       }
 
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
-        const catalogueId = catalogue.catalogue.id;
-        this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
-        db.catalogues.put({
-          content: catalogue,
-          id: `${systemId}-${catalogueId}`,
-        });
+        this.getSystem(systemId).setCatalogue(catalogue);
+        db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
       }
     },
 
@@ -154,7 +117,7 @@ export default defineComponent({
       let catalogues = (await db.catalogues.toArray()).map((o) => o.content);
 
       for (let system of systems) {
-        this.getSystem(system.gameSystem.id).gameSystem = system;
+        this.getSystem(system.gameSystem.id).setSystem(system);
       }
       for (let catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
