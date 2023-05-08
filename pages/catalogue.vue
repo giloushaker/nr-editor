@@ -16,15 +16,29 @@
         <template #right>
           <CatalogueRightPanel
             :item="item"
-            :catalogue="catalogue"
-            @catalogueChanged="changed"
+            :catalogue="data"
+            @catalogueChanged="on_changed"
           />
         </template>
       </SplitView>
     </div>
   </div>
   <Teleport to="#titlebar-content" v-if="data">
-    <div>Editing {{ data.name }}</div>
+    <div>
+      Editing {{ data.name }}
+      <template v-if="changed">
+        <template v-if="saving">
+          <span class="gray mx-2">saving...</span>
+        </template>
+        <template v-else-if="unsaved">
+          <span class="gray mx-2">unsaved</span>
+          <button @click="save">Save</button>
+        </template>
+        <template v-else="unsaved">
+          <span class="gray mx-2">saved</span>
+        </template>
+      </template>
+    </div>
   </Teleport>
 </template>
 
@@ -35,8 +49,6 @@ import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { GameSystemFiles } from "./index.vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
-import { GameSystem } from "~/assets/ts/systems/game_system";
-import { rootCertificates } from "tls";
 export default {
   components: { LeftPanel },
   data() {
@@ -45,6 +57,10 @@ export default {
       data: null as Catalogue | null,
       raw: null as BSIData | null,
       item: null as any,
+      unsaved: false,
+      saving: false,
+      savingPromise: null as any,
+      changed: false,
     };
   },
 
@@ -69,9 +85,21 @@ export default {
   },
 
   methods: {
-    changed() {
+    on_changed() {
+      this.changed = true;
+      this.unsaved = true;
+      if (!this.savingPromise) {
+        this.savingPromise = setTimeout(() => this.save(), 2000);
+        console.log("timeout", this.savingPromise);
+      }
+    },
+    save() {
       // TODO: Save the catalogue in indexed DB
-      if (!this.data) return;
+      this.saving = true;
+      if (!this.data) {
+        console.log("couldn't save: no data");
+        return;
+      }
       const badKeys = new Set([
         "loaded",
         "loaded2",
@@ -128,6 +156,9 @@ export default {
         });
         console.log("saved");
       }
+      this.unsaved = false;
+      this.savingPromise = null;
+      this.saving = false;
     },
 
     itemSelected(item: any) {

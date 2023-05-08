@@ -30,10 +30,10 @@ Editor:
         ☐ references from
         ☐ references to
         ☐ move back/forward (like browser navigation)
-        ☐ save
+        ✔ save @done(23-05-08 18:48)
         ☐ export xml/zip
         ☐ upload to github
-        ☐ download from github (needs proxy)
+        ✔ download from github (needs proxy) @done(23-05-08 18:43)
         ☐ view old versions, changes
         ☐ load a roster in ui
 
