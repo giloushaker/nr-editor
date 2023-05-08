@@ -38,9 +38,74 @@ Editor:
         ✔ download from github (needs proxy) @done(23-05-08 18:43)
         ☐ view old versions, changes
         ☐ load a roster in ui
-
+        ✔ search entries @done(23-05-09 01:14)
+            ☐ search nested
 
             
 
         
 
+
+
+xml:
+  export const catalogueTagMap = {
+  publications: "publication",
+  costTypes: "costType",
+  profileTypes: "profileType",
+  categoryEntries: "categoryEntry",
+  forceEntries: "forceEntry",
+  selectionEntries: "selectionEntry",
+  entryLinks: "entryLink",
+  sharedSelectionEntries: "selectionEntry",
+  sharedSelectionEntryGroups: "selectionEntryGroup",
+  sharedProfiles: "profile",
+  characteristics: "characteristic",
+  modifiers: "modifier",
+  constraints: "constraint",
+  profiles: "profile",
+  categoryLinks: "categoryLink",
+  costs: "cost",
+  conditionGroups: "conditionGroup",
+  conditions: "condition",
+  repeats: "repeat",
+  selectionEntryGroups: "selectionEntryGroup",
+  infoLinks: "infoLink",
+  characteristicTypes: "characteristicType",
+  catalogueLinks: "catalogueLink",
+  modifierGroups: "modifierGroup",
+  rules: "rule",
+  sharedRules: "rule",
+  infoGroups: "infoGroup",
+};
+export const attributeNames = [
+  "id",
+  "name",
+  "hidden",
+  "field",
+  "scope",
+  "value",
+  "percentValue",
+  "shared",
+  "includeChildSelections",
+  "includeChildForces",
+  "childId",
+  "type",
+  "targetId",
+  "primary",
+  "typeId",
+  "collective",
+  "import",
+  "$text",
+  "page",
+  "typeName",
+  "defaultSelectionEntryId",
+  "revision",
+  "battleScribeVersion",
+  "authorName",
+  "authorContact",
+  "authorUrl",
+  "library",
+  "gameSystemId",
+  "gameSystemRevision",
+  "xmlns",
+];

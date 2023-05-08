@@ -14,7 +14,7 @@
     <div class="bottom">
       <input
         v-model="filter"
-        type="text"
+        type="search"
         placeholder="search..."
         class="w-full"
       />
