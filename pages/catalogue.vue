@@ -78,12 +78,12 @@ export default {
     });
   },
   mounted() {
-    console.log("mounted");
     window.addEventListener("beforeunload", this.beforeUnload);
+    document.addEventListener("keydown", this.onKeydown, true);
   },
-
   unmounted() {
     window.removeEventListener("beforeunload", this.beforeUnload);
+    document.removeEventListener("keydown", this.onKeydown);
   },
   async created() {
     try {
@@ -95,12 +95,21 @@ export default {
   },
 
   methods: {
-    beforeUnload(event: Event) {
+    beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
         return false;
       }
+    },
+    onKeydown(e: KeyboardEvent) {
+      if (!(e.key === "s" && (e.ctrlKey || e.metaKey))) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      this.save();
     },
     onChanged() {
       this.changed = true;
@@ -110,16 +119,15 @@ export default {
           () => this.unsaved && this.save(),
           30000
         );
-        console.log("timeout", this.savingPromise);
       }
     },
     save() {
-      // TODO: Save the catalogue in indexed DB
       this.saving = true;
       if (!this.data) {
         console.log("couldn't save: no data");
         return;
       }
+      console.log("saving");
       saveCatalogue(this.data, this.raw);
       this.unsaved = false;
       this.savingPromise = null;
