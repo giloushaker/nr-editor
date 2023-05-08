@@ -69,7 +69,7 @@ export default {
   position: relative;
 
   .leftMost {
-    & > .collapsibleBox {
+    & > .EditorCollapsibleBox {
       border-top: none;
 
       & > .arrowTitle {
@@ -84,7 +84,7 @@ export default {
   .leftSide {
     overflow-y: scroll;
 
-    & > .collapsibleBox {
+    & > .EditorCollapsibleBox {
       border-top: none;
 
       & > .arrowTitle {

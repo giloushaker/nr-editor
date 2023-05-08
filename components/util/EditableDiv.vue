@@ -1,0 +1,84 @@
+<template>
+  <div
+    :placeholder="placeholder"
+    class="editableDiv"
+    @input="change"
+    @paste="onpaste"
+    contenteditable="true"
+    ref="div"
+  ></div>
+</template>
+
+<script lang="ts">
+export default {
+  emits: ["change", "update:modelValue"],
+  props: {
+    modelValue: {
+      type: String,
+      required: true,
+    },
+    placeholder: {
+      type: String,
+      default: "",
+    },
+  },
+
+  methods: {
+    change(e: any) {
+      if (e.target) {
+        this.$emit("update:modelValue", e.target.outerText);
+        this.$emit("change");
+      }
+    },
+
+    toHtml(s: string) {
+      return s.replace(/\n/g, "<br />");
+    },
+
+    onpaste(e: Event) {
+      e.preventDefault();
+      var text = (e as any).clipboardData.getData("text/plain");
+      (this.$refs.div as any).innerText = text;
+      this.$emit("update:modelValue", text);
+      this.$emit("change");
+    },
+  },
+
+  mounted() {
+    (this.$refs.div as any).innerText = this.modelValue;
+  },
+
+  watch: {
+    value() {
+      if ((this.$refs.div as any).innerText != this.modelValue) {
+        (this.$refs.div as any).innerText = this.modelValue;
+      }
+    },
+  },
+};
+</script>
+
+<style scoped lang="scss">
+@import "@/shared_components/css/vars.scss";
+
+.editableDiv {
+  border: 1px $gray solid;
+  padding: 3px;
+  text-align: left;
+}
+
+[contentEditable="true"]:empty:not(:focus):before {
+  content: attr(data-text);
+  color: $gray;
+  font-style: italic;
+}
+
+.editableDiv[placeholder]:empty:before {
+  content: attr(placeholder);
+  color: #555;
+}
+
+.editableDiv[placeholder]:empty:focus::before {
+  content: "";
+}
+</style>

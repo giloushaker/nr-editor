@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import CollapsibleBox from "~/shared_components/CollapsibleBox.vue";
+import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
 
 import {
   BSICatalogueLink,
@@ -94,7 +94,7 @@ export class GameSystemFiles extends BSCatalogueManager {
 }
 export default defineComponent({
   components: {
-    CollapsibleBox,
+    EditorCollapsibleBox,
     UploadJson,
     CataloguesDetail,
     ImportFromGithub,
