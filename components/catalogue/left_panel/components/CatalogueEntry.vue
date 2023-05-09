@@ -33,6 +33,7 @@
         nobox
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :selected="item.id === selectedId"
+        :titleCollapse="false"
       >
         <template #title>
           <span>{{ item.name }} </span></template
