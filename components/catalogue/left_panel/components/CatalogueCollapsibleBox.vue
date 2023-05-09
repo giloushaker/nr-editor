@@ -72,6 +72,7 @@ export default {
         for (const selected of this.selected) {
           selected.unselect(item);
         }
+        this.$emit("selected", { type: this.type, item: item });
       } else if (e.shiftKey && this.lastSelected) {
         const entries = this.entries;
         const a = entries.findIndex((o) => o === $el);
@@ -85,8 +86,6 @@ export default {
           }
           entries[i].select();
         }
-      } else {
-        this.$emit("selected", { type: this.type, item: item });
       }
       if (!this.selected.includes($el)) {
         this.selected.push($el);

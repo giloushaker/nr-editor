@@ -46,13 +46,17 @@
 <script lang="ts">
 import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import {
+  getDataObject,
+  getDataDbId,
+} from "~/assets/shared/battlescribe/bs_system";
 import {
   GameSystemFiles,
   saveCatalogue,
 } from "~/assets/ts/systems/game_system";
+import { useCataloguesStore } from "~/stores/cataloguesState";
 export default {
   components: { LeftPanel },
   data() {
@@ -77,6 +81,9 @@ export default {
         vue.error = e;
       }
     });
+  },
+  setup() {
+    return { cataloguesStore: useCataloguesStore() };
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -130,6 +137,7 @@ export default {
       }
       console.log("saving");
       saveCatalogue(this.data, this.raw);
+      this.cataloguesStore.setEdited(getDataDbId(this.data), true);
       this.unsaved = false;
       this.savingPromise = null;
       this.saving = false;

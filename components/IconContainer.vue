@@ -1,8 +1,26 @@
 <template>
   <div class="items">
-    <div v-for="item of sortedItems" class="item" @click="elementClicked(item)">
-      <img src="/assets/icons/book.png" />
-      <div>{{ item.name }}</div>
+    <div
+      v-for="item of sortedItems"
+      class="relative item"
+      :class="{ edited: edited(item), selected: item === selected }"
+      @click="elementClicked(item)"
+    >
+      <ErrorIcon class="error" :errors="errors(item)" />
+      <template v-if="item.gameSystem">
+        <img src="/assets/icons/system1.png" />
+      </template>
+      <template v-else-if="item.catalogue!.library">
+        <img src="/assets/icons/library.png" />
+      </template>
+      <template v-else>
+        <img src="/assets/icons/book.png" />
+      </template>
+      <div>{{ name(item) }}</div>
+    </div>
+    <div class="relative item add" @click="add">
+      <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
+      <div class="bold text-blue">New</div>
     </div>
   </div>
 </template>
@@ -10,29 +28,54 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-
-export interface NamedItem {
-  name: string;
-}
-
+import { BSIData } from "~/assets/shared/battlescribe/bs_types";
+import ErrorIcon from "./ErrorIcon.vue";
+import {
+  getDataDbId,
+  getDataObject,
+} from "~/assets/shared/battlescribe/bs_system";
+import { useCataloguesStore } from "~/stores/cataloguesState";
 export default {
+  emits: ["new", "itemClicked"],
+  setup() {
+    return { cataloguesStore: useCataloguesStore() };
+  },
   props: {
     items: {
-      type: Array as PropType<NamedItem[]>,
+      type: Array as PropType<BSIData[]>,
       required: true,
     },
   },
-
+  data() {
+    return {
+      selected: null as null | BSIData,
+    };
+  },
   methods: {
-    elementClicked(item: NamedItem) {
+    elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
+      this.selected = item;
+    },
+    errors(data: BSIData) {
+      return [];
+    },
+    edited(data: BSIData) {
+      return this.cataloguesStore.getEdited(getDataDbId(data));
+    },
+    name(data: BSIData) {
+      return getDataObject(data).name;
+    },
+    add() {
+      this.$emit("new");
+      this.selected = null;
     },
   },
   computed: {
     sortedItems() {
-      return sortByAscending(this.items, (o) => o.name);
+      return sortByAscending(this.items, (o) => this.name(o));
     },
   },
+  components: { ErrorIcon },
 };
 </script>
 
@@ -64,5 +107,25 @@ export default {
   grid-gap: 5px 0px;
   grid-auto-rows: 1fr;
   align-items: stretch;
+}
+
+.error {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+}
+
+.item:hover {
+  background-color: rgba($color: #000000, $alpha: 0.05);
+}
+.selected {
+  border: solid black 2px;
+}
+
+.edited {
+  background-color: rgba(40, 120, 250, 0.15);
+}
+.add {
+  border: solid rgb(45, 190, 45) 2px;
 }
 </style>

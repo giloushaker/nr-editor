@@ -64,6 +64,13 @@ export class GameSystemFiles extends BSCatalogueManager {
     const catalogueId = catalogue.catalogue.id;
     this.catalogueFiles[catalogueId] = catalogue;
   }
+  removeCatalogue(catalogue: BSIDataCatalogue) {
+    for (const [key, value] of Object.entries(this.catalogueFiles)) {
+      if (value.catalogue.id === catalogue.catalogue.id) {
+        delete this.catalogueFiles[key];
+      }
+    }
+  }
 }
 
 export function saveCatalogue(data: Catalogue, raw: BSIData) {

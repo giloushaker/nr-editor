@@ -4,16 +4,16 @@
 Interface:
     Main Menu:
         ☐ Add System
-        ☐ Add Catalogue
-        ☐ Edit Catalogue
-        ☐ Delete Catalogue
-        ☐ Errors icon on catalogues
+        ✔ Add Catalogue @done(23-05-09 16:30)
+        ✔ Edit Catsalogue @done(23-05-09 14:10)
+        ✔ Delete Catalogue @done(23-05-09 16:30)
+        ✔ Errors icon on catalogues @done(23-05-09 14:10)
             Errrors:
             Missing imports
             Errors within the catalogue
             Unsaved?
             Unreferenced + unplayable
-        ☐ Indication that catalogue has been modified by the user
+        ✔ Indication that catalogue has been modified by the user @done(23-05-09 14:09)
 
 
 Editor:
