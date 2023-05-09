@@ -26,6 +26,7 @@
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
+  emits: ["selected"],
   data() {
     return {
       filter: "",
