@@ -14,7 +14,7 @@
       <template #middle v-if="data">
         <LeftPanel :catalogue="data" @selected="itemSelected" />
       </template>
-      <template #right v-if="data">
+      <template #right v-if="item && data">
         <CatalogueRightPanel
           :item="item"
           :catalogue="data"
