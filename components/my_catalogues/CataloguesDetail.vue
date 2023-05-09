@@ -30,7 +30,6 @@
       Edit Catalogue
     </button>
     <button class="bouton" @click="deletePopup = true">Delete Catalogue</button>
-    {{ deletePopup }}
     <PopupDialog
       button="Confirm"
       text="Cancel"

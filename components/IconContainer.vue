@@ -3,7 +3,7 @@
     <div
       v-for="item of sortedItems"
       class="relative item"
-      :class="{ edited: edited(item), selected: item === selected }"
+      :class="{ edited: edited(item), selected: item === modelValue }"
       @click="elementClicked(item)"
     >
       <ErrorIcon class="error" :errors="errors(item)" />
@@ -45,16 +45,14 @@ export default {
       type: Array as PropType<BSIData[]>,
       required: true,
     },
-  },
-  data() {
-    return {
-      selected: null as null | BSIData,
-    };
+    modelValue: {
+      type: Object as PropType<null | BSIData>,
+      required: true,
+    },
   },
   methods: {
     elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
-      this.selected = item;
     },
     errors(data: BSIData) {
       return [];
@@ -67,7 +65,6 @@ export default {
     },
     add() {
       this.$emit("new");
-      this.selected = null;
     },
   },
   computed: {

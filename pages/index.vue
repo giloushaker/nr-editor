@@ -18,6 +18,7 @@
             :items="systemAndCatalogues(gst)"
             @itemClicked="itemClicked"
             @new="newCatalogue(gst)"
+            v-model="selectedItem"
           />
         </template>
         <template #right v-if="selectedItem">
@@ -37,15 +38,14 @@
         </template>
       </SplitView>
     </div>
-    <div v-if="msg">
-      {{ msg }}
+    <div>
+      <div class="border-2 border-black">Create New system</div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
-
 import {
   BSIData,
   BSIDataCatalogue,
@@ -119,10 +119,12 @@ export default defineComponent({
       console.log("Created catalogue", data);
       this.getSystem(data.catalogue.gameSystemId).setCatalogue(data);
       this.cataloguesStore.setEdited(getDataDbId(data), true);
+      this.selectedItem = data;
       db.catalogues.put({
         content: JSON.parse(JSON.stringify(data)),
         id: getDataDbId(data),
       });
+      this.mode = "edit";
     },
     deleteCatalogue(data: BSIDataCatalogue) {
       console.log("Deleted catalogue", data);
