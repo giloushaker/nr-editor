@@ -187,6 +187,7 @@ export default {
         targetId: getDataObject(file).id,
         name: getDataObject(file).name,
       });
+      loaded.processForEditor();
       this.raw = file;
       this.data = loaded;
       (globalThis as any).$catalogue = this.data;

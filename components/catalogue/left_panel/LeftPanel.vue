@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div>
+    <div class="top">
       <CatalogueCollapsibleBox
         v-for="item of items"
         :type="item.type"
@@ -89,5 +89,9 @@ export default {
 }
 .bottom {
   margin-top: auto;
+  position: sticky;
+}
+.top {
+  overflow: auto;
 }
 </style>
