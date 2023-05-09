@@ -72,21 +72,26 @@ export default {
         for (const selected of this.selected) {
           selected.unselect(item);
         }
-      }
-      if (e.shiftKey && this.lastSelected) {
+      } else if (e.shiftKey && this.lastSelected) {
         const entries = this.entries;
         const a = entries.findIndex((o) => o === $el);
         const b = entries.findIndex((o) => o === this.lastSelected);
         const low = Math.min(a, b);
         const high = Math.max(a, b);
         for (let i = low; i <= high; i++) {
+          const entry = entries[i];
+          if (!this.selected.includes(entry)) {
+            this.selected.push(entry);
+          }
           entries[i].select();
         }
       } else {
         this.$emit("selected", { type: this.type, item: item });
       }
+      if (!this.selected.includes($el)) {
+        this.selected.push($el);
+      }
       this.lastSelected = $el;
-      this.selected.push($el);
     },
   },
 
