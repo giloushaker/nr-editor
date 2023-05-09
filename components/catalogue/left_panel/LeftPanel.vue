@@ -1,15 +1,15 @@
 <template>
   <div class="leftPanel">
     <div class="top">
-      <CatalogueCollapsibleBox
-        v-for="item of items"
-        :type="item.type"
-        :catalogue="catalogue"
-        :filter="filter"
+      <CatalogueEntry
+        :parent="null"
+        :item="catalogue"
         @selected="selected"
-      >
-        {{ item.name }}
-      </CatalogueCollapsibleBox>
+        :selectedId="selectedId"
+        :filter="filter"
+        :categories="categories"
+        :possibleChildren="possibleChildren"
+      />
     </div>
     <div class="bottom">
       <input
@@ -23,6 +23,7 @@
 </template>
 
 <script lang="ts">
+import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
@@ -30,7 +31,8 @@ export default {
   data() {
     return {
       filter: "",
-      items: [
+      selectedId: null as string | null,
+      categories: [
         {
           type: "catalogueLinks",
           name: "Catalogue Links",
@@ -59,7 +61,19 @@ export default {
           type: "sharedProfiles",
           name: "Shared Profiles",
         },
-      ],
+      ] as Array<{ name: string; type: keyof (Base | Link) }>,
+      possibleChildren: [
+        "catalogueLinks",
+        "publications",
+        "costTypes",
+        "profileTypes",
+        "categoryEntries",
+        "categoryLinks",
+        "forceEntries",
+        "selectionEntries",
+        "entryLinks",
+        "sharedProfiles",
+      ] as Array<keyof (Base | Link)>,
     };
   },
 
@@ -71,8 +85,15 @@ export default {
   },
 
   methods: {
-    selected(item: any) {
+    selected(item: { item: Base | Link; type: string }) {
+      this.selectedId = item.item.id;
       this.$emit("selected", item);
+    },
+  },
+
+  computed: {
+    availableItems() {
+      return this.items;
     },
   },
 };

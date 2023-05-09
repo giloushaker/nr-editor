@@ -13,11 +13,11 @@
       v-if="!notitle"
       :class="[
         {
+          selected: selected,
           arrowTitle: collapsible,
           normalTitle: !collapsible,
           collapsed: collapsible && collapsed,
         },
-        title,
       ]"
       @click="titleSwitch"
     >
@@ -42,6 +42,7 @@
 <script>
 export default {
   props: {
+    selected: Boolean,
     collapsible: {
       type: Boolean,
       default: true,
@@ -154,6 +155,7 @@ export default {
 
 h3 {
   font-size: 16px;
+  font-weight: normal;
 }
 
 .EditorCollapsibleBox.box {
@@ -185,5 +187,13 @@ h3 {
     text-orientation: upright;
     writing-mode: vertical-rl;
   }
+}
+
+.selected {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.arrow {
+  height: 12px;
 }
 </style>
