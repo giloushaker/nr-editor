@@ -1,8 +1,7 @@
 <template>
   <fieldset class="details">
-    <legend>{{ catalogue.name }}</legend>
+    <legend>{{ cataloguedata.name }}</legend>
     <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
-    <div><span class="grey">Playable:</span> {{ catalogue.playable }}</div>
     <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
     <div>
       <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }}
@@ -30,31 +29,47 @@
     <button class="bouton" @click="$emit('edit', catalogue)">
       Edit Catalogue
     </button>
+    <button class="bouton" @click="deletePopup = true">Delete Catalogue</button>
+    {{ deletePopup }}
+    <PopupDialog
+      button="Confirm"
+      text="Cancel"
+      @button="$emit('delete', catalogue)"
+      v-model="deletePopup"
+      v-if="deletePopup"
+    >
+      <div>Are you sure you want to delete this catalogue?</div>
+    </PopupDialog>
   </fieldset>
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataCatalogue,
   BSIDataSystem,
   BSICatalogue,
   BSIGameSystem,
 } from "~/assets/shared/battlescribe/bs_types";
-
+import PopupDialog from "~/shared_components/PopupDialog.vue";
 export default {
-  emits: ["edit"],
+  emits: ["edit", "delete"],
   props: {
     catalogue: {
       type: Object as PropType<BSIDataCatalogue | BSIDataSystem>,
       required: true,
     },
   },
-
+  data() {
+    return {
+      deletePopup: false,
+    };
+  },
+  components: { PopupDialog },
   computed: {
     cataloguedata(): BSICatalogue | BSIGameSystem {
-      let cat = this.catalogue as any;
-      return cat.gameSystem || cat.catalogue;
+      return getDataObject(this.catalogue);
     },
   },
 };
@@ -62,7 +77,6 @@ export default {
 
 <style scoped lang="scss">
 .details {
-  min-width: 500px;
   h4 {
     margin: 0;
     font-size: 16px;

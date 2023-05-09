@@ -17,12 +17,23 @@
           <IconContainer
             :items="systemAndCatalogues(gst)"
             @itemClicked="itemClicked"
+            @new="newCatalogue(gst)"
           />
         </template>
         <template #right v-if="selectedItem">
-          <div>
-            <CataloguesDetail @edit="editCatalogue" :catalogue="selectedItem" />
-          </div>
+          <template v-if="mode === 'create'">
+            <CataloguesCreate
+              @create="createCatalogue"
+              :catalogue="selectedItem"
+            />
+          </template>
+          <template v-else>
+            <CataloguesDetail
+              @delete="deleteCatalogue"
+              @edit="editCatalogue"
+              :catalogue="selectedItem"
+            />
+          </template>
         </template>
       </SplitView>
     </div>
@@ -36,23 +47,19 @@
 import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
 
 import {
-  BSICatalogueLink,
   BSIData,
   BSIDataCatalogue,
   BSIDataSystem,
 } from "~/assets/shared/battlescribe/bs_types";
-import {
-  BSCatalogueManager,
-  getDataDbId,
-  getDataObject,
-} from "~/assets/shared/battlescribe/bs_system";
-import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 import { db } from "~/assets/ts/dexie";
-import { NamedItem } from "~/components/IconContainer.vue";
 import ImportFromGithub from "./ImportFromGithub.vue";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
+import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { useCataloguesStore } from "~/stores/cataloguesState";
 
 export default defineComponent({
   components: {
@@ -60,23 +67,27 @@ export default defineComponent({
     UploadJson,
     CataloguesDetail,
     ImportFromGithub,
+    CataloguesCreate,
   },
   data() {
     return {
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
+      mode: "edit",
       editingItem: null as BSIData | null,
       gameSystems: {} as Record<string, GameSystemFiles>,
     };
   },
-
+  setup() {
+    return { cataloguesStore: useCataloguesStore() };
+  },
   created() {
     this.loadSystemsFromDB();
   },
 
   methods: {
-    systemAndCatalogues(gst: GameSystemFiles): NamedItem[] {
-      let res: NamedItem[] = [];
+    systemAndCatalogues(gst: GameSystemFiles) {
+      let res = [];
       if (!gst.gameSystem) {
         return [];
       }
@@ -87,8 +98,38 @@ export default defineComponent({
 
     itemClicked(item: BSIDataCatalogue) {
       this.selectedItem = item;
+      this.mode = "edit";
     },
-
+    newCatalogue(gst: GameSystemFiles) {
+      if (!gst.gameSystem) return;
+      const gameSystem = gst.gameSystem.gameSystem;
+      this.mode = "create";
+      this.selectedItem = {
+        catalogue: {
+          library: false,
+          id: generateBattlescribeId(),
+          name: "",
+          gameSystemId: gameSystem.id,
+          gameSystemRevision: gameSystem.revision,
+          revision: 1,
+        },
+      };
+    },
+    createCatalogue(data: BSIDataCatalogue) {
+      console.log("Created catalogue", data);
+      this.getSystem(data.catalogue.gameSystemId).setCatalogue(data);
+      this.cataloguesStore.setEdited(getDataDbId(data), true);
+      db.catalogues.put({
+        content: JSON.parse(JSON.stringify(data)),
+        id: getDataDbId(data),
+      });
+    },
+    deleteCatalogue(data: BSIDataCatalogue) {
+      console.log("Deleted catalogue", data);
+      this.getSystem(data.catalogue.gameSystemId).removeCatalogue(data);
+      db.catalogues.delete(getDataDbId(data));
+      this.selectedItem = null;
+    },
     getSystem(id: string) {
       if (!(id in this.gameSystems)) {
         this.gameSystems[id] = new GameSystemFiles();
@@ -102,6 +143,7 @@ export default defineComponent({
         const systemId = system.gameSystem.id;
         this.getSystem(systemId).setSystem(system);
         db.systems.put({ content: system, id: getDataDbId(system) });
+        this.cataloguesStore.setEdited(getDataDbId(system), false);
       }
 
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
@@ -109,6 +151,7 @@ export default defineComponent({
         const systemId = catalogue.catalogue.gameSystemId;
         this.getSystem(systemId).setCatalogue(catalogue);
         db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
     },
 
