@@ -9,6 +9,10 @@ export default defineNuxtConfig({
     "@pinia-plugin-persistedstate/nuxt",
   ],
   ssr: false,
+  env: {
+    PROD_BUILD: true,
+    vue: 3,
+  },
   typescript: {
     strict: true,
   },
@@ -16,7 +20,6 @@ export default defineNuxtConfig({
     "~/shared_components/css/vars.scss",
     "~/shared_components/css/style.scss",
   ],
-
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
   },
