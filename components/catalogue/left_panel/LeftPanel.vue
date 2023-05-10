@@ -46,30 +46,37 @@ export default {
         {
           type: "costTypes",
           name: "Cost Types",
+          icon: "costs.png",
         },
         {
           type: "profileTypes",
           name: "Profile Types",
+          icon: "profiles.png",
         },
         {
           type: "categoryEntries",
           name: "Category Entries",
+          icon: "categories.png",
         },
         {
           type: "forceEntries",
           name: "Force Entries",
+          icon: "forces.png",
         },
         {
           type: "sharedSelectionEntries",
           name: "Shared Selection Entries",
+          icon: "shared_selections.png",
         },
         {
           type: "sharedSelectionEntryGroups",
           name: "Shared Selection Entry Groups",
+          icon: "shared_groups.png",
         },
         {
           type: "sharedProfiles",
           name: "Shared Profiles",
+          icon: "shared_profiles.png",
         },
         {
           type: "sharedRules",

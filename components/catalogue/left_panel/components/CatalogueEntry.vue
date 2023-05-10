@@ -9,6 +9,10 @@
       >
         <template #title>
           <span :class="{ selected: selected }">
+            <img
+              v-if="category.icon"
+              :src="`/assets/bsicons/${category.icon}`"
+            />
             {{ category.name }}
           </span>
         </template>
@@ -63,28 +67,21 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { findSelfOrParentWhere } from "~/assets/shared/battlescribe/bs_condition";
 import {
   sortByAscending,
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { constraintToText } from "~/assets/shared/battlescribe/bs_modifiers";
+
 import {
-  BSICatalogueLink,
   BSICondition,
   BSIConditionGroup,
   BSIConstraint,
   BSIModifier,
   BSIModifierGroup,
-  BSIProfile,
-  BSIProfileType,
-  BSIPublication,
-  BSIQuery,
-  BSIValued,
 } from "~/assets/shared/battlescribe/bs_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+
 import { getName } from "~/assets/shared/battlescribe/bs_editor";
 export type ItemTypes =
   | Base
@@ -156,7 +153,7 @@ export default {
       required: true,
     },
     categories: {
-      type: Array as PropType<{ name: string; type: ItemKeys }[]>,
+      type: Array as PropType<{ name: string; type: ItemKeys; icon: string }[]>,
       required: true,
     },
     possibleChildren: {
@@ -276,7 +273,7 @@ export default {
       let res: Array<any> = [];
       for (let cat of this.possibleChildren) {
         const sub: Array<any> = (this.item as any)[cat] as Array<any>;
-        if (sub) {
+        if (sub && Array.isArray(sub)) {
           res.push(
             ...sub.map((elt) => {
               return { type: cat, item: elt };

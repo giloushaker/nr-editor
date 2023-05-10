@@ -9,8 +9,6 @@
 </template>
 
 <script lang="ts">
-import { BSIOption } from "~/assets/shared/battlescribe/bs_types";
-
 export default {
   emits: ["catalogueChanged"],
   props: {

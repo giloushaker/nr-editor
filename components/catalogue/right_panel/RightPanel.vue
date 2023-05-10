@@ -45,7 +45,9 @@
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelSelectionEntryPanel
-      v-if="item.type == 'selectionEntries'"
+      v-if="
+        item.type == 'selectionEntries' || item.type == 'sharedSelectionEntries'
+      "
       :item="item.item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
@@ -85,8 +87,12 @@ export default {
     border: none;
     text-align: left;
     &:first-child {
-      width: 200px;
+      white-space: nowrap;
+      width: fit-content;
       text-align: right;
+    }
+    &:last-child {
+      width: 100%;
     }
   }
 
