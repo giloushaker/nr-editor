@@ -1,22 +1,28 @@
 <template>
   <div class="item unselectable">
     <template v-if="parent == null">
-      <EditorCollapsibleBox nobox v-for="category of categories">
+      <EditorCollapsibleBox
+        :titleCollapse="false"
+        nobox
+        v-for="category of categories"
+        @titleClick="select({ item: item, type: type })"
+      >
         <template #title>
           <span :class="{ selected: selected }">{{
             category.name
           }}</span></template
         >
-        <template #content v-if="item[category.type]">
+        <template #content>
           <CatalogueEntry
             ref="entries"
             v-for="entry of applyFilter(getTypedArray(item, category.type))"
             :item="entry.item"
+            :type="category.type"
             :filter="filter"
-            @click.prevent="select(entry)"
+            @selected="select"
             :parent="item"
-            :selectedId="selectedId"
-            :selected="item.id === selectedId"
+            :selectedItem="selectedItem"
+            :selected="item === selectedItem"
             :categories="categories"
             :possibleChildren="possibleChildren"
           />
@@ -29,21 +35,23 @@
         nobox
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
-        :selected="item.id === selectedId"
+        :selected="item === selectedItem"
         :titleCollapse="false"
+        @titleClick="select({ item: item, type: type })"
       >
         <template #title>
-          <span>{{ item.name }} </span></template
+          <span>{{ getName() }} </span></template
         >
         <template #content>
           <CatalogueEntry
             ref="entries"
             v-for="child of applyFilter(mixedChildren)"
             :item="child.item"
+            :type="child.type"
             :filter="filter"
-            @click.prevent="select(child)"
+            @selected="select"
             :parent="item"
-            :selectedId="selectedId"
+            :selectedItem="selectedItem"
             :categories="categories"
             :possibleChildren="possibleChildren"
           />
@@ -60,10 +68,62 @@ import {
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { constraintToText } from "~/assets/shared/battlescribe/bs_modifiers";
+import {
+  BSICondition,
+  BSIConditionGroup,
+  BSIConstraint,
+  BSIModifier,
+  BSIModifierGroup,
+  BSIQuery,
+  BSIValued,
+} from "~/assets/shared/battlescribe/bs_types";
 
-interface CatalogueEntryItem {
-  item: Base | Link;
-  type: keyof (Base | Link);
+export type ItemTypes =
+  | Base
+  | Link
+  | Catalogue
+  | BSIModifier
+  | BSIModifierGroup
+  | BSICondition
+  | BSIConditionGroup
+  | BSIConstraint;
+
+export type ItemKeys =
+  | "catalogue"
+  | "catalogueLinks"
+  | "publications"
+  | "costTypes"
+  | "profileTypes"
+  | "sharedProfiles"
+  | "sharedRules"
+
+  // Modifiable
+  | "infoLinks"
+  | "profiles"
+  | "rules"
+  | "infoGroups"
+
+  // Children
+  | "categoryEntries"
+  | "categoryLinks"
+  | "forceEntries"
+  | "selectionEntries"
+  | "selectionEntryGroups"
+  | "entryLinks"
+
+  // Constraints and modifiers
+  | "constraints"
+  | "conditions"
+  | "modifiers"
+  | "modifierGroups"
+  | "repeats"
+  | "conditionGroups";
+
+export interface CatalogueEntryItem {
+  item: ItemTypes;
+  type: ItemKeys;
 }
 
 export default {
@@ -74,44 +134,81 @@ export default {
   },
 
   props: {
+    type: {
+      type: String as PropType<ItemKeys>,
+      required: true,
+    },
     categories: {
-      type: Array as PropType<{ name: string; type: keyof (Base | Link) }[]>,
+      type: Array as PropType<{ name: string; type: ItemKeys }[]>,
       required: true,
     },
     possibleChildren: {
-      type: Array as PropType<Array<keyof (Base | Link)>>,
+      type: Array as PropType<Array<string>>,
       required: true,
     },
-    selectedId: {
-      type: String,
+    selectedItem: {
+      type: Object as PropType<ItemTypes>,
     },
     item: {
-      type: Object as PropType<Base | Link>,
+      type: Object as PropType<ItemTypes>,
       required: true,
     },
     filter: String,
     parent: {
-      type: Object as PropType<Base | Link>,
+      type: Object as PropType<ItemTypes>,
       required: false,
     },
   },
 
   methods: {
-    getTypedArray(
-      item: Base | Link,
-      type: keyof (Base | Link)
-    ): CatalogueEntryItem[] {
-      let arr = item[type] as Array<any>;
+    titleClicked() {
+      this.$emit("headerClicked", this.item);
+    },
+
+    select(item: CatalogueEntryItem) {
+      this.$emit("selected", item);
+    },
+
+    getName() {
+      const item = this.item as any;
+      if (item.getName) {
+        return item.getName();
+      }
+      if (item.name) {
+        return item.name;
+      }
+
+      switch (this.type) {
+        case "constraints":
+          return constraintToText(this.parent as Base | Link, item);
+          break;
+        case "modifiers":
+          break;
+        case "modifierGroups":
+          break;
+        case "repeats":
+          break;
+        case "modifiers":
+          break;
+        case "conditionGroups":
+          break;
+        default:
+          break;
+      }
+    },
+
+    getTypedArray(item: ItemTypes, type: ItemKeys): CatalogueEntryItem[] {
+      let arr = (item as any)[type] as Array<any>;
+      if (!arr) {
+        return [];
+      }
+
       return arr.map((elt) => {
         return {
           item: elt as Base | Link,
           type: type,
         };
       });
-    },
-
-    select(item: CatalogueEntryItem) {
-      this.$emit("selected", item);
     },
 
     applyFilter(elements: CatalogueEntryItem[]): CatalogueEntryItem[] {
@@ -122,14 +219,17 @@ export default {
       const regx = textSearchRegex(this.filter);
       return this.sortArray(
         elements.filter(
-          (o) =>
+          (o: any) =>
             !o.item.getName || !o.item.getName() || o.item.getName().match(regx)
         )
       );
     },
 
     sortArray(items: CatalogueEntryItem[]) {
-      return sortByAscending(items, (o) => o.item.name);
+      if (items.length == 0 || (items[0].item as any).name == undefined) {
+        return items;
+      }
+      return sortByAscending(items, (o: any) => o.item.name);
     },
 
     /*
@@ -182,10 +282,10 @@ export default {
   },
 
   computed: {
-    mixedChildren(): Array<{ type: keyof (Base | Link); item: Base | Link }> {
+    mixedChildren(): Array<CatalogueEntryItem> {
       let res: Array<any> = [];
       for (let cat of this.possibleChildren) {
-        const sub: Array<any> = this.item[cat] as Array<any>;
+        const sub: Array<any> = (this.item as any)[cat] as Array<any>;
         if (sub) {
           res.push(
             ...sub.map((elt) => {

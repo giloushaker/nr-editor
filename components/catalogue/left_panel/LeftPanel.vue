@@ -2,10 +2,11 @@
   <div class="leftPanel">
     <div class="top">
       <CatalogueEntry
-        :parent="null"
         :item="catalogue"
+        :type="`catalogue`"
+        :parent="null"
         @selected="selected"
-        :selectedId="selectedId"
+        :selectedItem="selectedItem"
         :filter="filter"
         :categories="categories"
         :possibleChildren="possibleChildren"
@@ -25,13 +26,14 @@
 <script lang="ts">
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { ItemTypes, ItemKeys } from "./components/CatalogueEntry.vue";
 
 export default {
   emits: ["selected"],
   data() {
     return {
       filter: "",
-      selectedId: null as string | null,
+      selectedItem: null as ItemTypes | null,
       categories: [
         {
           type: "catalogueLinks",
@@ -74,7 +76,7 @@ export default {
           name: "Shared Rules",
         },
         {
-          type: "infoLinks",
+          type: "infoGroups",
           name: "Shared Info Groups",
         },
         {
@@ -86,20 +88,38 @@ export default {
           name: "Root Rules",
         },
       ] as Array<{ name: string; type: keyof (Base | Link) }>,
+
       possibleChildren: [
+        // Catalogue stuff
         "catalogueLinks",
         "publications",
         "costTypes",
         "profileTypes",
+        "sharedProfiles",
+        "sharedRules",
+
+        // Modifiable
+        "infoLinks",
+        "profiles",
+        "rules",
+        "infoGroups",
+
+        // Children
         "categoryEntries",
         "categoryLinks",
         "forceEntries",
         "selectionEntries",
+        "selectionEntryGroups",
         "entryLinks",
-        "sharedProfiles",
-        "sharedRules",
-        "infoLinks",
-      ] as Array<keyof (Base | Link)>,
+
+        // Constraints and modifiers
+        "constraints",
+        "conditions",
+        "modifiers",
+        "modifierGroups",
+        "repeats",
+        "conditionGroups",
+      ] as Array<ItemKeys>,
     };
   },
 
@@ -111,9 +131,8 @@ export default {
   },
 
   methods: {
-    selected(item: { item: Base | Link; type: string }) {
-      this.selectedId = item.item.id;
-      console.log(item);
+    selected(item: { item: ItemTypes; type: ItemKeys }) {
+      this.selectedItem = item.item;
       this.$emit("selected", item);
     },
   },
