@@ -30,7 +30,7 @@
       <slot name="title" class="title" />
     </h3>
     <div
-      v-if="initiated"
+      v-if="initiated && !empty"
       v-show="!collapsed || !collapsible"
       class="boxContent"
     >
@@ -42,6 +42,10 @@
 <script>
 export default {
   props: {
+    empty: {
+      type: Boolean,
+      default: false,
+    },
     selected: Boolean,
     collapsible: {
       type: Boolean,
@@ -164,6 +168,7 @@ h3 {
 
 .boxContent {
   padding: 5px;
+  padding-top: 0;
 }
 
 .noboxindent {
@@ -173,7 +178,7 @@ h3 {
 }
 
 .nobox > .boxContent {
-  padding: 0px;
+  padding-left: 5px;
 }
 
 .collapsed {
@@ -195,5 +200,9 @@ h3 {
 
 .arrow {
   height: 12px;
+}
+
+.nocollapse {
+  padding-left: 14px;
 }
 </style>

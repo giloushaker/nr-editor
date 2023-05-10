@@ -1,7 +1,7 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <NuxtLink :to="{ name: 'index' }">
+      <NuxtLink :to="{ name: 'index' }" class="link">
         <h1>NR-Editor</h1>
       </NuxtLink>
       <slot />
@@ -13,7 +13,8 @@
   </div>
 </template>
 
-<style>
+<style scoped lang="scss">
+@import "@/shared_components/css/vars.scss";
 .titlebar {
   display: flex;
   position: sticky;
@@ -41,5 +42,9 @@
 }
 .titlebar-content > * {
   margin: 4px;
+}
+
+.link {
+  color: $blue;
 }
 </style>

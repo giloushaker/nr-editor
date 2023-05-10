@@ -5,8 +5,7 @@
       <UploadJson @uploaded="filesUploaded" />
       <ImportFromGithub @uploaded="filesUploaded" />
     </div>
-    <div class="section" v-for="gst in gameSystems">
-      <h3>{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</h3>
+    <div class="section">
       <SplitView
         :split="true"
         :double="true"
@@ -14,12 +13,17 @@
         :viewStyle="{ 'grid-template-columns': 'auto 30%' }"
       >
         <template #middle>
-          <IconContainer
-            :items="systemAndCatalogues(gst)"
-            @itemClicked="itemClicked"
-            @new="newCatalogue(gst)"
-            v-model="selectedItem"
-          />
+          <fieldset v-for="gst in gameSystems">
+            <legend>
+              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+            </legend>
+            <IconContainer
+              :items="systemAndCatalogues(gst)"
+              @itemClicked="itemClicked"
+              @new="newCatalogue(gst)"
+              v-model="selectedItem"
+            />
+          </fieldset>
         </template>
         <template #right v-if="selectedItem">
           <template v-if="mode === 'create'">
@@ -113,7 +117,7 @@ export default defineComponent({
           gameSystemRevision: gameSystem.revision,
           revision: 1,
         },
-      };
+      } as any;
     },
     createCatalogue(data: BSIDataCatalogue) {
       console.log("Created catalogue", data);

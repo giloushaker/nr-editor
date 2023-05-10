@@ -4,36 +4,36 @@
       {{ error }}
     </span>
   </template>
-  <template v-else-if="data">
+  <template v-else-if="cat">
     <SplitView
       :split="true"
       :double="true"
       :showRight="item != null"
       :viewStyle="{ 'grid-template-columns': '400px auto' }"
     >
-      <template #middle v-if="data">
-        <LeftPanel :catalogue="data" @selected="itemSelected" />
+      <template #middle v-if="cat">
+        <LeftPanel :catalogue="cat" @selected="itemSelected" />
       </template>
-      <template #right v-if="item && data">
+      <template #right v-if="item && cat">
         <CatalogueRightPanel
           :item="item"
-          :catalogue="data"
+          :catalogue="cat"
           @catalogueChanged="onChanged"
         />
       </template>
     </SplitView>
   </template>
 
-  <Teleport to="#titlebar-content" v-if="data">
+  <Teleport to="#titlebar-content" v-if="cat">
     <div>
-      Editing {{ data.name }}
+      Editing {{ cat.name }} v{{ cat.revision }}
       <template v-if="changed">
         <template v-if="saving">
           <span class="gray mx-2">saving...</span>
         </template>
         <template v-else-if="unsaved">
           <span class="gray mx-2">unsaved</span>
-          <button @click="save">Save</button>
+          <button class="bouton save" @click="save">Save</button>
         </template>
         <template v-else="unsaved">
           <span class="gray mx-2">saved</span>
@@ -46,7 +46,7 @@
 <script lang="ts">
 import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import {
   getDataObject,
@@ -57,12 +57,13 @@ import {
   saveCatalogue,
 } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
+
 export default {
   components: { LeftPanel },
   data() {
     return {
       error: null as string | null,
-      data: null as Catalogue | null,
+      cat: null as Catalogue | null,
       raw: null as BSIData | null,
       item: null as any,
       unsaved: false,
@@ -131,13 +132,13 @@ export default {
     },
     save() {
       this.saving = true;
-      if (!this.data) {
-        console.log("couldn't save: no data");
+      if (!this.cat || !this.raw) {
+        console.log("couldn't save: no cat");
         return;
       }
-      console.log("saving");
-      saveCatalogue(this.data, this.raw);
-      this.cataloguesStore.setEdited(getDataDbId(this.data), true);
+
+      saveCatalogue(this.cat as Catalogue, this.raw);
+      this.cataloguesStore.setEdited(getDataDbId(this.cat as Catalogue), true);
       this.unsaved = false;
       this.savingPromise = null;
       this.saving = false;
@@ -197,9 +198,15 @@ export default {
       });
       loaded.processForEditor();
       this.raw = file;
-      this.data = loaded;
-      (globalThis as any).$catalogue = this.data;
+      this.cat = loaded;
+      (globalThis as any).$catalogue = this.cat;
     },
   },
 };
 </script>
+
+<style scoped>
+.save {
+  width: 100px;
+}
+</style>

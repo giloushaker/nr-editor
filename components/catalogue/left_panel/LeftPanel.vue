@@ -58,8 +58,32 @@ export default {
           name: "Force Entries",
         },
         {
+          type: "sharedSelectionEntries",
+          name: "Shared Selection Entries",
+        },
+        {
+          type: "sharedSelectionEntryGroups",
+          name: "Shared Selection Entry Groups",
+        },
+        {
           type: "sharedProfiles",
           name: "Shared Profiles",
+        },
+        {
+          type: "sharedRules",
+          name: "Shared Rules",
+        },
+        {
+          type: "infoLinks",
+          name: "Shared Info Groups",
+        },
+        {
+          type: "selectionEntries",
+          name: "Root Selection Entries",
+        },
+        {
+          type: "rules",
+          name: "Root Rules",
         },
       ] as Array<{ name: string; type: keyof (Base | Link) }>,
       possibleChildren: [
@@ -73,6 +97,8 @@ export default {
         "selectionEntries",
         "entryLinks",
         "sharedProfiles",
+        "sharedRules",
+        "infoLinks",
       ] as Array<keyof (Base | Link)>,
     };
   },
@@ -87,6 +113,7 @@ export default {
   methods: {
     selected(item: { item: Base | Link; type: string }) {
       this.selectedId = item.item.id;
+      console.log(item);
       this.$emit("selected", item);
     },
   },

@@ -1,11 +1,7 @@
 <template>
   <div class="item unselectable">
     <template v-if="parent == null">
-      <EditorCollapsibleBox
-        nobox
-        :collapsible="items && items.length > 0"
-        v-for="category of categories"
-      >
+      <EditorCollapsibleBox nobox v-for="category of categories">
         <template #title>
           <span :class="{ selected: selected }">{{
             category.name
@@ -14,10 +10,10 @@
         <template #content v-if="item[category.type]">
           <CatalogueEntry
             ref="entries"
-            v-for="entry of applyFilterHead(item[category.type])"
-            :item="entry"
+            v-for="entry of applyFilter(getTypedArray(item, category.type))"
+            :item="entry.item"
             :filter="filter"
-            @click.prevent="select({ item: entry, type: category.type })"
+            @click.prevent="select(entry)"
             :parent="item"
             :selectedId="selectedId"
             :selected="item.id === selectedId"
@@ -32,6 +28,7 @@
       <EditorCollapsibleBox
         nobox
         :collapsible="mixedChildren && mixedChildren.length > 0"
+        :empty="!mixedChildren || mixedChildren.length == 0"
         :selected="item.id === selectedId"
         :titleCollapse="false"
       >
@@ -58,8 +55,16 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
+import {
+  sortByAscending,
+  textSearchRegex,
+} from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
+
+interface CatalogueEntryItem {
+  item: Base | Link;
+  type: keyof (Base | Link);
+}
 
 export default {
   data() {
@@ -86,43 +91,98 @@ export default {
     },
     filter: String,
     parent: {
-      type: Object as PropType<Base | Link | null>,
-      required: true,
+      type: Object as PropType<Base | Link>,
+      required: false,
     },
   },
 
   methods: {
-    select(item: { type: string; item: Base | Link }) {
+    getTypedArray(
+      item: Base | Link,
+      type: keyof (Base | Link)
+    ): CatalogueEntryItem[] {
+      let arr = item[type] as Array<any>;
+      return arr.map((elt) => {
+        return {
+          item: elt as Base | Link,
+          type: type,
+        };
+      });
+    },
+
+    select(item: CatalogueEntryItem) {
       this.$emit("selected", item);
     },
 
-    applyFilter(elements: { item: Base | Link; type: string }[]) {
+    applyFilter(elements: CatalogueEntryItem[]): CatalogueEntryItem[] {
       if (!this.filter) {
-        return elements;
+        return this.sortArray(elements);
       }
+
       const regx = textSearchRegex(this.filter);
-      return elements.filter(
-        (o) =>
-          !o.item.getName || !o.item.getName() || o.item.getName().match(regx)
+      return this.sortArray(
+        elements.filter(
+          (o) =>
+            !o.item.getName || !o.item.getName() || o.item.getName().match(regx)
+        )
       );
     },
 
-    applyFilterHead(elements: any) {
-      if (!elements) {
-        return [];
-      }
+    sortArray(items: CatalogueEntryItem[]) {
+      return sortByAscending(items, (o) => o.item.name);
+    },
+
+    /*
+    sorted() {
+      const items = (this.catalogue[this.type] || []) as Base[];
+      return sortByAscending(items, (o) => o.getName());
+    },
+    items() {
       if (!this.filter) {
-        return elements;
+        return this.sorted;
       }
       const regx = textSearchRegex(this.filter);
-      return elements.filter(
-        (o: any) => !o.getName || !o.getName() || o.getName().match(regx)
+      return this.sorted.filter(
+        (o) => !o.getName || !o.getName() || o.getName().match(regx)
       );
     },
+    entries(): (typeof CatalogueEntry)[] {
+      return this.$refs.entries as (typeof CatalogueEntry)[];
+    },
+
+    itemSelected(item: any, $el: typeof CatalogueEntry, e: MouseEvent) {
+      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        for (const selected of this.selected) {
+          selected.unselect(item);
+        }
+      }
+      if (e.shiftKey && this.lastSelected) {
+        const entries = this.entries;
+        const a = entries.findIndex((o) => o === $el);
+        const b = entries.findIndex((o) => o === this.lastSelected);
+        const low = Math.min(a, b);
+        const high = Math.max(a, b);
+        for (let i = low; i <= high; i++) {
+          const entry = entries[i];
+          if (!this.selected.includes(entry)) {
+            this.selected.push(entry);
+          }
+          entries[i].select();
+        }
+      } else {
+        if (!e.ctrlKey) {
+          this.$emit("selected", { type: this.type, item: item });
+        }
+      }
+      if (!this.selected.includes($el)) {
+        this.selected.push($el);
+      }
+      this.lastSelected = $el;
+    }, */
   },
 
   computed: {
-    mixedChildren(): Array<{ type: string; item: Base | Link }> {
+    mixedChildren(): Array<{ type: keyof (Base | Link); item: Base | Link }> {
       let res: Array<any> = [];
       for (let cat of this.possibleChildren) {
         const sub: Array<any> = this.item[cat] as Array<any>;
@@ -145,12 +205,6 @@ export default {
 
 .item {
   cursor: pointer;
-  border-bottom: 1px $gray solid;
-
-  &:first-child {
-    border-top: 1px $gray solid;
-  }
-
-  padding: 2px;
+  padding: 0px;
 }
 </style>
