@@ -1,21 +1,21 @@
 <template>
-  <div class="item unselectable">
-    <template v-if="parent == null">
+  <div class="item unselectable" @click.middle.stop="debug">
+    <template v-if="parent == null" v-for="category of groupedCategories">
       <EditorCollapsibleBox
         :titleCollapse="false"
         nobox
-        v-for="category of categories"
         @titleClick="select({ item: item, type: type })"
+        :collapsible="category.items.length > 0"
       >
         <template #title>
-          <span :class="{ selected: selected }">{{
-            category.name
-          }}</span></template
-        >
+          <span :class="{ selected: selected }">
+            {{ category.name }}
+          </span>
+        </template>
         <template #content>
           <CatalogueEntry
             ref="entries"
-            v-for="entry of applyFilter(getTypedArray(item, category.type))"
+            v-for="entry of category.items"
             :item="entry.item"
             :type="category.type"
             :filter="filter"
@@ -40,7 +40,7 @@
         @titleClick="select({ item: item, type: type })"
       >
         <template #title>
-          <span>{{ getName() }} </span></template
+          <span>{{ getName(item, type) }} </span></template
         >
         <template #content>
           <CatalogueEntry
@@ -63,6 +63,7 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
+import { findSelfOrParentWhere } from "~/assets/shared/battlescribe/bs_condition";
 import {
   sortByAscending,
   textSearchRegex,
@@ -71,15 +72,20 @@ import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { constraintToText } from "~/assets/shared/battlescribe/bs_modifiers";
 import {
+  BSICatalogueLink,
   BSICondition,
   BSIConditionGroup,
   BSIConstraint,
   BSIModifier,
   BSIModifierGroup,
+  BSIProfile,
+  BSIProfileType,
+  BSIPublication,
   BSIQuery,
   BSIValued,
 } from "~/assets/shared/battlescribe/bs_types";
-
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getName } from "~/assets/shared/battlescribe/bs_editor";
 export type ItemTypes =
   | Base
   | Link
@@ -91,6 +97,17 @@ export type ItemTypes =
   | BSIConstraint;
 
 export type ItemKeys =
+  // Entries
+  | "selectionEntries"
+  | "sharedSelectionEntries"
+  | "selectionEntryGroups"
+  | "sharedSelectionEntryGroups"
+  | "entryLinks"
+  | "sharedEntryLinks"
+  | "forceEntries"
+  | "categoryEntries"
+
+  //
   | "catalogue"
   | "catalogueLinks"
   | "publications"
@@ -161,6 +178,9 @@ export default {
   },
 
   methods: {
+    debug() {
+      console.log(this.type, this.item, this.getName(this.item, this.type));
+    },
     titleClicked() {
       this.$emit("headerClicked", this.item);
     },
@@ -169,32 +189,8 @@ export default {
       this.$emit("selected", item);
     },
 
-    getName() {
-      const item = this.item as any;
-      if (item.getName) {
-        return item.getName();
-      }
-      if (item.name) {
-        return item.name;
-      }
-
-      switch (this.type) {
-        case "constraints":
-          return constraintToText(this.parent as Base | Link, item);
-          break;
-        case "modifiers":
-          break;
-        case "modifierGroups":
-          break;
-        case "repeats":
-          break;
-        case "modifiers":
-          break;
-        case "conditionGroups":
-          break;
-        default:
-          break;
-      }
+    getName(obj: any, type: string) {
+      return getName(obj, type);
     },
 
     getTypedArray(item: ItemTypes, type: ItemKeys): CatalogueEntryItem[] {
@@ -218,18 +214,12 @@ export default {
 
       const regx = textSearchRegex(this.filter);
       return this.sortArray(
-        elements.filter(
-          (o: any) =>
-            !o.item.getName || !o.item.getName() || o.item.getName().match(regx)
-        )
+        elements.filter((o) => this.getName(o.item, o.type).match(regx))
       );
     },
 
     sortArray(items: CatalogueEntryItem[]) {
-      if (items.length == 0 || (items[0].item as any).name == undefined) {
-        return items;
-      }
-      return sortByAscending(items, (o: any) => o.item.name);
+      return sortByAscending(items, (o) => this.getName(o.item, o.type));
     },
 
     /*
@@ -295,6 +285,12 @@ export default {
         }
       }
       return res;
+    },
+    groupedCategories() {
+      return this.categories.map((o) => ({
+        ...o,
+        items: this.applyFilter(this.getTypedArray(this.item, o.type)),
+      }));
     },
   },
 };
