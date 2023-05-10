@@ -197,6 +197,7 @@ export default {
         name: getDataObject(file).name,
       });
       loaded.processForEditor();
+      loaded.imports.map((o) => o.processForEditor());
       this.raw = file;
       this.cat = loaded;
       (globalThis as any).$catalogue = this.cat;
