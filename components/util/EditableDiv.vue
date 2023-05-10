@@ -38,18 +38,18 @@ export default {
     onpaste(e: Event) {
       e.preventDefault();
       var text = (e as any).clipboardData.getData("text/plain");
-      (this.$refs.div as any).innerText = text;
+      (this.$refs.div as any).innerText = text || "";
       this.$emit("update:modelValue", text);
       this.$emit("change");
     },
   },
 
   mounted() {
-    (this.$refs.div as any).innerText = this.modelValue;
+    (this.$refs.div as any).innerText = this.modelValue || "";
   },
 
   watch: {
-    value() {
+    modelValue() {
       if ((this.$refs.div as any).innerText != this.modelValue) {
         (this.$refs.div as any).innerText = this.modelValue;
       }
@@ -65,6 +65,7 @@ export default {
   border: 1px $gray solid;
   padding: 3px;
   text-align: left;
+  background-color: white;
 }
 
 [contentEditable="true"]:empty:not(:focus):before {

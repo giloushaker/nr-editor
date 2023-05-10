@@ -1,7 +1,10 @@
 <template>
   <fieldset>
-    <legend>Comment</legend>
-    <UtilEditableDiv v-model="item.comment" @change="changed"></UtilEditableDiv>
+    <legend>Description</legend>
+    <UtilEditableDiv
+      v-model="item.description"
+      @change="changed"
+    ></UtilEditableDiv>
   </fieldset>
 </template>
 
@@ -12,7 +15,7 @@ export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIOption>,
+      type: Object as PropType<{ description: string }>,
       required: true,
     },
   },

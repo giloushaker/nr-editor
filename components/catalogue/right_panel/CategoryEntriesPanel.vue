@@ -1,9 +1,31 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed">
+  <CatalogueRightPanelFieldsBasics
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  />
+  <CatalogueRightPanelFieldsReference
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    class="section"
+  />
+  <CatalogueRightPanelFieldsHidden
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  >
     Entry
   </CatalogueRightPanelFieldsHidden>
+
+  <CatalogueRightPanelFieldsQuickConstraints
+    :item="item"
+    @catalogueChanged="changed"
+    :withCategory="false"
+    class="section"
+  >
+  </CatalogueRightPanelFieldsQuickConstraints>
 </template>
 
 <script lang="ts">

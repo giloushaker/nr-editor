@@ -11,18 +11,23 @@
     @catalogueChanged="changed"
     class="section"
   />
-  <CatalogueRightPanelFieldsHidden
+  <CatalogueRightPanelFieldsBooleans
     :item="item"
     @catalogueChanged="changed"
+    :fields="[
+      { field: 'hidden', enabled: true, name: 'Hidden' },
+      { field: 'collective', enabled: false, name: 'Collective' },
+      { field: 'import', enabled: true, name: 'Import' },
+    ]"
     class="section"
   >
     Entry
-  </CatalogueRightPanelFieldsHidden>
+  </CatalogueRightPanelFieldsBooleans>
 
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
     @catalogueChanged="changed"
-    :withCategory="true"
+    :withCategory="false"
     class="section"
   >
   </CatalogueRightPanelFieldsQuickConstraints>
@@ -30,14 +35,17 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Force } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Base, Category } from "~/assets/shared/battlescribe/bs_main";
+import {
+  Catalogue,
+  Publication,
+} from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Force>,
+      type: Object as PropType<Base>,
       required: true,
     },
 

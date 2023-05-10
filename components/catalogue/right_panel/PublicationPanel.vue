@@ -1,7 +1,12 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" />
+  <CatalogueRightPanelFieldsBasics
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  />
   <CatalogueRightPanelFieldsPublication
+    class="section"
     :item="item"
     @catalogueChanged="changed"
   />

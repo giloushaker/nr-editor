@@ -229,7 +229,11 @@ export default {
       if (items.length == 0 || (items[0].item as any).name == undefined) {
         return items;
       }
-      return sortByAscending(items, (o: any) => o.item.name);
+      try {
+        return sortByAscending(items, (o: any) => o.item.name);
+      } catch {
+        return items;
+      }
     },
 
     /*

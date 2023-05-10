@@ -1,5 +1,9 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
+  <CatalogueRightPanelFieldsComment
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  />
   <CatalogueRightPanelFieldsBasics
     :item="item"
     @catalogueChanged="changed"
@@ -16,33 +20,31 @@
     @catalogueChanged="changed"
     class="section"
   >
-    Entry
+    Constraints
   </CatalogueRightPanelFieldsHidden>
 
-  <CatalogueRightPanelFieldsQuickConstraints
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="true"
+  <CatalogueRightPanelFieldsDescription
     class="section"
-  >
-  </CatalogueRightPanelFieldsQuickConstraints>
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+  />
 </template>
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Force } from "~/assets/shared/battlescribe/bs_main";
+import { Rule } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
-    item: {
-      type: Object as PropType<Force>,
-      required: true,
-    },
-
     catalogue: {
       type: Object as PropType<Catalogue>,
+      required: true,
+    },
+    item: {
+      type: Object as PropType<Rule>,
       required: true,
     },
   },

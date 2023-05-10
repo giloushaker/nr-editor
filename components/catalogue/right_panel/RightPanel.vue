@@ -1,5 +1,5 @@
 <template>
-  <div class="box">
+  <div class="box rightPanel">
     <CatalogueRightPanelPublicationPanel
       v-if="item.type == 'publications'"
       :item="item.item"
@@ -32,13 +32,24 @@
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
-    <CatalogueRightPanelSharedProfilesPanel
+    <CatalogueRightPanelProfilesPanel
       v-if="item.type == 'sharedProfiles'"
       :item="item.item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
-    >
-    </CatalogueRightPanelSharedProfilesPanel>
+    />
+    <CatalogueRightPanelRulesPanel
+      v-if="item.type == 'sharedRules'"
+      :item="item.item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
+    <CatalogueRightPanelSelectionEntryPanel
+      v-if="item.type == 'selectionEntries'"
+      :item="item.item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
   </div>
 </template>
 

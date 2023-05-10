@@ -1,10 +1,30 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed">
+  <CatalogueRightPanelFieldsComment
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  />
+  <CatalogueRightPanelFieldsBasics
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  />
+  <CatalogueRightPanelFieldsReference
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    class="section"
+  />
+  <CatalogueRightPanelFieldsHidden
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+  >
     Constraints
   </CatalogueRightPanelFieldsHidden>
+
   <CatalogueRightPanelFieldsCharacteristics
+    class="section"
     :item="item"
     :catalogue="catalogue"
     @catalogueChanged="changed"
