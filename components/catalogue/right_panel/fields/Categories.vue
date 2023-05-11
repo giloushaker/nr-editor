@@ -33,7 +33,7 @@
           <input
             type="checkbox"
             :checked="hasCategory(cat) != 0"
-            @change="secondaryChange(cat)"
+            @change="secondaryChanged(cat)"
           />
           {{ cat.name }}
         </div>
@@ -43,14 +43,25 @@
 </template>
 
 <script lang="ts">
-import { Category, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import {
+  Category,
+  CategoryLink,
+  Link,
+} from "~/assets/shared/battlescribe/bs_main";
+import {
+  Catalogue,
+  EditorBase,
+} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 
 export default {
   emits: ["catalogueChanged"],
   data() {
     return {
       filter: "",
+      primaries: new Set<string>(),
+      secondaries: new Set<string>(),
     };
   },
 
@@ -66,10 +77,72 @@ export default {
   },
 
   methods: {
-    primaryChanged(cat: Category | null) {},
+    primaryChanged(cat: Category | null) {
+      this.refreshCategories(this.item, cat, true);
+    },
 
-    secondaryChanged(cat: Category) {},
+    secondaryChanged(cat: Category) {
+      this.refreshCategories(this.item, cat, false);
+    },
+    refreshCategories(item: Link, cat: Category | null, primary: boolean) {
+      if (!item.categoryLinks) item.categoryLinks = [];
+      if (primary) {
+        item.categoryLinks.forEach((o) => (o.primary = false));
+      }
+      if (!cat) return;
+      const links = item.categoryLinks;
+      const found = links.find((o) => o.targetId === cat?.id);
+      if (found && primary) {
+        found.primary = true;
+      } else if (found) {
+        this.removeLink(links, found);
+      } else {
+        this.addLink(links, cat, primary);
+      }
 
+      console.log(
+        links
+          .map((o) => o.target.getName() + " " + o.primary + " " + o.id)
+          .join("\n")
+      );
+    },
+    removeLink(links: Link[], link: Link) {
+      const idx = links.findIndex((o) => o === link);
+      if (idx !== -1) {
+        const [cl] = links.splice(idx, 1);
+        this.catalogue.removeFromIndex(cl);
+        const targetLinks = (cl.target as EditorBase).links;
+        if (targetLinks) {
+          const targetIdx = targetLinks?.findIndex((o) => o === cl);
+          if (targetIdx !== -1) {
+            targetLinks?.splice(targetIdx, 1);
+          }
+        }
+      }
+    },
+    addLink(links: Link[], cat: Category, primary = false) {
+      if (!cat.isCategory()) {
+        throw Error("Invalid argument, target must be a category");
+      }
+      const cl = setPrototype(
+        {
+          targetId: cat.id,
+          target: cat,
+          id: this.catalogue.generateNonConflictingId(),
+          primary: primary,
+          catalogue: this.catalogue,
+        },
+        "categoryLinks"
+      );
+      links.push(cl);
+      this.catalogue.addToIndex(cl);
+      const target = cat as EditorBase;
+      if (!target.links) {
+        target.links = [];
+      }
+      target.links?.push(cl);
+      return cl;
+    },
     changed() {
       this.$emit("catalogueChanged");
     },
