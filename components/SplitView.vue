@@ -20,9 +20,8 @@
       <slot name="middle"></slot>
     </div>
     <div
-      class="between"
-      @drag.capture="ondragstart"
-      @dragend="ondragend"
+      class="between unselectable"
+      @mousedown="drag"
       :style="{ left: `${leftWidth - 8}px` }"
     ></div>
     <div
@@ -45,14 +44,22 @@ export default {
     return { leftWidth: 400 };
   },
   methods: {
-    ondragstart(e: MouseEvent) {
-      console.log("dragstarts");
-      this.leftWidth = e.clientX;
-    },
-    ondragend(e: MouseEvent) {
-      console.log(e);
-      this.leftWidth = e.clientX;
-      console.log("dragdrop");
+    async drag(e: MouseEvent) {
+      const b = this.leftWidth;
+      const x = e.clientX;
+      const onmousemove = (m: MouseEvent) => {
+        this.leftWidth = b + (m.clientX - x);
+      };
+      addEventListener("mousemove", onmousemove);
+      const mouseupoptions = {
+        once: true,
+        capture: true,
+      };
+      addEventListener(
+        "mouseup",
+        () => removeEventListener("mousemove", onmousemove),
+        mouseupoptions
+      );
     },
   },
 };
@@ -159,5 +166,6 @@ export default {
   position: absolute;
   cursor: ew-resize;
   width: 10px;
+  z-index: 1;
 }
 </style>
