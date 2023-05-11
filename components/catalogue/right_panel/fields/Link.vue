@@ -19,7 +19,7 @@
               v-if="item.type"
               :src="`/assets/bsicons/${store.icons[getType(item)]}`"
             />
-            {{ item.name }}
+            {{ item.target.name }}
           </template>
         </td>
       </tr>
