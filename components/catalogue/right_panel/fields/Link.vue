@@ -77,7 +77,6 @@ export default {
       required: true,
     },
   },
-
   methods: {
     changed() {
       this.$emit("catalogueChanged");

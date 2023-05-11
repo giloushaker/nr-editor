@@ -124,6 +124,9 @@ export default {
       }
       return this.groups[key];
     },
+    debug() {
+      console.log(this.item);
+    },
     getName(obj: any, type: string) {
       return getName(obj, type);
     },
