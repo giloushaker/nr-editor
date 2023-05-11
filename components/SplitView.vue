@@ -19,7 +19,6 @@
       v-if="draggable"
       class="between unselectable"
       @mousedown="drag_left_handle"
-      :style="{ left: `${leftw}px` }"
     />
 
     <template v-if="triple">
@@ -189,7 +188,7 @@ export default {
 .between {
   background-color: rgba(0, 0, 100, 0.08);
   height: 100%;
-  position: absolute;
+  position: relative;
   cursor: ew-resize;
   width: 10px;
   z-index: 1;
