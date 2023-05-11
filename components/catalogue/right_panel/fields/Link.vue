@@ -32,7 +32,16 @@
       <tr>
         <td>Target:</td>
         <td>
-          <select></select>
+          <UtilAutocomplete
+            :resultValue="itemValue"
+            :resultLabel="itemName"
+            :search="availableTargets"
+            :placeholder="`Search Target...`"
+            @selected="targetSelected"
+            v-model="filter"
+            ref="autocomplete"
+            :min="0"
+          ></UtilAutocomplete>
         </td>
       </tr>
     </table>
@@ -40,7 +49,8 @@
 </template>
 
 <script lang="ts">
-import { Link } from "~/assets/shared/battlescribe/bs_main";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
+import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorState";
 
@@ -49,6 +59,14 @@ export default {
     return { store: useEditorStore() };
   },
   emits: ["catalogueChanged"],
+
+  data() {
+    return {
+      filter: "",
+      val: null as any,
+    };
+  },
+
   props: {
     item: {
       type: Object as PropType<Link>,
@@ -73,10 +91,31 @@ export default {
     },
 
     updateLink() {
-      this.catalogue.resolveAllLinks(this.catalogue.imports);
-      console.log(this.item.target);
+      this.catalogue.updateLink(this.item);
       this.changed();
     },
+
+    targetSelected(elt: Base) {
+      this.item.target = elt;
+      this.item.targetId = elt.id;
+    },
+
+    itemName(elt: Base) {
+      return elt.name;
+    },
+
+    itemValue(elt: Base) {
+      return elt.name;
+    },
+
+    availableTargets(filter: string) {
+      let all = this.catalogue.findOptionsByName(filter || "");
+      console.log(all);
+      //all = all.filter((elt) => !elt.isLink());
+      return sortByAscending(all, (o) => o.name);
+    },
   },
+
+  computed: {},
 };
 </script>
