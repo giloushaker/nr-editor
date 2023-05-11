@@ -21,8 +21,7 @@
     </div>
     <div
       class="between"
-      @click.prevent
-      @drag.prevent="ondragstart"
+      @drag.capture="ondragstart"
       @dragend="ondragend"
       :style="{ left: `${leftWidth - 8}px` }"
     ></div>
