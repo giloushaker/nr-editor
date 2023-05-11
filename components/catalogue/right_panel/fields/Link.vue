@@ -34,7 +34,7 @@
         <td>
           <select v-for="item of items">
             {{
-              item.getName()
+              item.name
             }}
           </select>
         </td>
