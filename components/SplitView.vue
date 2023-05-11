@@ -14,11 +14,18 @@
 
     <div
       class="leftSide"
+      :style="{ width: `${leftWidth}px` }"
       :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
     >
       <slot name="middle"></slot>
     </div>
-
+    <div
+      class="between"
+      @click.prevent
+      @drag.prevent="ondragstart"
+      @dragend="ondragend"
+      :style="{ left: `${leftWidth - 8}px` }"
+    ></div>
     <div
       class="rightSide"
       :class="{
@@ -32,9 +39,23 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   props: ["split", "double", "triple", "showRight", "viewStyle"],
+  data() {
+    return { leftWidth: 400 };
+  },
+  methods: {
+    ondragstart(e: MouseEvent) {
+      console.log("dragstarts");
+      this.leftWidth = e.clientX;
+    },
+    ondragend(e: MouseEvent) {
+      console.log(e);
+      this.leftWidth = e.clientX;
+      console.log("dragdrop");
+    },
+  },
 };
 </script>
 
@@ -132,5 +153,12 @@ export default {
   .leftMost {
     overflow-y: auto;
   }
+}
+.between {
+  background-color: rgba(255, 0, 0, 54);
+  height: 100%;
+  position: absolute;
+  cursor: ew-resize;
+  width: 10px;
 }
 </style>
