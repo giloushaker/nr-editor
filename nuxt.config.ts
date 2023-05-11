@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   env: {
     PROD_BUILD: true,
     vue: 3,
+    editor: true,
   },
   typescript: {
     strict: true,

@@ -32,7 +32,11 @@
       <tr>
         <td>Target:</td>
         <td>
-          <select></select>
+          <select v-for="item of items">
+            {{
+              item.getName()
+            }}
+          </select>
         </td>
       </tr>
     </table>
@@ -59,7 +63,11 @@ export default {
       required: true,
     },
   },
-
+  computed: {
+    items() {
+      return this.catalogue.findOptionsByName();
+    },
+  },
   methods: {
     changed() {
       this.$emit("catalogueChanged");

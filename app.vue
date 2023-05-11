@@ -65,6 +65,7 @@ export default defineComponent({
   },
   async created() {
     updateCssVars(defaultAppearence, {});
+    globalThis.isEditor = true;
   },
   components: { TitleBar },
 });
