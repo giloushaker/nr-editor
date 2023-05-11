@@ -86,20 +86,21 @@ export default {
     },
     refreshCategories(item: Link, cat: Category | null, primary: boolean) {
       if (!item.categoryLinks) item.categoryLinks = [];
-      if (primary) {
-        item.categoryLinks.forEach((o) => (o.primary = false));
-      }
-      if (!cat) return;
       const links = item.categoryLinks;
-      const found = links.find((o) => o.targetId === cat?.id);
-      if (found && primary) {
-        found.primary = true;
-      } else if (found) {
-        this.removeLink(links, found);
-      } else {
-        this.addLink(links, cat, primary);
+      if (primary) {
+        links.forEach((o) => (o.primary = false));
       }
-
+      if (cat) {
+        const found = links.find((o) => o.targetId === cat?.id);
+        if (found && primary) {
+          found.primary = true;
+        } else if (found) {
+          this.removeLink(links, found);
+        } else {
+          this.addLink(links, cat, primary);
+        }
+      }
+      this.changed();
       console.log(
         links
           .map((o) => o.target.getName() + " " + o.primary + " " + o.id)
