@@ -32,11 +32,10 @@
       <tr>
         <td>Target:</td>
         <td>
-          <select v-for="item of items">
-            {{
-              item.name
-            }}
-          </select>
+          <select></select>
+          <option v-for="item of items">
+            {{ item.getName() }}
+          </option>
         </td>
       </tr>
     </table>
