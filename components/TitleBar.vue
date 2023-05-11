@@ -26,7 +26,7 @@
   color: #fff;
   padding: 8px;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 2;
 }
 .titlebar-left {
   height: 100%;

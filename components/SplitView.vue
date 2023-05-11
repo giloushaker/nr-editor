@@ -8,29 +8,46 @@
     }"
     :style="viewStyle"
   >
-    <div class="leftMost scrollable" v-if="triple">
+    <div
+      class="left scrollable"
+      ref="left"
+      :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }"
+    >
       <slot name="left"></slot>
     </div>
-
     <div
-      class="leftSide"
-      :style="{ width: `${leftWidth}px` }"
-      :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
-    >
-      <slot name="middle"></slot>
-    </div>
-    <div
+      v-if="draggable"
       class="between unselectable"
-      @mousedown="drag"
-      :style="{ left: `${leftWidth - 8}px` }"
-    ></div>
+      @mousedown="drag_left_handle"
+      :style="{ left: `${leftw}px` }"
+    />
+
+    <template v-if="triple">
+      <div
+        ref="middle"
+        class="leftSide scrollable"
+        :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
+      >
+        <slot name="middle"></slot>
+      </div>
+      <div
+        v-if="draggable"
+        class="between unselectable"
+        @mousedown="drag_right_handle"
+        :style="{ right: `${rightw - 8}px)` }"
+      />
+    </template>
     <div
-      class="rightSide"
+      v-if="showRight"
+      ref="right"
+      class="right grow scrollable"
+      :style="{
+        width: rightw > 0 ? `calc(100vw - ${rightw}px)` : rightWidth,
+      }"
       :class="{
         hidden: !split && showRight == false,
         hideOnSmallScreen: showRight == false,
       }"
-      v-if="showRight"
     >
       <slot name="right"></slot>
     </div>
@@ -39,16 +56,68 @@
 
 <script lang="ts">
 export default {
-  props: ["split", "double", "triple", "showRight", "viewStyle"],
+  props: {
+    split: {},
+    double: {},
+    triple: {},
+    showRight: {},
+    viewStyle: {},
+    draggable: {
+      type: Boolean,
+      default: false,
+    },
+    leftWidth: {
+      type: String,
+      default: "auto",
+    },
+    rightWidth: {
+      type: String,
+      default: "auto",
+    },
+  },
   data() {
-    return { leftWidth: 400 };
+    return { _leftWidth: 0, _rightWidth: 0, dragging: false };
+  },
+  mounted() {
+    if (this.draggable) {
+      this.first = false;
+      const element = this.$refs.left;
+      const width = element.offsetWidth;
+      this._leftWidth = width;
+    }
+  },
+  computed: {
+    left() {
+      return this.$el?.offsetLeft || 0;
+    },
+    leftw() {
+      return this._leftWidth - this.left;
+    },
+    right() {
+      return this.$el?.offsetRight || 0;
+    },
+    rightw() {
+      return this._rightWidth - this.right;
+    },
+    hasMiddle() {
+      return !!this.$slots.middle;
+    },
+    totalWidth() {
+      return this.$el.clientWidth;
+    },
   },
   methods: {
-    async drag(e: MouseEvent) {
-      const b = this.leftWidth;
+    clamp(val: number) {
+      if (val < 100) return 100;
+      if (val > this.totalWidth - 100) return this.totalWidth - 100;
+      return val;
+    },
+    async drag_left_handle(e: MouseEvent) {
+      this.dragging = true;
+      const b = this._leftWidth;
       const x = e.clientX;
       const onmousemove = (m: MouseEvent) => {
-        this.leftWidth = b + (m.clientX - x);
+        this._leftWidth = this.clamp(b + (m.clientX - x), 100);
       };
       addEventListener("mousemove", onmousemove);
       const mouseupoptions = {
@@ -57,7 +126,36 @@ export default {
       };
       addEventListener(
         "mouseup",
-        () => removeEventListener("mousemove", onmousemove),
+        () => {
+          removeEventListener("mousemove", onmousemove);
+          this.$nextTick(() => {
+            this._leftWidth = this.$refs.left.clientWidth;
+            this.dragging = false;
+          });
+        },
+        mouseupoptions
+      );
+    },
+    async drag_right_handle(e: MouseEvent) {
+      this.dragging = true;
+      const b = this._leftWidth;
+      const x = e.clientX;
+      const onmousemove = (m: MouseEvent) => {
+        this._leftWidth = this.clamp(b + (m.clientX - x));
+      };
+      addEventListener("mousemove", onmousemove);
+      const mouseupoptions = {
+        once: true,
+        capture: true,
+      };
+      addEventListener(
+        "mouseup",
+        () => {
+          this.$nextTick(() => {
+            this._rightWidth = this.$refs.right.clientWidth;
+            this.dragging = false;
+          });
+        },
         mouseupoptions
       );
     },
@@ -69,19 +167,8 @@ export default {
 @import "@/shared_components/css/vars.scss";
 
 .mainView {
-  display: grid;
-  grid-gap: 5px;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  display: flex;
   width: 100%;
-
-  &.tripleSplitView {
-    grid-template-columns: fit-content(20%) 1fr 1fr;
-  }
-
-  &.doubleSplitView {
-    grid-template-columns: auto fit-content(50%);
-  }
 }
 
 @media screen and (max-width: $very_large_mode) {
@@ -93,75 +180,14 @@ export default {
 .splitMainView {
   flex: 1;
   overflow: auto;
-  position: relative;
-
-  .leftMost {
-    & > .EditorCollapsibleBox {
-      border-top: none;
-
-      & > .arrowTitle {
-        position: sticky !important;
-        top: 0;
-        z-index: 20;
-        border-top: 1px solid $box_border;
-      }
-    }
-  }
-
-  .leftSide {
-    overflow-y: auto;
-
-    & > .EditorCollapsibleBox {
-      border-top: none;
-
-      & > .arrowTitle {
-        position: sticky !important;
-
-        top: 0;
-        z-index: 20;
-        border-top: 1px solid $box_border;
-      }
-
-      & > .boxContent {
-        padding: 0;
-
-        & > div:first-child {
-          position: sticky !important;
-          top: 31px;
-          background-color: rgba(var(--bg-r), var(--bg-g), var(--bg-b), 1);
-          z-index: 10;
-          padding: 5px;
-          border-bottom: 1px solid $box_border;
-        }
-      }
-
-      div.liste {
-        padding: 5px;
-      }
-    }
-  }
-
-  .rightSide {
-    overflow-y: auto;
-
-    .inbox {
-      border-top: none;
-    }
-
-    .unitNameTitle {
-      position: sticky !important;
-      top: 0;
-      z-index: 10;
-      border-top: 1px solid $box_border;
-    }
-  }
-
-  .leftMost {
-    overflow-y: auto;
-  }
 }
+
+.right {
+  flex: 1;
+}
+
 .between {
-  background-color: rgba(255, 0, 0, 54);
+  background-color: rgba(0, 0, 100, 0.08);
   height: 100%;
   position: absolute;
   cursor: ew-resize;

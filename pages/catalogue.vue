@@ -6,12 +6,13 @@
   </template>
   <template v-else-if="cat">
     <SplitView
+      draggable
       :split="true"
       :double="true"
       :showRight="store.selectedItem != null"
       :viewStyle="{ 'grid-template-columns': '400px auto' }"
     >
-      <template #middle>
+      <template #left>
         <LeftPanel :catalogue="cat" />
       </template>
       <template #right>

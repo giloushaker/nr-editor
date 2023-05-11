@@ -10,34 +10,41 @@
         :split="true"
         :double="true"
         :showRight="selectedItem != null"
-        :viewStyle="{ 'grid-template-columns': 'auto 30%' }"
+        leftWidth="calc(100% - 400px)"
+        rightWidth="400px"
       >
-        <template #middle>
-          <fieldset v-for="gst in gameSystems">
-            <legend>
-              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
-            </legend>
-            <IconContainer
-              :items="systemAndCatalogues(gst)"
-              @itemClicked="itemClicked"
-              @new="newCatalogue(gst)"
-              v-model="selectedItem"
-            />
-          </fieldset>
+        <template #left>
+          <div class="w-full">
+            <fieldset v-for="gst in gameSystems">
+              <legend>
+                {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+              </legend>
+              <IconContainer
+                :items="systemAndCatalogues(gst)"
+                @itemClicked="itemClicked"
+                @new="newCatalogue(gst)"
+                v-model="selectedItem"
+              />
+            </fieldset>
+          </div>
         </template>
-        <template #right v-if="selectedItem">
-          <template v-if="mode === 'create'">
-            <CataloguesCreate
-              @create="createCatalogue"
-              :catalogue="selectedItem"
-            />
-          </template>
-          <template v-else>
-            <CataloguesDetail
-              @delete="deleteCatalogue"
-              @edit="editCatalogue"
-              :catalogue="selectedItem"
-            />
+        <template #right>
+          <template v-if="selectedItem">
+            <template v-if="mode === 'create'">
+              <CataloguesCreate
+                :style="{ width: '400px' }"
+                @create="createCatalogue"
+                :catalogue="selectedItem"
+              />
+            </template>
+            <template v-else>
+              <CataloguesDetail
+                :style="{ width: '400px' }"
+                @delete="deleteCatalogue"
+                @edit="editCatalogue"
+                :catalogue="selectedItem"
+              />
+            </template>
           </template>
         </template>
       </SplitView>
