@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="top">
+    <div class="top h-full">
       <CatalogueEntry :item="catalogue" />
     </div>
     <div class="bottom">
