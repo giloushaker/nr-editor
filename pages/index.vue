@@ -49,7 +49,6 @@
 </template>
 
 <script lang="ts">
-import EditorCollapsibleBox from "~/components/EditorCollapsibleBox.vue";
 import {
   BSIData,
   BSIDataCatalogue,
@@ -67,7 +66,6 @@ import { useCataloguesStore } from "~/stores/cataloguesState";
 
 export default defineComponent({
   components: {
-    EditorCollapsibleBox,
     UploadJson,
     CataloguesDetail,
     ImportFromGithub,

@@ -1,5 +1,5 @@
 <template>
-  <div class="box rightPanel">
+  <div class="rightPanel">
     <CatalogueRightPanelPublicationPanel
       v-if="item.type == 'publications'"
       :item="item.item"
@@ -52,6 +52,12 @@
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
+    <CatalogueRightPanelLinkPanel
+      v-if="item.type == 'entryLinks'"
+      :item="item.item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
   </div>
 </template>
 
@@ -100,5 +106,11 @@ export default {
   input[type="text"] {
     width: 100% !important;
   }
+}
+
+.rightPanel {
+  padding-top: 10px;
+  padding-right: 10px;
+  padding-left: 5px;
 }
 </style>

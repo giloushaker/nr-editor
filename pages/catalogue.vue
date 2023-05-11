@@ -107,7 +107,6 @@ export default {
     "store.selectedItem"(e) {
       this.item = { type: e.$parent.type, item: e.$parent.item };
       this.type = e.$parent.type;
-      console.log(this.item);
     },
   },
   methods: {

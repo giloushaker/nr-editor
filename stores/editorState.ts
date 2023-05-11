@@ -1,11 +1,71 @@
 import { VueElement } from "nuxt/dist/app/compat/capi";
 import { defineStore } from "pinia";
+import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import {
+  BSICondition,
+  BSIConditionGroup,
+  BSIConstraint,
+  BSIModifier,
+  BSIModifierGroup,
+} from "~/assets/shared/battlescribe/bs_types";
+
+export type ItemTypes =
+  | Base
+  | Link
+  | Catalogue
+  | BSIModifier
+  | BSIModifierGroup
+  | BSICondition
+  | BSIConditionGroup
+  | BSIConstraint;
+
+export type ItemKeys =
+  // Entries
+  | "selectionEntries"
+  | "sharedSelectionEntries"
+  | "selectionEntryGroups"
+  | "sharedSelectionEntryGroups"
+  | "entryLinks"
+  | "sharedEntryLinks"
+  | "forceEntries"
+  | "categoryEntries"
+  | "categoryLinks"
+
+  //
+  | "catalogue"
+  | "catalogueLinks"
+  | "publications"
+  | "costTypes"
+  | "profileTypes"
+  | "sharedProfiles"
+  | "sharedRules"
+
+  // Modifiable
+  | "infoLinks"
+  | "profiles"
+  | "rules"
+  | "infoGroups"
+
+  // Constraints and modifiers
+  | "constraints"
+  | "conditions"
+  | "modifiers"
+  | "modifierGroups"
+  | "repeats"
+  | "conditionGroups";
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown }[];
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
+  icons: Record<ItemKeys, string>;
+}
+
+export interface CatalogueEntryItem {
+  item: ItemTypes;
+  type: ItemKeys;
 }
 
 export const useEditorStore = defineStore("editor", {
@@ -14,6 +74,39 @@ export const useEditorStore = defineStore("editor", {
     selectedElementGroup: null,
     selectedElement: null,
     selectedItem: null,
+    icons: {
+      sharedSelectionEntries: "shared_selections.png",
+      selectionEntryGroups: "entrygroups",
+      sharedSelectionEntryGroups: "shared_groups.png",
+      entryLinks: "shared_selections.png",
+      sharedEntryLinks: "shared_selections.png",
+      forceEntries: "forces.png",
+      categoryEntries: "categories.png",
+      categoryLinks: "categories.png",
+      selectionEntries: "entry.png",
+
+      catalogue: "catalogue.png",
+      catalogueLinks: "catalogue_links.png",
+      publications: "publications.png",
+      costTypes: "costs.png",
+      profileTypes: "profiles.png",
+      sharedProfiles: "shared_profiles.png",
+      sharedRules: "shared_rules.png",
+
+      // Modifiable
+      infoLinks: "infogroups.png",
+      profiles: "profiles.png",
+      rules: "rules.png",
+      infoGroups: "infogroups.png",
+
+      // Constraints and modifiers
+      constraints: "constraint.png",
+      conditions: "",
+      modifiers: "modifier.png",
+      modifierGroups: "",
+      repeats: "",
+      conditionGroups: "",
+    },
   }),
   actions: {
     unselect(obj?: any) {
@@ -54,7 +147,7 @@ export const useEditorStore = defineStore("editor", {
         const low = Math.min(a, b);
         const high = Math.max(a, b);
         for (let i = low; i <= high; i++) {
-          const entry = entries[i];
+          const entry: any = entries[i];
           entry.select();
         }
         return;
@@ -65,7 +158,7 @@ export const useEditorStore = defineStore("editor", {
       if (e.ctrlKey && this.is_selected(el)) {
         this.unselect(el);
       } else {
-        el.select();
+        (el as any).select();
         this.selectedItem = el;
       }
     },

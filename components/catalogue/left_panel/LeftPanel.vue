@@ -25,7 +25,7 @@
 <script lang="ts">
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ItemTypes, ItemKeys } from "./components/CatalogueEntry.vue";
+import { ItemKeys } from "@/stores/editorState";
 
 export default {
   data() {
@@ -43,37 +43,30 @@ export default {
         {
           type: "costTypes",
           name: "Cost Types",
-          icon: "costs.png",
         },
         {
           type: "profileTypes",
           name: "Profile Types",
-          icon: "profiles.png",
         },
         {
           type: "categoryEntries",
           name: "Category Entries",
-          icon: "categories.png",
         },
         {
           type: "forceEntries",
           name: "Force Entries",
-          icon: "forces.png",
         },
         {
           type: "sharedSelectionEntries",
           name: "Shared Selection Entries",
-          icon: "shared_selections.png",
         },
         {
           type: "sharedSelectionEntryGroups",
           name: "Shared Selection Entry Groups",
-          icon: "shared_groups.png",
         },
         {
           type: "sharedProfiles",
           name: "Shared Profiles",
-          icon: "shared_profiles.png",
         },
         {
           type: "sharedRules",
@@ -85,6 +78,7 @@ export default {
         },
         {
           type: "selectionEntries",
+          links: "entryLinks",
           name: "Root Selection Entries",
         },
         {

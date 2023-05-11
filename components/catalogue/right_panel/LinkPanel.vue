@@ -11,13 +11,13 @@
     @catalogueChanged="changed"
     class="section"
   />
-  <CatalogueRightPanelFieldsEntryType
+
+  <CatalogueRightPanelFieldsLink
     :item="item"
+    :catalogue="catalogue"
     @catalogueChanged="changed"
     class="section"
-  >
-    Selection Entry
-  </CatalogueRightPanelFieldsEntryType>
+  />
 
   <CatalogueRightPanelFieldsCosts
     :item="item"
@@ -38,13 +38,6 @@
   >
     Entry
   </CatalogueRightPanelFieldsBooleans>
-
-  <CatalogueRightPanelFieldsCategories
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
 
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
