@@ -35,13 +35,25 @@
           <UtilAutocomplete
             :resultValue="itemValue"
             :resultLabel="itemName"
-            :search="availableTargets"
+            :search="() => []"
             :placeholder="`Search Target...`"
             @selected="targetSelected"
             v-model="filter"
             ref="autocomplete"
             :min="0"
-          ></UtilAutocomplete>
+          >
+            <template v-for="opt in availableTargets(filter)">
+              <div :value="opt">
+                <img
+                  class="mr-1 align-middle"
+                  :src="`/assets/bsicons/${opt.editorTypeName}.png`"
+                />
+                <span>
+                  {{ opt.getName() }}
+                </span>
+              </div>
+            </template>
+          </UtilAutocomplete>
         </td>
       </tr>
     </table>
@@ -77,7 +89,11 @@ export default {
       required: true,
     },
   },
-
+  watch: {
+    filter(v) {
+      console.log("filter", v);
+    },
+  },
   methods: {
     changed() {
       this.$emit("catalogueChanged");
@@ -109,9 +125,11 @@ export default {
     },
 
     availableTargets(filter: string) {
-      let all = this.catalogue.findOptionsByName(filter || "");
-      console.log(all);
-      //all = all.filter((elt) => !elt.isLink());
+      let all = this.catalogue.findOptionsByName(filter || "").filter((o) => {
+        if (o.isLink()) return false;
+        if (!o.parent.isCatalogue()) return false;
+        return o.isEntry() || o.isGroup();
+      });
       return sortByAscending(all, (o) => o.name);
     },
   },
