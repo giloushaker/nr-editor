@@ -23,12 +23,6 @@ export default defineNuxtConfig({
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
   },
-  piniaPersistedState: {
-    cookieOptions: {
-      sameSite: "strict",
-    },
-    storage: "localStorage",
-  },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   alias: {
     "./js/teleport": "vue",

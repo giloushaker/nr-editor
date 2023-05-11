@@ -11,10 +11,10 @@
       :showRight="item != null"
       :viewStyle="{ 'grid-template-columns': '400px auto' }"
     >
-      <template #middle v-if="cat">
-        <LeftPanel :catalogue="cat" @selected="itemSelected" />
+      <template #middle>
+        <LeftPanel :catalogue="cat" />
       </template>
-      <template #right v-if="item && cat">
+      <template #right v-if="item">
         <CatalogueRightPanel
           :item="item"
           :catalogue="cat"
@@ -57,6 +57,7 @@ import {
   saveCatalogue,
 } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
+import { useEditorStore } from "~/stores/editorState";
 
 export default {
   components: { LeftPanel },
@@ -84,7 +85,7 @@ export default {
     });
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -102,7 +103,13 @@ export default {
       this.error = e;
     }
   },
-
+  watch: {
+    "store.selectedItem"(e) {
+      this.item = { type: e.$parent.type, item: e.$parent.item };
+      this.type = e.$parent.type;
+      console.log(this.item);
+    },
+  },
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
@@ -142,10 +149,6 @@ export default {
       this.unsaved = false;
       this.savingPromise = null;
       this.saving = false;
-    },
-
-    itemSelected(item: any) {
-      this.item = item;
     },
 
     async load(idCat: string | null | undefined) {

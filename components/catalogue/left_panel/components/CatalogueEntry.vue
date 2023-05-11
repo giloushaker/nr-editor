@@ -4,11 +4,12 @@
       <EditorCollapsibleBox
         :titleCollapse="false"
         nobox
-        @titleClick="select({ item: item, type: type })"
         :collapsible="category.items.length > 0"
+        :class="{ child: parent }"
+        :group="get_group('entries')"
       >
         <template #title>
-          <span :class="{ selected: selected }">
+          <span>
             <img
               v-if="category.icon"
               :src="`/assets/bsicons/${category.icon}`"
@@ -17,19 +18,17 @@
           </span>
         </template>
         <template #content>
-          <CatalogueEntry
-            ref="entries"
-            v-for="entry of category.items"
-            :item="entry.item"
-            :type="category.type"
-            :filter="filter"
-            @selected="select"
-            :parent="item"
-            :selectedItem="selectedItem"
-            :selected="item === selectedItem"
-            :categories="categories"
-            :possibleChildren="possibleChildren"
-          />
+          <template v-for="entry of category.items">
+            <CatalogueEntry
+              :item="entry.item"
+              :type="category.type"
+              :filter="filter"
+              :parent="item"
+              :categories="categories"
+              :possibleChildren="possibleChildren"
+              :group="get_group(category.type)"
+            />
+          </template>
         </template>
       </EditorCollapsibleBox>
     </template>
@@ -39,25 +38,24 @@
         nobox
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
-        :selected="item === selectedItem"
         :titleCollapse="false"
-        @titleClick="select({ item: item, type: type })"
+        :class="{ child: parent }"
+        :select="{ item, type }"
+        :group="group || []"
       >
         <template #title>
           <span>{{ getName(item, type) }} </span></template
         >
         <template #content>
           <CatalogueEntry
-            ref="entries"
             v-for="child of applyFilter(mixedChildren)"
             :item="child.item"
             :type="child.type"
             :filter="filter"
-            @selected="select"
             :parent="item"
-            :selectedItem="selectedItem"
             :categories="categories"
             :possibleChildren="possibleChildren"
+            :group="get_group(type)"
           />
         </template>
       </EditorCollapsibleBox>
@@ -141,12 +139,6 @@ export interface CatalogueEntryItem {
 }
 
 export default {
-  data() {
-    return {
-      selected: false,
-    };
-  },
-
   props: {
     type: {
       type: String as PropType<ItemKeys>,
@@ -160,9 +152,6 @@ export default {
       type: Array as PropType<Array<string>>,
       required: true,
     },
-    selectedItem: {
-      type: Object as PropType<ItemTypes>,
-    },
     item: {
       type: Object as PropType<ItemTypes>,
       required: true,
@@ -172,20 +161,22 @@ export default {
       type: Object as PropType<ItemTypes>,
       required: false,
     },
+    group: {
+      type: Array,
+    },
   },
-
+  data() {
+    return {
+      groups: {} as Record<string, any>,
+    };
+  },
   methods: {
-    debug() {
-      console.log(this.type, this.item, this.getName(this.item, this.type));
+    get_group(key: string) {
+      if (!(key in this.groups)) {
+        this.groups[key] = [];
+      }
+      return this.groups[key];
     },
-    titleClicked() {
-      this.$emit("headerClicked", this.item);
-    },
-
-    select(item: CatalogueEntryItem) {
-      this.$emit("selected", item);
-    },
-
     getName(obj: any, type: string) {
       return getName(obj, type);
     },
@@ -218,54 +209,6 @@ export default {
     sortArray(items: CatalogueEntryItem[]) {
       return sortByAscending(items, (o) => this.getName(o.item, o.type));
     },
-
-    /*
-    sorted() {
-      const items = (this.catalogue[this.type] || []) as Base[];
-      return sortByAscending(items, (o) => o.getName());
-    },
-    items() {
-      if (!this.filter) {
-        return this.sorted;
-      }
-      const regx = textSearchRegex(this.filter);
-      return this.sorted.filter(
-        (o) => !o.getName || !o.getName() || o.getName().match(regx)
-      );
-    },
-    entries(): (typeof CatalogueEntry)[] {
-      return this.$refs.entries as (typeof CatalogueEntry)[];
-    },
-
-    itemSelected(item: any, $el: typeof CatalogueEntry, e: MouseEvent) {
-      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        for (const selected of this.selected) {
-          selected.unselect(item);
-        }
-      }
-      if (e.shiftKey && this.lastSelected) {
-        const entries = this.entries;
-        const a = entries.findIndex((o) => o === $el);
-        const b = entries.findIndex((o) => o === this.lastSelected);
-        const low = Math.min(a, b);
-        const high = Math.max(a, b);
-        for (let i = low; i <= high; i++) {
-          const entry = entries[i];
-          if (!this.selected.includes(entry)) {
-            this.selected.push(entry);
-          }
-          entries[i].select();
-        }
-      } else {
-        if (!e.ctrlKey) {
-          this.$emit("selected", { type: this.type, item: item });
-        }
-      }
-      if (!this.selected.includes($el)) {
-        this.selected.push($el);
-      }
-      this.lastSelected = $el;
-    }, */
   },
 
   computed: {
@@ -282,6 +225,9 @@ export default {
         }
       }
       return res;
+    },
+    children() {
+      this.mixedChildren.map((o) => o.item);
     },
     groupedCategories() {
       return this.categories.map((o) => ({

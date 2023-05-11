@@ -1,34 +1,37 @@
 <template>
   <div
     :class="{
+      nobox,
+      noboxindent,
       box: !nobox && !noboxindent,
-      nobox: nobox,
       nocollapse: !collapsible,
-      noboxindent: noboxindent,
       verticalbox: collapsed && vertical,
     }"
     class="EditorCollapsibleBox"
+    @click.stop="do_select"
   >
-    <h3
-      v-if="!notitle"
-      :class="[
-        {
-          selected: selected,
-          arrowTitle: collapsible,
-          normalTitle: !collapsible,
-          collapsed: collapsible && collapsed,
-        },
-      ]"
-      @click="titleSwitch"
-    >
-      <img
-        v-if="collapsible"
-        :src="dropdownSrc"
-        class="icon arrow"
-        @click.stop="collapseSwitch"
-      />
-      <slot name="title" class="title" />
-    </h3>
+    <div class="title" :class="{ selected }" @dblclick="collapseSwitch">
+      <h3
+        v-if="!notitle"
+        :class="[
+          {
+            arrowTitle: collapsible,
+            normalTitle: !collapsible,
+            collapsed: collapsible && collapsed,
+          },
+        ]"
+        @click="titleSwitch"
+      >
+        <img
+          :class="{ hide: !collapsible }"
+          :src="dropdownSrc"
+          class="icon arrow"
+          @click.stop="collapseSwitch"
+        />
+
+        <slot name="title" class="title" />
+      </h3>
+    </div>
     <div
       v-if="initiated && !empty"
       v-show="!collapsed || !collapsible"
@@ -39,14 +42,17 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { PropType } from "nuxt/dist/app/compat/capi";
+import { useEditorStore } from "~/stores/editorState";
+
 export default {
   props: {
     empty: {
       type: Boolean,
       default: false,
     },
-    selected: Boolean,
+
     collapsible: {
       type: Boolean,
       default: true,
@@ -87,12 +93,17 @@ export default {
       type: Boolean,
       default: true,
     },
+    group: {
+      type: Array as PropType<any[]>,
+      required: true,
+    },
   },
 
   data() {
     return {
       collapsed: true,
       initiated: false,
+      selected: false,
     };
   },
 
@@ -101,7 +112,20 @@ export default {
       this.collapseSwitch();
     }
   },
-
+  setup() {
+    return { store: useEditorStore() };
+  },
+  mounted() {
+    this.group?.push(this);
+  },
+  destroyed() {
+    if (this.group && Array.isArray(this.group)) {
+      const idx = this.group.findIndex(this as any);
+      if (idx !== -1) {
+        this.group?.splice(idx, 1);
+      }
+    }
+  },
   computed: {
     dropdownSrc() {
       let n = 2;
@@ -118,6 +142,16 @@ export default {
   },
 
   methods: {
+    select() {
+      this.selected = true;
+      this.store.select(this, () => this.unselect());
+    },
+    unselect() {
+      this.selected = false;
+    },
+    do_select(e: MouseEvent) {
+      this.store.do_select(e, this as any, this.group);
+    },
     collapseSwitch() {
       this.collapsed = !this.collapsed;
       this.initiated = true;
@@ -147,51 +181,26 @@ export default {
 
   img.arrow {
     vertical-align: middle;
-    margin-right: 7px;
+    // padding: 4px;
   }
 }
-
-.normalTitle {
-  position: relative;
-  padding-top: 5px;
-  padding-left: 8px;
+.title {
+  white-space: nowrap;
+  h3 {
+    padding: 4px;
+  }
 }
-
 h3 {
   font-size: 16px;
   font-weight: normal;
 }
 
-.EditorCollapsibleBox.box {
-  padding: 0px !important;
-}
-
-.boxContent {
-  padding: 5px;
-  padding-top: 0;
-}
-
-.noboxindent {
-  .boxContent {
-    border-left: 1px #ccc solid;
-  }
-}
-
 .nobox > .boxContent {
-  padding-left: 5px;
+  padding-left: 15px;
 }
 
 .collapsed {
   filter: brightness(95%);
-}
-
-.verticalbox {
-  width: 25px;
-
-  h3 {
-    text-orientation: upright;
-    writing-mode: vertical-rl;
-  }
 }
 
 .selected {
@@ -204,5 +213,8 @@ h3 {
 
 .nocollapse {
   padding-left: 14px;
+}
+.hide {
+  display: none;
 }
 </style>

@@ -2,11 +2,10 @@
   <div class="leftPanel">
     <div class="top">
       <CatalogueEntry
+        ref="entries"
         :item="catalogue"
         :type="`catalogue`"
         :parent="null"
-        @selected="selected"
-        :selectedItem="selectedItem"
         :filter="filter"
         :categories="categories"
         :possibleChildren="possibleChildren"
@@ -29,11 +28,9 @@ import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { ItemTypes, ItemKeys } from "./components/CatalogueEntry.vue";
 
 export default {
-  emits: ["selected"],
   data() {
     return {
       filter: "",
-      selectedItem: null as ItemTypes | null,
       categories: [
         {
           type: "catalogueLinks",
@@ -134,13 +131,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-
-  methods: {
-    selected(item: { item: ItemTypes; type: ItemKeys }) {
-      this.selectedItem = item.item;
-      this.$emit("selected", item);
     },
   },
 
