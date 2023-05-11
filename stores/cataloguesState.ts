@@ -13,7 +13,9 @@ export const useCataloguesStore = defineStore("catalogues", {
   state: (): ICataloguesState => ({
     dict: {},
   }),
-  persist: true,
+  persist: {
+    storage: localStorage,
+  },
   actions: {
     get(id: string) {
       if (!(id in this.dict)) {
