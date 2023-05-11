@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="top h-full">
+    <div class="top">
       <CatalogueEntry :item="catalogue" />
     </div>
     <div class="bottom">
@@ -43,7 +43,7 @@ export default {
 
 .leftPanel {
   border: 1px $gray solid;
-  height: 100%;
+  height: calc(100% - 2px);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -51,8 +51,5 @@ export default {
 .bottom {
   margin-top: auto;
   position: sticky;
-}
-.top {
-  overflow: auto;
 }
 </style>

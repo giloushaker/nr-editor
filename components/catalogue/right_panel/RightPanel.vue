@@ -1,5 +1,5 @@
 <template>
-  <div class="rightPanel">
+  <div class="rightPanel h-full">
     <CatalogueRightPanelPublicationPanel
       v-if="item.editorTypeName == 'publication'"
       :item="item"

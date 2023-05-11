@@ -33,7 +33,6 @@
         v-if="draggable"
         class="between unselectable"
         @mousedown="drag_right_handle"
-        :style="{ right: `${rightw - 8}px)` }"
       />
     </template>
     <div
@@ -170,12 +169,6 @@ export default {
   width: 100%;
 }
 
-@media screen and (max-width: $very_large_mode) {
-  .mainView {
-    grid-template-columns: 1fr !important;
-  }
-}
-
 .splitMainView {
   flex: 1;
   overflow: auto;
@@ -192,5 +185,9 @@ export default {
   cursor: ew-resize;
   width: 10px;
   z-index: 1;
+}
+
+.scrollable {
+  overflow-y: auto;
 }
 </style>
