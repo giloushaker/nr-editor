@@ -1,60 +1,58 @@
 <template>
   <div class="rightPanel">
     <CatalogueRightPanelPublicationPanel
-      v-if="item.type == 'publications'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'publication'"
+      :item="item"
       @catalogueChanged="changed"
     />
 
     <CatalogueRightPanelCostTypesPanel
-      v-if="item.type == 'costTypes'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'costType'"
+      :item="item"
       @catalogueChanged="changed"
     >
     </CatalogueRightPanelCostTypesPanel>
 
     <CatalogueRightPanelProfileTypesPanel
-      v-if="item.type == 'profileTypes'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'profileType'"
+      :item="item"
       @catalogueChanged="changed"
     >
     </CatalogueRightPanelProfileTypesPanel>
 
     <CatalogueRightPanelCategoryEntriesPanel
-      v-if="item.type == 'categoryEntries'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'category'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelForceEntriesPanel
-      v-if="item.type == 'forceEntries'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'force'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelProfilesPanel
-      v-if="item.type == 'sharedProfiles'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'profile'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelRulesPanel
-      v-if="item.type == 'sharedRules'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'rule'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelSelectionEntryPanel
-      v-if="
-        item.type == 'selectionEntries' || item.type == 'sharedSelectionEntries'
-      "
-      :item="item.item"
+      v-if="item.editorTypeName == 'selectionEntry'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
     <CatalogueRightPanelLinkPanel
-      v-if="item.type == 'entryLinks'"
-      :item="item.item"
+      v-if="item.editorTypeName == 'entryLink'"
+      :item="item"
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
@@ -64,16 +62,16 @@
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorState";
 
 export default {
+  setup() {
+    return { store: useEditorStore() };
+  },
   emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
-      required: true,
-    },
-    item: {
-      type: Object as PropType<{ type: string; item: any }>,
       required: true,
     },
   },
@@ -81,6 +79,12 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+  },
+
+  computed: {
+    item() {
+      return this.store.selectedItem.$parent.item;
     },
   },
 };

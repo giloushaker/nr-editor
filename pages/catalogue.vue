@@ -8,18 +8,14 @@
     <SplitView
       :split="true"
       :double="true"
-      :showRight="item != null"
+      :showRight="store.selectedItem != null"
       :viewStyle="{ 'grid-template-columns': '400px auto' }"
     >
       <template #middle>
         <LeftPanel :catalogue="cat" />
       </template>
-      <template #right v-if="item">
-        <CatalogueRightPanel
-          :item="item"
-          :catalogue="cat"
-          @catalogueChanged="onChanged"
-        />
+      <template #right>
+        <CatalogueRightPanel :catalogue="cat" @catalogueChanged="onChanged" />
       </template>
     </SplitView>
   </template>
@@ -58,6 +54,7 @@ import {
 } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
+import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 
 export default {
   components: { LeftPanel },
@@ -66,7 +63,7 @@ export default {
       error: null as string | null,
       cat: null as Catalogue | null,
       raw: null as BSIData | null,
-      item: null as any,
+      item: null as ItemTypes | null,
       unsaved: false,
       saving: false,
       savingPromise: null as any,
@@ -103,12 +100,7 @@ export default {
       this.error = e;
     }
   },
-  watch: {
-    "store.selectedItem"(e) {
-      this.item = { type: e.$parent.type, item: e.$parent.item };
-      this.type = e.$parent.type;
-    },
-  },
+
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {

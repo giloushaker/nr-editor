@@ -17,7 +17,7 @@
           <template v-if="item.target">
             <img
               v-if="item.type"
-              :src="`/assets/bsicons/${store.icons[getType(item)]}`"
+              :src="`/assets/bsicons/${getType(item)}.png`"
             />
             {{ item.target.name }}
           </template>
@@ -83,11 +83,11 @@ export default {
       this.$emit("catalogueChanged");
     },
 
-    getType(item: Link): "selectionEntries" | "selectionEntryGroups" {
+    getType(item: Link): "selectionEntry" | "selectionEntryGroup" {
       if (item.type === "selectionEntry") {
-        return "selectionEntries";
+        return "selectionEntry";
       }
-      return "selectionEntryGroups";
+      return "selectionEntryGroup";
     },
 
     updateLink() {

@@ -1,6 +1,12 @@
 <template>
   <div class="item unselectable" @click.middle.stop="debug">
-    <template v-if="type === 'catalogue'" v-for="category of groupedCategories">
+    <template
+      v-if="
+        item.editorTypeName === 'catalogue' ||
+        item.editorTypeName === 'gameSystem'
+      "
+      v-for="category of groupedCategories"
+    >
       <CatalogueLeftPanelComponentsEditorCollapsibleBox
         :titleCollapse="false"
         :collapsible="category.items.length > 0"
@@ -9,20 +15,13 @@
       >
         <template #title>
           <span>
-            <img
-              v-if="store.icons[category.type].length"
-              :src="`/assets/bsicons/${store.icons[category.type]}`"
-            />
+            <img :src="`/assets/bsicons/${category.icon}`" />
             {{ category.name }}
           </span>
         </template>
         <template #content>
           <template v-for="entry of category.items">
-            <CatalogueEntry
-              :item="entry.item"
-              :type="entry.type"
-              :group="get_group(entry.type)"
-            />
+            <CatalogueEntry :item="entry.item" :group="get_group(entry.type)" />
           </template>
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -34,23 +33,19 @@
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
         :titleCollapse="false"
-        :select="{ item, type }"
         :group="group || []"
       >
         <template #title>
           <span>
-            <img
-              v-if="store.icons[type].length"
-              :src="`/assets/bsicons/${store.icons[type]}`"
-            />
-            {{ getName(item, type) }} ({{ type }})
+            <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
+            {{ getName(item) }} ({{ item.editorTypeName }})
           </span></template
         >
         <template #content>
           <CatalogueEntry
             v-for="child of applyFilter(mixedChildren)"
             :item="child.item"
-            :group="get_group(type)"
+            :group="get_group(item.parentKey)"
           />
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -64,9 +59,13 @@ import {
   sortByAscending,
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import { ItemTypes, ItemKeys, CatalogueEntryItem } from "@/stores/editorState";
+import { CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
-import { getName } from "~/assets/shared/battlescribe/bs_editor";
+import {
+  ItemKeys,
+  ItemTypes,
+  getName,
+} from "~/assets/shared/battlescribe/bs_editor";
 
 export default {
   setup() {
@@ -96,8 +95,8 @@ export default {
     debug() {
       console.log(this.item);
     },
-    getName(obj: any, type: string) {
-      return getName(obj, type);
+    getName(obj: any) {
+      return getName(obj);
     },
 
     getTypedArray(
@@ -128,20 +127,16 @@ export default {
 
       const regx = textSearchRegex(this.filter);
       return this.sortArray(
-        elements.filter((o) => this.getName(o.item, o.type).match(regx))
+        elements.filter((o) => this.getName(o.item).match(regx))
       );
     },
 
     sortArray(items: CatalogueEntryItem[]) {
-      return sortByAscending(items, (o) => this.getName(o.item, o.type));
+      return sortByAscending(items, (o) => this.getName(o.item));
     },
   },
 
   computed: {
-    type() {
-      return this.item.parentKey;
-    },
-
     categories() {
       return this.store.categories;
     },

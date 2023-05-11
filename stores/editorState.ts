@@ -1,63 +1,10 @@
 import { VueElement } from "nuxt/dist/app/compat/capi";
 import { defineStore } from "pinia";
-import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
-  BSICondition,
-  BSIConditionGroup,
-  BSIConstraint,
-  BSIModifier,
-  BSIModifierGroup,
-} from "~/assets/shared/battlescribe/bs_types";
-
-export type ItemTypes = (
-  | Base
-  | Link
-  | Catalogue
-  | BSIModifier
-  | BSIModifierGroup
-  | BSICondition
-  | BSIConditionGroup
-  | BSIConstraint
-) & {
-  parentKey: ItemKeys;
-  typeName: string;
-};
-
-export type ItemKeys =
-  // Entries
-  | "selectionEntries"
-  | "sharedSelectionEntries"
-  | "selectionEntryGroups"
-  | "sharedSelectionEntryGroups"
-  | "entryLinks"
-  | "sharedEntryLinks"
-  | "forceEntries"
-  | "categoryEntries"
-  | "categoryLinks"
-
-  //
-  | "catalogue"
-  | "catalogueLinks"
-  | "publications"
-  | "costTypes"
-  | "profileTypes"
-  | "sharedProfiles"
-  | "sharedRules"
-
-  // Modifiable
-  | "infoLinks"
-  | "profiles"
-  | "rules"
-  | "infoGroups"
-
-  // Constraints and modifiers
-  | "constraints"
-  | "conditions"
-  | "modifiers"
-  | "modifierGroups"
-  | "repeats"
-  | "conditionGroups";
+  ItemTypeNames,
+  ItemKeys,
+  ItemTypes,
+} from "~/assets/shared/battlescribe/bs_editor";
 
 export interface IEditorState {
   selectionsParent?: Object | null;
@@ -65,8 +12,12 @@ export interface IEditorState {
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
-  icons: Record<ItemKeys, string>;
-  categories: Array<{ name: string; type: ItemKeys; links?: ItemKeys }>;
+  categories: Array<{
+    name: string;
+    type: ItemKeys;
+    links?: ItemKeys;
+    icon: string;
+  }>;
   possibleChildren: Array<ItemKeys>;
   filter: string;
 }
@@ -118,91 +69,72 @@ export const useEditorStore = defineStore("editor", {
       {
         type: "catalogueLinks",
         name: "Catalogue Links",
+        icon: "catalogueLink.png",
       },
       {
         type: "publications",
         name: "Publications",
+        icon: "publication.png",
       },
       {
         type: "costTypes",
         name: "Cost Types",
+        icon: "cost.png",
       },
       {
         type: "profileTypes",
         name: "Profile Types",
+        icon: "profileType.png",
       },
       {
         type: "categoryEntries",
         name: "Category Entries",
+        icon: "category.png",
       },
       {
         type: "forceEntries",
         name: "Force Entries",
+        icon: "force.png",
       },
       {
         type: "sharedSelectionEntries",
         name: "Shared Selection Entries",
+        icon: "entryLink.png",
       },
       {
         type: "sharedSelectionEntryGroups",
         name: "Shared Selection Entry Groups",
+        icon: "shared_groups.png",
       },
       {
         type: "sharedProfiles",
         name: "Shared Profiles",
+        icon: "shared_profiles.png",
       },
       {
         type: "sharedRules",
         name: "Shared Rules",
+        icon: "shared_rules.png",
       },
       {
         type: "infoGroups",
         name: "Shared Info Groups",
+        icon: "infoGroup.png",
       },
       {
         type: "selectionEntries",
         links: "entryLinks",
         name: "Root Selection Entries",
+        icon: "selectionEntry.png",
       },
       {
         type: "rules",
         name: "Root Rules",
+        icon: "rule.png",
       },
     ],
-    icons: {
-      sharedSelectionEntries: "shared_selections.png",
-      selectionEntryGroups: "entrygroups",
-      sharedSelectionEntryGroups: "shared_groups.png",
-      entryLinks: "shared_selections.png",
-      sharedEntryLinks: "shared_selections.png",
-      forceEntries: "forces.png",
-      categoryEntries: "categories.png",
-      categoryLinks: "categories.png",
-      selectionEntries: "entry.png",
-
-      catalogue: "catalogue.png",
-      catalogueLinks: "catalogue_links.png",
-      publications: "publications.png",
-      costTypes: "costs.png",
-      profileTypes: "profiles.png",
-      sharedProfiles: "shared_profiles.png",
-      sharedRules: "shared_rules.png",
-
-      // Modifiable
-      infoLinks: "infogroups.png",
-      profiles: "profiles.png",
-      rules: "rules.png",
-      infoGroups: "infogroups.png",
-
-      // Constraints and modifiers
-      constraints: "constraint.png",
-      conditions: "",
-      modifiers: "modifier.png",
-      modifierGroups: "",
-      repeats: "",
-      conditionGroups: "",
-    },
   }),
+
   actions: {
     unselect(obj?: any) {
       const next_selected = [];
