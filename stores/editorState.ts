@@ -10,7 +10,7 @@ import {
   BSIModifierGroup,
 } from "~/assets/shared/battlescribe/bs_types";
 
-export type ItemTypes =
+export type ItemTypes = (
   | Base
   | Link
   | Catalogue
@@ -18,7 +18,11 @@ export type ItemTypes =
   | BSIModifierGroup
   | BSICondition
   | BSIConditionGroup
-  | BSIConstraint;
+  | BSIConstraint
+) & {
+  parentKey: ItemKeys;
+  typeName: string;
+};
 
 export type ItemKeys =
   // Entries
@@ -54,6 +58,7 @@ export type ItemKeys =
   | "modifierGroups"
   | "repeats"
   | "conditionGroups";
+
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown }[];
@@ -61,6 +66,9 @@ export interface IEditorState {
   selectedElement: any | null;
   selectedItem: any | null;
   icons: Record<ItemKeys, string>;
+  categories: Array<{ name: string; type: ItemKeys; links?: ItemKeys }>;
+  possibleChildren: Array<ItemKeys>;
+  filter: string;
 }
 
 export interface CatalogueEntryItem {
@@ -74,6 +82,93 @@ export const useEditorStore = defineStore("editor", {
     selectedElementGroup: null,
     selectedElement: null,
     selectedItem: null,
+    filter: "",
+    possibleChildren: [
+      // Catalogue stuff
+      "catalogueLinks",
+      "publications",
+      "costTypes",
+      "profileTypes",
+      "sharedProfiles",
+      "sharedRules",
+
+      // Modifiable
+      "infoLinks",
+      "profiles",
+      "rules",
+      "infoGroups",
+
+      // Children
+      "categoryEntries",
+      "categoryLinks",
+      "forceEntries",
+      "selectionEntries",
+      "selectionEntryGroups",
+      "entryLinks",
+
+      // Constraints and modifiers
+      "constraints",
+      "conditions",
+      "modifiers",
+      "modifierGroups",
+      "repeats",
+      "conditionGroups",
+    ],
+    categories: [
+      {
+        type: "catalogueLinks",
+        name: "Catalogue Links",
+      },
+      {
+        type: "publications",
+        name: "Publications",
+      },
+      {
+        type: "costTypes",
+        name: "Cost Types",
+      },
+      {
+        type: "profileTypes",
+        name: "Profile Types",
+      },
+      {
+        type: "categoryEntries",
+        name: "Category Entries",
+      },
+      {
+        type: "forceEntries",
+        name: "Force Entries",
+      },
+      {
+        type: "sharedSelectionEntries",
+        name: "Shared Selection Entries",
+      },
+      {
+        type: "sharedSelectionEntryGroups",
+        name: "Shared Selection Entry Groups",
+      },
+      {
+        type: "sharedProfiles",
+        name: "Shared Profiles",
+      },
+      {
+        type: "sharedRules",
+        name: "Shared Rules",
+      },
+      {
+        type: "infoGroups",
+        name: "Shared Info Groups",
+      },
+      {
+        type: "selectionEntries",
+        links: "entryLinks",
+        name: "Root Selection Entries",
+      },
+      {
+        type: "rules",
+        name: "Root Rules",
+      },
+    ],
     icons: {
       sharedSelectionEntries: "shared_selections.png",
       selectionEntryGroups: "entrygroups",

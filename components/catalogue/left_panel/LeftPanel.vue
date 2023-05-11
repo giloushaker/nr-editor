@@ -1,19 +1,11 @@
 <template>
   <div class="leftPanel">
     <div class="top">
-      <CatalogueEntry
-        ref="entries"
-        :item="catalogue"
-        :type="`catalogue`"
-        :parent="null"
-        :filter="filter"
-        :categories="categories"
-        :possibleChildren="possibleChildren"
-      />
+      <CatalogueEntry :item="catalogue" />
     </div>
     <div class="bottom">
       <input
-        v-model="filter"
+        v-model="store.filter"
         type="search"
         placeholder="search..."
         class="w-full"
@@ -23,102 +15,12 @@
 </template>
 
 <script lang="ts">
-import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ItemKeys } from "@/stores/editorState";
+import { useEditorStore } from "~/stores/editorState";
 
 export default {
-  data() {
-    return {
-      filter: "",
-      categories: [
-        {
-          type: "catalogueLinks",
-          name: "Catalogue Links",
-        },
-        {
-          type: "publications",
-          name: "Publications",
-        },
-        {
-          type: "costTypes",
-          name: "Cost Types",
-        },
-        {
-          type: "profileTypes",
-          name: "Profile Types",
-        },
-        {
-          type: "categoryEntries",
-          name: "Category Entries",
-        },
-        {
-          type: "forceEntries",
-          name: "Force Entries",
-        },
-        {
-          type: "sharedSelectionEntries",
-          name: "Shared Selection Entries",
-        },
-        {
-          type: "sharedSelectionEntryGroups",
-          name: "Shared Selection Entry Groups",
-        },
-        {
-          type: "sharedProfiles",
-          name: "Shared Profiles",
-        },
-        {
-          type: "sharedRules",
-          name: "Shared Rules",
-        },
-        {
-          type: "infoGroups",
-          name: "Shared Info Groups",
-        },
-        {
-          type: "selectionEntries",
-          links: "entryLinks",
-          name: "Root Selection Entries",
-        },
-        {
-          type: "rules",
-          name: "Root Rules",
-        },
-      ] as Array<{ name: string; type: keyof (Base | Link) }>,
-
-      possibleChildren: [
-        // Catalogue stuff
-        "catalogueLinks",
-        "publications",
-        "costTypes",
-        "profileTypes",
-        "sharedProfiles",
-        "sharedRules",
-
-        // Modifiable
-        "infoLinks",
-        "profiles",
-        "rules",
-        "infoGroups",
-
-        // Children
-        "categoryEntries",
-        "categoryLinks",
-        "forceEntries",
-        "selectionEntries",
-        "selectionEntryGroups",
-        "entryLinks",
-
-        // Constraints and modifiers
-        "constraints",
-        "conditions",
-        "modifiers",
-        "modifierGroups",
-        "repeats",
-        "conditionGroups",
-      ] as Array<ItemKeys>,
-    };
+  setup() {
+    return { store: useEditorStore() };
   },
 
   props: {

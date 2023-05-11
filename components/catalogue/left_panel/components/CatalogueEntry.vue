@@ -1,12 +1,11 @@
 <template>
   <div class="item unselectable" @click.middle.stop="debug">
-    <template v-if="parent == null" v-for="category of groupedCategories">
+    <template v-if="type === 'catalogue'" v-for="category of groupedCategories">
       <CatalogueLeftPanelComponentsEditorCollapsibleBox
         :titleCollapse="false"
-        nobox
         :collapsible="category.items.length > 0"
-        :class="{ child: parent }"
         :group="get_group('entries')"
+        nobox
       >
         <template #title>
           <span>
@@ -22,10 +21,6 @@
             <CatalogueEntry
               :item="entry.item"
               :type="entry.type"
-              :filter="filter"
-              :parent="item"
-              :categories="categories"
-              :possibleChildren="possibleChildren"
               :group="get_group(entry.type)"
             />
           </template>
@@ -39,7 +34,6 @@
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
         :titleCollapse="false"
-        :class="{ child: parent }"
         :select="{ item, type }"
         :group="group || []"
       >
@@ -49,18 +43,13 @@
               v-if="store.icons[type].length"
               :src="`/assets/bsicons/${store.icons[type]}`"
             />
-            {{ getName(item, type) }}
+            {{ getName(item, type) }} ({{ type }})
           </span></template
         >
         <template #content>
           <CatalogueEntry
             v-for="child of applyFilter(mixedChildren)"
             :item="child.item"
-            :type="child.type"
-            :filter="filter"
-            :parent="item"
-            :categories="categories"
-            :possibleChildren="possibleChildren"
             :group="get_group(type)"
           />
         </template>
@@ -75,7 +64,6 @@ import {
   sortByAscending,
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { ItemTypes, ItemKeys, CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
 import { getName } from "~/assets/shared/battlescribe/bs_editor";
@@ -85,28 +73,9 @@ export default {
     return { store: useEditorStore() };
   },
   props: {
-    type: {
-      type: String as PropType<ItemKeys>,
-      required: true,
-    },
-    categories: {
-      type: Array as PropType<
-        { name: string; type: ItemKeys; icon: string; links?: ItemKeys }[]
-      >,
-      required: true,
-    },
-    possibleChildren: {
-      type: Array as PropType<Array<string>>,
-      required: true,
-    },
     item: {
       type: Object as PropType<ItemTypes>,
       required: true,
-    },
-    filter: String,
-    parent: {
-      type: Object as PropType<ItemTypes>,
-      required: false,
     },
     group: {
       type: Array,
@@ -146,7 +115,7 @@ export default {
 
       return arr.map((elt) => {
         return {
-          item: elt as Base | Link,
+          item: elt as ItemTypes,
           type: type,
         };
       });
@@ -169,6 +138,22 @@ export default {
   },
 
   computed: {
+    type() {
+      return this.item.parentKey;
+    },
+
+    categories() {
+      return this.store.categories;
+    },
+
+    possibleChildren() {
+      return this.store.possibleChildren;
+    },
+
+    filter() {
+      return this.store.filter;
+    },
+
     mixedChildren(): Array<CatalogueEntryItem> {
       let res: Array<any> = [];
       for (let cat of this.possibleChildren) {
