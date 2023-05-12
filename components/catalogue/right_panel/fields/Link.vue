@@ -60,6 +60,7 @@
 </template>
 
 <script lang="ts">
+import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -128,8 +129,16 @@ export default {
       return elt.name;
     },
 
+    targetIsValid(target: ItemTypes) {
+      return target.editorTypeName == this.item.type;
+    },
+
     availableTargets(filter: string) {
       let all = this.catalogue.findOptionsByName(filter || "").filter((o) => {
+        if (this.targetIsValid(o as ItemTypes) == false) {
+          return false;
+        }
+
         if (o.isLink()) return false;
         if (!(o as any).parent?.isCatalogue()) return false;
         return o.isEntry() || o.isGroup();
