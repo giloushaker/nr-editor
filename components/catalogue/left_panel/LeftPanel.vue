@@ -44,6 +44,7 @@ export default {
 .leftPanel {
   border: 1px $gray solid;
   height: calc(100% - 2px);
+  height: calc(100% - 2px);
   display: flex;
   flex-direction: column;
   flex-grow: 1;

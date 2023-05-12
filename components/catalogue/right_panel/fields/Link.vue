@@ -33,24 +33,23 @@
         <td></td>
         <td>
           <UtilAutocomplete
-            :resultValue="itemValue"
-            :resultLabel="itemName"
-            :search="() => []"
             :placeholder="`Search Target...`"
-            @selected="targetSelected"
             v-model="filter"
             ref="autocomplete"
             :min="0"
           >
-            <template v-for="opt in availableTargets(filter)">
-              <div :value="opt">
+            <template #default="{ editing }">
+              <div
+                v-for="opt in availableTargets(filter)"
+                v-if="editing"
+                :value="opt"
+                @click="targetSelected(opt)"
+              >
                 <img
                   class="mr-1 align-middle"
                   :src="`/assets/bsicons/${opt.editorTypeName}.png`"
                 />
-                <span>
-                  {{ opt.getName() }}
-                </span>
+                {{ opt.getName() }}
               </div>
             </template>
           </UtilAutocomplete>
