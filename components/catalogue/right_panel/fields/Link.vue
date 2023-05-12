@@ -30,7 +30,7 @@
         </td>
       </tr>
       <tr>
-        <td>Target:</td>
+        <td></td>
         <td>
           <UtilAutocomplete
             :resultValue="itemValue"
@@ -90,8 +90,11 @@ export default {
     },
   },
   watch: {
-    filter(v) {
-      console.log("filter", v);
+    filter(v) {},
+
+    item() {
+      this.filter = "";
+      (this.$refs.autocomplete as any)?.reset();
     },
   },
   methods: {
@@ -112,6 +115,8 @@ export default {
     },
 
     targetSelected(elt: Base) {
+      this.filter = "";
+      (this.$refs.autocomplete as any)?.reset();
       this.item.target = elt;
       this.item.targetId = elt.id;
     },
@@ -127,7 +132,7 @@ export default {
     availableTargets(filter: string) {
       let all = this.catalogue.findOptionsByName(filter || "").filter((o) => {
         if (o.isLink()) return false;
-        if (!o.parent.isCatalogue()) return false;
+        if (!(o as any).parent?.isCatalogue()) return false;
         return o.isEntry() || o.isGroup();
       });
       return sortByAscending(all, (o) => o.name);

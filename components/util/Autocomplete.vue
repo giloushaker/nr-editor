@@ -77,6 +77,10 @@ export default {
     },
   },
   methods: {
+    reset() {
+      this.searchPattern = "";
+    },
+
     update() {
       if (!this.$el) return;
       const suggestionsDiv = this.$refs.suggestions as Element | undefined;
