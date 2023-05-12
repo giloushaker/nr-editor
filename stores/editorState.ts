@@ -114,7 +114,6 @@ export interface IEditorState {
   categories: Array<CategoryEntry>;
   possibleChildren: Array<ItemKeys>;
   filter: string;
-  contextmenu: VueElement | null;
 }
 export interface CategoryEntry {
   name: string;
@@ -136,7 +135,6 @@ export const useEditorStore = defineStore("editor", {
     filter: "",
     possibleChildren,
     categories: categories,
-    contextmenu: null as VueElement | null,
   }),
 
   actions: {

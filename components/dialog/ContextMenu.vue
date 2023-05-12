@@ -36,9 +36,6 @@ export default {
       type: Object as PropType<VueElement | HTMLDivElement>,
     },
   },
-  setup() {
-    return { store: useEditorStore() };
-  },
   methods: {
     update(e: MouseEvent) {
       e.preventDefault();
@@ -56,7 +53,6 @@ export default {
         addEventListener("contextmenu", this.close);
       }
       this.visible = true;
-      this.store.contextmenu = this as unknown as VueElement;
       this.update(e);
       this.$emit("update:modelValue", true);
     },
@@ -64,19 +60,10 @@ export default {
       this.payload = undefined;
       removeEventListener("click", this.close);
       this.visible = false;
-      if (this.store.contextmenu === (this as unknown as VueElement)) {
-        this.store.contextmenu = null;
-      }
       this.$emit("update:modelValue", false);
     },
   },
-  watch: {
-    "store.contextmenu"(v) {
-      if (v !== this) {
-        this.visible = false;
-      }
-    },
-  },
+
   computed: {
     el() {
       return this.$refs["context-menu"] as HTMLDivElement | undefined;
