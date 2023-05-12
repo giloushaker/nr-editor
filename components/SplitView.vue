@@ -53,6 +53,9 @@
 </template>
 
 <script lang="ts">
+import { PropType } from "nuxt/dist/app/compat/capi";
+import { useUIState } from "~/stores/uiState";
+
 export default {
   props: {
     split: {},
@@ -72,16 +75,36 @@ export default {
       type: String,
       default: "auto",
     },
+    id: {
+      type: String,
+    },
   },
   data() {
     return { _leftWidth: 0, _rightWidth: 0, dragging: false };
   },
+  setup() {
+    return { store: useUIState() };
+  },
   mounted() {
     if (this.draggable) {
-      this.first = false;
-      const element = this.$refs.left;
-      const width = element.offsetWidth;
-      this._leftWidth = width;
+      if (this.id) {
+        const left = this.store.get(this.id, "left");
+        if (left) this._leftWidth = left;
+      }
+      if (!this._leftWidth && this.$refs.left) {
+        const element = this.$refs.left;
+        const width = (element as HTMLDivElement).offsetWidth;
+        this._leftWidth = width;
+      }
+      if (this.id) {
+        const right = this.store.get(this.id, "right");
+        if (right) this._rightWidth = right;
+      }
+      if (!this._rightWidth && this.$refs.right) {
+        const element = this.$refs.right;
+        const width = (element as HTMLDivElement).offsetWidth;
+        this._rightWidth = width;
+      }
     }
   },
   computed: {
@@ -115,7 +138,7 @@ export default {
       const b = this._leftWidth;
       const x = e.clientX;
       const onmousemove = (m: MouseEvent) => {
-        this._leftWidth = this.clamp(b + (m.clientX - x), 100);
+        this._leftWidth = this.clamp(b + (m.clientX - x));
       };
       addEventListener("mousemove", onmousemove);
       const mouseupoptions = {
@@ -127,8 +150,9 @@ export default {
         () => {
           removeEventListener("mousemove", onmousemove);
           this.$nextTick(() => {
-            this._leftWidth = this.$refs.left.clientWidth;
+            this._leftWidth = (this.$refs.left as HTMLDivElement).clientWidth;
             this.dragging = false;
+            if (this.id) this.store.set(this.id, "left", this._leftWidth);
           });
         },
         mouseupoptions
@@ -150,8 +174,9 @@ export default {
         "mouseup",
         () => {
           this.$nextTick(() => {
-            this._rightWidth = this.$refs.right.clientWidth;
+            this._rightWidth = (this.$refs.right as HTMLDivElement).clientWidth;
             this.dragging = false;
+            if (this.id) this.store.set(this.id, "right", this._rightWidth);
           });
         },
         mouseupoptions

@@ -11,6 +11,7 @@
       :double="true"
       :showRight="store.selectedItem != null"
       :viewStyle="{ 'grid-template-columns': '400px auto' }"
+      id="catalogueView"
     >
       <template #left>
         <LeftPanel :catalogue="cat" />
