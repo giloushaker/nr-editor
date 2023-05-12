@@ -50,11 +50,8 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Base, Category } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  Publication,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],

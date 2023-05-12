@@ -38,7 +38,7 @@
         <template #title>
           <span>
             <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
-            {{ getName(item) }} ({{ item.editorTypeName }})
+            {{ getName(item) }}
           </span></template
         >
         <template #content>
@@ -122,12 +122,14 @@ export default {
 
     applyFilter(elements: CatalogueEntryItem[]): CatalogueEntryItem[] {
       if (!this.filter) {
-        return this.sortArray(elements);
+        return this.sortArray(
+          elements.filter((elt) => this.getName(elt.item) != null)
+        );
       }
 
       const regx = textSearchRegex(this.filter);
       return this.sortArray(
-        elements.filter((o) => this.getName(o.item).match(regx))
+        elements.filter((o) => this.getName(o.item)?.match(regx))
       );
     },
 
