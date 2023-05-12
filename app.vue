@@ -1,5 +1,6 @@
 <template>
   <div id="popups" />
+  <div id="dialogs" />
   <div id="app">
     <TitleBar />
     <NuxtPage :keepalive="true" />

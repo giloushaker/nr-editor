@@ -6,22 +6,122 @@ import {
   ItemTypes,
 } from "~/assets/shared/battlescribe/bs_editor";
 
+const possibleChildren: ItemKeys[] = [
+  // Catalogue stuff
+  "catalogueLinks",
+  "publications",
+  "costTypes",
+  "profileTypes",
+  "sharedProfiles",
+  "sharedRules",
+
+  // Modifiable
+  "infoLinks",
+  "profiles",
+  "rules",
+  "infoGroups",
+
+  // Children
+  "categoryEntries",
+  "categoryLinks",
+  "forceEntries",
+  "selectionEntries",
+  "selectionEntryGroups",
+  "entryLinks",
+
+  // Constraints and modifiers
+  "constraints",
+  "conditions",
+  "modifiers",
+  "modifierGroups",
+  "repeats",
+  "conditionGroups",
+];
+const categories: CategoryEntry[] = [
+  {
+    type: "catalogueLinks",
+    name: "Catalogue Links",
+    icon: "catalogueLink.png",
+  },
+  {
+    type: "publications",
+    name: "Publications",
+    icon: "publication.png",
+  },
+  {
+    type: "costTypes",
+    name: "Cost Types",
+    icon: "cost.png",
+  },
+  {
+    type: "profileTypes",
+    name: "Profile Types",
+    icon: "profileType.png",
+  },
+  {
+    type: "categoryEntries",
+    name: "Category Entries",
+    icon: "category.png",
+  },
+  {
+    type: "forceEntries",
+    name: "Force Entries",
+    icon: "force.png",
+  },
+  {
+    type: "sharedSelectionEntries",
+    name: "Shared Selection Entries",
+    icon: "entryLink.png",
+  },
+  {
+    type: "sharedSelectionEntryGroups",
+    name: "Shared Selection Entry Groups",
+    icon: "shared_groups.png",
+  },
+  {
+    type: "sharedProfiles",
+    name: "Shared Profiles",
+    icon: "shared_profiles.png",
+  },
+  {
+    type: "sharedRules",
+    name: "Shared Rules",
+    icon: "shared_rules.png",
+  },
+  {
+    type: "infoGroups",
+    name: "Shared Info Groups",
+    icon: "infoGroup.png",
+  },
+  {
+    type: "selectionEntries",
+    links: "entryLinks",
+    name: "Root Selection Entries",
+    icon: "selectionEntry.png",
+  },
+  {
+    type: "rules",
+    name: "Root Rules",
+    icon: "rule.png",
+  },
+];
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown }[];
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
-  categories: Array<{
-    name: string;
-    type: ItemKeys;
-    links?: ItemKeys;
-    icon: string;
-  }>;
+  categories: Array<CategoryEntry>;
   possibleChildren: Array<ItemKeys>;
   filter: string;
+  contextmenu: VueElement | null;
 }
-
+export interface CategoryEntry {
+  name: string;
+  type: ItemKeys;
+  links?: ItemKeys;
+  icon: string;
+}
 export interface CatalogueEntryItem {
   item: ItemTypes;
   type: ItemKeys;
@@ -34,105 +134,9 @@ export const useEditorStore = defineStore("editor", {
     selectedElement: null,
     selectedItem: null,
     filter: "",
-    possibleChildren: [
-      // Catalogue stuff
-      "catalogueLinks",
-      "publications",
-      "costTypes",
-      "profileTypes",
-      "sharedProfiles",
-      "sharedRules",
-
-      // Modifiable
-      "infoLinks",
-      "profiles",
-      "rules",
-      "infoGroups",
-
-      // Children
-      "categoryEntries",
-      "categoryLinks",
-      "forceEntries",
-      "selectionEntries",
-      "selectionEntryGroups",
-      "entryLinks",
-
-      // Constraints and modifiers
-      "constraints",
-      "conditions",
-      "modifiers",
-      "modifierGroups",
-      "repeats",
-      "conditionGroups",
-    ],
-    categories: [
-      {
-        type: "catalogueLinks",
-        name: "Catalogue Links",
-        icon: "catalogueLink.png",
-      },
-      {
-        type: "publications",
-        name: "Publications",
-        icon: "publication.png",
-      },
-      {
-        type: "costTypes",
-        name: "Cost Types",
-        icon: "cost.png",
-      },
-      {
-        type: "profileTypes",
-        name: "Profile Types",
-        icon: "profileType.png",
-      },
-      {
-        type: "categoryEntries",
-        name: "Category Entries",
-        icon: "category.png",
-      },
-      {
-        type: "forceEntries",
-        name: "Force Entries",
-        icon: "force.png",
-      },
-      {
-        type: "sharedSelectionEntries",
-        name: "Shared Selection Entries",
-        icon: "entryLink.png",
-      },
-      {
-        type: "sharedSelectionEntryGroups",
-        name: "Shared Selection Entry Groups",
-        icon: "shared_groups.png",
-      },
-      {
-        type: "sharedProfiles",
-        name: "Shared Profiles",
-        icon: "shared_profiles.png",
-      },
-      {
-        type: "sharedRules",
-        name: "Shared Rules",
-        icon: "shared_rules.png",
-      },
-      {
-        type: "infoGroups",
-        name: "Shared Info Groups",
-        icon: "infoGroup.png",
-      },
-      {
-        type: "selectionEntries",
-        links: "entryLinks",
-        name: "Root Selection Entries",
-        icon: "selectionEntry.png",
-      },
-      {
-        type: "rules",
-        name: "Root Rules",
-        icon: "rule.png",
-      },
-    ],
+    possibleChildren,
+    categories: categories,
+    contextmenu: null as VueElement | null,
   }),
 
   actions: {

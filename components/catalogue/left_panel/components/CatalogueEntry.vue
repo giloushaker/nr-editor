@@ -1,5 +1,9 @@
 <template>
-  <div class="item unselectable" @click.middle.stop="debug">
+  <div
+    class="item unselectable"
+    @click.middle.stop="debug"
+    @contextmenu.stop="contextmenu.show"
+  >
     <template
       v-if="
         item.editorTypeName === 'catalogue' ||
@@ -11,6 +15,7 @@
         :titleCollapse="false"
         :collapsible="category.items.length > 0"
         :group="get_group('entries')"
+        @contextmenu.stop="contextmenu.show($event, category.type)"
         nobox
       >
         <template #title>
@@ -51,6 +56,19 @@
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
     </template>
   </div>
+  <DialogContextMenu ref="contextmenu">
+    <template #default="{ payload }">
+      <div>Follow</div>
+      <Separator />
+      <div>Cut<span class="gray absolute right-5px">Ctrl+X</span></div>
+      <div>Copy<span class="gray absolute right-5px">Ctrl+C</span></div>
+      <div>Paste<span class="gray absolute right-5px">Ctrl+V</span></div>
+      <Separator />
+      <div @click="remove(payload)">
+        Remove<span class="gray absolute right-5px">Del</span>
+      </div>
+    </template>
+  </DialogContextMenu>
 </template>
 
 <script lang="ts">
@@ -98,7 +116,9 @@ export default {
     getName(obj: any) {
       return getName(obj);
     },
-
+    remove(type?: string) {
+      console.log("remove", type, getName(this.item));
+    },
     getTypedArray(
       item: ItemTypes,
       type: ItemKeys | undefined
@@ -137,6 +157,11 @@ export default {
   },
 
   computed: {
+    contextmenu() {
+      return this.$refs.contextmenu as {
+        show: (event: MouseEvent, o: any) => unknown;
+      };
+    },
     categories() {
       return this.store.categories;
     },
@@ -184,9 +209,4 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
-
-.item {
-  cursor: pointer;
-  padding: 0px;
-}
 </style>
