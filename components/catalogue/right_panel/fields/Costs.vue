@@ -51,8 +51,8 @@ export default {
 
     update() {
       this.selectedCosts = {};
-      if (this.catalogue.costTypes) {
-        for (let cost of this.catalogue.costTypes) {
+      if (this.catalogue.costIndex) {
+        for (let cost of Object.values(this.catalogue.costIndex)) {
           this.selectedCosts[cost.id] = {
             name: cost.name,
             typeId: cost.id,
