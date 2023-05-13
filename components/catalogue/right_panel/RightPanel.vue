@@ -56,6 +56,12 @@
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
+    <CatalogueRightPanelModifierPanel
+      v-if="item.editorTypeName == 'modifier'"
+      :item="item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
   </div>
 </template>
 
