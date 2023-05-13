@@ -2,10 +2,10 @@
   <div id="popups" />
   <div id="dialogs" />
   <div id="app">
-    <div class="title">
+    <div class="title" ref="title" @resize="update">
       <TitleBar />
     </div>
-    <div class="content" :style="{ height: `${contentSize}px` }">
+    <div class="content" :style="{ height: `calc(100vh - ${titleSize}px)` }">
       <NuxtPage :keepalive="true" />
     </div>
   </div>
@@ -61,7 +61,6 @@ export default defineComponent({
     return {
       val: "",
       titleSize: 50,
-      contentSize: innerHeight - 50,
     };
   },
   async setup() {
@@ -70,12 +69,17 @@ export default defineComponent({
       session,
     };
   },
-  mounted() {
-    addEventListener("resize", () => {
-      this.contentSize = innerHeight - this.titleSize;
-    });
+  methods: {
+    update() {
+      this.titleSize = (this.$refs.title as HTMLDivElement).clientHeight;
+    },
   },
-  unmounted() {},
+  mounted() {
+    addEventListener("resize", this.update);
+  },
+  unmounted() {
+    removeEventListener("resize", this.update);
+  },
   async created() {
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
