@@ -33,7 +33,7 @@ export default {
 
   props: {
     item: {
-      type: Object as PropType<{ costs: BSICost[] }>,
+      type: Object as PropType<{ costs?: BSICost[] }>,
       required: true,
     },
 
@@ -51,12 +51,24 @@ export default {
 
     update() {
       this.selectedCosts = {};
-      for (let cost of this.item.costs) {
-        this.selectedCosts[cost.typeId] = {
-          name: cost.name,
-          typeId: cost.typeId,
-          value: cost.value,
-        };
+      if (this.catalogue.costTypes) {
+        for (let cost of this.catalogue.costTypes) {
+          this.selectedCosts[cost.id] = {
+            name: cost.name,
+            typeId: cost.id,
+            value: 0,
+          };
+        }
+      }
+
+      if (this.item.costs) {
+        for (let cost of this.item.costs) {
+          this.selectedCosts[cost.typeId] = {
+            name: cost.name,
+            typeId: cost.typeId,
+            value: cost.value,
+          };
+        }
       }
     },
   },
