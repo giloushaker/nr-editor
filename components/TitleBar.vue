@@ -17,9 +17,6 @@
 @import "@/shared_components/css/vars.scss";
 .titlebar {
   display: flex;
-  position: sticky;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 50px;
   background-color: #333;
@@ -45,6 +42,7 @@
 }
 
 .link {
-  color: $blue;
+  color: white;
+  text-decoration: none;
 }
 </style>

@@ -42,13 +42,20 @@ export default {
 @import "@/shared_components/css/vars.scss";
 
 .leftPanel {
-  height: calc(100% - 2px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
+.top {
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
 .bottom {
-  margin-top: auto;
   position: sticky;
+  width: 100%;
+  margin-top: auto;
+  bottom: 0;
 }
 </style>

@@ -2,8 +2,12 @@
   <div id="popups" />
   <div id="dialogs" />
   <div id="app">
-    <TitleBar />
-    <NuxtPage :keepalive="true" />
+    <div class="title">
+      <TitleBar />
+    </div>
+    <div class="content" :style="{ height: `${contentSize}px` }">
+      <NuxtPage :keepalive="true" />
+    </div>
   </div>
 </template>
 
@@ -56,6 +60,8 @@ export default defineComponent({
   data() {
     return {
       val: "",
+      titleSize: 50,
+      contentSize: innerHeight - 50,
     };
   },
   async setup() {
@@ -64,6 +70,12 @@ export default defineComponent({
       session,
     };
   },
+  mounted() {
+    addEventListener("resize", () => {
+      this.contentSize = innerHeight - this.titleSize;
+    });
+  },
+  unmounted() {},
   async created() {
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
@@ -79,17 +91,17 @@ export default defineComponent({
 
 #app {
   padding: 0 !important;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  position: fixed;
 }
+
 html {
   font-family: sans-serif;
   background-image: linear-gradient(
-      rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a)),
-      rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a))
-    ),
-    var(--bg-texture);
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a)),
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a))
+  );
   background-size: var(--backgroundSize);
   background-color: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
   filter: var(--global-filter);

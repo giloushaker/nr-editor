@@ -9,6 +9,7 @@
     }"
     class="EditorCollapsibleBox"
     @click.stop="do_select"
+    @contextmenu="do_select"
   >
     <div class="title" :class="{ selected }" @dblclick="collapseSwitch">
       <h3

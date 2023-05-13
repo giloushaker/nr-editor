@@ -58,14 +58,26 @@
   </div>
   <DialogContextMenu ref="contextmenu">
     <template #default="{ payload }">
-      <div>Follow</div>
-      <Separator />
-      <div>Cut<span class="gray absolute right-5px">Ctrl+X</span></div>
-      <div>Copy<span class="gray absolute right-5px">Ctrl+C</span></div>
+      <template v-if="!payload">
+        <div v-if="item.targetId">Follow</div>
+        <div v-if="item.links">
+          References ({{ item.links ? 0 : items.links.length }})
+        </div>
+        <Separator v-if="item.isLink() || item.links" />
+      </template>
+      <div v-if="!payload">
+        Cut<span class="gray absolute right-5px">Ctrl+X</span>
+      </div>
+      <div v-if="!payload">
+        Copy<span class="gray absolute right-5px">Ctrl+C</span>
+      </div>
       <div>Paste<span class="gray absolute right-5px">Ctrl+V</span></div>
       <Separator />
-      <div @click="remove(payload)">
-        Remove<span class="gray absolute right-5px">Del</span>
+      <div v-if="!payload" @click="remove()">
+        <img class="w-12px pr-4px" src="assets/icons/redcross.png" />Remove<span
+          class="gray absolute right-5px"
+          >Del</span
+        >
       </div>
     </template>
   </DialogContextMenu>
@@ -84,6 +96,8 @@ import {
   ItemTypes,
   getName,
 } from "~/assets/shared/battlescribe/bs_editor";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   setup() {
@@ -91,7 +105,7 @@ export default {
   },
   props: {
     item: {
-      type: Object as PropType<ItemTypes>,
+      type: Object as PropType<ItemTypes & EditorBase>,
       required: true,
     },
     group: {
@@ -101,9 +115,43 @@ export default {
   data() {
     return {
       groups: {} as Record<string, any>,
+      msg: "",
     };
   },
   methods: {
+    // Actions
+    cut(type?: string) {
+      console.log("remove", type, getName(this.item));
+    },
+    copy(type?: string) {
+      if (!type) {
+      }
+    },
+    remove() {
+      const parent = this.item.parent;
+      if (!parent) {
+        console.log("Couldn't remove", this.item, "reason: no parent");
+        return;
+      }
+      const items = (parent as any)[this.item.parentKey];
+      console.log("items", items.length, items);
+      const idx = items.findIndex((o) => o === this.item);
+      if (idx == -1) {
+        console.log(
+          "Couldn't remove",
+          this.item,
+          `reason: couldn't find within parent[${this.item.parentKey}]`
+        );
+        return;
+      }
+      const removed = items.splice(idx, 1);
+      for (const rmed of removed) {
+        this.item.catalogue.removeFromIndex(this.item);
+      }
+    },
+
+    // end Actions
+
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];
@@ -115,9 +163,6 @@ export default {
     },
     getName(obj: any) {
       return getName(obj);
-    },
-    remove(type?: string) {
-      console.log("remove", type, getName(this.item));
     },
     getTypedArray(
       item: ItemTypes,

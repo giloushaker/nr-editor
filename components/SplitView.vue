@@ -9,7 +9,7 @@
     :style="viewStyle"
   >
     <div
-      class="left scrollable"
+      class="left"
       ref="left"
       :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }"
     >
@@ -24,7 +24,7 @@
     <template v-if="triple">
       <div
         ref="middle"
-        class="leftSide scrollable"
+        class="middle scrollable"
         :class="{ hidden: !split && showRight, hideOnSmallScreen: showRight }"
       >
         <slot name="middle"></slot>
@@ -38,7 +38,7 @@
     <div
       v-if="showRight"
       ref="right"
-      class="right grow scrollable"
+      class="right grow"
       :style="{
         width: rightw > 0 ? `calc(100vw - ${rightw}px)` : rightWidth,
       }"
@@ -192,11 +192,13 @@ export default {
 .mainView {
   display: flex;
   width: 100%;
+  height: 100%;
+  // position: fixed;
 }
-
-.splitMainView {
-  flex: 1;
-  overflow: auto;
+.left,
+.middle,
+.right {
+  height: 100%;
 }
 
 .right {
@@ -210,9 +212,5 @@ export default {
   cursor: ew-resize;
   width: 10px;
   z-index: 1;
-}
-
-.scrollable {
-  overflow-y: auto;
 }
 </style>

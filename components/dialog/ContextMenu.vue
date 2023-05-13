@@ -1,12 +1,6 @@
 <template>
   <Teleport to="#dialogs" v-if="visible">
-    <li
-      ref="context-menu"
-      class="context-menu"
-      :style="style"
-      @click="update"
-      @contextmenu.prevent.capture.stop
-    >
+    <li ref="context-menu" class="context-menu" :style="style" @click="update">
       <slot :payload="payload" />
     </li>
   </Teleport>
@@ -50,20 +44,26 @@ export default {
       this.payload = payload;
       if (!this.visible) {
         addEventListener("click", this.close, { capture: true });
-        addEventListener("contextmenu", this.close);
       }
       this.visible = true;
       this.update(e);
       this.$emit("update:modelValue", true);
     },
-    close(e: MouseEvent) {
+    close() {
       this.payload = undefined;
       removeEventListener("click", this.close);
       this.visible = false;
       this.$emit("update:modelValue", false);
     },
   },
-
+  mounted() {
+    addEventListener("contextmenu", this.close, { capture: true });
+    addEventListener("scroll", this.close, { capture: true });
+  },
+  unmounted() {
+    removeEventListener("contextmenu", this.close);
+    removeEventListener("scroll", this.close);
+  },
   computed: {
     el() {
       return this.$refs["context-menu"] as HTMLDivElement | undefined;
@@ -75,7 +75,6 @@ export default {
       return result;
     },
   },
-  updated() {},
 };
 </script>
 
@@ -85,8 +84,10 @@ export default {
 .context-menu {
   z-index: 10000000;
   display: block;
+  // flex-direction: column;
   position: absolute;
   box-sizing: border-box;
+  justify-content: center;
   background-color: white;
   color: black;
   text-decoration: none;
@@ -100,6 +101,8 @@ export default {
   bottom: 0;
 
   > div {
+    display: flex;
+    align-items: center;
     padding: 4px;
   }
 

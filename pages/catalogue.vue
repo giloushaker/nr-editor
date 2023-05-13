@@ -6,18 +6,22 @@
   </template>
   <template v-else-if="cat">
     <SplitView
+      class="h-full"
       draggable
       :split="true"
       :double="true"
       :showRight="store.selectedItem != null"
-      :viewStyle="{ 'grid-template-columns': '400px auto' }"
       id="catalogueView"
     >
       <template #left>
-        <LeftPanel :catalogue="cat" />
+        <LeftPanel class="h-full" :catalogue="cat" />
       </template>
       <template #right>
-        <CatalogueRightPanel :catalogue="cat" @catalogueChanged="onChanged" />
+        <CatalogueRightPanel
+          class="h-full overflow-y-auto"
+          :catalogue="cat"
+          @catalogueChanged="onChanged"
+        />
       </template>
     </SplitView>
   </template>

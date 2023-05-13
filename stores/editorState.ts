@@ -191,5 +191,13 @@ export const useEditorStore = defineStore("editor", {
         this.selectedItem = el;
       }
     },
+    do_rightclick_select(
+      e: MouseEvent,
+      el: VueElement,
+      group: VueElement | VueElement[]
+    ) {
+      if (this.is_selected(el)) return;
+      this.do_select(e, el, group);
+    },
   },
 });

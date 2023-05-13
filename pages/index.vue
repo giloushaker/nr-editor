@@ -1,57 +1,54 @@
 <template>
-  <div class="box">
+  <div class="m-10px box">
     <h3>My Catalogues</h3>
     <div class="boutons">
       <UploadJson @uploaded="filesUploaded" />
       <ImportFromGithub @uploaded="filesUploaded" />
     </div>
-    <div class="section">
-      <SplitView
-        :split="true"
-        :double="true"
-        :showRight="selectedItem != null"
-        leftWidth="calc(100% - 400px)"
-        rightWidth="400px"
-      >
-        <template #left>
-          <div class="w-full">
-            <fieldset v-for="gst in gameSystems">
-              <legend>
-                {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
-              </legend>
-              <IconContainer
-                :items="systemAndCatalogues(gst)"
-                @itemClicked="itemClicked"
-                @new="newCatalogue(gst)"
-                v-model="selectedItem"
-              />
-            </fieldset>
-          </div>
-        </template>
-        <template #right>
-          <template v-if="selectedItem">
-            <template v-if="mode === 'create'">
-              <CataloguesCreate
-                :style="{ width: '400px' }"
-                @create="createCatalogue"
-                :catalogue="selectedItem"
-              />
-            </template>
-            <template v-else>
-              <CataloguesDetail
-                :style="{ width: '400px' }"
-                @delete="deleteCatalogue"
-                @edit="editCatalogue"
-                :catalogue="selectedItem"
-              />
-            </template>
+  </div>
+
+  <div class="mx-10px box h-full">
+    <SplitView
+      :split="true"
+      :double="true"
+      :showRight="selectedItem != null"
+      leftWidth="calc(100% - 400px)"
+      rightWidth="400px"
+    >
+      <template #left>
+        <div class="scrollable">
+          <fieldset v-for="gst in gameSystems">
+            <legend>
+              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+            </legend>
+            <IconContainer
+              :items="systemAndCatalogues(gst)"
+              @itemClicked="itemClicked"
+              @new="newCatalogue(gst)"
+              v-model="selectedItem"
+            />
+          </fieldset>
+        </div>
+      </template>
+      <template #right>
+        <div v-if="selectedItem">
+          <template v-if="mode === 'create'">
+            <CataloguesCreate
+              class="fixed box"
+              @create="createCatalogue"
+              :catalogue="selectedItem"
+            />
           </template>
-        </template>
-      </SplitView>
-    </div>
-    <div>
-      <div class="border-2 border-black">Create New system</div>
-    </div>
+          <template v-else>
+            <CataloguesDetail
+              @delete="deleteCatalogue"
+              @edit="editCatalogue"
+              :catalogue="selectedItem"
+            />
+          </template>
+        </div>
+      </template>
+    </SplitView>
   </div>
 </template>
 
@@ -189,3 +186,10 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scope>
+.scrollable {
+  height: 100%;
+  overflow-y: auto;
+}
+</style>

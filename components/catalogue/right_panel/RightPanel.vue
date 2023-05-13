@@ -113,6 +113,7 @@ export default {
 }
 
 .rightPanel {
+  overflow-y: auto;
   padding-top: 10px;
   padding-right: 10px;
   padding-left: 5px;
