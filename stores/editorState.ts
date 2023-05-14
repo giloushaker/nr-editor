@@ -13,6 +13,7 @@ import {
   onRemoveEntry,
   popAtEntryPath,
   setAtEntryPath,
+  scrambleIds,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { enumerate_zip } from "~/assets/shared/battlescribe/bs_helpers";
 import {
@@ -182,7 +183,7 @@ export const useEditorStore = defineStore("editor", {
           paths.push(path);
         }
       }
-      let removeds = [] as EditorBase[][];
+      let removeds = [] as EditorBase[];
       function redo() {
         removeds = [];
         for (const path of paths) {
@@ -225,7 +226,7 @@ export const useEditorStore = defineStore("editor", {
 
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
-
+            scrambleIds(catalogue, copy);
             onAddEntry(copy, catalogue, item);
             arr.push(copy);
             addeds.push(copy);
