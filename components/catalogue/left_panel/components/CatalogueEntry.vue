@@ -58,10 +58,10 @@
   </div>
   <DialogContextMenu ref="contextmenu">
     <template #default="{ payload }">
-      <template v-if="!payload">
+      <template v-if="!payload && item">
         <div v-if="item.targetId">Follow</div>
         <div v-if="item.links">
-          References ({{ item.links ? 0 : items.links.length }})
+          References ({{ item.links ? item.links.length : 0 }})
         </div>
         <Separator v-if="item.isLink() || item.links" />
       </template>
