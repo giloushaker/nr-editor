@@ -33,25 +33,22 @@
         <td></td>
         <td>
           <UtilAutocomplete
-            :placeholder="`Search Target...`"
+            placeholder="Search Target..."
             v-model="filter"
             ref="autocomplete"
             :min="0"
           >
-            <template #default="{ editing }">
-              <div
-                v-for="opt in availableTargets(filter)"
-                v-if="editing"
-                :value="opt"
-                @click="targetSelected(opt)"
-              >
-                <img
-                  class="mr-1 align-middle"
-                  :src="`/assets/bsicons/${opt.editorTypeName}.png`"
-                />
-                {{ opt.getName() }}
-              </div>
-            </template>
+            <div
+              v-for="opt in availableTargets(filter)"
+              :value="opt"
+              @click="targetSelected(opt)"
+            >
+              <img
+                class="mr-1 align-middle"
+                :src="`/assets/bsicons/${opt.editorTypeName}.png`"
+              />
+              {{ opt.getName() }}
+            </div>
           </UtilAutocomplete>
         </td>
       </tr>
@@ -90,7 +87,9 @@ export default {
     },
   },
   watch: {
-    filter(v) {},
+    filter(v) {
+      console.log(v);
+    },
 
     item() {
       this.filter = "";

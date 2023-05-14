@@ -16,7 +16,7 @@
       @click.capture="clickedOption"
       :class="{ hidden: !editing }"
     >
-      <slot :editing="editing"> </slot>
+      <slot v-if="editing"> </slot>
     </div>
   </div>
 </template>
@@ -53,13 +53,6 @@ export default {
   updated() {
     this.el = this.$el;
   },
-  watch: {
-    searchPattern(val) {
-      if (this.editing) {
-        this.$emit("update:modelValue", val);
-      }
-    },
-  },
   methods: {
     reset() {
       this.searchPattern = "";
@@ -75,6 +68,7 @@ export default {
       } else {
         this.editing = true;
       }
+      this.$emit("update:modelValue", this.searchPattern);
     },
 
     maySuggest() {

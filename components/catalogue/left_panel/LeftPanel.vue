@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="top">
+    <div class="top" @keydown.capture="keydown">
       <CatalogueEntry :item="catalogue" />
     </div>
     <div class="bottom">
@@ -23,13 +23,44 @@ export default {
     return { store: useEditorStore() };
   },
 
+  mounted() {
+    addEventListener("keydown", this.keydown);
+  },
+  unmounted() {
+    removeEventListener("keydown", this.keydown);
+  },
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
     },
   },
+  methods: {
+    keydown(e: KeyboardEvent) {
+      if (!e.target) return;
+      const target = (e.target as HTMLDivElement).tagName;
+      if (target !== "BODY") return;
 
+      if (e.ctrlKey && e.key === "z") {
+        this.store.undo();
+      }
+
+      if (e.ctrlKey && e.key === "y") {
+        this.store.redo();
+      }
+
+      if (e.ctrlKey && e.key === "x") {
+        this.store.set_clipboard(this.store.get_selections());
+        this.store.remove();
+      }
+      if (e.ctrlKey && e.key === "c") {
+        this.store.set_clipboard(this.store.get_selections());
+      }
+      if (e.ctrlKey && e.key === "v") {
+        this.store.add(this.store.get_clipboard());
+      }
+    },
+  },
   computed: {
     availableItems() {
       return this.items;

@@ -9,7 +9,7 @@
     }"
     class="EditorCollapsibleBox"
     @click.stop="do_select"
-    @contextmenu="do_select"
+    @contextmenu="do_rightcllick_select"
   >
     <div class="title" :class="{ selected }" @dblclick="collapseSwitch">
       <h3
@@ -152,6 +152,9 @@ export default {
     },
     do_select(e: MouseEvent) {
       this.store.do_select(e, this as any, this.group);
+    },
+    do_rightcllick_select(e: MouseEvent) {
+      this.store.do_rightclick_select(e, this as any, this.group);
     },
     collapseSwitch() {
       this.collapsed = !this.collapsed;
