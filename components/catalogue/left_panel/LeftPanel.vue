@@ -59,6 +59,10 @@ export default {
       if (e.ctrlKey && e.key === "v") {
         this.store.add(this.store.get_clipboard());
       }
+
+      if (e.key === "Delete") {
+        this.store.remove();
+      }
     },
   },
   computed: {
