@@ -62,6 +62,12 @@
       :catalogue="catalogue"
       @catalogueChanged="changed"
     />
+    <CatalogueRightPanelConstraintPanel
+      v-if="item.editorTypeName == 'constraint'"
+      :item="item"
+      :catalogue="catalogue"
+      @catalogueChanged="changed"
+    />
   </div>
 </template>
 
