@@ -33,12 +33,15 @@ export default {
   methods: {
     update(e: MouseEvent) {
       e.preventDefault();
-      this.width = this.el?.clientWidth || this.width;
-      this.height = this.el?.clientHeight || this.height;
-      this.left = Math.min(e.clientX, window.innerWidth - this.width);
-      this.top = Math.min(e.clientY, window.innerHeight - this.height);
-      this.bottom = window.innerHeight - this.top;
-      this.right = window.innerWidth - this.left;
+      this.$nextTick(() => {
+        this.width = this.el?.clientWidth || this.width;
+        console.log(this.el);
+        this.height = this.el?.clientHeight || this.height;
+        this.left = Math.min(e.clientX, window.innerWidth - this.width);
+        this.top = Math.min(e.clientY, window.innerHeight - 7 - this.height);
+        this.bottom = window.innerHeight - this.top;
+        this.right = window.innerWidth - this.left;
+      });
     },
     show(e: MouseEvent, payload?: any) {
       this.payload = payload;
