@@ -94,6 +94,7 @@ export default {
     escapeRegex(str: string) {
       return str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
     },
+
     textSearchRegex(query: string) {
       const words = this.escapeRegex(query).split(" ");
       const regexStr = `^(?=.*\\b${words.join(".*)(?=.*\\b")}).*$`;
@@ -128,6 +129,8 @@ export default {
           this.selectedOption = {
             option: found,
           };
+        } else {
+          this.selectedOption = null;
         }
       }
     },
@@ -156,8 +159,10 @@ export default {
     },
 
     async startEditing() {
-      this.editing = true;
-      this.searchPattern = "";
+      if (!this.editing) {
+        this.editing = true;
+        this.searchPattern = "";
+      }
     },
   },
 
@@ -187,28 +192,23 @@ export default {
 <style lang="scss">
 .suggestions {
   position: absolute;
+  top: 100%;
+  margin-top: 3px;
   max-height: 300px;
+
   overflow-y: auto;
   z-index: 1;
   width: 100%;
-  padding-top: 2px;
   display: grid;
   box-shadow: rgba(22, 1, 1, 0.74) 0px 3px 8px;
-
+  border-top: 1px gray solid;
+  border-bottom: 1px gray solid;
   > * {
     background-color: white;
-    border-left: 1px black solid;
-    border-right: 1px black solid;
+    border-left: 1px gray solid;
+    border-right: 1px gray solid;
     border-bottom: none;
     padding: 5px;
-
-    &:last-child {
-      border-bottom: 1px black solid;
-    }
-
-    &:first-child {
-      border-top: 1px black solid;
-    }
 
     &:hover {
       background-color: rgb(218, 227, 241);
