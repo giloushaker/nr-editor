@@ -1,13 +1,15 @@
 <template>
-  <div class="m-10px box">
-    <h3>My Catalogues</h3>
-    <div class="boutons">
-      <UploadJson @uploaded="filesUploaded" />
-      <ImportFromGithub @uploaded="filesUploaded" />
+  <div class="p-10px">
+    <div class="box">
+      <h3>My Catalogues</h3>
+      <div class="boutons">
+        <UploadJson @uploaded="filesUploaded" />
+        <ImportFromGithub @uploaded="filesUploaded" />
+      </div>
     </div>
   </div>
 
-  <div class="mx-10px box h-full">
+  <div class="mx-10px box h-full pb-200px">
     <SplitView
       :split="true"
       :double="true"
@@ -90,7 +92,7 @@ export default defineComponent({
   created() {
     this.loadSystemsFromDB();
   },
-
+  updated() {},
   methods: {
     systemAndCatalogues(gst: GameSystemFiles) {
       let res = [];

@@ -6,7 +6,7 @@
       doubleSplitView: double,
       tripleSplitView: triple,
     }"
-    :style="viewStyle"
+    :style="height > 0 ? { height: `${height}px` } : {}"
   >
     <div
       class="left"
@@ -62,7 +62,6 @@ export default {
     double: {},
     triple: {},
     showRight: {},
-    viewStyle: {},
     draggable: {
       type: Boolean,
       default: false,
@@ -80,7 +79,7 @@ export default {
     },
   },
   data() {
-    return { _leftWidth: 0, _rightWidth: 0, dragging: false };
+    return { _leftWidth: 0, _rightWidth: 0, dragging: false, height: 0 };
   },
   setup() {
     return { store: useUIState() };
@@ -106,6 +105,14 @@ export default {
         this._rightWidth = width;
       }
     }
+    addEventListener("resize", this.update);
+  },
+
+  unmounted() {
+    removeEventListener("resize", this.update);
+  },
+  updated() {
+    this.update();
   },
   computed: {
     left() {
@@ -128,6 +135,11 @@ export default {
     },
   },
   methods: {
+    update() {
+      const pos = (this.$el as HTMLDivElement)?.offsetTop || 0;
+      console.log("splitView height", pos);
+      this.height = innerHeight - pos;
+    },
     clamp(val: number) {
       if (val < 100) return 100;
       if (val > this.totalWidth - 100) return this.totalWidth - 100;
