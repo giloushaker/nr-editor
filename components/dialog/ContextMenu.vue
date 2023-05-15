@@ -103,7 +103,8 @@ export default {
   > div {
     display: flex;
     align-items: center;
-    padding: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   cursor: pointer;

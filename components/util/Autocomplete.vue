@@ -27,7 +27,6 @@
 <script lang="ts">
 export default {
   props: {
-    modelValue: Object,
     placeholder: {
       type: String,
       default: "Search...",

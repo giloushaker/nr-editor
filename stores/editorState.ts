@@ -15,18 +15,25 @@ import {
   setAtEntryPath,
   scrambleIds,
 } from "~/assets/shared/battlescribe/bs_editor";
-import { enumerate_zip } from "~/assets/shared/battlescribe/bs_helpers";
+import {
+  enumerate_zip,
+  generateBattlescribeId,
+} from "~/assets/shared/battlescribe/bs_helpers";
 import {
   Catalogue,
   EditorBase,
 } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import entries from "assets/json/entries.json";
-import { Base, entryToJson } from "~/assets/shared/battlescribe/bs_main";
+import { entries } from "assets/json/entries";
+import {
+  Base,
+  entryToJson,
+  getTypeName,
+} from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 
 export interface IEditorState {
   selectionsParent?: Object | null;
-  selections: { obj: any; onunselected: () => unknown }[];
+  selections: { obj: any; onunselected: () => unknown; payload?: any }[];
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
@@ -80,22 +87,26 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
-    select(obj: any, onunselected: () => unknown) {
+    select(obj: any, onunselected: () => unknown, payload?: any) {
       if (!this.selections.includes(obj)) {
-        this.selections.push({ obj, onunselected });
+        this.selections.push({ obj, onunselected, payload });
       }
     },
     is_selected(obj: any) {
       return this.selections.findIndex((o) => o.obj === obj) !== -1;
     },
-    do_select(e: MouseEvent, el: VueElement, group: VueElement | VueElement[]) {
+    do_select(
+      e: MouseEvent | null,
+      el: VueElement,
+      group: VueElement | VueElement[]
+    ) {
       const entries = Array.isArray(group) ? group : [group];
       const last = toRaw(this.selectedElementGroup);
       const last_element = toRaw(this.selectedElement);
       this.selectedElement = toRaw(el);
       this.selectedElementGroup = toRaw(group);
 
-      if (e.shiftKey && toRaw(group) === toRaw(last)) {
+      if (e?.shiftKey && toRaw(group) === toRaw(last)) {
         const a = entries.findIndex((o) => o === last_element);
         const b = entries.findIndex((o) => o === this.selectedElement);
         const low = Math.min(a, b);
@@ -106,10 +117,10 @@ export const useEditorStore = defineStore("editor", {
         }
         return;
       }
-      if (!e.ctrlKey && !e.metaKey) {
+      if (!e?.ctrlKey && !e?.metaKey) {
         this.unselect();
       }
-      if (e.ctrlKey && this.is_selected(el)) {
+      if (e?.ctrlKey && this.is_selected(el)) {
         this.unselect(el);
       } else {
         (el as any).select();
@@ -137,7 +148,7 @@ export const useEditorStore = defineStore("editor", {
       }
       this.undoStackPos += 1;
     },
-    set_clipboard(data: any[]) {
+    set_clipboard(data: EditorBase[]) {
       this.clipboard = data;
     },
     get_clipboard() {
@@ -201,14 +212,13 @@ export const useEditorStore = defineStore("editor", {
       this.do_action("remove", undo, redo);
       this.unselect();
     },
-    add(data: EditorBase[], childKey?: string) {
+    add(data: (EditorBase | Record<string, any>)[], childKey?: string) {
       const selections = this.get_selections();
       if (!selections.length) return;
 
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
 
-      let paths = [];
       let addeds = [] as EditorBase[];
 
       function redo() {
@@ -239,6 +249,36 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.do_action("add", undo, redo);
+    },
+    create(key: string) {
+      switch (key) {
+        default:
+          console.log("create", key);
+          this.add(
+            [
+              {
+                id: generateBattlescribeId(),
+                select: true,
+                name: `New ${getTypeName(key)}`,
+              },
+            ],
+            key
+          );
+          return;
+          throw new Error(`Unimplemented create key "${key}"`);
+      }
+    },
+    allowed_children(obj: EditorBase, key: string): Set<string> {
+      let result = (entries as any)[key].allowedChildrens;
+      while (typeof result === "string") {
+        const new_key = (obj as any)[result];
+        if (typeof new_key !== "string" || new_key === result) {
+          throw new Error("Invalid children key");
+        }
+        result = (entries as any)[new_key].allowedChildrens;
+      }
+      console.log(key, result);
+      return new Set(result);
     },
   },
 });

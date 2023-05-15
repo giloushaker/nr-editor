@@ -49,6 +49,9 @@ import { useEditorStore } from "~/stores/editorState";
 
 export default {
   props: {
+    payload: {
+      type: Object,
+    },
     empty: {
       type: Boolean,
       default: false,
@@ -127,6 +130,14 @@ export default {
       }
     }
   },
+  watch: {
+    payload(data) {
+      if (data?.select) {
+        delete data?.select;
+        this.store.do_select(null, this as any, this.group);
+      }
+    },
+  },
   computed: {
     dropdownSrc() {
       let n = 2;
@@ -145,7 +156,7 @@ export default {
   methods: {
     select() {
       this.selected = true;
-      this.store.select(this, () => this.unselect());
+      this.store.select(this, () => this.unselect(), this.payload);
     },
     unselect() {
       this.selected = false;
