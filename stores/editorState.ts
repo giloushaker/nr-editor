@@ -251,9 +251,23 @@ export const useEditorStore = defineStore("editor", {
       this.do_action("add", undo, redo);
     },
     create(key: string) {
+      console.log("create", key);
       switch (key) {
+        case "modifiers":
+        case "modifierGroups":
+        case "conditions":
+        case "conditionGroups":
+          this.add(
+            [
+              {
+                id: generateBattlescribeId(),
+                select: true,
+              },
+            ],
+            key
+          );
+          return;
         default:
-          console.log("create", key);
           this.add(
             [
               {
