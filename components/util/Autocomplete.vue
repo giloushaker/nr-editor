@@ -3,6 +3,7 @@
     <input
       class="input autocomplete-input"
       type="text"
+      ref="edit"
       @input="suggest"
       @click="maySuggest"
       @change="changed"
@@ -15,7 +16,7 @@
       <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
       <slot v-else v-bind="selectedOption" name="option"></slot>
     </div>
-    <div class="suggestions" ref="suggestions" :class="{ hidden: !editing }">
+    <div class="suggestions" :class="{ hidden: !editing }">
       <div v-for="option of foundOptions" @click="targetSelected(option)">
         <slot v-bind="option" name="option"></slot>
       </div>
@@ -31,15 +32,18 @@ export default {
       type: String,
       default: "Search...",
     },
+
     min: {
       type: Number,
       default: 0,
     },
+
     options: {
       type: Array,
       required: true,
       default: [],
     },
+
     valueField: {
       type: String,
       default: "",
@@ -136,9 +140,8 @@ export default {
       if (this.searchPattern.length < this.min) {
         this.editing = false;
       } else {
-        this.editing = true;
+        this.startEditing();
       }
-      this.$emit("update:modelValue", this.searchPattern);
     },
 
     maySuggest() {
@@ -152,7 +155,7 @@ export default {
       this.editing = false;
     },
 
-    startEditing() {
+    async startEditing() {
       this.editing = true;
       this.searchPattern = "";
     },
@@ -161,6 +164,21 @@ export default {
   watch: {
     options() {
       this.reset();
+    },
+
+    modelValue() {
+      if (!this.editing) {
+        this.reset();
+      }
+    },
+
+    async editing() {
+      if (this.editing) {
+        await this.$nextTick();
+        if (this.$refs.edit) {
+          (this.$refs.edit as any).focus();
+        }
+      }
     },
   },
 };
