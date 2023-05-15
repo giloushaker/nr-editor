@@ -121,6 +121,7 @@ export default {
   },
   mounted() {
     this.group?.push(this);
+    this.init(this.payload);
   },
   destroyed() {
     if (this.group && Array.isArray(this.group)) {
@@ -132,10 +133,7 @@ export default {
   },
   watch: {
     payload(data) {
-      if (data?.select) {
-        delete data?.select;
-        this.store.do_select(null, this as any, this.group);
-      }
+      this.init(data);
     },
   },
   computed: {
@@ -154,6 +152,12 @@ export default {
   },
 
   methods: {
+    init(data) {
+      if (data?.select) {
+        delete data?.select;
+        this.store.do_select(null, this as any, this.group);
+      }
+    },
     select() {
       this.selected = true;
       this.store.select(this, () => this.unselect(), this.payload);
