@@ -9,14 +9,16 @@
       v-model="searchPattern"
       :placeholder="placeholder"
       v-click-outside="onClickOutside"
+      v-if="editing"
     />
-    <div
-      class="suggestions"
-      ref="suggestions"
-      @click.capture="clickedOption"
-      :class="{ hidden: !editing }"
-    >
-      <slot :editing="editing"> </slot>
+    <div v-else @click="startEditing" class="autocomplete-input">
+      <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
+      <slot v-else v-bind="selectedOption" name="option"></slot>
+    </div>
+    <div class="suggestions" ref="suggestions" :class="{ hidden: !editing }">
+      <div v-for="option of foundOptions" @click="targetSelected(option)">
+        <slot v-bind="option" name="option"></slot>
+      </div>
     </div>
   </div>
 </template>
@@ -24,18 +26,33 @@
 <script lang="ts">
 export default {
   props: {
-    modelValue: String,
-    placeholder: String,
+    modelValue: Object,
+    placeholder: {
+      type: String,
+      default: "Search...",
+    },
     min: {
       type: Number,
-      default: 3,
+      default: 0,
+    },
+    options: {
+      type: Array,
+      required: true,
+      default: [],
+    },
+    valueField: {
+      type: String,
+      default: "",
+    },
+
+    filterField: {
+      type: String,
+      default: "",
     },
   },
 
   created() {
-    if (this.modelValue) {
-      this.searchPattern = this.modelValue;
-    }
+    this.reset();
   },
 
   data() {
@@ -43,26 +60,72 @@ export default {
       searchPattern: "",
       lastSearch: null as string | null,
       editing: false,
-      el: null,
-      elements: [] as HTMLDivElement[],
+      selectedOption: null as { option: any } | null,
     };
   },
-  mounted() {
-    this.el = this.$el;
-  },
-  updated() {
-    this.el = this.$el;
-  },
-  watch: {
-    searchPattern(val) {
-      if (this.editing) {
-        this.$emit("update:modelValue", val);
-      }
+
+  computed: {
+    foundOptions(): { option: any }[] {
+      const regex = this.textSearchRegex(this.searchPattern);
+
+      const res = this.options
+        .filter((opt) => {
+          let val: any = opt;
+          if (this.filterField) {
+            val = val[this.filterField];
+          }
+          if (val.match && val.match(regex)) {
+            return true;
+          }
+          return false;
+        })
+        .map((elt: any) => {
+          return { option: elt };
+        });
+      return res;
     },
   },
+
   methods: {
+    escapeRegex(str: string) {
+      return str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+    },
+    textSearchRegex(query: string) {
+      const words = this.escapeRegex(query).split(" ");
+      const regexStr = `^(?=.*\\b${words.join(".*)(?=.*\\b")}).*$`;
+      const regx = new RegExp(regexStr, "i");
+      return regx;
+    },
+
+    targetSelected(opt: any) {
+      let res = opt.option;
+      if (this.valueField.length) {
+        res = opt.option[this.valueField];
+      }
+      this.selectedOption = opt;
+      this.$emit("update:modelValue", res);
+      this.$emit("change");
+    },
+
     reset() {
       this.searchPattern = "";
+      if (this.modelValue) {
+        let found = this.options.find((opt: any) => {
+          let item = opt;
+          if (this.valueField) {
+            item = opt[this.valueField];
+          }
+          if (item === this.modelValue) {
+            return true;
+          }
+          return false;
+        });
+        if (found) {
+          this.selectedOption = {
+            option: found,
+          };
+        }
+      }
     },
 
     onClickOutside() {
@@ -86,6 +149,17 @@ export default {
 
     clicked() {
       this.editing = false;
+    },
+
+    startEditing() {
+      this.editing = true;
+      this.searchPattern = "";
+    },
+  },
+
+  watch: {
+    options() {
+      this.reset();
     },
   },
 };
@@ -123,6 +197,10 @@ export default {
   }
 }
 
+.view {
+  background-color: white;
+}
+
 .container {
   position: relative;
 }
@@ -133,5 +211,18 @@ export default {
 
 .hidden {
   display: none;
+}
+
+.autocomplete-input::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #000;
 }
 </style>
