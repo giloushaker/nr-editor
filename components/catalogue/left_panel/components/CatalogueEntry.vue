@@ -60,7 +60,7 @@
   <DialogContextMenu ref="contextmenu">
     <template #default="{ payload }">
       <template v-if="!payload && item">
-        <div v-if="item.targetId">Follow</div>
+        <div v-if="link.targetId">Follow</div>
         <div v-if="item.links">
           References ({{ item.links ? item.links.length : 0 }})
         </div>
@@ -97,12 +97,10 @@ import { useEditorStore } from "~/stores/editorState";
 import {
   ItemKeys,
   ItemTypes,
-  getEntryPath,
   getName,
-  popAtEntryPath,
-  setAtEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Link } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   setup() {
@@ -151,7 +149,7 @@ export default {
 
       return arr.map((elt) => {
         return {
-          item: elt as ItemTypes,
+          item: elt as ItemTypes & EditorBase,
           type: type,
         };
       });
@@ -176,6 +174,10 @@ export default {
   },
 
   computed: {
+    link(): Link {
+      return this.item as Link;
+    },
+
     contextmenu() {
       return this.$refs.contextmenu as {
         show: (event: MouseEvent, o: any) => unknown;

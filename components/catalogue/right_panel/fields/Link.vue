@@ -60,7 +60,10 @@
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import {
+  Catalogue,
+  EditorBase,
+} from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorState";
 
 export default {
@@ -100,7 +103,7 @@ export default {
     },
 
     updateLink() {
-      this.catalogue.updateLink(this.item);
+      this.catalogue.updateLink(this.item as Link & EditorBase);
       this.changed();
     },
 

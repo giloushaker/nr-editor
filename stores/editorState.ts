@@ -39,7 +39,7 @@ export interface IEditorState {
 }
 
 export interface CatalogueEntryItem {
-  item: ItemTypes;
+  item: ItemTypes & EditorBase;
   type: ItemKeys;
 }
 
