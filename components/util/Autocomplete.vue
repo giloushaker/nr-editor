@@ -138,6 +138,7 @@ export default {
       } else {
         this.editing = true;
       }
+      this.$emit("update:modelValue", this.searchPattern);
     },
 
     maySuggest() {

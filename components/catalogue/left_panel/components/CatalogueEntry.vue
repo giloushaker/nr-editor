@@ -51,6 +51,7 @@
             v-for="child of applyFilter(mixedChildren)"
             :item="child.item"
             :group="get_group(item.parentKey)"
+            :key="child.item.id"
           />
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -65,15 +66,17 @@
         </div>
         <Separator v-if="item.isLink() || item.links" />
       </template>
-      <div v-if="!payload">
+      <div @click="store.cut()" v-if="!payload">
         Cut<span class="gray absolute right-5px">Ctrl+X</span>
       </div>
-      <div v-if="!payload">
+      <div @click="store.copy" v-if="!payload">
         Copy<span class="gray absolute right-5px">Ctrl+C</span>
       </div>
-      <div>Paste<span class="gray absolute right-5px">Ctrl+V</span></div>
+      <div @click="store.paste">
+        Paste<span class="gray absolute right-5px">Ctrl+V</span>
+      </div>
       <Separator />
-      <div v-if="!payload" @click="remove()">
+      <div @click="store.remove()" v-if="!payload">
         <img class="w-12px pr-4px" src="assets/icons/redcross.png" />Remove<span
           class="gray absolute right-5px"
           >Del</span
@@ -94,9 +97,11 @@ import { useEditorStore } from "~/stores/editorState";
 import {
   ItemKeys,
   ItemTypes,
+  getEntryPath,
   getName,
+  popAtEntryPath,
+  setAtEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
-import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
@@ -119,39 +124,6 @@ export default {
     };
   },
   methods: {
-    // Actions
-    cut(type?: string) {
-      console.log("remove", type, getName(this.item));
-    },
-    copy(type?: string) {
-      if (!type) {
-      }
-    },
-    remove() {
-      const parent = this.item.parent;
-      if (!parent) {
-        console.log("Couldn't remove", this.item, "reason: no parent");
-        return;
-      }
-      const items = (parent as any)[this.item.parentKey];
-      console.log("items", items.length, items);
-      const idx = items.findIndex((o) => o === this.item);
-      if (idx == -1) {
-        console.log(
-          "Couldn't remove",
-          this.item,
-          `reason: couldn't find within parent[${this.item.parentKey}]`
-        );
-        return;
-      }
-      const removed = items.splice(idx, 1);
-      for (const rmed of removed) {
-        this.item.catalogue.removeFromIndex(this.item);
-      }
-    },
-
-    // end Actions
-
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];

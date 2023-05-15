@@ -13,6 +13,7 @@ import {
 import { GameSystemRow } from "~/assets/shared/types/db_types";
 import { db } from "../dexie";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 
 export class GameSystem extends BsGameSystem {
   constructor(
@@ -74,61 +75,16 @@ export class GameSystemFiles extends BSCatalogueManager {
 }
 
 export function saveCatalogue(data: Catalogue, raw: BSIData) {
-  const badKeys = new Set([
-    "loaded",
-    "loaded_wiki",
-    "loaded_editor",
-    "units",
-    "categories",
-    "forces",
-    "childs",
-    "roster_constraints",
-    "extra_constraints",
-    "costIndex",
-    "imports",
-    "index",
-    "catalogue",
-    "gameSystem",
-    "main_catalogue",
-    "collective_recursive",
-    "limited_to_one",
-    "associations",
-    "associationConstraints",
-    "book",
-    "short",
-    "version",
-    "nrversion",
-    "lastUpdated",
-    "costIndex",
-    "target",
-    "parent",
-    "links",
-  ]);
-  const root: any = {
-    ...raw,
-    catalogue: undefined,
-    gameSystem: undefined,
-  };
-  const copy = { ...data }; // ensure there is no recursivity by making sure only this copy is put in the json
+  const stringed = rootToJson(data, raw);
   if (data.isGameSystem()) {
-    root.gameSystem = copy;
-  } else if (data.isCatalogue()) {
-    root.catalogue = copy;
-  }
-  const stringed = JSON.stringify(root, (k, v) => {
-    if (v === copy || !badKeys.has(k)) return v;
-    return undefined;
-  });
-  if (root.catalogue) {
-    db.catalogues.put({
-      content: JSON.parse(stringed),
-      id: `${root.catalogue.gameSystemId}-${root.catalogue.id}`,
-    });
-  }
-  if (root.gameSystem) {
     db.systems.put({
       content: JSON.parse(stringed),
-      id: root.gameSystem.id,
+      id: data.getId(),
+    });
+  } else {
+    db.catalogues.put({
+      content: JSON.parse(stringed),
+      id: `${data.gameSystem.getId()}-${data.getId()}`,
     });
   }
 }
