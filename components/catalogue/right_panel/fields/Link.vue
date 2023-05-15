@@ -30,26 +30,23 @@
         </td>
       </tr>
       <tr>
-        <td></td>
+        <td>Target:</td>
         <td>
           <UtilAutocomplete
+            v-model="item.targetId"
             :placeholder="`Search Target...`"
-            v-model="filter"
-            ref="autocomplete"
-            :min="0"
+            :options="availableTargets"
+            valueField="id"
+            filterField="name"
+            @change="updateLink"
           >
-            <template #default="{ editing }">
-              <div
-                v-for="opt in availableTargets(filter)"
-                v-if="editing"
-                :value="opt"
-                @click="targetSelected(opt)"
-              >
+            <template #option="opt">
+              <div>
                 <img
                   class="mr-1 align-middle"
-                  :src="`/assets/bsicons/${opt.editorTypeName}.png`"
+                  :src="`/assets/bsicons/${opt.option.editorTypeName}.png`"
                 />
-                {{ opt.getName() }}
+                {{ opt.option.name }}
               </div>
             </template>
           </UtilAutocomplete>
@@ -89,14 +86,7 @@ export default {
       required: true,
     },
   },
-  watch: {
-    filter(v) {},
 
-    item() {
-      this.filter = "";
-      (this.$refs.autocomplete as any)?.reset();
-    },
-  },
   methods: {
     changed() {
       this.$emit("catalogueChanged");
@@ -114,13 +104,6 @@ export default {
       this.changed();
     },
 
-    targetSelected(elt: Base) {
-      this.filter = "";
-      (this.$refs.autocomplete as any)?.reset();
-      this.item.target = elt;
-      this.item.targetId = elt.id;
-    },
-
     itemName(elt: Base) {
       return elt.name;
     },
@@ -132,9 +115,11 @@ export default {
     targetIsValid(target: ItemTypes) {
       return target.editorTypeName == this.item.type;
     },
+  },
 
-    availableTargets(filter: string) {
-      let all = this.catalogue.findOptionsByName(filter || "").filter((o) => {
+  computed: {
+    availableTargets() {
+      let all = this.catalogue.findOptionsByName("").filter((o) => {
         if (this.targetIsValid(o as ItemTypes) == false) {
           return false;
         }
@@ -146,7 +131,5 @@ export default {
       return sortByAscending(all, (o) => o.name);
     },
   },
-
-  computed: {},
 };
 </script>
