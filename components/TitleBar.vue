@@ -109,6 +109,9 @@ export default {
       fetch("https://newrecruit.eu/api/feedback/post", {
         method: "POST",
         body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
     },
     submit_feedback() {
@@ -120,6 +123,9 @@ export default {
       fetch("https://newrecruit.eu/api/feedback/post", {
         method: "POST",
         body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
     },
   },
