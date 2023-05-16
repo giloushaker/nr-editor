@@ -28,7 +28,7 @@ async function onFileSelected(event: any) {
   const result_files = [] as Object[];
   for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
     const asJson = await convertToJson(
-      await file.arrayBuffer(),
+      await file.text(),
       getExtension(file.name)
     );
     result_files.push(asJson);
