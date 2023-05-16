@@ -253,22 +253,42 @@ export const useEditorStore = defineStore("editor", {
     create(key: string) {
       console.log("create", key);
       switch (key) {
-        case "modifiers":
-        case "modifierGroups":
+        case "constraints":
         case "conditions":
-        case "conditionGroups":
-          this.add(
+          return this.add(
             [
               {
+                type: "min",
+                value: 1,
+                field: "selections",
+                scope: "parent",
                 id: generateBattlescribeId(),
                 select: true,
               },
             ],
             key
           );
-          return;
+        case "modifiers":
+          return this.add(
+            [
+              {
+                type: "set",
+                value: true,
+                field: "hidden",
+                id: generateBattlescribeId(),
+                select: true,
+              },
+            ],
+            key
+          );
+        case "modifierGroups":
+        case "conditionGroups":
+          return this.add(
+            [{ id: generateBattlescribeId(), select: true }],
+            key
+          );
         default:
-          this.add(
+          return this.add(
             [
               {
                 id: generateBattlescribeId(),
@@ -278,12 +298,11 @@ export const useEditorStore = defineStore("editor", {
             ],
             key
           );
-          return;
           throw new Error(`Unimplemented create key "${key}"`);
       }
     },
     allowed_children(obj: EditorBase, key: string): Set<string> {
-      let result = (entries as any)[key].allowedChildrens;
+      let result = (entries as any)[key]?.allowedChildrens;
       while (typeof result === "string") {
         const new_key = (obj as any)[result];
         if (typeof new_key !== "string" || new_key === result) {

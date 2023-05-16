@@ -27,18 +27,18 @@
   </template>
 
   <Teleport to="#titlebar-content" v-if="cat">
-    <div>
+    <div class="ml-10px">
       Editing {{ cat.name }} v{{ cat.revision }}
       <template v-if="changed">
         <template v-if="saving">
-          <span class="gray mx-2">saving...</span>
+          <span class="status mx-2">saving...</span>
         </template>
         <template v-else-if="unsaved">
-          <span class="gray mx-2">unsaved</span>
+          <span class="status mx-2">unsaved</span>
           <button class="bouton save" @click="save">Save</button>
         </template>
         <template v-else="unsaved">
-          <span class="gray mx-2">saved</span>
+          <span class="status mx-2">saved</span>
         </template>
       </template>
     </div>
@@ -209,5 +209,9 @@ export default {
 <style scoped>
 .save {
   width: 100px;
+}
+
+.status {
+  color: lightgray;
 }
 </style>

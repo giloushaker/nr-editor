@@ -68,6 +68,8 @@
         </div>
         <Separator v-if="item.isLink() || item.links" />
       </template>
+
+      <!-- All Adds -->
       <template v-if="payload">
         <div @click="store.create(payload)">
           <img
@@ -283,6 +285,9 @@ export default {
       }
       return this.allowedChildren.has(child);
     },
+    openSelected() {
+      console.log("open");
+    },
   },
 
   computed: {
@@ -304,7 +309,9 @@ export default {
     },
 
     allowedChildren() {
-      return this.store.allowed_children(this.item, this.item.parentKey);
+      return (
+        this.store.allowed_children(this.item, this.item.parentKey) || new Set()
+      );
     },
 
     filter() {
