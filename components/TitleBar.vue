@@ -7,11 +7,11 @@
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
-      <div class="flex flex-col" @click="bug = true">
+      <div class="flex flex-col iconbox" @click="bug = true">
         <img src="assets/icons/bug.png" class="icon" />
         <span class="icontext">Bug</span>
       </div>
-      <div class="flex flex-col" @click="feedback = true">
+      <div class="flex flex-col iconbox" @click="feedback = true">
         <img src="assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
       </div>
@@ -172,7 +172,7 @@ export default {
   font-size: smaller;
   text-align: center;
 }
-.icon:hover {
+.iconbox:hover {
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.2);
 }
