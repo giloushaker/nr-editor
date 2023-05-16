@@ -100,7 +100,7 @@ export default {
 
 .items {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   grid-gap: 5px 0px;
   grid-auto-rows: 1fr;
   align-items: stretch;
