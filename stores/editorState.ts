@@ -18,6 +18,7 @@ import {
 import {
   enumerate_zip,
   generateBattlescribeId,
+  textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import {
   Catalogue,
@@ -40,6 +41,7 @@ export interface IEditorState {
   categories: Array<CategoryEntry>;
   possibleChildren: Array<ItemKeys>;
   filter: string;
+  filterRegex: RegExp;
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
   clipboard: EditorBase[];
@@ -57,6 +59,7 @@ export const useEditorStore = defineStore("editor", {
     selectedElement: null,
     selectedItem: null,
     filter: "",
+    filterRegex: RegExp(""),
     possibleChildren,
     categories: categories,
     undoStack: [],
@@ -65,6 +68,10 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
+    set_filter(filter: string) {
+      this.$state.filter = filter;
+      this.filterRegex = textSearchRegex(filter);
+    },
     init() {
       (globalThis as any).undo = () => this.undo();
       (globalThis as any).redo = () => this.redo();
@@ -212,9 +219,18 @@ export const useEditorStore = defineStore("editor", {
       this.do_action("remove", undo, redo);
       this.unselect();
     },
-    add(data: (EditorBase | Record<string, any>)[], childKey?: string) {
+    add(
+      data:
+        | (EditorBase | Record<string, any>)
+        | (EditorBase | Record<string, any>)[],
+      childKey?: string
+    ) {
       const selections = this.get_selections();
       if (!selections.length) return;
+
+      if (!Array.isArray(data)) {
+        data = [data];
+      }
 
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
@@ -224,7 +240,7 @@ export const useEditorStore = defineStore("editor", {
       function redo() {
         addeds = [];
         for (const item of selections) {
-          for (const entry of data) {
+          for (const entry of data as (EditorBase | Record<string, any>)[]) {
             // Create array to put the childs in
             const key = childKey || entry.parentKey;
             if (!(item as any)[key]) (item as any)[key] = [];
@@ -250,56 +266,59 @@ export const useEditorStore = defineStore("editor", {
       }
       this.do_action("add", undo, redo);
     },
-    create(key: string) {
+    open_selected() {
+      for (const el of this.selections as any[]) {
+        el.obj.open();
+      }
+    },
+    create(key: string, data?: any) {
       console.log("create", key);
       switch (key) {
         case "constraints":
         case "conditions":
-          return this.add(
-            [
-              {
-                type: "min",
-                value: 1,
-                field: "selections",
-                scope: "parent",
-                id: generateBattlescribeId(),
-                select: true,
-              },
-            ],
+          this.add(
+            {
+              type: "min",
+              value: 1,
+              field: "selections",
+              scope: "parent",
+              id: generateBattlescribeId(),
+              select: true,
+              ...data,
+            },
             key
           );
+          break;
         case "modifiers":
-          return this.add(
-            [
-              {
-                type: "set",
-                value: true,
-                field: "hidden",
-                id: generateBattlescribeId(),
-                select: true,
-              },
-            ],
+          this.add(
+            {
+              type: "set",
+              value: true,
+              field: "hidden",
+              id: generateBattlescribeId(),
+              select: true,
+            },
             key
           );
+          break;
+
         case "modifierGroups":
         case "conditionGroups":
-          return this.add(
-            [{ id: generateBattlescribeId(), select: true }],
-            key
-          );
+          this.add({ id: generateBattlescribeId(), select: true }, key);
+          break;
+
         default:
-          return this.add(
-            [
-              {
-                id: generateBattlescribeId(),
-                select: true,
-                name: `New ${getTypeName(key)}`,
-              },
-            ],
+          this.add(
+            {
+              id: generateBattlescribeId(),
+              select: true,
+              name: `New ${getTypeName(key)}`,
+            },
             key
           );
-          throw new Error(`Unimplemented create key "${key}"`);
+          break;
       }
+      this.open_selected();
     },
     allowed_children(obj: EditorBase, key: string): Set<string> {
       let result = (entries as any)[key]?.allowedChildrens;

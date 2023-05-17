@@ -137,7 +137,6 @@ export default {
   methods: {
     update() {
       const pos = (this.$el as HTMLDivElement)?.offsetTop || 0;
-      console.log("splitView height", pos);
       this.height = innerHeight - pos;
     },
     clamp(val: number) {

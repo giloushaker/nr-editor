@@ -3,30 +3,38 @@
     <legend>Quick Constraints</legend>
     <div class="columns">
       <div class="buttonList">
-        <button class="bouton">
+        <button class="bouton" @click="add('min', 'parent')">
           <img src="/assets/icons/iconeplus.png" />MIN IN PARENT
         </button>
-        <button class="bouton" v-if="withCategory">
+        <button
+          class="bouton"
+          v-if="withCategory"
+          @click="add('min', 'parent')"
+        >
           <img src="/assets/icons/iconeplus.png" />MIN IN CATEGORY
         </button>
-        <button class="bouton">
+        <button class="bouton" @click="add('min', 'force')">
           <img src="/assets/icons/iconeplus.png" />MIN IN FORCE
         </button>
-        <button class="bouton">
+        <button class="bouton" @click="add('min', 'roster')">
           <img src="/assets/icons/iconeplus.png" />MIN IN ROSTER
         </button>
       </div>
       <div class="buttonList">
-        <button class="bouton">
+        <button class="bouton" @click="add('max', 'parent')">
           <img src="/assets/icons/iconeplus.png" />MAX IN PARENT
         </button>
-        <button class="bouton" v-if="withCategory">
+        <button
+          class="bouton"
+          v-if="withCategory"
+          @click="add('max', 'parent')"
+        >
           <img src="/assets/icons/iconeplus.png" />MAX IN CATEGORY
         </button>
-        <button class="bouton">
+        <button class="bouton" @click="add('max', 'force')">
           <img src="/assets/icons/iconeplus.png" />MAX IN FORCE
         </button>
-        <button class="bouton">
+        <button class="bouton" @click="add('max', 'roster')">
           <img src="/assets/icons/iconeplus.png" />MAX IN ROSTER
         </button>
       </div>
@@ -35,10 +43,15 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "../../left_panel/components/CatalogueEntry.vue";
+import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorState";
 
 export default {
   emits: ["catalogueChanged"],
+  setup() {
+    return { store: useEditorStore() };
+  },
   props: {
     item: {
       type: Object as PropType<ItemTypes>,
@@ -54,6 +67,14 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+    add(type: string, scope: string) {
+      this.store.create("constraints", {
+        type: type,
+        scope: scope,
+        value: 1,
+        select: false,
+      });
     },
   },
 };

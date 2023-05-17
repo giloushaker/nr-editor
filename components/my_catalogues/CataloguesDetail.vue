@@ -26,10 +26,12 @@
       </div>
     </div>
 
-    <button class="bouton" @click="$emit('edit', catalogue)">
-      Edit Catalogue
-    </button>
-    <button class="bouton" @click="deletePopup = true">Delete Catalogue</button>
+    <div class="flex flex-col">
+      <button class="bouton mx-auto" @click="$emit('edit', catalogue)">
+        Edit
+      </button>
+      <button class="bouton mx-auto" @click="deletePopup = true">Delete</button>
+    </div>
     <PopupDialog
       button="Confirm"
       text="Cancel"

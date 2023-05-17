@@ -152,10 +152,12 @@ export default {
   },
 
   methods: {
-    init(data) {
-      if (data?.select) {
+    init(data: any) {
+      if (data?.select !== undefined) {
+        if (data.select) {
+          this.store.do_select(null, this as any, this.group);
+        }
         delete data?.select;
-        this.store.do_select(null, this as any, this.group);
       }
     },
     select() {
@@ -164,6 +166,11 @@ export default {
     },
     unselect() {
       this.selected = false;
+    },
+    open() {
+      if (this.collapsed) {
+        this.collapseSwitch();
+      }
     },
     do_select(e: MouseEvent) {
       this.store.do_select(e, this as any, this.group);

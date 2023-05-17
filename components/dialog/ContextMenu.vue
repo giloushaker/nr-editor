@@ -35,7 +35,6 @@ export default {
       e.preventDefault();
       this.$nextTick(() => {
         this.width = this.el?.clientWidth || this.width;
-        console.log(this.el);
         this.height = this.el?.clientHeight || this.height;
         this.left = Math.min(e.clientX, window.innerWidth - this.width);
         this.top = Math.min(e.clientY, window.innerHeight - 7 - this.height);
