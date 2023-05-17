@@ -31,6 +31,7 @@
         Edit
       </button>
       <button class="bouton mx-auto" @click="deletePopup = true">Delete</button>
+      <button class="bouton mx-auto" @click="download_file">Download</button>
     </div>
     <PopupDialog
       button="Confirm"
@@ -46,6 +47,9 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
+import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataCatalogue,
@@ -53,6 +57,7 @@ import {
   BSICatalogue,
   BSIGameSystem,
 } from "~/assets/shared/battlescribe/bs_types";
+import { download } from "~/assets/shared/util";
 import PopupDialog from "~/shared_components/PopupDialog.vue";
 export default {
   emits: ["edit", "delete"],
@@ -66,6 +71,18 @@ export default {
     return {
       deletePopup: false,
     };
+  },
+  methods: {
+    download_file() {
+      const data = getDataObject(this.catalogue);
+      const xml = convertToXml(this.catalogue);
+      console.log(xml);
+      // download(
+      // `${data.name}.cat`,
+      // "application/xml",
+      // rootToJson(data, this.catalogue)
+      // );
+    },
   },
   components: { PopupDialog },
   computed: {

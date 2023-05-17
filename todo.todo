@@ -16,7 +16,7 @@ Interface:
         ✔ Indication that catalogue has been modified by the user @done(23-05-09 14:09)
 
 
-    ☐ Bug report form
+    ✔ Bug report form @done(23-05-17 17:54)
     
 Editor:
 
@@ -35,13 +35,13 @@ Editor:
         ☐ references to
         ☐ move back/forward (like browser navigation)
         ✔ save @done(23-05-08 18:48)
-        ☐ export xml/zip
+        ✔ export xml/zip @done(23-05-17 19:19)
         ☐ upload to github
         ✔ download from github (needs proxy) @done(23-05-08 18:43)
         ☐ view old versions, changes
         ☐ load a roster in ui
         ✔ search entries @done(23-05-09 01:14)
-            ☐ search nested
+            ✔ search nested @done(23-05-17 17:53)
 
             
 

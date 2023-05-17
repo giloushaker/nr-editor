@@ -82,7 +82,7 @@
             v-if="payload === 'selectionEntries'"
           >
             <img class="pr-4px" :src="`/assets/bsicons/entryLink.png`" />
-            entryLink
+            Link
           </div>
           <Separator />
         </template>
@@ -204,10 +204,10 @@ import {
   ItemKeys,
   ItemTypes,
   getName,
+  getTypeName,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
-import { getTypeName } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   setup() {

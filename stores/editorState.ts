@@ -14,6 +14,7 @@ import {
   popAtEntryPath,
   setAtEntryPath,
   scrambleIds,
+  getTypeName,
 } from "~/assets/shared/battlescribe/bs_editor";
 import {
   enumerate_zip,
@@ -25,11 +26,7 @@ import {
   EditorBase,
 } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
-import {
-  Base,
-  entryToJson,
-  getTypeName,
-} from "~/assets/shared/battlescribe/bs_main";
+import { Base, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 
 export interface IEditorState {
