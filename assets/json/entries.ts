@@ -117,6 +117,9 @@ export const entries = {
   profiles: {
     allowedChildrens: ["modifiers", "modifierGroups"],
   },
+  sharedProfiles: {
+    allowedChildrens: ["modifiers", "modifierGroups"],
+  },
   infoGroup: {
     allowedChildrens: [
       "profiles",
