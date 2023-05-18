@@ -1,73 +1,78 @@
 <template>
-  <div class="rightPanel h-full">
-    <CatalogueRightPanelPublicationPanel
-      v-if="item.editorTypeName == 'publication'"
-      :item="item"
-      @catalogueChanged="changed"
-    />
+  <div class="rightPanel h-full" v-if="item">
+    <template v-if="store.mode === 'edit'">
+      <CatalogueRightPanelPublicationPanel
+        v-if="item.editorTypeName == 'publication'"
+        :item="item"
+        @catalogueChanged="changed"
+      />
 
-    <CatalogueRightPanelCostTypesPanel
-      v-if="item.editorTypeName == 'costType'"
-      :item="item"
-      @catalogueChanged="changed"
-    >
-    </CatalogueRightPanelCostTypesPanel>
+      <CatalogueRightPanelCostTypesPanel
+        v-else-if="item.editorTypeName == 'costType'"
+        :item="item"
+        @catalogueChanged="changed"
+      >
+      </CatalogueRightPanelCostTypesPanel>
 
-    <CatalogueRightPanelProfileTypesPanel
-      v-if="item.editorTypeName == 'profileType'"
-      :item="item"
-      @catalogueChanged="changed"
-    >
-    </CatalogueRightPanelProfileTypesPanel>
+      <CatalogueRightPanelProfileTypesPanel
+        v-else-if="item.editorTypeName == 'profileType'"
+        :item="item"
+        @catalogueChanged="changed"
+      >
+      </CatalogueRightPanelProfileTypesPanel>
 
-    <CatalogueRightPanelCategoryEntriesPanel
-      v-if="item.editorTypeName == 'category'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelForceEntriesPanel
-      v-if="item.editorTypeName == 'force'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelProfilesPanel
-      v-if="item.editorTypeName == 'profile'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelRulesPanel
-      v-if="item.editorTypeName == 'rule'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelSelectionEntryPanel
-      v-if="item.editorTypeName == 'selectionEntry'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelLinkPanel
-      v-if="item.editorTypeName == 'entryLink'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelModifierPanel
-      v-if="item.editorTypeName == 'modifier'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelConstraintPanel
-      v-if="item.editorTypeName == 'constraint'"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
+      <CatalogueRightPanelCategoryEntriesPanel
+        v-else-if="item.editorTypeName == 'category'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelForceEntriesPanel
+        v-else-if="item.editorTypeName == 'force'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelProfilesPanel
+        v-else-if="item.editorTypeName == 'profile'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelRulesPanel
+        v-else-if="item.editorTypeName == 'rule'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelSelectionEntryPanel
+        v-else-if="item.editorTypeName == 'selectionEntry'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="item.editorTypeName == 'entryLink'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelModifierPanel
+        v-else-if="item.editorTypeName == 'modifier'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelConstraintPanel
+        v-else-if="item.editorTypeName == 'constraint'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+    </template>
+    <template v-else-if="store.mode === 'references'">
+      <CatalogueRightPanelReferencesPanel :item="item" :catalogue="catalogue" />
+    </template>
   </div>
 </template>
 
@@ -96,7 +101,7 @@ export default {
 
   computed: {
     item() {
-      return this.store.selectedItem.$parent.item;
+      return this.store.get_selected();
     },
   },
 };

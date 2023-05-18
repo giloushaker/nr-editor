@@ -51,26 +51,26 @@ export default {
       const target = (e.target as HTMLDivElement).tagName;
       if (target !== "BODY") return;
 
-      if (e.ctrlKey && e.key === "z") {
+      if (e.ctrlKey && e.key.toLowerCase() === "z") {
         this.store.undo();
       }
 
-      if (e.ctrlKey && e.key === "y") {
+      if (e.ctrlKey && e.key.toLowerCase() === "y") {
         this.store.redo();
       }
 
-      if (e.ctrlKey && e.key === "x") {
+      if (e.ctrlKey && e.key.toLowerCase() === "x") {
         this.store.set_clipboard(this.store.get_selections());
         this.store.remove();
       }
-      if (e.ctrlKey && e.key === "c") {
+      if (e.ctrlKey && e.key.toLowerCase() === "c") {
         this.store.set_clipboard(this.store.get_selections());
       }
-      if (e.ctrlKey && e.key === "v") {
+      if (e.ctrlKey && e.key.toLowerCase() === "v") {
         this.store.add(this.store.get_clipboard());
       }
 
-      if (e.key === "Delete") {
+      if (e.key.toLowerCase() === "delete") {
         this.store.remove();
       }
     },
@@ -95,6 +95,7 @@ export default {
         this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
         for (const p of this.filtered) {
           (p as any).showInEditor = true;
+
           forEachParent(p as EditorBase, (parent) => {
             (parent as any).showInEditor = true;
           });

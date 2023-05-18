@@ -106,7 +106,7 @@ export default {
         expected: this.text2,
         type: "bug",
       };
-      fetch("https://newrecruit.eu/api/feedback/post", {
+      fetch("https://corsproxy.io/?https://www.newrecruit.eu/api/feedback", {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
@@ -120,7 +120,7 @@ export default {
         content: this.text,
         type: "suggestion",
       };
-      fetch("https://newrecruit.eu/api/feedback/post", {
+      fetch("https://corsproxy.io/?https://www.newrecruit.eu/api/feedback", {
         method: "POST",
         body: JSON.stringify(data),
         headers: {

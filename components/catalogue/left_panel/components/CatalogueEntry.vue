@@ -62,7 +62,7 @@
       <template #default="{ payload }">
         <template v-if="!payload && item">
           <div v-if="link.targetId">Follow</div>
-          <div v-if="item.links">
+          <div v-if="item.links" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
           </div>
           <Separator v-if="item.isLink() || item.links" />

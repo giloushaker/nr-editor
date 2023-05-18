@@ -42,6 +42,7 @@ export interface IEditorState {
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
   clipboard: EditorBase[];
+  mode: "edit" | "references";
 }
 
 export interface CatalogueEntryItem {
@@ -62,6 +63,7 @@ export const useEditorStore = defineStore("editor", {
     undoStack: [],
     undoStackPos: -1,
     clipboard: [],
+    mode: "edit",
   }),
 
   actions: {
@@ -129,6 +131,7 @@ export const useEditorStore = defineStore("editor", {
       } else {
         (el as any).select();
         this.selectedItem = el;
+        this.mode = "edit";
       }
     },
     do_rightclick_select(
@@ -141,6 +144,9 @@ export const useEditorStore = defineStore("editor", {
     },
     get_selections(): EditorBase[] {
       return this.selections.map((o) => o.obj.$parent.item);
+    },
+    get_selected(): EditorBase | undefined {
+      return this.selectedItem?.$parent?.item;
     },
     do_action(type: string, undo: () => void, redo: () => void) {
       redo();

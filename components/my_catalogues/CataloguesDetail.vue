@@ -76,12 +76,11 @@ export default {
     download_file() {
       const data = getDataObject(this.catalogue);
       const xml = convertToXml(this.catalogue);
-      console.log(xml);
-      // download(
-      // `${data.name}.cat`,
-      // "application/xml",
-      // rootToJson(data, this.catalogue)
-      // );
+      download(
+        (data as any).gameSystem ? `${data.name}.gst` : `${data.name}.cat`,
+        "application/xml",
+        xml
+      );
     },
   },
   components: { PopupDialog },
