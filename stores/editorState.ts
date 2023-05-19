@@ -275,7 +275,6 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     create(key: string, data?: any) {
-      console.log("create", key);
       switch (key) {
         case "constraints":
         case "conditions":
@@ -332,7 +331,6 @@ export const useEditorStore = defineStore("editor", {
         }
         result = (entries as any)[new_key].allowedChildrens;
       }
-      console.log(key, result);
       return new Set(result);
     },
   },

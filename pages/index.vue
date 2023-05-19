@@ -36,7 +36,7 @@
         <div v-if="selectedItem">
           <template v-if="mode === 'create'">
             <CataloguesCreate
-              class="fixed box"
+              class="fixed"
               @create="createCatalogue"
               :catalogue="selectedItem"
             />
@@ -69,6 +69,7 @@ import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 
 export default defineComponent({
   components: {
@@ -116,7 +117,7 @@ export default defineComponent({
         catalogue: {
           library: false,
           id: generateBattlescribeId(),
-          name: "",
+          name: "New Catalogue",
           gameSystemId: gameSystem.id,
           gameSystemRevision: gameSystem.revision,
           revision: 1,
@@ -124,7 +125,6 @@ export default defineComponent({
       } as any;
     },
     createCatalogue(data: BSIDataCatalogue) {
-      console.log("Created catalogue", data);
       this.getSystem(data.catalogue.gameSystemId).setCatalogue(data);
       this.cataloguesStore.setEdited(getDataDbId(data), true);
       this.selectedItem = data;

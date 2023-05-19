@@ -27,6 +27,7 @@
 <script lang="ts">
 export default {
   props: {
+    modelValue: String,
     placeholder: {
       type: String,
       default: "Search...",
@@ -63,7 +64,7 @@ export default {
       searchPattern: "",
       lastSearch: null as string | null,
       editing: false,
-      selectedOption: null as { option: any } | null,
+      selectedOption: null as { option: any; selected?: boolean } | null,
     };
   },
 
@@ -106,7 +107,10 @@ export default {
       if (this.valueField.length) {
         res = opt.option[this.valueField];
       }
-      this.selectedOption = opt;
+      this.selectedOption = {
+        option: opt.option,
+        selected: true,
+      };
       this.$emit("update:modelValue", res);
       this.$emit("change");
     },
@@ -127,6 +131,7 @@ export default {
         if (found) {
           this.selectedOption = {
             option: found,
+            selected: true,
           };
         } else {
           this.selectedOption = null;

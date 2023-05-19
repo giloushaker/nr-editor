@@ -45,7 +45,7 @@
         <template #title>
           <span>
             <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
-            {{ getName(item) }}
+            {{ getName(item) }} ({{ item.editorTypeName }})
           </span></template
         >
         <template #content>

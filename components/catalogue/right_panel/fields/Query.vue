@@ -29,6 +29,25 @@
           </div>
         </template>
       </UtilAutocomplete>
+
+      <div class="checks">
+        <div v-if="childSelections">
+          <input
+            type="checkbox"
+            label="childForces"
+            v-model="item.includeChildSelections"
+          />
+          <label for="childForces">And all child Selections</label>
+        </div>
+        <div v-if="childForces">
+          <input
+            type="checkbox"
+            label="childForces"
+            v-model="item.includeChildForces"
+          />
+          <label for="childForces">And all child Forces</label>
+        </div>
+      </div>
     </div>
   </fieldset>
 </template>
@@ -40,6 +59,7 @@ import {
   EditorBase,
 } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
+  BSICondition,
   BSIConstraint,
   BSICostType,
 } from "~/assets/shared/battlescribe/bs_types";
@@ -48,12 +68,20 @@ export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIConstraint>,
+      type: Object as PropType<BSIConstraint | BSICondition>,
       required: true,
     },
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
+    },
+    childForces: {
+      type: Boolean,
+      default: false,
+    },
+    childSelections: {
+      type: Boolean,
+      default: false,
     },
   },
 
@@ -83,15 +111,20 @@ export default {
       return res;
     },
 
-    allForces(): Force[] {
-      let res: Force[] = [];
+    allForces(): (Force & EditorBase)[] {
+      // TODO: add child forces
+      let res: (Force & EditorBase)[] = [];
       for (let elt of this.catalogue.forcesIterator()) {
-        res.push(elt);
+        res.push(elt as Force & EditorBase);
       }
       return res;
     },
 
-    allScopes() {
+    allScopes(): {
+      id: string;
+      name: string;
+      editorTypeName: string;
+    }[] {
       let res = [
         {
           id: "parent",
@@ -115,7 +148,9 @@ export default {
         },
       ];
 
-      return res.concat(this.allCategories);
+      return res
+        .concat(this.allCategories as any)
+        .concat(this.allForces as any);
     },
   },
 };
@@ -125,6 +160,12 @@ export default {
 .constraint {
   display: grid;
   grid-template-columns: 1fr 50px max-content;
+}
+
+.checks {
+  display: grid;
+  grid-gap: 10px;
+  grid-auto-flow: column;
 }
 
 .query {

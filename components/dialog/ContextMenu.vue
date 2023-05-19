@@ -8,7 +8,6 @@
 
 <script lang="ts">
 import { VueElement } from "nuxt/dist/app/compat/capi";
-import { useEditorStore } from "~/stores/editorState";
 
 export default {
   data() {
@@ -93,7 +92,7 @@ export default {
   background-color: white;
   color: black;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
   border: 1px solid $gray;
 
   min-width: 200px;

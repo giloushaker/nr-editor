@@ -4,6 +4,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "start": "nuxt start",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
@@ -27,5 +28,9 @@
     "pinia": "^2.0.36",
     "unzipit": "^1.4.3",
     "vite-plugin-commonjs": "^0.7.0"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "htmlWhitespaceSensitivity": "strict"
   }
 }

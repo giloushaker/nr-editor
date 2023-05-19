@@ -7,7 +7,9 @@
         <td>
           <select @change="changed" :value="item.type">
             <option :value="'selectionEntry'">Selection Entry</option>
-            <option :value="'entryGroup'">Entry Group</option>
+            <option :value="'selectionEntryGroup'">
+              Selection Entry Group
+            </option>
           </select>
         </td>
       </tr>
