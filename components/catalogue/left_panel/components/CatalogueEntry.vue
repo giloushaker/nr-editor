@@ -1,14 +1,7 @@
 <template>
-  <div
-    class="item unselectable"
-    @click.middle.stop="debug"
-    @contextmenu.stop="contextmenu.show"
-  >
+  <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
     <template
-      v-if="
-        item.editorTypeName === 'catalogue' ||
-        item.editorTypeName === 'gameSystem'
-      "
+      v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'"
       v-for="category of groupedCategories"
     >
       <CatalogueLeftPanelComponentsEditorCollapsibleBox
@@ -17,6 +10,7 @@
         :group="get_group('entries')"
         :payload="item"
         @contextmenu.stop="contextmenu.show($event, category.type)"
+        :class="category.type"
         nobox
       >
         <template #title>
@@ -41,6 +35,7 @@
         :titleCollapse="false"
         :group="group || []"
         :payload="item"
+        :class="item.parentKey"
       >
         <template #title>
           <span>
@@ -61,7 +56,12 @@
     <DialogContextMenu ref="contextmenu">
       <template #default="{ payload }">
         <template v-if="!payload && item">
-          <div v-if="link.targetId">Follow</div>
+          <div v-if="link.target" @click="store.follow(link)"
+            >Follow
+            <span class="gray" v-if="link.target.catalogue !== item.catalogue">
+              &nbsp;({{ link.target.catalogue.getName() }})
+            </span>
+          </div>
           <div v-if="item.links" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
           </div>
@@ -71,33 +71,21 @@
         <!-- All Adds -->
         <template v-if="payload">
           <div @click="store.create(payload)">
-            <img
-              class="pr-4px"
-              :src="`/assets/bsicons/${getTypeName(payload)}.png`"
-            />
+            <img class="pr-4px" :src="`/assets/bsicons/${getTypeName(payload)}.png`" />
             {{ getTypeName(payload) }}
           </div>
-          <div
-            @click="store.create('entryLink')"
-            v-if="payload === 'selectionEntries'"
-          >
+          <div @click="store.create('entryLink')" v-if="payload === 'selectionEntries'">
             <img class="pr-4px" :src="`/assets/bsicons/entryLink.png`" />
             Link
           </div>
           <Separator />
         </template>
         <template v-else>
-          <div
-            @click="store.create('selectionEntries')"
-            v-if="allowed('selectionEntries')"
-          >
+          <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
             <img class="pr-4px" src="/assets/bsicons/selectionEntry.png" />
             Entry
           </div>
-          <div
-            @click="store.create('selectionEntryGroups')"
-            v-if="allowed('selectionEntryGroups')"
-          >
+          <div @click="store.create('selectionEntryGroups')" v-if="allowed('selectionEntryGroups')">
             <img class="pr-4px" src="/assets/bsicons/selectionEntryGroup.png" />
             Group
           </div>
@@ -105,15 +93,7 @@
             <img class="pr-4px" src="/assets/bsicons/entryLink.png" />
             Link
           </div>
-          <Separator
-            v-if="
-              allowed([
-                'selectionEntries',
-                'selectionEntryGroups',
-                'entryLinks',
-              ])
-            "
-          />
+          <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
           <div @click="store.create('profiles')" v-if="allowed('profiles')">
             <img class="pr-4px" src="/assets/bsicons/profile.png" />
             Profile
@@ -130,17 +110,12 @@
             <img class="pr-4px" src="/assets/bsicons/infoLink.png" />
             Info Link
           </div>
-          <Separator
-            v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])"
-          />
+          <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
             <img class="pr-4px" src="/assets/bsicons/condition.png" />
             Condition
           </div>
-          <div
-            @click="store.create('conditionGroups')"
-            v-if="allowed('conditionGroups')"
-          >
+          <div @click="store.create('conditionGroups')" v-if="allowed('conditionGroups')">
             <img class="pr-4px" src="/assets/bsicons/conditionGroup.png" />
             Condition Group
           </div>
@@ -148,13 +123,8 @@
             <img class="pr-4px" src="/assets/bsicons/repeat.png" />
             Repeat
           </div>
-          <Separator
-            v-if="allowed(['conditions', 'conditionGroups', 'repeats'])"
-          />
-          <div
-            @click="store.create('constraints')"
-            v-if="allowed('constraints')"
-          >
+          <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
+          <div @click="store.create('constraints')" v-if="allowed('constraints')">
             <img class="pr-4px" src="/assets/bsicons/constraint.png" />
             Constraint
           </div>
@@ -162,34 +132,22 @@
             <img class="pr-4px" src="/assets/bsicons/modifier.png" />
             Modifier
           </div>
-          <div
-            @click="store.create('modifierGroups')"
-            v-if="allowed('modifierGroups')"
-          >
+          <div @click="store.create('modifierGroups')" v-if="allowed('modifierGroups')">
             <img class="pr-4px" src="/assets/bsicons/modifierGroup.png" />
             Modifier Group
           </div>
-          <Separator
-            v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])"
-          />
+          <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />
         </template>
 
-        <div @click="store.cut()" v-if="!payload">
-          Cut<span class="gray absolute right-5px">Ctrl+X</span>
-        </div>
-        <div @click="store.copy" v-if="!payload">
-          Copy<span class="gray absolute right-5px">Ctrl+C</span>
-        </div>
-        <div @click="store.paste">
-          Paste<span class="gray absolute right-5px">Ctrl+V</span>
-        </div>
+        <div @click="store.cut()" v-if="!payload"> Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
+        <div @click="store.copy" v-if="!payload"> Copy<span class="gray absolute right-5px">Ctrl+C</span> </div>
+        <div @click="store.paste"> Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
 
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
-          <img
-            class="w-12px pr-4px"
-            src="assets/icons/redcross.png"
-          />Remove<span class="gray absolute right-5px">Del</span>
+          <img class="w-12px pr-4px" src="assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
+            >Del</span
+          >
         </div>
       </template>
     </DialogContextMenu>
@@ -200,12 +158,7 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
-import {
-  ItemKeys,
-  ItemTypes,
-  getName,
-  getTypeName,
-} from "~/assets/shared/battlescribe/bs_editor";
+import { ItemKeys, ItemTypes, getName, getTypeName } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 
@@ -242,10 +195,7 @@ export default {
     getName(obj: any) {
       return getName(obj);
     },
-    getTypedArray(
-      item: ItemTypes,
-      type: ItemKeys | undefined
-    ): CatalogueEntryItem[] {
+    getTypedArray(item: ItemTypes, type: ItemKeys | undefined): CatalogueEntryItem[] {
       if (!type) {
         return [];
       }
@@ -275,14 +225,11 @@ export default {
   },
 
   computed: {
-    link(): Link {
-      return this.item as Link;
+    link(): Link & EditorBase {
+      return this.item as Link & EditorBase;
     },
     iscollapsible() {
-      return (
-        this.mixedChildren.length > 0 &&
-        this.hiddenChilds < this.mixedChildren.length
-      );
+      return this.mixedChildren.length > 0 && this.hiddenChilds < this.mixedChildren.length;
     },
     contextmenu() {
       return this.$refs.contextmenu as {
@@ -298,9 +245,7 @@ export default {
     },
 
     allowedChildren() {
-      return (
-        this.store.allowed_children(this.item, this.item.parentKey) || new Set()
-      );
+      return this.store.allowed_children(this.item, this.item.parentKey) || new Set();
     },
 
     mixedChildren(): Array<CatalogueEntryItem> {
@@ -318,9 +263,7 @@ export default {
     groupedCategories() {
       return this.categories.map((o) => ({
         ...o,
-        items: this.getTypedArray(this.item, o.type).concat(
-          this.getTypedArray(this.item, o.links)
-        ),
+        items: this.getTypedArray(this.item, o.type).concat(this.getTypedArray(this.item, o.links)),
       }));
     },
   },

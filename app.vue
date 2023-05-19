@@ -86,6 +86,7 @@ export default defineComponent({
   async created() {
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
+    globalThis.isVue3 = true;
   },
   components: { TitleBar },
 });

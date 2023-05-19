@@ -1,15 +1,10 @@
 <template>
   <div class="leftPanel">
     <div class="top" @keydown.capture="keydown">
-      <CatalogueEntry :item="catalogue" grouped />
+      <CatalogueEntry :item="catalogue" grouped id="editor-entries" />
     </div>
     <div class="bottom">
-      <input
-        v-model="storeFilter"
-        type="search"
-        placeholder="search..."
-        class="w-full"
-      />
+      <input v-model="storeFilter" type="search" placeholder="search..." class="w-full" />
     </div>
   </div>
 </template>
@@ -17,10 +12,7 @@
 <script lang="ts">
 import { forEachParent } from "~/assets/shared/battlescribe/bs_editor";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorState";
 
 export default {
@@ -87,17 +79,17 @@ export default {
       set(v: string) {
         const prev = this.filtered as EditorBase[];
         for (const p of prev) {
-          delete (p as any).showInEditor;
+          delete p.showInEditor;
           forEachParent(p as EditorBase, (parent) => {
-            delete (parent as any).showInEditor;
+            delete parent.showInEditor;
           });
         }
         this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
         for (const p of this.filtered) {
-          (p as any).showInEditor = true;
+          p.showInEditor = true;
 
           forEachParent(p as EditorBase, (parent) => {
-            (parent as any).showInEditor = true;
+            parent.showInEditor = true;
           });
         }
         this.store.set_filter(v);

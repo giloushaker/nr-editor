@@ -1,4 +1,4 @@
-import { VueElement } from "nuxt/dist/app/compat/capi";
+import { VNode, VueElement } from "nuxt/dist/app/compat/capi";
 import { defineStore } from "pinia";
 import {
   ItemTypeNames,
@@ -15,19 +15,14 @@ import {
   setAtEntryPath,
   scrambleIds,
   getTypeName,
+  forEachParent,
 } from "~/assets/shared/battlescribe/bs_editor";
-import {
-  enumerate_zip,
-  generateBattlescribeId,
-  textSearchRegex,
-} from "~/assets/shared/battlescribe/bs_helpers";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { enumerate_zip, generateBattlescribeId, textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
-import { Base, entryToJson } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
+import ContextMenuVue from "~/components/dialog/ContextMenu.vue";
 
 export interface IEditorState {
   selectionsParent?: Object | null;
@@ -101,11 +96,7 @@ export const useEditorStore = defineStore("editor", {
     is_selected(obj: any) {
       return this.selections.findIndex((o) => o.obj === obj) !== -1;
     },
-    do_select(
-      e: MouseEvent | null,
-      el: VueElement,
-      group: VueElement | VueElement[]
-    ) {
+    do_select(e: MouseEvent | null, el: VueElement, group: VueElement | VueElement[]) {
       const entries = Array.isArray(group) ? group : [group];
       const last = toRaw(this.selectedElementGroup);
       const last_element = toRaw(this.selectedElement);
@@ -134,16 +125,15 @@ export const useEditorStore = defineStore("editor", {
         this.mode = "edit";
       }
     },
-    do_rightclick_select(
-      e: MouseEvent,
-      el: VueElement,
-      group: VueElement | VueElement[]
-    ) {
+    do_rightclick_select(e: MouseEvent, el: VueElement, group: VueElement | VueElement[]) {
       if (this.is_selected(el)) return;
       this.do_select(e, el, group);
     },
+    get_base_from_vue_el(vue_el: any) {
+      return vue_el.$parent.item;
+    },
     get_selections(): EditorBase[] {
-      return this.selections.map((o) => o.obj.$parent.item);
+      return this.selections.map((o) => this.get_base_from_vue_el(o.obj));
     },
     get_selected(): EditorBase | undefined {
       return this.selectedItem?.$parent?.item;
@@ -222,12 +212,7 @@ export const useEditorStore = defineStore("editor", {
       this.do_action("remove", undo, redo);
       this.unselect();
     },
-    add(
-      data:
-        | (EditorBase | Record<string, any>)
-        | (EditorBase | Record<string, any>)[],
-      childKey?: string
-    ) {
+    add(data: (EditorBase | Record<string, any>) | (EditorBase | Record<string, any>)[], childKey?: string) {
       const selections = this.get_selections();
       if (!selections.length) return;
 
@@ -332,6 +317,70 @@ export const useEditorStore = defineStore("editor", {
         result = (entries as any)[new_key].allowedChildrens;
       }
       return new Set(result);
+    },
+    async get_el_from_base(obj: EditorBase) {
+      let current = document.getElementById("editor-entries") as Element;
+      if (!current) {
+        return;
+      }
+      function get_ctx(el: any): any {
+        return el.__vnode.ctx.ctx;
+      }
+      async function open_el(el: any) {
+        const context = get_ctx(el);
+        context.open();
+        await context.$nextTick();
+      }
+
+      const path = getEntryPath(obj);
+      current = current.getElementsByClassName(`EditorCollapsibleBox ${path[0].key}`)[0];
+      await open_el(current);
+      const nodes = [] as EditorBase[];
+      forEachParent(obj, (parent) => {
+        nodes.push(parent);
+      });
+      const catalogue = nodes.pop();
+      nodes.reverse();
+      nodes.push(obj);
+      const last = nodes[nodes.length - 1];
+      for (const node of nodes) {
+        const childs = current.getElementsByClassName(`EditorCollapsibleBox ${node.parentKey}`);
+        const child = [...childs].find((o) => this.get_base_from_vue_el(get_ctx(o)) === node);
+        if (!child) {
+          throw new Error("Invalid path");
+        }
+        current = child;
+        if (node !== last) {
+          await open_el(current);
+        }
+      }
+
+      const context = get_ctx(current);
+      this.do_select(null, context, context);
+      current.scrollIntoView({
+        behavior: "instant",
+        block: "center",
+        inline: "center",
+      });
+    },
+    open(obj: EditorBase) {
+      obj.openInEditor = true;
+      forEachParent(obj, (parent) => {
+        parent.openInEditor = true;
+      });
+    },
+    goto(obj: EditorBase) {
+      this.open(obj as EditorBase);
+      this.get_el_from_base(obj as EditorBase);
+    },
+    follow(obj?: EditorBase & Link) {
+      if (obj?.target) {
+        if (obj.target.catalogue !== obj.catalogue) {
+          console.warn("Cannot follow link to another catalogue");
+          return;
+        }
+        this.goto(obj.target as EditorBase);
+      }
     },
   },
 });

@@ -19,6 +19,8 @@ Interface:
     ✔ Bug report form @done(23-05-17 17:54)
     
 Editor:
+    UI:
+        ☐ show imported entries
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
@@ -26,13 +28,13 @@ Editor:
             ✔ add in ui @done(23-05-15 19:09)
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)
-        ☐ move to
+        ✔ move to @done(23-05-19 21:10)
             Would allow the used to right click on an entry to move it somewhere else, 
             like an imported catalogue for example, 
             we would do that automatically without breaking previous links
         ☐ errors
         ☐ references from
-        ☐ references to
+        ✔ references to @done(23-05-19 21:10)
         ☐ move back/forward (like browser navigation)
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)
@@ -42,6 +44,9 @@ Editor:
         ☐ load a roster in ui
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
+            ☐ show childs of found
+            
+
 
             
 
