@@ -35,18 +35,10 @@
       <template #right>
         <div v-if="selectedItem">
           <template v-if="mode === 'create'">
-            <CataloguesCreate
-              class="fixed"
-              @create="createCatalogue"
-              :catalogue="selectedItem"
-            />
+            <CataloguesCreate class="fixed" @create="createCatalogue" :catalogue="selectedItem" />
           </template>
           <template v-else>
-            <CataloguesDetail
-              @delete="deleteCatalogue"
-              @edit="editCatalogue"
-              :catalogue="selectedItem"
-            />
+            <CataloguesDetail @delete="deleteCatalogue" @edit="editCatalogue" :catalogue="selectedItem" />
           </template>
         </div>
       </template>
@@ -55,11 +47,7 @@
 </template>
 
 <script lang="ts">
-import {
-  BSIData,
-  BSIDataCatalogue,
-  BSIDataSystem,
-} from "~/assets/shared/battlescribe/bs_types";
+import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
@@ -97,11 +85,12 @@ export default defineComponent({
   methods: {
     systemAndCatalogues(gst: GameSystemFiles) {
       let res = [];
-      if (!gst.gameSystem) {
-        return [];
+      if (gst.gameSystem) {
+        res.push(gst.gameSystem);
       }
-      res.push(gst.gameSystem);
-      res.push(...Object.values(gst.catalogueFiles));
+      if (gst.catalogueFiles) {
+        res.push(...Object.values(gst.catalogueFiles));
+      }
       return res;
     },
 

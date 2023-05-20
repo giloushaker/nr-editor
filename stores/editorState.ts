@@ -23,6 +23,9 @@ import { entries } from "assets/json/entries";
 import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import ContextMenuVue from "~/components/dialog/ContextMenu.vue";
+import { saveCatalogue } from "~/assets/ts/systems/game_system";
+import { useCataloguesStore } from "./cataloguesState";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 
 export interface IEditorState {
   selectionsParent?: Object | null;
@@ -38,13 +41,18 @@ export interface IEditorState {
   undoStackPos: number;
   clipboard: EditorBase[];
   mode: "edit" | "references";
+  unsavedChanges: Record<string, CatalogueState>;
 }
 
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
   type: ItemKeys;
 }
-
+export interface CatalogueState {
+  changed: boolean;
+  unsaved: boolean;
+  savingPromise?: Promise<any>;
+}
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorState => ({
     selections: [],
@@ -59,9 +67,37 @@ export const useEditorStore = defineStore("editor", {
     undoStackPos: -1,
     clipboard: [],
     mode: "edit",
+    unsavedChanges: {} as Record<string, CatalogueState>,
   }),
 
   actions: {
+    get_catalogue_state(catalogue: Catalogue) {
+      const id = getDataDbId(catalogue);
+      return this.unsavedChanges[id];
+    },
+    set_catalogue_state(catalogue: Catalogue, state: boolean) {
+      const id = getDataDbId(catalogue);
+      if (!(id in this.unsavedChanges)) {
+        this.unsavedChanges[id] = {
+          changed: false,
+          unsaved: false,
+        };
+      }
+      this.unsavedChanges[id].unsaved = state;
+      if (state) {
+        this.unsavedChanges[id].changed = true;
+      }
+
+      const obj = this.unsavedChanges[id];
+    },
+    save_catalogue(catalogue: Catalogue) {
+      saveCatalogue(catalogue, catalogue as any);
+      const cataloguesStore = useCataloguesStore();
+      const id = getDataDbId(catalogue);
+      cataloguesStore.setEdited(id, true);
+      const state = this.get_catalogue_state(catalogue);
+      state.unsaved = false;
+    },
     set_filter(filter: string) {
       this.$state.filter = filter;
       this.filterRegex = textSearchRegex(filter);
@@ -210,6 +246,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.do_action("remove", undo, redo);
+      this.set_catalogue_state(catalogue, true);
       this.unselect();
     },
     add(data: (EditorBase | Record<string, any>) | (EditorBase | Record<string, any>)[], childKey?: string) {
@@ -253,6 +290,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.do_action("add", undo, redo);
+      this.set_catalogue_state(catalogue, true);
     },
     open_selected() {
       for (const el of this.selections as any[]) {

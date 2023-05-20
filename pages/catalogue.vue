@@ -17,11 +17,7 @@
         <LeftPanel class="h-full" :catalogue="cat" />
       </template>
       <template #right>
-        <CatalogueRightPanel
-          class="h-full overflow-y-auto"
-          :catalogue="cat"
-          @catalogueChanged="onChanged"
-        />
+        <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
       </template>
     </SplitView>
   </template>
@@ -30,14 +26,11 @@
     <div class="ml-10px">
       Editing {{ cat.name }} v{{ cat.revision }}
       <template v-if="changed">
-        <template v-if="saving">
-          <span class="status mx-2">saving...</span>
-        </template>
-        <template v-else-if="unsaved">
+        <template v-if="unsaved">
           <span class="status mx-2">unsaved</span>
-          <button class="bouton save" @click="save">Save</button>
+          <button class="bouton save" @click="store.save_catalogue(cat as Catalogue)">Save</button>
         </template>
-        <template v-else="unsaved">
+        <template v-else>
           <span class="status mx-2">saved</span>
         </template>
       </template>
@@ -50,14 +43,8 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
-import {
-  getDataObject,
-  getDataDbId,
-} from "~/assets/shared/battlescribe/bs_system";
-import {
-  GameSystemFiles,
-  saveCatalogue,
-} from "~/assets/ts/systems/game_system";
+import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
@@ -70,10 +57,6 @@ export default {
       cat: null as Catalogue | null,
       raw: null as BSIData | null,
       item: null as ItemTypes | null,
-      unsaved: false,
-      saving: false,
-      savingPromise: null as any,
-      changed: false,
     };
   },
 
@@ -106,7 +89,24 @@ export default {
       this.error = e;
     }
   },
-
+  computed: {
+    changed() {
+      if (!this.cat) return false;
+      return this.store.get_catalogue_state(this.cat as Catalogue)?.changed || false;
+    },
+    unsaved() {
+      if (!this.cat) return false;
+      return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
+    },
+  },
+  beforeRouteLeave(to, from, next) {
+    const answer = window.confirm("You have unsaved changes that will be lost");
+    if (answer) {
+      next();
+    } else {
+      next(false);
+    }
+  },
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
@@ -122,30 +122,10 @@ export default {
 
       e.preventDefault();
       e.stopPropagation();
-      this.save();
+      this.store.save_catalogue(this.cat as Catalogue);
     },
     onChanged() {
-      this.changed = true;
-      this.unsaved = true;
-      if (!this.savingPromise) {
-        this.savingPromise = setTimeout(
-          () => this.unsaved && this.save(),
-          30000
-        );
-      }
-    },
-    save() {
-      this.saving = true;
-      if (!this.cat || !this.raw) {
-        console.log("couldn't save: no cat");
-        return;
-      }
-
-      saveCatalogue(this.cat as Catalogue, this.raw);
-      this.cataloguesStore.setEdited(getDataDbId(this.cat as Catalogue), true);
-      this.unsaved = false;
-      this.savingPromise = null;
-      this.saving = false;
+      this.store.set_catalogue_state(this.cat as Catalogue, true);
     },
 
     async load(idCat: string | null | undefined) {
@@ -153,8 +133,7 @@ export default {
         throw "No catalogue ID";
       }
 
-      let dbobj: { content: BSIData; id: string } | undefined =
-        await db.catalogues.get(idCat);
+      let dbobj: { content: BSIData; id: string } | undefined = await db.catalogues.get(idCat);
 
       if (!dbobj) {
         dbobj = await db.systems.get(idCat);
@@ -165,9 +144,7 @@ export default {
 
       const file = dbobj.content as BSIData;
       const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
-      const systemId = file.catalogue
-        ? file.catalogue.gameSystemId
-        : file.gameSystem?.id;
+      const systemId = file.catalogue ? file.catalogue.gameSystemId : file.gameSystem?.id;
 
       if (!id || !systemId) {
         throw Error("Unable to open this catalogue");

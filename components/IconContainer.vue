@@ -30,10 +30,7 @@ import { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "./ErrorIcon.vue";
-import {
-  getDataDbId,
-  getDataObject,
-} from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 export default {
   emits: ["new", "itemClicked"],
@@ -46,7 +43,6 @@ export default {
       required: true,
     },
     modelValue: {
-      type: Object as PropType<null | BSIData>,
       required: true,
     },
   },
