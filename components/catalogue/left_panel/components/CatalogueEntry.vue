@@ -12,6 +12,7 @@
         @contextmenu.stop="contextmenu.show($event, category.type)"
         :class="category.type"
         nobox
+        :defcollapsed="false"
       >
         <template #title>
           <span>

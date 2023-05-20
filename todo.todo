@@ -34,7 +34,7 @@ Editor:
             we would do that automatically without breaking previous links
         ☐ errors
         ☐ references from
-        ✔ references to @done(23-05-19 21:10)
+        ☐ references to
         ☐ move back/forward (like browser navigation)
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)
@@ -44,7 +44,7 @@ Editor:
         ☐ load a roster in ui
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
-            ☐ show childs of found
+            ✔ show childs of found @done(23-05-21 01:08)
             
 
 
