@@ -21,7 +21,7 @@
         </template>
         <template #content>
           <template v-for="entry of category.items">
-            <CatalogueEntry :item="entry.item" :group="get_group(entry.type)" />
+            <CatalogueEntry :item="entry.item" :group="get_group(entry.type)" :forceShowRecursive="forceShow" />
           </template>
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -49,6 +49,7 @@
             :item="child.item"
             :group="get_group(item.parentKey)"
             :key="child.item.id"
+            :forceShowRecursive="forceShow"
           />
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -168,11 +169,15 @@ export default {
   },
   props: {
     item: {
-      type: Object as PropType<ItemTypes & EditorBase>,
+      type: Object as PropType<EditorBase>,
       required: true,
     },
     group: {
       type: Array,
+    },
+    forceShowRecursive: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -190,7 +195,7 @@ export default {
       return this.groups[key];
     },
     debug() {
-      console.log(this.item.name, this.item);
+      console.log(this.item.name, this.forceShow, this.item);
     },
     getName(obj: any) {
       return getName(obj);
@@ -207,7 +212,7 @@ export default {
 
       const result = [];
       for (const elt of arr) {
-        if (this.store.filter && elt.showInEditor !== true) continue;
+        if (!this.filter_child(elt)) continue;
 
         result.push({ item: elt, type: type });
       }
@@ -221,6 +226,12 @@ export default {
         return false;
       }
       return this.allowedChildren.has(child);
+    },
+    filter_child(elt: EditorBase) {
+      if (!this.forceShow) {
+        if (this.store.filter && elt.showInEditor !== true) return false;
+      }
+      return true;
     },
   },
 
@@ -247,14 +258,16 @@ export default {
     allowedChildren() {
       return this.store.allowed_children(this.item, this.item.parentKey) || new Set();
     },
-
+    forceShow() {
+      return this.item.showChildsInEditor || this.forceShowRecursive;
+    },
     mixedChildren(): Array<CatalogueEntryItem> {
       const res = [];
       for (const cat of this.possibleChildren) {
         const sub = (this.item as any)[cat] as any[];
         if (!sub || !Array.isArray(sub)) continue;
         for (const elt of sub) {
-          if (this.store.filter && elt.showInEditor !== true) continue;
+          if (!this.filter_child(elt)) continue;
           res.push({ type: cat, item: elt });
         }
       }

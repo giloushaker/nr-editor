@@ -80,14 +80,16 @@ export default {
         const prev = this.filtered as EditorBase[];
         for (const p of prev) {
           delete p.showInEditor;
+          delete p.showChildsInEditor;
           forEachParent(p as EditorBase, (parent) => {
             delete parent.showInEditor;
+            delete p.showChildsInEditor;
           });
         }
         this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
         for (const p of this.filtered) {
           p.showInEditor = true;
-
+          p.showChildsInEditor = true;
           forEachParent(p as EditorBase, (parent) => {
             parent.showInEditor = true;
           });
