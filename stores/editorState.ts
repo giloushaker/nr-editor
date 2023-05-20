@@ -124,8 +124,11 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
+    is_el_selected(obj: any) {
+      return this.selections.find((o) => o.obj === obj) !== undefined;
+    },
     select(obj: any, onunselected: () => unknown, payload?: any) {
-      if (!this.selections.includes(obj)) {
+      if (!this.is_el_selected(obj)) {
         this.selections.push({ obj, onunselected, payload });
       }
     },
@@ -218,26 +221,31 @@ export const useEditorStore = defineStore("editor", {
       this.add(this.get_clipboard());
     },
     remove() {
-      const paths = [] as EntryPathEntry[][];
       const selections = this.get_selections();
       if (!selections.length) return;
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
+
+      let entries = [] as EditorBase[];
       for (const selected of selections) {
         if (selected.catalogue !== catalogue) continue;
-        const path = getEntryPath(selected);
-        if (path.length) {
-          paths.push(path);
-        }
+        entries.push(selected);
       }
+      let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
       function redo() {
+        const temp = entries;
         removeds = [];
-        for (const path of paths) {
+        paths = [];
+        for (const entry of temp) {
+          const path = getEntryPath(entry);
           const removed = popAtEntryPath(catalogue, path);
           removeds.push(removed);
+          paths.push(path);
           onRemoveEntry(removed);
         }
+        removeds.reverse();
+        paths.reverse();
       }
       function undo() {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
