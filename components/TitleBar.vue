@@ -15,39 +15,26 @@
         <img src="assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
       </div>
-      <PopupDialog
-        v-if="bug"
-        :disabled="!can_submit_bug"
-        v-model="bug"
-        button="Submit"
-        @button="submit_bug"
-      >
+
+      <a class="flex flex-col iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
+        <img
+          class="icon"
+          src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6918e57475a843f59f_icon_clyde_black_RGB.svg"
+        />
+        <span class="icontext">Discord</span>
+      </a>
+      <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">
         <div class="m-20px">
           <h2 class="text-center">Bug Report form</h2>
           <label for="contact">Contact:</label>
           <div>
             <input type="text" id="contact" v-model="contact" />
           </div>
-          <label for="text1"
-            >What happened
-            <span class="gray">(include the steps to reproduce)</span>:*</label
-          >
-          <textarea
-            required
-            class="w-full textbox"
-            type="text"
-            id="text1"
-            v-model="text1"
-          />
+          <label for="text1">What happened <span class="gray">(include the steps to reproduce)</span>:*</label>
+          <textarea required class="w-full textbox" type="text" id="text1" v-model="text1" />
 
           <label for="text2">What did you expect to happen:*</label>
-          <textarea
-            required
-            class="w-full mt-1px textbox"
-            type="text"
-            id="text2"
-            v-model="text2"
-          />
+          <textarea required class="w-full mt-1px textbox" type="text" id="text2" v-model="text2" />
         </div>
       </PopupDialog>
       <PopupDialog
@@ -63,16 +50,8 @@
           <div>
             <input type="text" id="contact" v-model="contact" />
           </div>
-          <label for="text">
-            Do you have any suggestions to improve NewRecruit ?:*
-          </label>
-          <textarea
-            required
-            class="w-full mt-1px textbox"
-            type="text"
-            id="text"
-            v-model="text"
-          />
+          <label for="text"> Do you have any suggestions to improve NewRecruit ?:* </label>
+          <textarea required class="w-full mt-1px textbox" type="text" id="text" v-model="text" />
         </div>
       </PopupDialog>
     </div>
@@ -167,10 +146,13 @@ export default {
 .icon {
   margin: auto;
   padding: 4px;
+  max-height: 20px;
 }
 .icontext {
   font-size: smaller;
   text-align: center;
+  text-decoration: none;
+  color: white;
 }
 .iconbox:hover {
   cursor: pointer;
