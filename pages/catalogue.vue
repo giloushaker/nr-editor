@@ -105,7 +105,6 @@ export default {
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
-        console.log("unsaved", this.unsaved, this.cat, this.store.get_catalogue_state(this.cat));
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
         return false;
