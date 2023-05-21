@@ -47,6 +47,7 @@ export interface IEditorState {
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
   type: ItemKeys;
+  imported?: boolean;
 }
 export interface CatalogueState {
   changed: boolean;

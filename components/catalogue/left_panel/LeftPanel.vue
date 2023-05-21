@@ -1,9 +1,10 @@
 <template>
   <div class="leftPanel">
     <div class="top" @keydown.capture="keydown">
-      <CatalogueEntry :item="catalogue" grouped id="editor-entries" />
+      <CatalogueEntry :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
-    <div class="bottom">
+    <div class="bottom border-1px border-gray-400 border-solid">
+      <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
       <input v-model="storeFilter" type="search" placeholder="search..." class="w-full" />
     </div>
   </div>
@@ -28,6 +29,7 @@ export default {
   data() {
     return {
       filtered: [] as EditorBase[],
+      showImported: false,
     };
   },
   props: {

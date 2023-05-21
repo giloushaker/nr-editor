@@ -22,7 +22,12 @@
         </template>
         <template #content>
           <template v-for="entry of sorted(category.items)">
-            <CatalogueEntry :item="entry.item" :group="get_group(entry.type)" :forceShowRecursive="forceShow" />
+            <CatalogueEntry
+              :item="entry.item"
+              :group="get_group(entry.type)"
+              :forceShowRecursive="forceShow"
+              :imported="entry.imported"
+            />
           </template>
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -39,7 +44,7 @@
         :class="item.parentKey"
       >
         <template #title>
-          <span>
+          <span :class="{ imported: imported }">
             <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
             {{ getName(item) }} ({{ item.editorTypeName }})
           </span></template
@@ -161,7 +166,7 @@ import { PropType } from "nuxt/dist/app/compat/capi";
 import { CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
 import { ItemKeys, ItemTypes, getName, getTypeName } from "~/assets/shared/battlescribe/bs_editor";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
@@ -179,6 +184,12 @@ export default {
     forceShowRecursive: {
       type: Boolean,
       default: false,
+    },
+    showImported: {
+      type: Boolean,
+    },
+    imported: {
+      type: Boolean,
     },
   },
   data() {
@@ -214,21 +225,30 @@ export default {
     getName(obj: any) {
       return getName(obj);
     },
-    getTypedArray(item: ItemTypes, type: ItemKeys | undefined): CatalogueEntryItem[] {
+    getTypedArray(item: Catalogue, type: ItemKeys | undefined): CatalogueEntryItem[] {
       if (!type) {
         return [];
       }
+      const key = type as keyof Catalogue;
+      const result = [] as CatalogueEntryItem[];
 
-      let arr = (item as any)[type] as Array<any>;
-      if (!arr) {
-        return [];
+      const found = item[key];
+      if (found && Array.isArray(found)) {
+        for (const child of found) {
+          if (!this.filter_child(child as EditorBase)) continue;
+          result.push({ item: child as ItemTypes & EditorBase, type });
+        }
       }
-
-      const result = [];
-      for (const elt of arr) {
-        if (!this.filter_child(elt)) continue;
-
-        result.push({ item: elt, type: type });
+      if (this.showImported) {
+        for (const catalogue of item.importRootEntries) {
+          const found = catalogue[key];
+          if (found && Array.isArray(found)) {
+            for (const child of found) {
+              if (!this.filter_child(child as EditorBase)) continue;
+              result.push({ item: child as ItemTypes & EditorBase, type, imported: true });
+            }
+          }
+        }
       }
       return result;
     },
@@ -299,7 +319,7 @@ export default {
     mixedChildren(): Array<CatalogueEntryItem> {
       const res = [];
       for (const cat of this.possibleChildren) {
-        const sub = (this.item as any)[cat] as any[];
+        const sub = (this.item as any)[cat] as Array<EditorBase & ItemTypes>;
         if (!sub || !Array.isArray(sub)) continue;
         for (const elt of sub) {
           if (!this.filter_child(elt)) continue;
@@ -311,8 +331,8 @@ export default {
     groupedCategories() {
       return this.categories.map((o) => ({
         ...o,
-        items: this.getTypedArray(this.item as ItemTypes, o.type).concat(
-          this.getTypedArray(this.item as ItemTypes, o.links)
+        items: this.getTypedArray(this.item as unknown as Catalogue, o.type).concat(
+          this.getTypedArray(this.item as unknown as Catalogue, o.links)
         ),
       }));
     },
@@ -322,4 +342,8 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
+.imported {
+  color: gray;
+  font-style: italic;
+}
 </style>
