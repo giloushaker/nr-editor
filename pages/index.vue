@@ -19,7 +19,7 @@
     >
       <template #left>
         <div class="scrollable">
-          <fieldset v-for="gst in gameSystems">
+          <fieldset v-for="gst in store.gameSystems">
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
             </legend>
@@ -57,7 +57,7 @@ import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { useEditorStore } from "~/stores/editorState";
 
 export default defineComponent({
   components: {
@@ -72,14 +72,13 @@ export default defineComponent({
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
       mode: "edit",
       editingItem: null as BSIData | null,
-      gameSystems: {} as Record<string, GameSystemFiles>,
     };
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   created() {
-    this.loadSystemsFromDB();
+    this.store.load_systems_from_db();
   },
   updated() {},
   methods: {
@@ -130,10 +129,10 @@ export default defineComponent({
       this.selectedItem = null;
     },
     getSystem(id: string) {
-      if (!(id in this.gameSystems)) {
-        this.gameSystems[id] = new GameSystemFiles();
+      if (!(id in this.store.gameSystems)) {
+        this.store.gameSystems[id] = new GameSystemFiles();
       }
-      return this.gameSystems[id];
+      return this.store.gameSystems[id];
     },
     filesUploaded(files: any[]) {
       console.log("Uploaded", files.length, "files", files);
@@ -151,20 +150,6 @@ export default defineComponent({
         this.getSystem(systemId).setCatalogue(catalogue);
         db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
-      }
-    },
-
-    async loadSystemsFromDB() {
-      let systems = (await db.systems.toArray()).map((o) => o.content);
-      let catalogues = (await db.catalogues.toArray()).map((o) => o.content);
-
-      for (let system of systems) {
-        this.getSystem(system.gameSystem.id).setSystem(system);
-      }
-      for (let catalogue of catalogues) {
-        const systemId = catalogue.catalogue.gameSystemId;
-        const catalogueId = catalogue.catalogue.id;
-        this.getSystem(systemId).catalogueFiles[catalogueId] = catalogue;
       }
     },
 

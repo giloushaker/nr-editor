@@ -32,10 +32,13 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "./ErrorIcon.vue";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
+import { useEditorStore } from "~/stores/editorState";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { ErrorMessage } from "~/assets/shared/error_manager";
 export default {
   emits: ["new", "itemClicked"],
   setup() {
-    return { cataloguesStore: useCataloguesStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   props: {
     items: {
@@ -50,8 +53,16 @@ export default {
     elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
     },
-    errors(data: BSIData) {
-      return [];
+    errors(data: BSIData): ErrorMessage[] {
+      const result = [] as ErrorMessage[];
+      if (this.store.get_catalogue_state(data)?.unsaved) {
+        result.push({
+          severity: "info",
+          msg: "Unsaved",
+          type: 0,
+        });
+      }
+      return result;
     },
     edited(data: BSIData) {
       return this.cataloguesStore.getEdited(getDataDbId(data));

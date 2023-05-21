@@ -16,7 +16,6 @@
     "sass": "^1.62.1"
   },
   "dependencies": {
-    "@nuxt/types": "^2.16.3",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.1",
     "@pinia/nuxt": "^0.4.10",
     "@sidebase/nuxt-session": "^0.2.7",

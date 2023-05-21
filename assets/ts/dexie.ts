@@ -1,9 +1,6 @@
 // db.ts
 import Dexie, { Table } from "dexie";
-import {
-  BSIDataCatalogue,
-  BSIDataSystem,
-} from "../shared/battlescribe/bs_types";
+import { BSIDataCatalogue, BSIDataSystem } from "../shared/battlescribe/bs_types";
 
 export class MySubClassedDexie extends Dexie {
   catalogues!: Table<{ id: string; content: BSIDataCatalogue }>;
@@ -12,7 +9,7 @@ export class MySubClassedDexie extends Dexie {
   constructor() {
     super("nr-editor");
     this.version(5).stores({
-      catalogues: "id, content.catalogue.id",
+      catalogues: "id, content.catalogue.id, content.catalogue.gameSystemId",
       systems: "id",
     });
   }

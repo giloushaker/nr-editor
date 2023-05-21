@@ -1,12 +1,8 @@
-import { VNode, VueElement } from "nuxt/dist/app/compat/capi";
+import { VueElement } from "nuxt/dist/app/compat/capi";
 import { defineStore } from "pinia";
 import {
-  ItemTypeNames,
   ItemKeys,
   ItemTypes,
-  CategoryEntry,
-  possibleChildren,
-  categories,
   EntryPathEntry,
   getEntryPath,
   onAddEntry,
@@ -22,10 +18,11 @@ import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_cata
 import { entries } from "assets/json/entries";
 import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
-import ContextMenuVue from "~/components/dialog/ContextMenu.vue";
-import { saveCatalogue } from "~/assets/ts/systems/game_system";
+import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { db } from "~/assets/ts/dexie";
+import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 
 export interface IEditorState {
   selectionsParent?: Object | null;
@@ -33,14 +30,14 @@ export interface IEditorState {
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
-  categories: Array<CategoryEntry>;
-  possibleChildren: Array<ItemKeys>;
   filter: string;
   filterRegex: RegExp;
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
   clipboard: EditorBase[];
   mode: "edit" | "references";
+  gameSystemsLoaded: boolean;
+  gameSystems: Record<string, GameSystemFiles>;
   unsavedChanges: Record<string, CatalogueState>;
 }
 
@@ -60,19 +57,63 @@ export const useEditorStore = defineStore("editor", {
     selectedElementGroup: null,
     selectedElement: null,
     selectedItem: null,
+
     filter: "",
     filterRegex: RegExp(""),
-    possibleChildren,
-    categories: categories,
+
     undoStack: [],
     undoStackPos: -1,
+
     clipboard: [],
+
     mode: "edit",
+
+    gameSystems: {},
+    gameSystemsLoaded: false,
     unsavedChanges: {} as Record<string, CatalogueState>,
   }),
 
   actions: {
-    get_catalogue_state(catalogue: Catalogue) {
+    async load_system_from_db(id: string) {
+      const dbsystem = await db.systems.get(id);
+      const system = dbsystem?.content;
+      if (!system) {
+        throw new Error("System not found " + id);
+      }
+      const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
+      const dbcataloguesarr = await dbcatalogues.toArray();
+      const catalogues = dbcataloguesarr.map((o) => o.content);
+
+      const systemFiles = this.get_system(system.gameSystem.id);
+      systemFiles.setSystem(system);
+      for (let catalogue of catalogues) {
+        const catalogueId = catalogue.catalogue.id;
+        systemFiles.catalogueFiles[catalogueId] = catalogue;
+      }
+    },
+    async load_systems_from_db(force = false) {
+      if (!this.gameSystemsLoaded && !force) {
+        this.gameSystemsLoaded = true;
+        let systems = await db.systems.offset(0).keys();
+        for (let system of systems) {
+          this.load_system_from_db(system as string);
+        }
+      }
+    },
+    async get_or_load_system(id: string) {
+      if (!(id in this.gameSystems)) {
+        this.gameSystems[id] = new GameSystemFiles();
+        await this.load_system_from_db(id);
+      }
+      return this.gameSystems[id];
+    },
+    get_system(id: string) {
+      if (!(id in this.gameSystems)) {
+        this.gameSystems[id] = new GameSystemFiles();
+      }
+      return this.gameSystems[id];
+    },
+    get_catalogue_state(catalogue: BSIData | Catalogue) {
       const id = getDataDbId(catalogue);
       return this.unsavedChanges[id];
     },

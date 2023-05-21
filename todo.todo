@@ -39,7 +39,7 @@ Editor:
             ✔ add in ui @done(23-05-15 19:09)
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)
-        ✔ move to @done(23-05-19 21:10)
+        ☐ move to
             Would allow the used to right click on an entry to move it somewhere else, 
             like an imported catalogue for example, 
             we would do that automatically without breaking previous links

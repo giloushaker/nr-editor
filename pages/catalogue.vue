@@ -34,6 +34,9 @@
           <span class="status mx-2">saved</span>
         </template>
       </template>
+      <template v-if="systemFiles && !systemFiles?.allLoaded">
+        <button class="bouton save" @click="systemFiles.loadAll">Load all</button>
+      </template>
     </div>
   </Teleport>
 </template>
@@ -43,11 +46,10 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
-import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_system";
-import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 
 export default {
   components: { LeftPanel },
@@ -57,6 +59,7 @@ export default {
       cat: null as Catalogue | null,
       raw: null as BSIData | null,
       item: null as ItemTypes | null,
+      systemFiles: null as GameSystemFiles | null,
     };
   },
 
@@ -99,17 +102,10 @@ export default {
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
   },
-  beforeRouteLeave(to, from, next) {
-    const answer = window.confirm("You have unsaved changes that will be lost");
-    if (answer) {
-      next();
-    } else {
-      next(false);
-    }
-  },
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
+        console.log("unsaved", this.unsaved, this.cat, this.store.get_catalogue_state(this.cat));
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
         return false;
@@ -128,56 +124,23 @@ export default {
       this.store.set_catalogue_state(this.cat as Catalogue, true);
     },
 
-    async load(idCat: string | null | undefined) {
-      if (!idCat) {
-        throw "No catalogue ID";
+    async load(catalogueFileId: string) {
+      if (!catalogueFileId) {
+        throw new Error("couldn't load catalogue: no id");
       }
-
-      let dbobj: { content: BSIData; id: string } | undefined = await db.catalogues.get(idCat);
-
-      if (!dbobj) {
-        dbobj = await db.systems.get(idCat);
+      const catFile = await db.catalogues.get(catalogueFileId);
+      const systemId = catFile ? catFile.content.catalogue.gameSystemId : catalogueFileId;
+      const catalogueId = catFile ? catFile.content.catalogue.id : catalogueFileId;
+      const system = await this.store.get_or_load_system(systemId);
+      let loaded = system.getLoadedCatalogue({ targetId: catalogueId });
+      if (!loaded) {
+        loaded = await system.loadCatalogue({
+          targetId: catalogueId,
+          name: catFile?.content.catalogue.name,
+        });
       }
-      if (!dbobj) {
-        throw "No catalogue exists with this ID";
-      }
-
-      const file = dbobj.content as BSIData;
-      const id = file.catalogue ? file.catalogue.id : file.gameSystem?.id;
-      const systemId = file.catalogue ? file.catalogue.gameSystemId : file.gameSystem?.id;
-
-      if (!id || !systemId) {
-        throw Error("Unable to open this catalogue");
-      }
-
-      let system: BSIDataSystem;
-      if (file.catalogue) {
-        const systemID = file.catalogue.gameSystemId;
-
-        if (!systemID && file.catalogue) {
-          throw "This catalogue does not belong to any a game system";
-        }
-        const systemData = await db.systems.get(systemID);
-        if (!systemData) {
-          throw "The Game System File (gst) for this catalogue is not loaded";
-        }
-
-        system = systemData.content;
-      } else {
-        system = dbobj.content as BSIDataSystem;
-      }
-      const systemFiles = new GameSystemFiles();
-      systemFiles.gameSystem = system;
-
-      const loaded = await systemFiles.loadCatalogue({
-        targetId: getDataObject(file).id,
-        name: getDataObject(file).name,
-      });
-      loaded.processForEditor();
-      loaded.imports.map((o) => o.processForEditor());
-      this.raw = file;
+      this.systemFiles = system;
       this.cat = loaded;
-      (globalThis as any).$catalogue = this.cat;
     },
   },
 };

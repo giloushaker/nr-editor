@@ -16,6 +16,7 @@ export class GameSystem extends BsGameSystem {
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
   catalogueFiles: Record<string, BSIDataCatalogue> = {};
+  allLoaded?: boolean;
   async getData(catalogueLink: BSICatalogueLink, booksDate?: BooksDate): Promise<BSIData> {
     if (catalogueLink.targetId == this.gameSystem?.gameSystem.id) {
       return this.gameSystem;
@@ -43,6 +44,15 @@ export class GameSystemFiles extends BSCatalogueManager {
     const loaded = await loadData(this, data, booksDate);
     loaded.processForEditor();
     return loaded;
+  }
+  async loadAll() {
+    if (this.gameSystem) {
+      await this.loadCatalogue({ targetId: this.gameSystem.gameSystem.id });
+      for (const catalogue of Object.values(this.catalogueFiles)) {
+        await this.loadCatalogue({ targetId: catalogue.catalogue.id });
+      }
+    }
+    this.allLoaded = true;
   }
   setSystem(system: BSIDataSystem) {
     this.gameSystem = system;

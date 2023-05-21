@@ -46,7 +46,7 @@
         <template #title>
           <span :class="{ imported: imported }">
             <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
-            {{ getName(item) }} ({{ item.editorTypeName }})
+            {{ getName(item) }}
           </span></template
         >
         <template #content>
@@ -170,7 +170,15 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
-import { ItemKeys, ItemTypes, getName, getTypeLabel, getTypeName } from "~/assets/shared/battlescribe/bs_editor";
+import {
+  ItemKeys,
+  ItemTypes,
+  getName,
+  getTypeLabel,
+  getTypeName,
+  categories,
+  possibleChildren,
+} from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 
@@ -309,11 +317,11 @@ export default {
       };
     },
     categories() {
-      return this.store.categories;
+      return categories;
     },
 
     possibleChildren() {
-      return this.store.possibleChildren;
+      return possibleChildren;
     },
 
     allowedChildren() {
