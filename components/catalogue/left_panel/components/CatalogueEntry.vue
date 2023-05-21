@@ -24,7 +24,7 @@
           <template v-for="entry of sorted(category.items)">
             <CatalogueEntry
               :item="entry.item"
-              :group="get_group(entry.type)"
+              :group="get_group(category.type)"
               :forceShowRecursive="forceShow"
               :imported="entry.imported"
             />
@@ -53,7 +53,7 @@
           <CatalogueEntry
             v-for="child of sorted(mixedChildren)"
             :item="child.item"
-            :group="get_group(item.parentKey)"
+            :group="get_group('default')"
             :key="child.item.id"
             :forceShowRecursive="forceShow"
             :imported="imported"
@@ -222,7 +222,7 @@ export default {
       return this.groups[key];
     },
     debug() {
-      console.log(this.item.name, this.forceShow, this.item);
+      console.log(this.item.name, this.forceShow, this.group, this.item);
     },
     getName(obj: any) {
       return getName(obj);

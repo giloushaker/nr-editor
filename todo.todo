@@ -31,7 +31,8 @@ Editor:
             ☐ profileLink
             ☐ ruleLink
             ☐ infoGroupLink
-
+        ☐ profiles
+        
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByName(query) then filter 
