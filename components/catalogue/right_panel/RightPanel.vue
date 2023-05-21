@@ -1,17 +1,9 @@
 <template>
   <div class="rightPanel h-full" v-if="item">
     <template v-if="store.mode === 'edit'">
-      <CatalogueRightPanelPublicationPanel
-        v-if="typeName == 'publication'"
-        :item="item"
-        @catalogueChanged="changed"
-      />
+      <CatalogueRightPanelPublicationPanel v-if="typeName == 'publication'" :item="item" @catalogueChanged="changed" />
 
-      <CatalogueRightPanelCostTypesPanel
-        v-else-if="typeName == 'costType'"
-        :item="item"
-        @catalogueChanged="changed"
-      >
+      <CatalogueRightPanelCostTypesPanel v-else-if="typeName == 'costType'" :item="item" @catalogueChanged="changed">
       </CatalogueRightPanelCostTypesPanel>
 
       <CatalogueRightPanelProfileTypesPanel
@@ -52,7 +44,7 @@
         @catalogueChanged="changed"
       />
       <CatalogueRightPanelLinkPanel
-        v-else-if="typeName == 'entryLink'"
+        v-else-if="typeName == 'link' || 'selectionEntryLink' || typeName == 'selectionEntryGroupLink'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"
@@ -77,6 +69,12 @@
       />
       <CatalogueRightPanelConditionPanel
         v-else-if="typeName == 'condition'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="typeName == 'categoryLink'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"

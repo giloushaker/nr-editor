@@ -21,6 +21,16 @@ Interface:
 Editor:
     UI:
         ☐ show imported entries
+        ☐ Entries are sorted by type, then alphabtically. New Entries should always come first
+        ☐ Handle dead links
+    
+    Right Panel:
+        ☐ modifierGroups
+        ☐ infoGroups
+        ☐ infoLinks
+            ☐ profileLink
+            ☐ ruleLink
+            ☐ infoGroupLink
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
@@ -45,8 +55,9 @@ Editor:
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
             ✔ show childs of found @done(23-05-21 01:08)
-            
-
+    Bugs:
+        ☐ Unable to create new links
+        ☐ Nothing in the context menu for top level shared selection entries and shared entry groups
 
             
 

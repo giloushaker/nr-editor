@@ -12,7 +12,7 @@
         @contextmenu.stop="contextmenu.show($event, category.type)"
         :class="category.type"
         nobox
-        :defcollapsed="false"
+        :defcollapsed="true"
       >
         <template #title>
           <span>
@@ -21,7 +21,7 @@
           </span>
         </template>
         <template #content>
-          <template v-for="entry of category.items">
+          <template v-for="entry of sorted(category.items)">
             <CatalogueEntry :item="entry.item" :group="get_group(entry.type)" :forceShowRecursive="forceShow" />
           </template>
         </template>
@@ -46,7 +46,7 @@
         >
         <template #content>
           <CatalogueEntry
-            v-for="child of mixedChildren"
+            v-for="child of sorted(mixedChildren)"
             :item="child.item"
             :group="get_group(item.parentKey)"
             :key="child.item.id"
@@ -185,6 +185,19 @@ export default {
     return {
       groups: {} as Record<string, any>,
       msg: "",
+      order: {
+        selectionEntry: 1,
+        entryLink: 1,
+        selectionEntryGroup: 2,
+        entryGroupLink: 2,
+        constraint: 3,
+        forceEntry: 4,
+        profile: 5,
+        modifier: 6,
+        modifierGroup: 7,
+        categoryLink: 8,
+        infoLink: 9,
+      } as Record<string, number>,
     };
   },
   methods: {
@@ -234,6 +247,27 @@ export default {
       }
       return true;
     },
+
+    sorted(items: CatalogueEntryItem[]) {
+      const res = items.sort((item1, item2) => {
+        const order1 = this.order[item1.item.editorTypeName] || 1000;
+        const order2 = this.order[item2.item.editorTypeName] || 1000;
+
+        if (order1 < order2) {
+          return -1;
+        }
+        if (order1 > order2) {
+          return 1;
+        }
+
+        // Same item type so  alphabetically
+        if (item1.item.name > item2.item.name) {
+          return 1;
+        }
+        return -1;
+      });
+      return res;
+    },
   },
 
   computed: {
@@ -277,7 +311,9 @@ export default {
     groupedCategories() {
       return this.categories.map((o) => ({
         ...o,
-        items: this.getTypedArray(this.item, o.type).concat(this.getTypedArray(this.item, o.links)),
+        items: this.getTypedArray(this.item as ItemTypes, o.type).concat(
+          this.getTypedArray(this.item as ItemTypes, o.links)
+        ),
       }));
     },
   },

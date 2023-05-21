@@ -2,14 +2,13 @@
   <fieldset>
     <legend>Link</legend>
     <table class="editorTable">
-      <tr>
+      <tr v-if="item.type !== undefined">
         <td>Link Type:</td>
         <td>
-          <select @change="changed" :value="item.type">
-            <option :value="'selectionEntry'">Selection Entry</option>
-            <option :value="'selectionEntryGroup'">
-              Selection Entry Group
-            </option>
+          <select @change="changed" v-model="itemType">
+            <option disabled :value="''">Link</option>
+            <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
+            <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
           </select>
         </td>
       </tr>
@@ -17,12 +16,10 @@
         <td>Link To:</td>
         <td>
           <template v-if="item.target">
-            <img
-              v-if="item.type"
-              :src="`/assets/bsicons/${getType(item)}.png`"
-            />
+            <img v-if="item.type" :src="`/assets/bsicons/${getType(item)}.png`" />
             {{ item.target.name }}
           </template>
+          <template v-else> <img src="/assets/icons/error_exclamation.png" /> No target selected </template>
         </td>
       </tr>
       <tr>
@@ -44,10 +41,7 @@
           >
             <template #option="opt">
               <div>
-                <img
-                  class="mr-1 align-middle"
-                  :src="`/assets/bsicons/${opt.option.editorTypeName}.png`"
-                />
+                <img class="mr-1 align-middle" :src="`/assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
               </div>
             </template>
@@ -62,10 +56,7 @@
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorState";
 
 export default {
@@ -78,12 +69,14 @@ export default {
     return {
       filter: "",
       val: null as any,
+      availableTargets: [] as Array<Base & EditorBase>,
+      itemType: "selectionEntry" as string | undefined,
     };
   },
 
   props: {
     item: {
-      type: Object as PropType<Link>,
+      type: Object as PropType<Link & EditorBase>,
       required: true,
     },
     catalogue: {
@@ -92,21 +85,61 @@ export default {
     },
   },
 
+  created() {
+    this.updateTargets();
+    this.itemType = this.item.type;
+  },
+
+  computed: {
+    allowEntries() {
+      return true;
+    },
+
+    allowGroups() {
+      return true;
+    },
+  },
+
   methods: {
+    updateTargets() {
+      let all = this.catalogue.findOptionsByName("").filter((o) => {
+        if (this.targetIsValid(o as ItemTypes) == false) {
+          return false;
+        }
+
+        if (o.isLink()) return false;
+        if (!(o as any).parent?.isCatalogue()) return false;
+        return o.isEntry() || o.isGroup() || o.isCategory();
+      });
+      this.availableTargets = sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
+    },
+
+    typeChanged() {
+      this.updateTargets();
+      this.changed();
+    },
+
+    updateLink() {
+      this.catalogue.updateLink(this.item);
+      this.itemType = this.item.type;
+    },
+
     changed() {
       this.$emit("catalogueChanged");
     },
 
-    getType(item: Link): "selectionEntry" | "selectionEntryGroup" {
-      if (item.type === "selectionEntry") {
+    getType(item: Link): "selectionEntry" | "selectionEntryGroup" | "category" {
+      if (!item.target) {
         return "selectionEntry";
       }
-      return "selectionEntryGroup";
-    },
 
-    updateLink() {
-      this.catalogue.updateLink(this.item as Link & EditorBase);
-      this.changed();
+      if ((item.target as EditorBase).editorTypeName === "selectionEntry") {
+        return "selectionEntry";
+      }
+      if ((item.target as EditorBase).editorTypeName === "selectionEntryGroup") {
+        return "selectionEntryGroup";
+      }
+      return "category";
     },
 
     itemName(elt: Base) {
@@ -118,22 +151,20 @@ export default {
     },
 
     targetIsValid(target: ItemTypes) {
-      return target.editorTypeName == this.item.type;
+      if (this.itemType == undefined) {
+        return target.editorTypeName == "category";
+      }
+      return target.editorTypeName == this.itemType;
     },
   },
 
-  computed: {
-    availableTargets() {
-      let all = this.catalogue.findOptionsByName("").filter((o) => {
-        if (this.targetIsValid(o as ItemTypes) == false) {
-          return false;
-        }
+  watch: {
+    item() {
+      this.updateTargets();
+    },
 
-        if (o.isLink()) return false;
-        if (!(o as any).parent?.isCatalogue()) return false;
-        return o.isEntry() || o.isGroup();
-      });
-      return sortByAscending(all, (o) => o.name);
+    itemType() {
+      this.updateTargets();
     },
   },
 };

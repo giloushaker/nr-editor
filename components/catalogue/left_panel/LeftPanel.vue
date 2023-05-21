@@ -11,7 +11,6 @@
 
 <script lang="ts">
 import { forEachParent } from "~/assets/shared/battlescribe/bs_editor";
-import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorState";
 
