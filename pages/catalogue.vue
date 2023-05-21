@@ -4,6 +4,9 @@
       {{ error }}
     </span>
   </template>
+  <template v-else-if="loading">
+    <div class="h-7/8 flex items-center justify-center"><span> Loading... </span> </div>
+  </template>
   <template v-else-if="cat">
     <SplitView
       class="h-full"
@@ -60,6 +63,7 @@ export default {
       raw: null as BSIData | null,
       item: null as ItemTypes | null,
       systemFiles: null as GameSystemFiles | null,
+      loading: false,
     };
   },
 
@@ -102,6 +106,13 @@ export default {
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
   },
+  watch: {
+    cat(nv, pv) {
+      if (nv !== pv) {
+        this.store.unselect();
+      }
+    },
+  },
   methods: {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
@@ -127,19 +138,24 @@ export default {
       if (!catalogueFileId) {
         throw new Error("couldn't load catalogue: no id");
       }
-      const catFile = await db.catalogues.get(catalogueFileId);
-      const systemId = catFile ? catFile.content.catalogue.gameSystemId : catalogueFileId;
-      const catalogueId = catFile ? catFile.content.catalogue.id : catalogueFileId;
-      const system = await this.store.get_or_load_system(systemId);
-      let loaded = system.getLoadedCatalogue({ targetId: catalogueId });
-      if (!loaded) {
-        loaded = await system.loadCatalogue({
-          targetId: catalogueId,
-          name: catFile?.content.catalogue.name,
-        });
+      try {
+        this.loading = true;
+        const catFile = await db.catalogues.get(catalogueFileId);
+        const systemId = catFile ? catFile.content.catalogue.gameSystemId : catalogueFileId;
+        const catalogueId = catFile ? catFile.content.catalogue.id : catalogueFileId;
+        const system = await this.store.get_or_load_system(systemId);
+        let loaded = system.getLoadedCatalogue({ targetId: catalogueId });
+        if (!loaded) {
+          loaded = await system.loadCatalogue({
+            targetId: catalogueId,
+            name: catFile?.content.catalogue.name,
+          });
+        }
+        this.systemFiles = system;
+        this.cat = loaded;
+      } finally {
+        this.loading = false;
       }
-      this.systemFiles = system;
-      this.cat = loaded;
     },
   },
 };

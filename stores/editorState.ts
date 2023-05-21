@@ -164,6 +164,9 @@ export const useEditorStore = defineStore("editor", {
         if (unselected.onunselected) {
           unselected.onunselected();
         }
+        if (unselected.obj === this.selectedItem) {
+          this.selectedItem = null;
+        }
       }
     },
     is_el_selected(obj: any) {
