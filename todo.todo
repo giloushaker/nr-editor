@@ -47,10 +47,14 @@ Editor:
         ☐ references from
         ☐ references to
         ☐ move back/forward (like browser navigation)
+        ☐ load multiple catalogues
+            ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)
         ☐ upload to github
+        ☐ preview profiles/rules (like in builder)
         ✔ download from github (needs proxy) @done(23-05-08 18:43)
+        ☐ https://github.com/BattleScribe/Release/issues/63
         ☐ view old versions, changes
         ☐ load a roster in ui
         ✔ search entries @done(23-05-09 01:14)

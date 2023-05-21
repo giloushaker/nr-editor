@@ -1,26 +1,14 @@
-import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
-import {
-  BSIDataSystem,
-  BSIDataCatalogue,
-  BSICatalogueLink,
-  BSIData,
-} from "~/assets/shared/battlescribe/bs_types";
+import { BSCatalogueManager, loadData } from "~/assets/shared/battlescribe/bs_system";
+import { BSIDataSystem, BSIDataCatalogue, BSICatalogueLink, BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
-import {
-  BookFetchFunction,
-  BsGameSystem,
-} from "~/assets/shared/systems/bs_game_system";
+import { BookFetchFunction, BsGameSystem } from "~/assets/shared/systems/bs_game_system";
 import { GameSystemRow } from "~/assets/shared/types/db_types";
 import { db } from "../dexie";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 
 export class GameSystem extends BsGameSystem {
-  constructor(
-    systemRow: GameSystemRow,
-    lang: string,
-    fetchStrategy: BookFetchFunction
-  ) {
+  constructor(systemRow: GameSystemRow, lang: string, fetchStrategy: BookFetchFunction) {
     super(systemRow, lang, fetchStrategy);
   }
 }
@@ -28,10 +16,7 @@ export class GameSystem extends BsGameSystem {
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
   catalogueFiles: Record<string, BSIDataCatalogue> = {};
-  async getData(
-    catalogueLink: BSICatalogueLink,
-    booksDate?: BooksDate
-  ): Promise<BSIData> {
+  async getData(catalogueLink: BSICatalogueLink, booksDate?: BooksDate): Promise<BSIData> {
     if (catalogueLink.targetId == this.gameSystem?.gameSystem.id) {
       return this.gameSystem;
     }
@@ -51,12 +36,13 @@ export class GameSystemFiles extends BSCatalogueManager {
       return system.content;
     }
 
-    const errorPart = catalogueLink.name
-      ? `name ${catalogueLink.name}`
-      : `id ${catalogueLink.targetId}`;
-    throw Error(
-      `Couldn't import catalogue with ${errorPart}, perhaps it wasnt uploaded?`
-    );
+    const errorPart = catalogueLink.name ? `name ${catalogueLink.name}` : `id ${catalogueLink.targetId}`;
+    throw Error(`Couldn't import catalogue with ${errorPart}, perhaps it wasnt uploaded?`);
+  }
+  async loadData(data: BSIData, booksDate?: BooksDate): Promise<Catalogue> {
+    const loaded = await loadData(this, data, booksDate);
+    loaded.processForEditor();
+    return loaded;
   }
   setSystem(system: BSIDataSystem) {
     this.gameSystem = system;
