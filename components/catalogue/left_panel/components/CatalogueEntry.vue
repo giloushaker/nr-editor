@@ -80,10 +80,10 @@
         <template v-if="payload">
           <div @click="store.create(payload)">
             <img class="pr-4px" :src="`/assets/bsicons/${getTypeName(payload)}.png`" />
-            {{ getTypeName(payload) }}
+            {{ getTypeLabel(getTypeName(payload)) }}
           </div>
           <div @click="store.create('entryLink')" v-if="payload === 'selectionEntries'">
-            <img class="pr-4px" :src="`/assets/bsicons/entryLink.png`" />
+            <img class="pr-4px" :src="`/assets/bsicons/link.png`" />
             Link
           </div>
           <Separator />
@@ -166,7 +166,7 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { CatalogueEntryItem } from "@/stores/editorState";
 import { useEditorStore } from "~/stores/editorState";
-import { ItemKeys, ItemTypes, getName, getTypeName } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemKeys, ItemTypes, getName, getTypeLabel, getTypeName } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 
@@ -214,6 +214,7 @@ export default {
   },
   methods: {
     getTypeName,
+    getTypeLabel,
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];

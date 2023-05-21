@@ -20,8 +20,8 @@ Interface:
     
 Editor:
     UI:
-        ☐ show imported entries
-        ☐ Entries are sorted by type, then alphabtically. New Entries should always come first
+        ✔ show imported entries @done(23-05-21 16:17)
+        ✘ Entries are sorted by type, then alphabtically. New Entries should always come first @cancelled(23-05-21 16:17)
         ☐ Handle dead links
     
     Right Panel:
@@ -56,8 +56,8 @@ Editor:
             ✔ search nested @done(23-05-17 17:53)
             ✔ show childs of found @done(23-05-21 01:08)
     Bugs:
-        ☐ Unable to create new links
-        ☐ Nothing in the context menu for top level shared selection entries and shared entry groups
+        ✔ Unable to create new links @done(23-05-21 16:28)
+        ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)
 
             
 
