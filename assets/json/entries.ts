@@ -61,6 +61,20 @@ export const entries = {
       "modifierGroups",
     ],
   },
+  sharedSelectionEntryGroups: {
+    allowedChildrens: [
+      "selectionEntries",
+      "selectionEntryGroups",
+      "entryLinks",
+      "profiles",
+      "rules",
+      "infoGroups",
+      "infoLinks",
+      "constraints",
+      "modifiers",
+      "modifierGroups",
+    ],
+  },
   selectionEntry: {
     allowedChildrens: [
       "selectionEntries",
