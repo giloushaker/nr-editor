@@ -41,9 +41,6 @@ export default {
   methods: {
     keydown(e: KeyboardEvent) {
       if (!e.target) return;
-      const target = (e.target as HTMLDivElement).tagName;
-      if (target !== "BODY") return;
-
       if (e.ctrlKey && e.key.toLowerCase() === "z") {
         this.store.undo();
       }
