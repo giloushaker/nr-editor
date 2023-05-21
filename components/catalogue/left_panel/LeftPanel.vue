@@ -5,7 +5,7 @@
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
       <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
-      <input v-model="storeFilter" type="search" placeholder="search..." class="w-full" />
+      <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search..." class="w-full" />
     </div>
   </div>
 </template>
@@ -47,6 +47,11 @@ export default {
 
       if (e.ctrlKey && e.key.toLowerCase() === "y") {
         this.store.redo();
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        (this.$refs["editor-searchbox"] as HTMLInputElement).focus();
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "x") {
