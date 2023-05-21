@@ -56,6 +56,7 @@
             :group="get_group(item.parentKey)"
             :key="child.item.id"
             :forceShowRecursive="forceShow"
+            :imported="imported"
           />
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
