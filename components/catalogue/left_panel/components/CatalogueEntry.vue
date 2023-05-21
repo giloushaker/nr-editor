@@ -70,10 +70,14 @@
               &nbsp;({{ link.target.catalogue.getName() }})
             </span>
           </div>
+          <div v-if="imported" @click="store.follow(link)">
+            Goto
+            <span class="gray"> &nbsp;({{ item.catalogue.getName() }}) </span>
+          </div>
           <div v-if="item.links" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
           </div>
-          <Separator v-if="item.isLink() || item.links" />
+          <Separator v-if="item.isLink() || item.links || imported" />
         </template>
 
         <!-- All Adds -->
