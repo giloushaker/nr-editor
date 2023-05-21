@@ -58,8 +58,8 @@
     <DialogContextMenu ref="contextmenu">
       <template #default="{ payload }">
         <template v-if="!payload && item">
-          <div v-if="link.target" @click="store.follow(link)"
-            >Follow
+          <div v-if="link.target" @click="store.follow(link)">
+            Follow
             <span class="gray" v-if="link.target.catalogue !== item.catalogue">
               &nbsp;({{ link.target.catalogue.getName() }})
             </span>
