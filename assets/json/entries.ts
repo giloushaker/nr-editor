@@ -12,26 +12,10 @@ export const entries = {
     allowedChildrens: [],
   },
   categoryEntries: {
-    allowedChildrens: [
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "constraints",
-      "modifiers",
-      "modifierGroups",
-    ],
+    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "constraints", "modifiers", "modifierGroups"],
   },
   categoryLinks: {
-    allowedChildrens: [
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "constraints",
-      "modifiers",
-      "modifierGroups",
-    ],
+    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "constraints", "modifiers", "modifierGroups"],
   },
   forceEntries: {
     allowedChildrens: [
@@ -77,6 +61,20 @@ export const entries = {
       "modifierGroups",
     ],
   },
+  sharedSelectionEntryGroups: {
+    allowedChildrens: [
+      "selectionEntries",
+      "selectionEntryGroups",
+      "entryLinks",
+      "profiles",
+      "rules",
+      "infoGroups",
+      "infoLinks",
+      "constraints",
+      "modifiers",
+      "modifierGroups",
+    ],
+  },
   selectionEntry: {
     allowedChildrens: [
       "selectionEntries",
@@ -92,6 +90,20 @@ export const entries = {
     ],
   },
   selectionEntries: {
+    allowedChildrens: [
+      "selectionEntries",
+      "selectionEntryGroups",
+      "entryLinks",
+      "profiles",
+      "rules",
+      "infoGroups",
+      "infoLinks",
+      "constraints",
+      "modifiers",
+      "modifierGroups",
+    ],
+  },
+  sharedSelectionEntries: {
     allowedChildrens: [
       "selectionEntries",
       "selectionEntryGroups",
@@ -121,24 +133,10 @@ export const entries = {
     allowedChildrens: ["modifiers", "modifierGroups"],
   },
   infoGroup: {
-    allowedChildrens: [
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "modifiers",
-      "modifierGroups",
-    ],
+    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
   },
   infoGroups: {
-    allowedChildrens: [
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "modifiers",
-      "modifierGroups",
-    ],
+    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
   },
   infoLinks: {
     allowedChildrens: "type", //get from type
@@ -147,13 +145,7 @@ export const entries = {
     allowedChildrens: ["conditions", "conditionGroups", "repeats"],
   },
   modifierGroups: {
-    allowedChildrens: [
-      "modifiers",
-      "modifierGroups",
-      "conditions",
-      "conditionGroups",
-      "repeats",
-    ],
+    allowedChildrens: ["modifiers", "modifierGroups", "conditions", "conditionGroups", "repeats"],
   },
   conditions: {
     allowedChildrens: [],
