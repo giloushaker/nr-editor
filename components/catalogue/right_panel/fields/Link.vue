@@ -36,7 +36,7 @@
       <tr>
         <td>Target ID:</td>
         <td>
-          <input type="text" v-model="item.targetId" @change="updateLink" />
+          <input type="text" v-model="item.targetId" @change="targetIdChanged" />
         </td>
       </tr>
       <tr>
@@ -48,7 +48,7 @@
             :options="availableTargets"
             valueField="id"
             filterField="name"
-            @change="updateLink"
+            @change="targetIdChanged"
           >
             <template #option="opt">
               <div>
@@ -131,6 +131,11 @@ export default {
 
     typeChanged() {
       this.updateTargets();
+      this.changed();
+    },
+
+    targetIdChanged() {
+      this.updateLink();
       this.changed();
     },
 
