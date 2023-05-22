@@ -2,13 +2,22 @@
   <fieldset>
     <legend>Link</legend>
     <table class="editorTable">
-      <tr v-if="item.type !== undefined">
+      <tr v-if="type == 'entry'">
         <td>Link Type:</td>
         <td>
           <select @change="changed" v-model="itemType">
-            <option disabled :value="''">Link</option>
             <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
             <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
+          </select>
+        </td>
+      </tr>
+      <tr v-if="type == 'info'">
+        <td>Link Type:</td>
+        <td>
+          <select @change="changed" v-model="itemType">
+            <option :value="'profile'">Profile</option>
+            <option :value="'rule'"> Rule </option>
+            <option :value="'infoGroup'"> Info Group </option>
           </select>
         </td>
       </tr>
@@ -16,10 +25,12 @@
         <td>Link To:</td>
         <td>
           <template v-if="item.target">
-            <img v-if="item.type" :src="`/assets/bsicons/${getType(item)}.png`" />
+            <img class="linkIcon" v-if="item.type" :src="`/assets/bsicons/${getType(item)}.png`" />
             {{ item.target.name }}
           </template>
-          <template v-else> <img src="/assets/icons/error_exclamation.png" /> No target selected </template>
+          <template v-else>
+            <img class="errIcon" src="/assets/icons/error_exclamation.png" /> No target selected
+          </template>
         </td>
       </tr>
       <tr>
@@ -83,6 +94,10 @@ export default {
       type: Object as PropType<Catalogue>,
       required: true,
     },
+    type: {
+      type: String,
+      required: true,
+    },
   },
 
   created() {
@@ -109,7 +124,7 @@ export default {
 
         if (o.isLink()) return false;
         if (!(o as any).parent?.isCatalogue()) return false;
-        return o.isEntry() || o.isGroup() || o.isCategory();
+        return true;
       });
       this.availableTargets = sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
@@ -128,18 +143,12 @@ export default {
       this.$emit("catalogueChanged");
     },
 
-    getType(item: Link): "selectionEntry" | "selectionEntryGroup" | "category" {
+    getType(item: Link): string {
       if (!item.target) {
-        return "selectionEntry";
+        return "bullet";
       }
 
-      if ((item.target as EditorBase).editorTypeName === "selectionEntry") {
-        return "selectionEntry";
-      }
-      if ((item.target as EditorBase).editorTypeName === "selectionEntryGroup") {
-        return "selectionEntryGroup";
-      }
-      return "category";
+      return (item.target as EditorBase).editorTypeName;
     },
 
     itemName(elt: Base) {
@@ -169,3 +178,13 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.linkIcon {
+  vertical-align: middle;
+}
+
+.errIcon {
+  vertical-align: -2px;
+}
+</style>

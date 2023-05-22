@@ -9,9 +9,8 @@
         </option>
       </select>
       <div class="section add">
-        <button class="bouton" @click="add">
-          <img src="/assets/icons/iconeplus.png" /> Add
-        </button>
+        <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+        <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
       </div>
 
       <template v-if="selectedType">
@@ -26,11 +25,7 @@
           <tr>
             <td>Name:</td>
             <td>
-              <input
-                type="text"
-                v-model="selectedType.name"
-                @change="changed"
-              />
+              <input type="text" v-model="selectedType.name" @change="changed" />
             </td>
           </tr>
         </table>
@@ -41,10 +36,7 @@
 
 <script lang="ts">
 import { ObjectId } from "bson";
-import {
-  BSICharacteristicType,
-  BSIProfileType,
-} from "~/assets/shared/battlescribe/bs_types";
+import { BSICharacteristicType, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -57,11 +49,26 @@ export default {
 
   methods: {
     add() {
+      if (!this.item.characteristicTypes) {
+        this.item.characteristicTypes = [];
+      }
       this.item.characteristicTypes.push({
         id: new ObjectId().toString(),
         name: "New Characteristic Type",
       });
       this.changed();
+    },
+
+    del() {
+      if (this.selectedType) {
+        if (this.item.characteristicTypes) {
+          const ind = this.item.characteristicTypes.indexOf(this.selectedType);
+          if (ind != -1) {
+            this.item.characteristicTypes.splice(ind, 1);
+            this.selectedType = this.item.characteristicTypes[0];
+          }
+        }
+      }
     },
 
     changed() {
@@ -104,6 +111,10 @@ h3 {
 }
 
 .add {
-  text-align: right;
+  display: grid;
+  grid-gap: 10px;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr min-content;
+  justify-items: end;
 }
 </style>

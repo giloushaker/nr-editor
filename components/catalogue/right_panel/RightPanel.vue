@@ -44,10 +44,18 @@
         @catalogueChanged="changed"
       />
       <CatalogueRightPanelLinkPanel
-        v-else-if="typeName == 'link' || 'selectionEntryLink' || typeName == 'selectionEntryGroupLink'"
+        v-else-if="links.includes(typeName)"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"
+        :type="'entry'"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="infoLinks.includes(typeName)"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        :type="'info'"
       />
       <CatalogueRightPanelModifierPanel
         v-else-if="typeName == 'modifier'"
@@ -78,6 +86,25 @@
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"
+        type="category"
+      />
+      <CatalogueRightPanelModifierGroupPanel
+        v-else-if="typeName == 'modifierGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelInfoGroupPanel
+        v-else-if="typeName == 'infoGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelSelectionEntryGroupPanel
+        v-else-if="typeName == 'selectionEntryGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
       />
     </template>
     <template v-else-if="store.mode === 'references'">
@@ -101,6 +128,12 @@ export default {
       type: Object as PropType<Catalogue>,
       required: true,
     },
+  },
+  data() {
+    return {
+      links: ["link", "selectionEntryLink", "selectionEntryGroupLink"],
+      infoLinks: ["infoLink", "profileLink", "ruleLink", "infoGroupLink"],
+    };
   },
 
   methods: {

@@ -117,6 +117,7 @@ export default {
 
     reset() {
       this.searchPattern = "";
+      this.selectedOption = null;
       if (this.modelValue) {
         let found = this.options.find((opt: any) => {
           let item = opt;

@@ -2,11 +2,7 @@
   <fieldset>
     <legend>Modifier</legend>
     <div class="modifier">
-      <select
-        v-if="selectedOperation"
-        v-model="selectedOperation"
-        @change="changed"
-      >
+      <select v-if="selectedOperation" v-model="selectedOperation" @change="changed">
         <option :value="operation" v-for="operation of operations">
           {{ operation.name }}
         </option>
@@ -19,16 +15,8 @@
       </select>
 
       <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
-      <UtilNumberInput
-        @change="changed"
-        v-if="selectedField && selectedField.type == 'number'"
-        v-model="item.value"
-      />
-      <select
-        @change="changed"
-        v-if="selectedField && selectedField.type == 'boolean'"
-        v-model="item.value"
-      >
+      <UtilNumberInput @change="changed" v-if="selectedField && selectedField.type == 'number'" v-model="item.value" />
+      <select @change="changed" v-if="selectedField && selectedField.type == 'boolean'" v-model="item.value">
         <option :value="true">True</option>
         <option :value="false">False</option>
       </select>
@@ -39,11 +27,7 @@
         v-model="item.value"
       />
 
-      <select
-        v-if="selectedField && selectedField.type == 'category'"
-        v-model="item.value"
-        @change="changed"
-      >
+      <select v-if="selectedField && selectedField.type == 'category'" v-model="item.value" @change="changed">
         <option :value="cat.id" v-for="cat of allCategories">
           {{ cat.name }}
         </option>
@@ -55,15 +39,8 @@
 <script lang="ts">
 import { ItemTypes, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { Base, Category, Link } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
-import {
-  BSIConstraint,
-  BSIModifier,
-  BSIModifierType,
-} from "~/assets/shared/battlescribe/bs_types";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { BSIConstraint, BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 
 type FieldTypes = "string" | "number" | "category" | "boolean";
 
@@ -84,22 +61,8 @@ export default {
       } | null,
       selectedValue: null as any,
       availableModifiers: {
-        selectionEntry: [
-          "costs",
-          "name",
-          "page",
-          "hidden",
-          "category",
-          "constraints",
-        ],
-        entryLink: [
-          "costs",
-          "name",
-          "page",
-          "hidden",
-          "category",
-          "constraints",
-        ],
+        selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
+        selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
         profile: ["name", "description", "page", "hidden"],
         rule: ["name", "description", "page", "hidden"],
         infoLink: ["name", "description", "page", "hidden"],
@@ -160,10 +123,8 @@ export default {
     },
 
     update() {
-      this.selectedField =
-        this.fieldData.find((elt) => elt.id === this.item.field) || null;
-      this.selectedOperation =
-        this.operations.find((op) => op.id === this.item.type) || null;
+      this.selectedField = this.fieldData.find((elt) => elt.id === this.item.field) || null;
+      this.selectedOperation = this.operations.find((op) => op.id === this.item.type) || null;
 
       if (!this.selectedField) {
         this.selectedField = this.fieldData[0];
@@ -199,10 +160,7 @@ export default {
         return [];
       }
 
-      let ops: Record<
-        string,
-        { id: BSIModifierType; name: string; word: string }[]
-      > = {
+      let ops: Record<string, { id: BSIModifierType; name: string; word: string }[]> = {
         number: [
           {
             id: "set",
@@ -267,8 +225,7 @@ export default {
     },
 
     fieldData() {
-      let available: string[] =
-        this.availableModifiers[this.parent.editorTypeName];
+      let available: string[] = this.availableModifiers[this.parent.editorTypeName];
 
       const additional: { id: string; name: string; type: FieldTypes }[] = [];
 
@@ -313,9 +270,7 @@ export default {
       }
 
       // Filter out special fields
-      available = available.filter(
-        (elt) => ["costs", "constraints", "category"].includes(elt) == false
-      );
+      available = available.filter((elt) => ["costs", "constraints", "category"].includes(elt) == false);
 
       return available
         .map((elt) => {

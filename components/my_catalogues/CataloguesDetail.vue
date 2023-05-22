@@ -3,16 +3,12 @@
     <legend>{{ cataloguedata.name }}</legend>
     <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
     <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
-    <div>
-      <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }}
-    </div>
+    <div> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
     <div>
       <span class="grey">authorContact:</span>
       {{ cataloguedata.authorContact }}
     </div>
-    <div>
-      <span class="grey">authorName:</span> {{ cataloguedata.authorName }}
-    </div>
+    <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
     <div>
       <span class="grey">imports:</span>
       <div
@@ -20,9 +16,7 @@
         v-for="link in (cataloguedata as BSICatalogue).catalogueLinks"
       >
         {{ link.name }}
-        <span class="grey">{{ link.targetId }}</span> importRootEntries={{
-          link.importRootEntries ? "true" : "false"
-        }}
+        <span class="grey">{{ link.targetId }}</span> importRootEntries={{ link.importRootEntries ? "true" : "false" }}
       </div>
     </div>
 
@@ -49,12 +43,7 @@ import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
 import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
-import {
-  BSIDataCatalogue,
-  BSIDataSystem,
-  BSICatalogue,
-  BSIGameSystem,
-} from "~/assets/shared/battlescribe/bs_types";
+import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
 import PopupDialog from "~/shared_components/PopupDialog.vue";
 export default {
@@ -74,11 +63,7 @@ export default {
     download_file() {
       const data = getDataObject(this.catalogue);
       const xml = convertToXml(this.catalogue);
-      download(
-        (data as any).gameSystem ? `${data.name}.gst` : `${data.name}.cat`,
-        "application/xml",
-        xml
-      );
+      download((data as any).gameSystem ? `${data.name}.gst` : `${data.name}.cat`, "application/xml", xml);
     },
   },
   components: { PopupDialog },
