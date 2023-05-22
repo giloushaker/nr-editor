@@ -51,6 +51,9 @@ export interface CatalogueState {
   unsaved: boolean;
   savingPromise?: Promise<any>;
 }
+function get_ctx(el: any): any {
+  return el.__vnode.ctx.ctx;
+}
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorState => ({
     selections: [],
@@ -409,14 +412,12 @@ export const useEditorStore = defineStore("editor", {
       }
       return new Set(result);
     },
-    async get_el_from_base(obj: EditorBase) {
+    async open(obj: EditorBase) {
       let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
       }
-      function get_ctx(el: any): any {
-        return el.__vnode.ctx.ctx;
-      }
+
       async function open_el(el: any) {
         const context = get_ctx(el);
         context.open();
@@ -445,24 +446,19 @@ export const useEditorStore = defineStore("editor", {
           await open_el(current);
         }
       }
-
-      const context = get_ctx(current);
-      this.do_select(null, context, context);
-      current.scrollIntoView({
-        behavior: "instant",
-        block: "center",
-        inline: "center",
-      });
+      return current;
     },
-    open(obj: EditorBase) {
-      obj.openInEditor = true;
-      forEachParent(obj, (parent) => {
-        parent.openInEditor = true;
-      });
-    },
-    goto(obj: EditorBase) {
-      this.open(obj as EditorBase);
-      this.get_el_from_base(obj as EditorBase);
+    async goto(obj: EditorBase) {
+      const el = await this.open(obj as EditorBase);
+      if (el) {
+        const context = get_ctx(el);
+        this.do_select(null, context, context);
+        el.scrollIntoView({
+          behavior: "instant",
+          block: "center",
+          inline: "center",
+        });
+      }
     },
     follow(obj?: EditorBase & Link) {
       if (obj?.target) {

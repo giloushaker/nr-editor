@@ -66,6 +66,11 @@ export default defineComponent({
     ImportFromGithub,
     CataloguesCreate,
   },
+  head() {
+    return {
+      title: "NR-Editor",
+    };
+  },
   data() {
     return {
       msg: "",

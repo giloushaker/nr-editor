@@ -250,6 +250,7 @@ export default {
       if (found && Array.isArray(found)) {
         for (const child of found) {
           if (!this.filter_child(child as EditorBase)) continue;
+          // if (child === null) debugger;
           result.push({ item: child as ItemTypes & EditorBase, type });
         }
       }

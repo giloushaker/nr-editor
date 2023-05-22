@@ -1,8 +1,11 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <NuxtLink :to="{ name: 'index' }" class="link">
-        <h1>NR-Editor</h1>
+      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline">
+        <h1 class="flex">
+          <img class="w-30px h-30px" src="assets/icons/icon.png" />
+          <span class="m-auto"> NR-Editor </span>
+        </h1>
       </NuxtLink>
       <slot />
     </div>
@@ -135,9 +138,8 @@ export default {
   margin: 4px;
 }
 
-.link {
-  color: rgba(200, 200, 200);
-  text-decoration: none;
+.titlecolor {
+  color: black;
 }
 
 .icon {

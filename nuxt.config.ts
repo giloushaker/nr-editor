@@ -2,12 +2,7 @@
 import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
-  modules: [
-    "@sidebase/nuxt-session",
-    "nuxt-windicss",
-    "@pinia/nuxt",
-    "@pinia-plugin-persistedstate/nuxt",
-  ],
+  modules: ["@sidebase/nuxt-session", "nuxt-windicss", "@pinia/nuxt", "@pinia-plugin-persistedstate/nuxt"],
   ssr: false,
   env: {
     PROD_BUILD: true,
@@ -17,15 +12,15 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
-  css: [
-    "~/shared_components/css/vars.scss",
-    "~/shared_components/css/style.scss",
-  ],
+  css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
   },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   alias: {
     "./js/teleport": "vue",
+  },
+  head: {
+    title: "NR-Editor",
   },
 });
