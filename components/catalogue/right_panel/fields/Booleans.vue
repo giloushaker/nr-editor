@@ -68,39 +68,63 @@ export default {
     },
 
     collective() {
-      if (this.item.parentKey === "selectionEntries" && this.item.parent?.isCatalogue()) {
+      if (this.item.parent?.isCatalogue()) {
         return 0;
       }
 
       switch (this.item.editorTypeName) {
-        case "categoryLink":
-          return -1;
         case "selectionEntryLink":
-          return 0;
+          return 1;
         case "selectionEntryGroupLink":
           return 1;
         case "selectionEntry":
           return 1;
         case "selectionEntryGroup":
           return 1;
+
+        case "categoryLink":
+          return -1;
+
+        case "infoLink":
+          return -1;
+        case "profileLink":
+          return -1;
+        case "ruleLink":
+          return -1;
+        case "infoGroupLink":
+          return -1;
       }
       return 1;
     },
 
     eimport() {
+      if (this.item.parent?.isCatalogue()) {
+        return 1;
+      }
+
       switch (this.item.editorTypeName) {
-        case "categoryLink":
-          return -1;
         case "selectionEntryLink":
           return 1;
         case "selectionEntryGroupLink":
           return 1;
         case "selectionEntry":
-          return 0;
+          return 1;
         case "selectionEntryGroup":
-          return 0;
+          return 1;
+
+        case "categoryLink":
+          return -1;
+
+        case "infoLink":
+          return -1;
+        case "profileLink":
+          return -1;
+        case "ruleLink":
+          return -1;
+        case "infoGroupLink":
+          return -1;
       }
-      return 1;
+      return 0;
     },
   },
 };

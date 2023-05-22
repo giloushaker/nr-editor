@@ -12,6 +12,7 @@ import {
   scrambleIds,
   getTypeName,
   forEachParent,
+  getTypeLabel,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { enumerate_zip, generateBattlescribeId, textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -393,7 +394,7 @@ export const useEditorStore = defineStore("editor", {
             {
               id: generateBattlescribeId(),
               select: true,
-              name: `New ${getTypeName(key)}`,
+              name: `_New ${getTypeLabel(getTypeName(key))}`,
             },
             key
           );

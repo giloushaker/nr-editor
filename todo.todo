@@ -22,16 +22,17 @@ Editor:
     UI:
         ✔ show imported entries @done(23-05-21 16:17)
         ✘ Entries are sorted by type, then alphabtically. New Entries should always come first @cancelled(23-05-21 16:17)
-        ☐ Handle dead links
+        ✔ Handle dead links @done(23-05-22 08:20)
     
     Right Panel:
-        ☐ modifierGroups
-        ☐ infoGroups
-        ☐ infoLinks
-            ☐ profileLink
-            ☐ ruleLink
-            ☐ infoGroupLink
-        ☐ profiles
+        ✔ modifierGroups @done(23-05-22 08:42)
+        ✔ infoGroups @done(23-05-22 10:56)
+        ✔ infoLinks @done(23-05-22 10:56)
+            ✔ profileLink @done(23-05-22 10:56)
+            ✔ ruleLink @done(23-05-22 10:56)
+            ✔ infoGroupLink @done(23-05-22 10:56)
+        ✔ profiles @done(23-05-22 09:42)
+        ✔ selectionEntryGroups @done(23-05-22 11:36)
         
     Features:
         ✔ text Search @done(23-05-08 21:18)
@@ -63,6 +64,9 @@ Editor:
     Bugs:
         ✔ Unable to create new links @done(23-05-21 16:28)
         ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)
+        ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
+            ☐ May still happen on items that do not have an id because id is used as key
+        ☐ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type
 
             
 

@@ -21,7 +21,7 @@
           </span>
         </template>
         <template #content>
-          <template v-for="entry of sorted(category.items)">
+          <template :key="entry.item.id" v-for="entry of sorted(category.items)">
             <CatalogueEntry
               :item="entry.item"
               :group="get_group(category.type)"
@@ -46,9 +46,8 @@
         <template #title>
           <span :class="{ imported: imported }">
             <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
-            {{ getName(item) }}
-          </span></template
-        >
+            <span v-html="getName(item)" /> </span
+        ></template>
         <template #content>
           <CatalogueEntry
             v-for="child of sorted(mixedChildren)"
@@ -237,7 +236,7 @@ export default {
       console.log(this.item.name, this.forceShow, this.group, this.item);
     },
     getName(obj: any) {
-      return getName(obj);
+      return getName(obj, true);
     },
     getTypedArray(item: Catalogue, type: ItemKeys | undefined): CatalogueEntryItem[] {
       if (!type) {
@@ -296,6 +295,13 @@ export default {
         }
 
         // Same item type so  alphabetically
+        if (item1.item.name.startsWith("_")) {
+          return -1;
+        }
+        if (item2.item.name.startsWith("_")) {
+          return 1;
+        }
+
         if (item1.item.name > item2.item.name) {
           return 1;
         }

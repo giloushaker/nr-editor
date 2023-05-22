@@ -1,15 +1,12 @@
 <template>
   <fieldset>
-    <legend>Publication</legend>
+    <legend>Reference</legend>
     <table class="editorTable">
       <tr v-if="catalogue.publications">
         <td>Publication:</td>
         <td>
           <select v-model="item.publicationId">
-            <option
-              :value="publication.id"
-              v-for="publication of catalogue.publications"
-            >
+            <option :value="publication.id" v-for="publication of catalogue.publications">
               {{ publication.name }}
             </option>
           </select>
