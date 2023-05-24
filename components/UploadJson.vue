@@ -14,7 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
+import {
+  convertToJson,
+  getExtension,
+  isAllowedExtension,
+  isZipExtension,
+} from "~/assets/shared/battlescribe/bs_convert";
 const fileinput = ref(null);
 const uploading = ref(false);
 const emit = defineEmits<{
@@ -26,18 +31,22 @@ async function onFileSelected(event: any) {
     uploading.value = true;
     const input_files = [...((event.target?.files as FileList | null) || [])];
     if (!input_files) {
+      uploading.value = false;
       return;
     }
 
     const result_files = [] as Object[];
     for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
-      const asJson = await convertToJson(await file.text(), getExtension(file.name));
+      const content = isZipExtension(file.name) ? await file.arrayBuffer() : await file.text();
+      const asJson = await convertToJson(content, getExtension(file.name));
       result_files.push(asJson);
     }
     if (result_files.length) {
       emit("uploaded", result_files);
     }
-  } finally {
+    uploading.value = false;
+  } catch (e) {
+    console.error(e);
     uploading.value = false;
   }
 }
