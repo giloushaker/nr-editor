@@ -16,7 +16,6 @@ import { AppearanceTheme } from "./assets/shared/types/stateOptions";
 import { updateCssVars } from "./assets/shared/js/util";
 import TitleBar from "./components/TitleBar.vue";
 import { useEditorStore } from "./stores/editorState";
-
 export const defaultAppearence: AppearanceTheme = {
   background: "#f0f5ff",
   backgroundTexture: "url(/assets/images/no.jpg)",

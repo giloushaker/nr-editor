@@ -10,19 +10,22 @@
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
-      <div class="flex flex-col iconbox" @click="bug = true">
+      <div class="iconbox" @click="bug = true">
         <img src="assets/icons/bug.png" class="icon" />
         <span class="icontext">Bug</span>
       </div>
-      <div class="flex flex-col iconbox" @click="feedback = true">
+      <div class="iconbox" @click="feedback = true">
         <img src="assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
       </div>
-
-      <a class="flex flex-col iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
+      <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
         <img class="icon" src="assets/icons/discord.png" />
         <span class="icontext">Discord</span>
       </a>
+      <div v-if="electron">
+        <img src="assets/icons/electron32.png" />
+      </div>
+
       <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">
         <div class="m-20px">
           <h2 class="text-center">Bug Report form</h2>
@@ -75,6 +78,9 @@ export default {
     },
     can_submit_feedback() {
       return this.text;
+    },
+    electron() {
+      return Boolean(globalThis.electron);
     },
   },
   methods: {
@@ -137,11 +143,9 @@ export default {
 .titlebar-content > * {
   margin: 4px;
 }
-
 .titlecolor {
   color: black;
 }
-
 .icon {
   margin: auto;
   padding: 4px;
@@ -152,6 +156,10 @@ export default {
   text-align: center;
   text-decoration: none;
   color: white;
+}
+.iconbox {
+  display: flex;
+  flex-direction: column;
 }
 .iconbox:hover {
   cursor: pointer;

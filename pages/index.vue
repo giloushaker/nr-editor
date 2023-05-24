@@ -52,19 +52,18 @@ import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 import { db } from "~/assets/ts/dexie";
-import ImportFromGithub from "./ImportFromGithub.vue";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
+import ImportFromGithub from "~/components/ImportFromGithub.vue";
 
 export default defineComponent({
   components: {
     UploadJson,
     CataloguesDetail,
     ImportFromGithub,
-    CataloguesCreate,
   },
   head() {
     return {

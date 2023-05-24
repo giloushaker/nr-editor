@@ -48,7 +48,7 @@ Editor:
         ☐ references from
         ☐ references to
         ☐ move back/forward (like browser navigation)
-        ☐ load multiple catalogues
+        ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)

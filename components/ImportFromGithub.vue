@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  convertToJson,
-  getExtension,
-  isAllowedExtension,
-  unzipFolder,
-} from "~/assets/shared/battlescribe/bs_convert";
+import { convertToJson, getExtension, isAllowedExtension, unzipFolder } from "~/assets/shared/battlescribe/bs_convert";
 
 const inputUrl = ref("");
 const busy = ref(false);
@@ -18,19 +13,18 @@ async function submit(url: string | null) {
   }
   try {
     busy.value = true;
-    // Get the zip of the repo's zip:
-    // https://github.com/BSData/wh40k -> https://github.com/BSData/wh40k/archive/refs/heads/master.zip
+    // Get the zip of the repo:
     const repoPath = url.split("/").slice(-2).join("/"); // BSData/wh40k
     const repoName = repoPath.split("/")[1];
     const apiUrl = `https://api.github.com/repos/${repoPath}`;
     const defaultBranch = (await $fetch<any>(apiUrl)).default_branch; // master
+    const zipDlUrl = `https://codeload.github.com/${repoPath}/zip/refs/heads/${defaultBranch}`;
 
     // Download the zip through a cors proxy
-    const zipDlUrl = `https://codeload.github.com/${repoPath}/zip/refs/heads/${defaultBranch}`;
     const zipFile = await $fetch<Blob>(`https://corsproxy.io/?${zipDlUrl}`);
-    const folder = await unzipFolder(zipFile, `${repoName}-${defaultBranch}`);
 
     // Extract the useful files
+    const folder = await unzipFolder(zipFile, `${repoName}-${defaultBranch}`);
     const result_files = [] as Object[];
     for (const [name, content] of Object.entries(folder)) {
       const extension = getExtension(name);
@@ -44,15 +38,12 @@ async function submit(url: string | null) {
     inputUrl.value = "";
   } catch (e) {
     console.error(e);
-
-    // Invalid url
   } finally {
     busy.value = false;
   }
 }
 function normalizeGithubRepoUrl(input: string): string | null {
-  const githubUrlRegex =
-    /^(?:(http(s?)?:\/\/)?github.com\/)?([^\/]+)\/([^\/]+)$/;
+  const githubUrlRegex = /^(?:(http(s?)?:\/\/)?github.com\/)?([^\/]+)\/([^\/]+)$/;
   const match = input.match(githubUrlRegex);
 
   if (!match) {
@@ -69,12 +60,7 @@ function normalizeGithubRepoUrl(input: string): string | null {
 }
 </script>
 <template>
-  <input
-    type="url"
-    class="bouton"
-    v-model="inputUrl"
-    placeholder="BSData/wh40k"
-  />
+  <input type="url" class="bouton" v-model="inputUrl" placeholder="BSData/wh40k" />
   <button
     @click="submit(normalizeGithubRepoUrl(inputUrl))"
     class="bouton"

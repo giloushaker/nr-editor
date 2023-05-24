@@ -1,17 +1,22 @@
 import { defineStore } from "pinia";
-export interface ICataloguesState {
-  dict: Record<
-    string,
-    {
-      edited?: boolean;
-      errors?: string[];
-    }
-  >;
+export interface ICatalogueState {
+  edited?: boolean;
+  errors?: string[];
+  dependencies?: Dependency[];
+  dependents?: Dependency[];
 }
 
+export interface Dependency {
+  id: string;
+  source: string;
+  type?: "import" | "link" | "condition";
+}
+/**
+ * Stores info about catalogues, wich will be persisted to disk.
+ */
 export const useCataloguesStore = defineStore("catalogues", {
-  state: (): ICataloguesState => ({
-    dict: {},
+  state: () => ({
+    dict: {} as Record<string, ICatalogueState>,
   }),
   persist: {
     storage: localStorage,
@@ -34,6 +39,26 @@ export const useCataloguesStore = defineStore("catalogues", {
     },
     getErrors(id: string) {
       return this.get(id).errors;
+    },
+    getDependents(id: string) {
+      return this.get(id).dependents;
+    },
+    setDependencies(id: string, dependencies: Dependency[]) {
+      this.get(id).dependencies = dependencies;
+    },
+    setDependents(id: string, dependents: Dependency[]) {
+      this.get(id).dependents = dependents;
+    },
+    addDependent(id: string, dependency: Dependency) {
+      const state = this.get(id);
+      if (!state.dependents) state.dependents = [];
+      state.dependents.push(dependency);
+    },
+    removeDependent(id: string, dependency: Dependency) {
+      const state = this.get(id);
+      if (state.dependents) {
+        state.dependents = state.dependents.filter((d) => d.id !== dependency.id);
+      }
     },
   },
 });

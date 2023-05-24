@@ -35,9 +35,9 @@
 </template>
 
 <script lang="ts">
-import { ObjectId } from "bson";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSICharacteristicType, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
-
+import { PropType } from "vue";
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -46,14 +46,18 @@ export default {
       required: true,
     },
   },
-
+  data() {
+    return {
+      selectedType: null as BSICharacteristicType | null,
+    };
+  },
   methods: {
     add() {
       if (!this.item.characteristicTypes) {
         this.item.characteristicTypes = [];
       }
       this.item.characteristicTypes.push({
-        id: new ObjectId().toString(),
+        id: generateBattlescribeId(),
         name: "New Characteristic Type",
       });
       this.changed();
@@ -80,12 +84,6 @@ export default {
         this.selectedType = this.item.characteristicTypes[0];
       }
     },
-  },
-
-  data() {
-    return {
-      selectedType: null as BSICharacteristicType | null,
-    };
   },
 
   created() {

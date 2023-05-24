@@ -14,7 +14,7 @@ export default {
   emits: ["change", "update:modelValue"],
   props: {
     modelValue: {
-      type: String,
+      type: [String, Number],
     },
     placeholder: {
       type: String,

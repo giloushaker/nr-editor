@@ -4,8 +4,12 @@ node_modules
 .nitro
 .cache
 .output
+.build
 .env
 dist
 .DS_Store
 *.diff
 shared_components
+.release
+nr-win32-x64
+dist-electron

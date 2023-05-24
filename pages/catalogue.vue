@@ -48,21 +48,19 @@
 
 <script lang="ts">
 import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
-import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 
 export default {
   components: { LeftPanel },
+
   data() {
     return {
       error: null as string | null,
-      cat: null as Catalogue | null,
       item: null as ItemTypes | null,
       systemFiles: null as GameSystemFiles | null,
       loading: false,
@@ -79,7 +77,7 @@ export default {
     });
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
+    return toRefs({ cataloguesStore: useCataloguesStore(), store: useEditorStore(), cat: null as Catalogue | null });
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -100,7 +98,8 @@ export default {
   computed: {
     changed() {
       if (!this.cat) return false;
-      return this.store.get_catalogue_state(this.cat as Catalogue)?.changed || false;
+      const cat = this.cat;
+      return this.store.get_catalogue_state(this.cat!)?.changed || false;
     },
     unsaved() {
       if (!this.cat) return false;
