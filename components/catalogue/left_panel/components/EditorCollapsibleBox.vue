@@ -23,21 +23,12 @@
         ]"
         @click="titleSwitch"
       >
-        <img
-          :class="{ hide: !collapsible }"
-          :src="dropdownSrc"
-          class="icon arrow"
-          @click.stop="collapseSwitch"
-        />
+        <img :class="{ hide: !collapsible }" :src="dropdownSrc" class="icon arrow" @click.stop="collapseSwitch" />
 
         <slot name="title" class="title" />
       </h3>
     </div>
-    <div
-      v-if="initiated && !empty"
-      v-show="!collapsed || !collapsible"
-      class="boxContent"
-    >
+    <div v-if="initiated && !empty" v-show="!collapsed || !collapsible" class="boxContent">
       <slot name="content" />
     </div>
   </div>
@@ -139,10 +130,7 @@ export default {
   computed: {
     dropdownSrc() {
       let n = 2;
-      let images = [
-        `/assets/icons/right${n}.png`,
-        `/assets/icons/down${n}.png`,
-      ];
+      let images = [`assets/icons/right${n}.png`, `assets/icons/down${n}.png`];
       let index = this.collapsed ? 0 : 1;
       if (this.vertical) {
         index = 1 - index;

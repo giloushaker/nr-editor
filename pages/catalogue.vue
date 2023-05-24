@@ -72,6 +72,7 @@ export default {
         await vue.load(to.query.id);
         vue.error = null;
       } catch (e: any) {
+        console.error(e);
         vue.error = e;
       }
     });
@@ -92,6 +93,7 @@ export default {
       await this.load(this.$route.query?.id as string);
       this.error = null;
     } catch (e: any) {
+      console.error(e);
       this.error = e;
     }
   },

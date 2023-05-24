@@ -18,7 +18,7 @@ import TitleBar from "./components/TitleBar.vue";
 import { useEditorStore } from "./stores/editorState";
 export const defaultAppearence: AppearanceTheme = {
   background: "#f0f5ff",
-  backgroundTexture: "url(/assets/images/no.jpg)",
+  backgroundTexture: "url(assets/images/no.jpg)",
   backgroundSize: "auto",
   bga: 70,
   hue: 0,
@@ -64,12 +64,9 @@ export default defineComponent({
     };
   },
   async setup() {
-    const session = await useSession();
     const editor = useEditorStore();
     editor.init();
-    return {
-      session,
-    };
+    return { store: editor };
   },
   methods: {
     update() {
@@ -370,7 +367,7 @@ p.info {
   width: fit-content;
 
   &:before {
-    content: url(/assets/icons/i.png) " ";
+    content: url(assets/icons/i.png) " ";
     position: absolute;
     top: -5px;
     left: -8px;
@@ -453,7 +450,7 @@ button.bouton[disabled] {
     &::after {
       vertical-align: -2px;
       margin-right: 3px;
-      content: url(/assets/icons/error_exclamation.png) !important;
+      content: url(assets/icons/error_exclamation.png) !important;
     }
   }
 }

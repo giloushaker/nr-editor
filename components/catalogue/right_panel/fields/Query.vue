@@ -21,10 +21,7 @@
       >
         <template #option="opt">
           <div>
-            <img
-              class="mr-1 align-middle"
-              :src="`/assets/bsicons/${opt.option.editorTypeName}.png`"
-            />
+            <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
             {{ opt.option.name }}
           </div>
         </template>
@@ -32,19 +29,11 @@
 
       <div class="checks">
         <div v-if="childSelections">
-          <input
-            type="checkbox"
-            label="childForces"
-            v-model="item.includeChildSelections"
-          />
+          <input type="checkbox" label="childForces" v-model="item.includeChildSelections" />
           <label for="childForces">And all child Selections</label>
         </div>
         <div v-if="childForces">
-          <input
-            type="checkbox"
-            label="childForces"
-            v-model="item.includeChildForces"
-          />
+          <input type="checkbox" label="childForces" v-model="item.includeChildForces" />
           <label for="childForces">And all child Forces</label>
         </div>
       </div>
@@ -54,15 +43,8 @@
 
 <script lang="ts">
 import { Category, Force } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
-import {
-  BSICondition,
-  BSIConstraint,
-  BSICostType,
-} from "~/assets/shared/battlescribe/bs_types";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -148,9 +130,7 @@ export default {
         },
       ];
 
-      return res
-        .concat(this.allCategories as any)
-        .concat(this.allForces as any);
+      return res.concat(this.allCategories as any).concat(this.allForces as any);
     },
   },
 };

@@ -22,22 +22,24 @@ const emit = defineEmits<{
 }>();
 
 async function onFileSelected(event: any) {
-  uploading.value = true;
-  const input_files = [...((event.target?.files as FileList | null) || [])];
-  if (!input_files) {
-    uploading.value = false;
-    return;
-  }
+  try {
+    uploading.value = true;
+    const input_files = [...((event.target?.files as FileList | null) || [])];
+    if (!input_files) {
+      return;
+    }
 
-  const result_files = [] as Object[];
-  for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
-    const asJson = await convertToJson(await file.text(), getExtension(file.name));
-    result_files.push(asJson);
+    const result_files = [] as Object[];
+    for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
+      const asJson = await convertToJson(await file.text(), getExtension(file.name));
+      result_files.push(asJson);
+    }
+    if (result_files.length) {
+      emit("uploaded", result_files);
+    }
+  } finally {
+    uploading.value = false;
   }
-  if (result_files.length) {
-    emit("uploaded", result_files);
-  }
-  uploading.value = false;
 }
 async function popFileInput() {
   (fileinput.value as any).click();

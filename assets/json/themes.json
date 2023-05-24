@@ -79,7 +79,7 @@
       "id": "preset_ghost_stripes",
       "css": {
         "background": "#333333",
-        "backgroundTexture": "url(/assets/backgrounds/stripes.jpg)",
+        "backgroundTexture": "url(assets/backgrounds/stripes.jpg)",
         "bga": "84",
         "title": "#333333",
         "inputBackground": "#333333",
@@ -104,7 +104,7 @@
       "id": "paper",
       "css": {
         "background": "#fff2b3",
-        "backgroundTexture": "url(/assets/backgrounds/crumpledpaper.jpg)",
+        "backgroundTexture": "url(assets/backgrounds/crumpledpaper.jpg)",
         "bga": "26",
         "title": "#d1d1d1",
         "dropdownStyle": 3,

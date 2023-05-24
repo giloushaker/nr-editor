@@ -16,7 +16,7 @@
       >
         <template #title>
           <span>
-            <img :src="`/assets/bsicons/${category.icon}`" />
+            <img :src="`assets/bsicons/${category.icon}`" />
             {{ category.name }}
           </span>
         </template>
@@ -45,7 +45,7 @@
       >
         <template #title>
           <span :class="{ imported: imported }">
-            <img :src="`/assets/bsicons/${item.editorTypeName}.png`" />
+            <img :src="`assets/bsicons/${item.editorTypeName}.png`" />
             <span v-html="getName(item)" /> </span
         ></template>
         <template #content>
@@ -82,69 +82,69 @@
         <!-- All Adds -->
         <template v-if="payload">
           <div @click="store.create(payload)">
-            <img class="pr-4px" :src="`/assets/bsicons/${getTypeName(payload)}.png`" />
+            <img class="pr-4px" :src="`assets/bsicons/${getTypeName(payload)}.png`" />
             {{ getTypeLabel(getTypeName(payload)) }}
           </div>
           <div @click="store.create('entryLink')" v-if="payload === 'selectionEntries'">
-            <img class="pr-4px" :src="`/assets/bsicons/link.png`" />
+            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
           <Separator />
         </template>
         <template v-else>
           <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
-            <img class="pr-4px" src="/assets/bsicons/selectionEntry.png" />
+            <img class="pr-4px" src="assets/bsicons/selectionEntry.png" />
             Entry
           </div>
           <div @click="store.create('selectionEntryGroups')" v-if="allowed('selectionEntryGroups')">
-            <img class="pr-4px" src="/assets/bsicons/selectionEntryGroup.png" />
+            <img class="pr-4px" src="assets/bsicons/selectionEntryGroup.png" />
             Group
           </div>
           <div @click="store.create('entryLinks')" v-if="allowed('entryLinks')">
-            <img class="pr-4px" src="/assets/bsicons/link.png" />
+            <img class="pr-4px" src="assets/bsicons/link.png" />
             Link
           </div>
           <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
           <div @click="store.create('profiles')" v-if="allowed('profiles')">
-            <img class="pr-4px" src="/assets/bsicons/profile.png" />
+            <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile
           </div>
           <div @click="store.create('rules')" v-if="allowed('rules')">
-            <img class="pr-4px" src="/assets/bsicons/rule.png" />
+            <img class="pr-4px" src="assets/bsicons/rule.png" />
             Rule
           </div>
           <div @click="store.create('infoGroups')" v-if="allowed('infoGroups')">
-            <img class="pr-4px" src="/assets/bsicons/infoGroup.png" />
+            <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
             Info Group
           </div>
           <div @click="store.create('infoLinks')" v-if="allowed('infoLinks')">
-            <img class="pr-4px" src="/assets/bsicons/link.png" />
+            <img class="pr-4px" src="assets/bsicons/link.png" />
             Info Link
           </div>
           <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
-            <img class="pr-4px" src="/assets/bsicons/condition.png" />
+            <img class="pr-4px" src="assets/bsicons/condition.png" />
             Condition
           </div>
           <div @click="store.create('conditionGroups')" v-if="allowed('conditionGroups')">
-            <img class="pr-4px" src="/assets/bsicons/conditionGroup.png" />
+            <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
             Condition Group
           </div>
           <div @click="store.create('repeats')" v-if="allowed('repeats')">
-            <img class="pr-4px" src="/assets/bsicons/repeat.png" />
+            <img class="pr-4px" src="assets/bsicons/repeat.png" />
             Repeat
           </div>
           <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
           <div @click="store.create('constraints')" v-if="allowed('constraints')">
-            <img class="pr-4px" src="/assets/bsicons/constraint.png" />
+            <img class="pr-4px" src="assets/bsicons/constraint.png" />
             Constraint
           </div>
           <div @click="store.create('modifiers')" v-if="allowed('modifiers')">
-            <img class="pr-4px" src="/assets/bsicons/modifier.png" />
+            <img class="pr-4px" src="assets/bsicons/modifier.png" />
             Modifier
           </div>
           <div @click="store.create('modifierGroups')" v-if="allowed('modifierGroups')">
-            <img class="pr-4px" src="/assets/bsicons/modifierGroup.png" />
+            <img class="pr-4px" src="assets/bsicons/modifierGroup.png" />
             Modifier Group
           </div>
           <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />

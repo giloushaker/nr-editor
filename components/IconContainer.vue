@@ -8,18 +8,18 @@
     >
       <ErrorIcon class="error" :errors="errors(item)" />
       <template v-if="item.gameSystem">
-        <img src="/assets/icons/system1.png" />
+        <img src="assets/icons/system1.png" />
       </template>
       <template v-else-if="item.catalogue!.library">
-        <img src="/assets/icons/library.png" />
+        <img src="assets/icons/library.png" />
       </template>
       <template v-else>
-        <img src="/assets/icons/book.png" />
+        <img src="assets/icons/book.png" />
       </template>
       <div>{{ name(item) }}</div>
     </div>
     <div class="relative item add" @click="add">
-      <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
+      <img class="w-40px h-40px" src="assets/icons/iconeplus.png" />
       <div class="bold text-blue">New</div>
     </div>
   </div>

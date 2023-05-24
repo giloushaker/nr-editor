@@ -16,11 +16,21 @@ export default defineNuxtConfig({
     electron: electron,
   },
   modules: [
-    "@sidebase/nuxt-session",
+    ...(!electron ? ["@sidebase/nuxt-session"] : []),
     "nuxt-windicss",
     "@pinia/nuxt",
     "@pinia-plugin-persistedstate/nuxt",
     ...(electron ? ["nuxt-electron"] : []),
+  ],
+  plugins: [
+    ...(electron
+      ? [
+          {
+            ssr: false,
+            src: "electron/renderer.js",
+          },
+        ]
+      : []),
   ],
 
   typescript: {
@@ -47,6 +57,9 @@ export default defineNuxtConfig({
         copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
       }
     },
+  },
+  alias: {
+    "./js/teleport": "vue",
   },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   head: {
