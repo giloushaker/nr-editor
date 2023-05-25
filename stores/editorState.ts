@@ -24,7 +24,10 @@ import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
-
+import { getFolderFiles } from "~/electron/node_helpers";
+import type { Router } from "vue-router";
+import { nextTick } from "vue";
+import { UnorderedBulkOperation } from "mongodb";
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -40,6 +43,9 @@ export interface IEditorState {
   gameSystemsLoaded: boolean;
   gameSystems: Record<string, GameSystemFiles>;
   unsavedChanges: Record<string, CatalogueState>;
+  $router?: Router;
+  $nextTick?: Promise<any>;
+  $nextTickResolve?: (...args: any[]) => unknown;
 }
 
 export interface CatalogueEntryItem {
@@ -78,6 +84,14 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
+    async load_systems_from_folder(folder: string) {
+      if (!globalThis.electron) {
+        throw new Error("Not running in electron");
+      }
+      const files = await getFolderFiles(folder);
+      console.log(files);
+      return files;
+    },
     async load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);
       const system = dbsystem?.content;
@@ -148,10 +162,11 @@ export const useEditorStore = defineStore("editor", {
       this.$state.filter = filter;
       this.filterRegex = textSearchRegex(filter);
     },
-    init() {
+    init(vueRouter: Router) {
       (globalThis as any).undo = () => this.undo();
       (globalThis as any).redo = () => this.redo();
       (globalThis as any).remove = () => this.remove();
+      this.$router = vueRouter as any;
     },
     unselect(obj?: any) {
       const next_selected = [];
@@ -461,13 +476,21 @@ export const useEditorStore = defineStore("editor", {
         });
       }
     },
-    follow(obj?: EditorBase & Link) {
+    async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
         if (obj.target.catalogue !== obj.catalogue) {
-          console.warn("Cannot follow link to another catalogue");
-          return;
+          if (!this.$router) {
+            console.warn("Cannot follow link to another catalogue without $router set");
+            return;
+          }
+          const id = getDataDbId(obj.target.catalogue);
+          this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
+          this.$nextTick = new Promise((resolve, reject) => {
+            this.$nextTickResolve = resolve;
+          });
+          await this.$nextTick;
         }
-        this.goto(obj.target as EditorBase);
+        await this.goto(obj.target as EditorBase);
       }
     },
   },

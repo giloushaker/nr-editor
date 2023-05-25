@@ -5,8 +5,8 @@ declare global {
   var electron:
     | undefined
     | {
-        send: (channel, args) => unknown;
+        send: (channel, ...args) => unknown;
         receive: (channel, listener) => unknown;
-        invoke: (channel, args) => unknown;
+        invoke: (channel, ...args) => unknown;
       };
 }

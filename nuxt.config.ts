@@ -3,7 +3,7 @@ import { fstat } from "fs";
 import { defineNuxtConfig } from "nuxt/config";
 const electron = process.argv.includes("--electron");
 export default defineNuxtConfig({
-  ssr: false,
+  ssr: true,
   // @ts-ignore
   env: {
     PROD_BUILD: true,
@@ -15,8 +15,11 @@ export default defineNuxtConfig({
     editor: true,
     electron: electron,
   },
+  routeRules: {
+    "*": { ssr: false, prerender: false },
+    "/**": { ssr: false, prerender: false },
+  },
   modules: [
-    ...(!electron ? ["@sidebase/nuxt-session"] : []),
     "nuxt-windicss",
     "@pinia/nuxt",
     "@pinia-plugin-persistedstate/nuxt",

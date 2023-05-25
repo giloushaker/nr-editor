@@ -65,7 +65,6 @@ export default defineComponent({
   },
   async setup() {
     const editor = useEditorStore();
-    editor.init();
     return { store: editor };
   },
   methods: {
@@ -80,9 +79,12 @@ export default defineComponent({
     removeEventListener("resize", this.update);
   },
   async created() {
+    this.store.init(this.$router);
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
-    globalThis.isVue3 = true;
+    if (!globalThis.electron) {
+      (globalThis as any).electron = null;
+    }
   },
   components: { TitleBar },
 });
@@ -151,35 +153,6 @@ a.bouton {
   color: var(--font-color);
 }
 
-.mainMenu {
-  position: fixed;
-  left: 0;
-  right: 0;
-}
-
-.mainContent {
-  position: fixed;
-  top: 45px;
-  padding: $margin;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow-y: auto;
-}
-
-@media screen and (max-width: $large_mode) {
-  .mainContent {
-    padding-left: $small_margin;
-    padding-right: $small_margin;
-    overflow-y: auto;
-    top: 82px;
-  }
-
-  .mainContent.hiddenMobile {
-    top: 45px;
-  }
-}
-
 body {
   font-family: $font;
   font-size: $fontSize;
@@ -239,58 +212,10 @@ a.bouton {
   font-size: $fontButtonSize !important;
 }
 
-a.ruleLink {
-  color: $fontColor;
-}
-
-a.ruleLink.optRule {
-  color: $blue;
-}
-
-a.ruleLink.lostRule {
-  color: $red !important;
-  text-decoration: line-through;
-}
-
-a.ruleLink.invisible {
-  display: none;
-}
-
 .date {
   color: $gray;
   font-style: italic;
   font-size: 16px;
-}
-
-.game-assist {
-  h2 {
-    text-align: center;
-    margin-bottom: 10px;
-    border-bottom: $dotted_border;
-
-    .subtitle {
-      font-size: 16px;
-      font-weight: normal;
-      color: $gray;
-    }
-  }
-
-  h3 {
-    font-size: 16px;
-    margin-bottom: 5px;
-  }
-
-  h4 {
-    font-size: 16px;
-    text-align: center;
-    margin-top: 5px;
-    margin-bottom: 5px;
-  }
-
-  .result {
-    display: grid;
-    justify-items: center;
-  }
 }
 
 .red {
@@ -310,49 +235,8 @@ a.ruleLink.invisible {
   color: $gray;
 }
 
-.cast_0 {
-  color: red;
-}
-
-.cast_1 {
-  color: blue;
-  font-weight: bold;
-}
-
-.cast_2 {
-  color: green;
-}
-
-.affectpairings {
-  color: $blue;
-}
-
-.cast_amp {
-  color: #988d04;
-  font-weight: bold;
-}
-
-.cast_oaken {
-  color: orange;
-}
-
 .conditional {
   color: $green !important;
-}
-
-.fluff p {
-  font-style: italic;
-}
-
-.listDeletion {
-  color: $orange;
-}
-
-.dg-btn--ok,
-.dg-btn--cancel {
-  width: auto;
-  background-color: white !important;
-  color: black !important;
 }
 
 p.info {
@@ -379,38 +263,6 @@ p.info {
 
 p.hidden {
   display: none;
-}
-
-form:invalid a.submit {
-  color: $gray;
-}
-
-.selectGrid {
-  display: grid;
-  grid-template-columns: 250px 30px;
-  align-content: center;
-  align-items: center;
-  grid-gap: 5px;
-
-  .imageBouton {
-    padding-right: 0;
-  }
-
-  .bouton,
-  select {
-    width: auto;
-  }
-}
-
-@media screen and (max-width: $mobile_mode) {
-  .selectGrid {
-    grid-template-columns: 1fr auto;
-  }
-}
-
-.iconeBouton {
-  width: 22px;
-  padding-right: 0 !important;
 }
 
 button.bouton[disabled] {
@@ -461,44 +313,6 @@ button.bouton[disabled] {
   }
 }
 
-.unitStatus {
-  color: #8035e2;
-  background-color: rgba(0, 0, 0, 0.09);
-  padding: 2px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  margin-right: 7px;
-  border-radius: 5px;
-  font-weight: normal !important;
-  font-style: italic;
-  text-decoration: none !important;
-}
-
-#vueListe {
-  min-height: 400px;
-
-  h2 {
-    .costList {
-      font-size: 16px;
-    }
-  }
-}
-
-.rightButtons {
-  float: right;
-  display: grid;
-  grid-auto-flow: column;
-  grid-gap: 10px;
-}
-
-h4.subtitle {
-  margin-top: 0;
-  font-style: italic;
-  color: $gray;
-  font-style: italic;
-  font-weight: normal;
-}
-
 @media screen and (max-width: $very_large_mode) {
   .hideOnSmallScreen {
     display: none;
@@ -535,33 +349,6 @@ h4.subtitle {
   }
 }
 
-@media screen and (min-width: $large_mode) {
-  .splitMainContent > div.tableList {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    top: 10px;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-.dg-container {
-  color: black !important;
-
-  input {
-    background-color: white !important;
-    color: black !important;
-  }
-
-  input:hover,
-  button:hover {
-    border-color: #009cbd !important;
-    filter: brightness(110%);
-  }
-}
-
 fieldset {
   border: 1px solid $box_border;
 }
@@ -583,23 +370,5 @@ h6,
 .arrowTitle {
   font-family: $fontHeader !important;
   text-transform: $fontHeaderTransform;
-}
-
-.testBanner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: grid;
-  justify-content: center;
-  align-content: center;
-  height: 44px;
-  font-weight: bolder;
-  background-color: rgb(55, 83, 211);
-  opacity: 0.75;
-  font-size: 24px;
-  color: rgb(255, 208, 0);
-  z-index: 1000;
-  pointer-events: none;
 }
 </style>

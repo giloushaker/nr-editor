@@ -17,7 +17,9 @@ export interface Dependency {
 export const useCataloguesStore = defineStore("catalogues", {
   state: () => ({
     dict: {} as Record<string, ICatalogueState>,
+    version: 1,
   }),
+
   persist: {
     storage: localStorage,
   },

@@ -71,6 +71,7 @@ export default defineComponent({
     };
   },
   data() {
+    console.log("hello");
     return {
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,

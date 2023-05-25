@@ -57,7 +57,6 @@ import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 
 export default {
   components: { LeftPanel },
-
   data() {
     return {
       error: null as string | null,
@@ -65,17 +64,6 @@ export default {
       systemFiles: null as GameSystemFiles | null,
       loading: false,
     };
-  },
-  beforeRouteEnter(to, from, next) {
-    next(async (vue: any) => {
-      try {
-        await vue.load(to.query.id);
-        vue.error = null;
-      } catch (e: any) {
-        console.error(e);
-        vue.error = e;
-      }
-    });
   },
   setup() {
     return toRefs({ cataloguesStore: useCataloguesStore(), store: useEditorStore(), cat: null as Catalogue | null });
@@ -88,31 +76,38 @@ export default {
     window.removeEventListener("beforeunload", this.beforeUnload);
     document.removeEventListener("keydown", this.onKeydown);
   },
-  async created() {
-    try {
-      await this.load(this.$route.query?.id as string);
-      this.error = null;
-    } catch (e: any) {
-      console.error(e);
-      this.error = e;
-    }
-  },
   computed: {
     changed() {
       if (!this.cat) return false;
-      const cat = this.cat;
-      return this.store.get_catalogue_state(this.cat!)?.changed || false;
+      return this.store.get_catalogue_state(this.cat)?.changed || false;
     },
     unsaved() {
       if (!this.cat) return false;
-      return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
+      return this.store.get_catalogue_state(this.cat)?.unsaved || false;
     },
   },
   watch: {
-    cat(nv, pv) {
-      if (nv !== pv) {
-        this.store.unselect();
-      }
+    "$route.params": {
+      async handler(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          this.store.unselect();
+          try {
+            await this.load(this.$route.query?.id as string);
+            this.error = null;
+
+            // Resolve a promise in the store so that nextTick can be awaited from within the store
+            // Otherwise it would run the goto code before the route loads
+            // Alternative could be passing the path to goto in route params
+            this.$nextTick(() => {
+              this.store.$nextTickResolve && this.store.$nextTickResolve();
+            });
+          } catch (e: any) {
+            console.error(e);
+            this.error = e;
+          }
+        }
+      },
+      immediate: true,
     },
   },
   methods: {
