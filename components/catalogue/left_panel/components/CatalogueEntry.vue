@@ -46,8 +46,10 @@
         <template #title>
           <span :class="{ imported: imported }">
             <img :src="`assets/bsicons/${item.editorTypeName}.png`" />
-            <span v-html="getName(item)" /> </span
-        ></template>
+            <span>{{ getName(item) }}</span>
+            <span class="gray">{{ getNameExtra(item) }} </span>
+          </span>
+        </template>
         <template #content>
           <CatalogueEntry
             v-for="child of sorted(mixedChildren)"
@@ -177,10 +179,12 @@ import {
   getTypeName,
   categories,
   possibleChildren,
+  getNameExtra,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
+import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 
 export default {
   setup() {
@@ -225,8 +229,11 @@ export default {
     };
   },
   methods: {
+    escapeXml,
     getTypeName,
     getTypeLabel,
+    getName,
+    getNameExtra,
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];
@@ -235,9 +242,6 @@ export default {
     },
     debug() {
       console.log(this.item.name, this.forceShow, this.group, this.item);
-    },
-    getName(obj: any) {
-      return getName(obj, true);
     },
     getTypedArray(item: Catalogue, type: ItemKeys | undefined): CatalogueEntryItem[] {
       if (!type) {
