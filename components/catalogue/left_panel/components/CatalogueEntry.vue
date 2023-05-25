@@ -180,6 +180,7 @@ import {
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
+import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 
 export default {
   setup() {
@@ -283,31 +284,8 @@ export default {
     },
 
     sorted(items: CatalogueEntryItem[]) {
-      const res = items.sort((item1, item2) => {
-        const order1 = this.order[item1.item.editorTypeName] || 1000;
-        const order2 = this.order[item2.item.editorTypeName] || 1000;
-
-        if (order1 < order2) {
-          return -1;
-        }
-        if (order1 > order2) {
-          return 1;
-        }
-
-        // Same item type so  alphabetically
-        if (item1.item.name.startsWith("_")) {
-          return -1;
-        }
-        if (item2.item.name.startsWith("_")) {
-          return 1;
-        }
-
-        if (item1.item.name > item2.item.name) {
-          return 1;
-        }
-        return -1;
-      });
-      return res;
+      const a = sortByAscending(items, (o) => o.item.getName() || "_");
+      return sortByDescending(a, (o) => this.order[o.item.editorTypeName] || 1000);
     },
   },
 
