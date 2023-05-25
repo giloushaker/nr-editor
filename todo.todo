@@ -46,7 +46,9 @@ Editor:
             we would do that automatically without breaking previous links
         ☐ errors
         ☐ references from
-        ☐ references to
+        ☐ build dependency graph
+        ☐ load systems from bs initially in some fast way
+        ✔ references to @done(23-05-25 19:16)
         ☐ move back/forward (like browser navigation)
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving

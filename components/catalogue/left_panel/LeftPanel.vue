@@ -5,7 +5,7 @@
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
       <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
-      <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search..." class="w-full" />
+      <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
     </div>
   </div>
 </template>
@@ -41,32 +41,33 @@ export default {
   methods: {
     keydown(e: KeyboardEvent) {
       if (!e.target) return;
-      if (e.ctrlKey && e.key.toLowerCase() === "z") {
-        this.store.undo();
-      }
-
-      if (e.ctrlKey && e.key.toLowerCase() === "y") {
-        this.store.redo();
-      }
+      const tagName = (e.target as HTMLSelectElement)?.tagName?.toLowerCase();
 
       if (e.ctrlKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         (this.$refs["editor-searchbox"] as HTMLInputElement).focus();
       }
 
-      if (e.ctrlKey && e.key.toLowerCase() === "x") {
-        this.store.set_clipboard(this.store.get_selections());
-        this.store.remove();
-      }
-      if (e.ctrlKey && e.key.toLowerCase() === "c") {
-        this.store.set_clipboard(this.store.get_selections());
-      }
-      if (e.ctrlKey && e.key.toLowerCase() === "v") {
-        this.store.add(this.store.get_clipboard());
-      }
-
-      if (e.key.toLowerCase() === "delete") {
-        this.store.remove();
+      if (tagName === "body") {
+        if (e.ctrlKey && e.key.toLowerCase() === "z") {
+          this.store.undo();
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "y") {
+          this.store.redo();
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "x") {
+          this.store.set_clipboard(this.store.get_selections());
+          this.store.remove();
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "c") {
+          this.store.set_clipboard(this.store.get_selections());
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "v") {
+          this.store.add(this.store.get_clipboard());
+        }
+        if (e.key.toLowerCase() === "delete") {
+          this.store.remove();
+        }
       }
     },
   },
@@ -123,5 +124,8 @@ export default {
   width: 100%;
   margin-top: auto;
   bottom: 0;
+}
+input:focus::placeholder {
+  color: transparent;
 }
 </style>
