@@ -42,30 +42,32 @@ export default {
     keydown(e: KeyboardEvent) {
       if (!e.target) return;
       const tagName = (e.target as HTMLSelectElement)?.tagName?.toLowerCase();
-
-      if (e.ctrlKey && e.key.toLowerCase() === "f") {
+      const key = e.key.toLowerCase();
+      if (e.ctrlKey && key === "f") {
         e.preventDefault();
         (this.$refs["editor-searchbox"] as HTMLInputElement).focus();
       }
-
+      if (key === "escape") {
+        (this.$refs["editor-searchbox"] as HTMLInputElement).blur();
+      }
       if (tagName === "body") {
-        if (e.ctrlKey && e.key.toLowerCase() === "z") {
+        if (e.ctrlKey && key === "z") {
           this.store.undo();
         }
-        if (e.ctrlKey && e.key.toLowerCase() === "y") {
+        if (e.ctrlKey && key === "y") {
           this.store.redo();
         }
-        if (e.ctrlKey && e.key.toLowerCase() === "x") {
+        if (e.ctrlKey && key === "x") {
           this.store.set_clipboard(this.store.get_selections());
           this.store.remove();
         }
-        if (e.ctrlKey && e.key.toLowerCase() === "c") {
+        if (e.ctrlKey && key === "c") {
           this.store.set_clipboard(this.store.get_selections());
         }
-        if (e.ctrlKey && e.key.toLowerCase() === "v") {
+        if (e.ctrlKey && key === "v") {
           this.store.add(this.store.get_clipboard());
         }
-        if (e.key.toLowerCase() === "delete") {
+        if (key === "delete") {
           this.store.remove();
         }
       }

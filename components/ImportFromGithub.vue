@@ -60,7 +60,7 @@ function normalizeGithubRepoUrl(input: string): string | null {
 }
 </script>
 <template>
-  <input type="url" class="bouton" v-model="inputUrl" placeholder="BSData/wh40k" />
+  <input ype="url" class="bouton !font-normal" v-model="inputUrl" placeholder="BSData/wh40k" />
   <button
     @click="submit(normalizeGithubRepoUrl(inputUrl))"
     class="bouton"

@@ -1,16 +1,18 @@
 <template>
   <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
+  <span class="gray"> note: this tab is only includes references from links for now</span>
+
   <table>
     <tr>
-      <th> Name </th>
       <th> Catalogue </th>
+      <th> Name </th>
     </tr>
     <tr v-for="link of links">
-      <td>
-        {{ link.getName() }}
-      </td>
       <td class="gray">
         {{ link.catalogue.getName() }}
+      </td>
+      <td>
+        {{ link.getName() }}
       </td>
     </tr>
   </table>

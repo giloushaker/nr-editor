@@ -165,7 +165,7 @@ button,
 .bouton {
   font-family: $fontButton !important;
   font-size: $fontButtonSize !important;
-  font-weight: bold !important;
+  font-weight: bold;
 }
 
 a {
