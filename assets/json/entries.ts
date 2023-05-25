@@ -124,7 +124,7 @@ export const entries = {
     allowedChildrens: ["modifiers", "modifierGroups"],
   },
   rules: {
-    allowedChildrens: ["modifiers", "modifierGroups"],
+    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
   },
   profiles: {
     allowedChildrens: ["modifiers", "modifierGroups"],

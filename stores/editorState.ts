@@ -13,6 +13,7 @@ import {
   getTypeName,
   forEachParent,
   getTypeLabel,
+  replaceAtEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { enumerate_zip, generateBattlescribeId, textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -26,8 +27,6 @@ import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
-import { nextTick } from "vue";
-import { UnorderedBulkOperation } from "mongodb";
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -61,6 +60,7 @@ export interface CatalogueState {
 function get_ctx(el: any): any {
   return el.__vnode.ctx.ctx;
 }
+const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorState => ({
     selections: [],
@@ -135,7 +135,7 @@ export const useEditorStore = defineStore("editor", {
       const id = getDataDbId(catalogue);
       return this.unsavedChanges[id];
     },
-    set_catalogue_state(catalogue: Catalogue, state: boolean) {
+    set_catalogue_changed(catalogue: Catalogue, state: boolean) {
       const id = getDataDbId(catalogue);
       if (!(id in this.unsavedChanges)) {
         this.unsavedChanges[id] = {
@@ -318,7 +318,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.do_action("remove", undo, redo);
-      this.set_catalogue_state(catalogue, true);
+      this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
     add(data: (EditorBase | Record<string, any>) | (EditorBase | Record<string, any>)[], childKey?: string) {
@@ -345,7 +345,7 @@ export const useEditorStore = defineStore("editor", {
 
             // Copy to not affect existing
             if (!Array.isArray(arr)) continue;
-            const copy = JSON.parse(entryToJson(entry));
+            const copy = JSON.parse(entryToJson(entry, editorFields));
 
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
@@ -362,7 +362,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.do_action("add", undo, redo);
-      this.set_catalogue_state(catalogue, true);
+      this.set_catalogue_changed(catalogue, true);
     },
     open_selected() {
       for (const el of this.selections as any[]) {
@@ -394,28 +394,106 @@ export const useEditorStore = defineStore("editor", {
               field: "hidden",
               id: generateBattlescribeId(),
               select: true,
+              ...data,
             },
             key
           );
           break;
-
         case "modifierGroups":
         case "conditionGroups":
           this.add({ id: generateBattlescribeId(), select: true }, key);
           break;
-
         default:
           this.add(
             {
               id: generateBattlescribeId(),
               select: true,
-              name: `_New ${getTypeLabel(getTypeName(key))}`,
+              name: `New ${getTypeLabel(getTypeName(key))}`,
+              ...data,
             },
             key
           );
           break;
       }
       this.open_selected();
+    },
+    can_move(obj: EditorBase) {
+      if (obj.isLink()) return false;
+      if (!this.move_to_key(obj)) return false;
+      return true;
+    },
+    get_move_targets(obj: EditorBase) {
+      const catalogue = obj.catalogue;
+      if (!catalogue) return;
+      if (obj.isLink()) return;
+      if (!this.move_to_key(obj)) return;
+      const result = [];
+      if (!obj.parentKey.startsWith("shared")) {
+        result.push(catalogue);
+      }
+      result.push(...catalogue.imports);
+      return result;
+    },
+    move_to_key(obj: EditorBase) {
+      switch (obj.editorTypeName) {
+        case "infoGroup":
+          return "sharedInfoGroups";
+        case "rule":
+          return "sharedRules";
+        case "profile":
+          return "sharedProfiles";
+        case "selectionEntry":
+          return "sharedSelectionEntries";
+        case "selectionEntryGroup":
+          return "sharedSelectionEntryGroups";
+        default:
+          return "";
+      }
+    },
+    move(obj: EditorBase, from: Catalogue, to: Catalogue) {
+      const redo = () => {
+        // Get key the object will end up in
+        const catalogueKey = this.move_to_key(obj);
+        if (!catalogueKey) return;
+
+        // move obj to target
+        from.removeFromIndex(obj);
+        const copy = JSON.parse(entryToJson(obj, editorFields));
+        setPrototypeRecursive({ [catalogueKey]: copy });
+        onAddEntry(copy, to, to);
+        if (!to[catalogueKey]) {
+          to[catalogueKey] = [];
+        }
+        to[catalogueKey]!.push(copy);
+
+        // replace previous obj with link to moved obj
+        if (obj.parentKey === "selectionEntries") {
+          const link: any = {
+            targetId: copy.id,
+            id: generateBattlescribeId(),
+            type: obj.editorTypeName,
+            name: obj.getName(),
+            hidden: obj.hidden,
+            collective: obj.collective,
+            select: true,
+          };
+
+          setPrototypeRecursive({ ["entryLinks"]: link });
+          replaceAtEntryPath(from, getEntryPath(obj), link);
+          onAddEntry(link, from, from);
+        } else {
+          popAtEntryPath(from, getEntryPath(obj));
+        }
+      };
+      function undo() {
+        // undo
+        // replace obj path with obj
+        // delete obj from target
+        // update obj
+      }
+      this.do_action("move", undo, redo);
+      this.set_catalogue_changed(from, true);
+      this.set_catalogue_changed(to, true);
     },
     allowed_children(obj: EditorBase, key: string): Set<string> {
       let result = (entries as any)[key]?.allowedChildrens;
@@ -455,6 +533,7 @@ export const useEditorStore = defineStore("editor", {
         const childs = current.getElementsByClassName(`EditorCollapsibleBox ${node.parentKey}`);
         const child = [...childs].find((o) => this.get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
+          console.error(path);
           throw new Error("Invalid path");
         }
         current = child;

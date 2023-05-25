@@ -36,14 +36,15 @@ Editor:
             ✔ infoGroupLink @done(23-05-22 10:56)
         ✔ profiles @done(23-05-22 09:42)
         ✔ selectionEntryGroups @done(23-05-22 11:36)
-        
+        ☐ catalogueLink
+        ☐ catalogue / gameSystem obj
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByName(query) then filter 
             ✔ add in ui @done(23-05-15 19:09)
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)
-        ☐ subdialog
+        ✔ subdialog @done(23-05-25 23:06)
         ☐ move to
             Would allow the used to right click on an entry to move it somewhere else, 
             like an imported catalogue for example, 
@@ -73,7 +74,7 @@ Editor:
         ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
             ☐ May still happen on items that do not have an id because id is used as key
         ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
-
+        ☐ Show enabled categories on top
             
 
         

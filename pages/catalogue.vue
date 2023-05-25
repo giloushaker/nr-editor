@@ -126,7 +126,7 @@ export default {
       }
     },
     onChanged() {
-      this.store.set_catalogue_state(this.cat as Catalogue, true);
+      this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
 
     async load(catalogueFileId: string) {

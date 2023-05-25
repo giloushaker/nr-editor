@@ -2,39 +2,20 @@
   <fieldset>
     <legend>Categories</legend>
     <div></div>
-    <input
-      class="section"
-      type="text"
-      v-model="filter"
-      placeholder="Filter categories..."
-    />
+    <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
     <div class="section categoryList">
       <div>
-        <input
-          name="primary"
-          type="radio"
-          :checked="noPrimary"
-          @change="primaryChanged(null)"
-        />
+        <input name="primary" type="radio" :checked="noPrimary" @change="primaryChanged(null)" />
         No Primary
       </div>
 
       <div v-for="cat of categories" class="category">
         <div>
-          <input
-            name="primary"
-            type="radio"
-            :checked="hasCategory(cat) == 2"
-            @change="primaryChanged(cat)"
-          />
+          <input name="primary" type="radio" :checked="hasCategory(cat) == 2" @change="primaryChanged(cat)" />
           Primary?
         </div>
         <div>
-          <input
-            type="checkbox"
-            :checked="hasCategory(cat) != 0"
-            @change="secondaryChanged(cat)"
-          />
+          <input type="checkbox" :checked="hasCategory(cat) != 0" @change="secondaryChanged(cat)" />
           {{ cat.name }}
         </div>
       </div>
@@ -44,15 +25,8 @@
 
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import {
-  Category,
-  CategoryLink,
-  Link,
-} from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  EditorBase,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 
 export default {
@@ -101,11 +75,7 @@ export default {
         }
       }
       this.changed();
-      console.log(
-        links
-          .map((o) => o.target.getName() + " " + o.primary + " " + o.id)
-          .join("\n")
-      );
+      console.log(links.map((o) => o.target.getName() + " " + o.primary + " " + o.id).join("\n"));
     },
     removeLink(links: Link[], link: Link) {
       const idx = links.findIndex((o) => o === link);
@@ -149,9 +119,7 @@ export default {
     },
 
     hasCategory(cat: Category) {
-      let link = this.item.categoryLinks?.find(
-        (elt) => elt.target.id === cat.id
-      );
+      let link = this.item.categoryLinks?.find((elt) => elt.target.id === cat.id);
       if (!link) {
         return 0;
       }

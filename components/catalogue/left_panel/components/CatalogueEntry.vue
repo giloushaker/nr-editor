@@ -62,7 +62,8 @@
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
     </template>
-    <DialogContextMenu ref="contextmenu">
+
+    <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
       <template #default="{ payload }">
         <template v-if="!payload && item">
           <div v-if="link.target" @click="store.follow(link)">
@@ -80,14 +81,16 @@
           </div>
           <Separator v-if="item.isLink() || item.links || imported" />
         </template>
-
-        <!-- All Adds -->
         <template v-if="payload">
           <div @click="store.create(payload)">
             <img class="pr-4px" :src="`assets/bsicons/${getTypeName(payload)}.png`" />
             {{ getTypeLabel(getTypeName(payload)) }}
           </div>
-          <div @click="store.create('entryLink')" v-if="payload === 'selectionEntries'">
+          <div @click="store.create('entryLinks')" v-if="payload === 'selectionEntries'">
+            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
+            Link
+          </div>
+          <div @click="store.create('infoLinks', { type: 'rule' })" v-if="payload === 'rules'">
             <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
@@ -155,7 +158,17 @@
         <div @click="store.cut()" v-if="!payload"> Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
         <div @click="store.copy" v-if="!payload"> Copy<span class="gray absolute right-5px">Ctrl+C</span> </div>
         <div @click="store.paste"> Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
-
+        <template v-if="!payload && store.get_move_targets(item)?.length">
+          <div @mouseover="nestedcontextmenu.show">
+            <span> Move To </span>
+            <span class="absolute right-5px">❯</span>
+          </div>
+          <ContextMenu ref="nestedcontextmenu">
+            <div v-for="target of store.get_move_targets(item)" @click="store.move(item, catalogue, target)">
+              {{ target.name }}
+            </div>
+          </ContextMenu>
+        </template>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
           <img class="w-12px pr-4px" src="assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
@@ -163,7 +176,7 @@
           >
         </div>
       </template>
-    </DialogContextMenu>
+    </ContextMenu>
   </div>
 </template>
 
@@ -185,8 +198,11 @@ import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_cata
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
-
+import ContextMenu from "~/components/dialog/ContextMenu.vue";
 export default {
+  components: {
+    ContextMenu,
+  },
   setup() {
     return { store: useEditorStore() };
   },
@@ -226,6 +242,7 @@ export default {
         categoryLink: 8,
         infoLink: 9,
       } as Record<string, number>,
+      contextmenuopen: false,
     };
   },
   methods: {
@@ -241,7 +258,7 @@ export default {
       return this.groups[key];
     },
     debug() {
-      console.log(this.item.name, this.forceShow, this.group, this.item);
+      console.log(this.item.name, this.item.editorTypeName, this.item, this);
     },
     getTypedArray(item: Catalogue, type: ItemKeys | undefined): CatalogueEntryItem[] {
       if (!type) {
@@ -288,8 +305,23 @@ export default {
     },
 
     sorted(items: CatalogueEntryItem[]) {
-      const a = sortByAscending(items, (o) => o.item.getName() || "_");
+      const a = sortByAscending(items, (o) => o.item.getName() || "");
       return sortByDescending(a, (o) => this.order[o.item.editorTypeName] || 1000);
+    },
+
+    menu(ref: string) {
+      return {
+        show: (event: MouseEvent, o: any) => {
+          this.contextmenuopen = true;
+          this.$nextTick(() => {
+            (this.$refs[ref] as any)?.show(event, o);
+          });
+        },
+        close: (event: MouseEvent, o: any) => {
+          (this.$refs[ref] as any)?.se(event, o);
+          this.contextmenuopen = false;
+        },
+      };
     },
   },
 
@@ -301,14 +333,20 @@ export default {
       return this.mixedChildren.length > 0 && this.hiddenChilds < this.mixedChildren.length;
     },
     contextmenu() {
-      return this.$refs.contextmenu as {
-        show: (event: MouseEvent, o: any) => unknown;
-      };
+      return this.menu("contextmenu");
+    },
+    nestedcontextmenu() {
+      return this.menu("nestedcontextmenu");
     },
     categories() {
       return categories;
     },
-
+    catalogue() {
+      return this.item.isCatalogue() ? this.item : this.item.catalogue;
+    },
+    catalogues() {
+      return this.catalogue.imports;
+    },
     possibleChildren() {
       return possibleChildren;
     },
