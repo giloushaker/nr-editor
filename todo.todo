@@ -26,6 +26,7 @@ Editor:
         ✔ show imported entries @done(23-05-21 16:17)
         ✘ Entries are sorted by type, then alphabtically. New Entries should always come first @cancelled(23-05-21 16:17)
         ✔ Handle dead links @done(23-05-22 08:20)
+        ☐ Show enabled categories of entries on top
     
     Right Panel:
         ✔ modifierGroups @done(23-05-22 08:42)
@@ -38,6 +39,7 @@ Editor:
         ✔ selectionEntryGroups @done(23-05-22 11:36)
         ☐ catalogueLink
         ☐ catalogue / gameSystem obj
+
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByName(query) then filter 
@@ -75,8 +77,8 @@ Editor:
         ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
             ☐ May still happen on items that do not have an id because id is used as key
         ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
-        ☐ Show enabled categories on top
-            
+        ☐ Creating a sub-entry of a type that didn't exist/had 0 of before does not react            
+            in sharedInfoGroups for example
 
         
 
