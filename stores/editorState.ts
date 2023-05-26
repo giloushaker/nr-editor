@@ -27,6 +27,7 @@ import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
+import ConditionGroupPanel from "~/components/catalogue/right_panel/ConditionGroupPanel.vue";
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -283,17 +284,48 @@ export const useEditorStore = defineStore("editor", {
     paste() {
       this.add(this.get_clipboard());
     },
+    duplicate() {
+      const selections = this.get_selections();
+      if (!selections.length) return;
+      const first = selections[0];
+      const catalogue = first instanceof Catalogue ? first : first.catalogue;
+      let addeds = [] as EditorBase[];
+
+      function redo() {
+        addeds = [];
+        for (const item of selections) {
+          const copy = JSON.parse(entryToJson(item, editorFields));
+          if (!item.parent) continue;
+          const arr = item.parent[item.parentKey as keyof EditorBase];
+          if (!Array.isArray(arr)) {
+            throw new Error(`Couldn't duplicate: parent[${item.parentKey}] is not an array`);
+          }
+          setPrototypeRecursive({ [item.parentKey]: copy });
+          scrambleIds(catalogue, copy);
+          onAddEntry(copy, catalogue, item.parent);
+          arr.push(copy);
+          addeds.push(copy);
+        }
+      }
+      function undo() {
+        for (const entry of addeds) {
+          popAtEntryPath(catalogue, getEntryPath(entry));
+        }
+      }
+      this.do_action("dupe", undo, redo);
+      this.set_catalogue_changed(catalogue, true);
+    },
     remove() {
       const selections = this.get_selections();
       if (!selections.length) return;
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
-
       let entries = [] as EditorBase[];
       for (const selected of selections) {
         if (selected.catalogue !== catalogue) continue;
         entries.push(selected);
       }
+
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
       function redo() {
@@ -323,16 +355,10 @@ export const useEditorStore = defineStore("editor", {
     add(data: (EditorBase | Record<string, any>) | (EditorBase | Record<string, any>)[], childKey?: string) {
       const selections = this.get_selections();
       if (!selections.length) return;
-
-      if (!Array.isArray(data)) {
-        data = [data];
-      }
-
+      if (!Array.isArray(data)) data = [data];
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
-
       let addeds = [] as EditorBase[];
-
       function redo() {
         addeds = [];
         for (const item of selections) {

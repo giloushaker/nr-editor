@@ -155,9 +155,11 @@
           <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />
         </template>
 
-        <div @click="store.cut()" v-if="!payload"> Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
-        <div @click="store.copy" v-if="!payload"> Copy<span class="gray absolute right-5px">Ctrl+C</span> </div>
-        <div @click="store.paste"> Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
+        <div @click="store.cut" v-if="!payload">Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
+        <div @click="store.copy" v-if="!payload">Copy<span class="gray absolute right-5px">Ctrl+C</span> </div>
+        <div @click="store.paste">Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
+        <div @click="store.duplicate" v-if="!payload">Duplicate<span class="gray absolute right-5px">Ctrl+D</span></div>
+
         <template v-if="!payload && store.get_move_targets(item)?.length">
           <div @mouseover="nestedcontextmenu.show">
             <span> Move To </span>

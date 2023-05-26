@@ -72,7 +72,6 @@ export default defineComponent({
     };
   },
   data() {
-    console.log("hello");
     return {
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
@@ -84,7 +83,7 @@ export default defineComponent({
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   created() {
-    this.store.load_systems_from_db();
+    console.log(this.$route);
   },
   methods: {
     systemAndCatalogues(gst: GameSystemFiles) {
@@ -169,10 +168,11 @@ export default defineComponent({
     },
   },
   watch: {
-    "$route.params.system": {
+    "$route.query.id": {
       immediate: true,
-      handler(newVal, oldVal) {
+      async handler(newVal, oldVal) {
         if (oldVal !== newVal) {
+          await this.store.load_system_from_db(newVal);
         }
       },
     },

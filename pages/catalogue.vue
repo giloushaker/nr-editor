@@ -95,9 +95,7 @@ export default {
             await this.load(this.$route.query?.id as string);
             this.error = null;
 
-            // Resolve a promise in the store so that nextTick can be awaited from within the store
-            // Otherwise it would run the goto code before the route loads
-            // Alternative could be passing the path to goto in route params
+            // Resolve a promise in the store so that code elsewhere can wait for this to load
             this.$nextTick(() => {
               this.store.$nextTickResolve && this.store.$nextTickResolve();
             });

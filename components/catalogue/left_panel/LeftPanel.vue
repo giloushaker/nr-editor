@@ -52,22 +52,32 @@ export default {
       }
       if (tagName === "body") {
         if (e.ctrlKey && key === "z") {
+          e.preventDefault();
           this.store.undo();
         }
         if (e.ctrlKey && key === "y") {
+          e.preventDefault();
           this.store.redo();
         }
         if (e.ctrlKey && key === "x") {
+          e.preventDefault();
           this.store.set_clipboard(this.store.get_selections());
           this.store.remove();
         }
         if (e.ctrlKey && key === "c") {
+          e.preventDefault();
           this.store.set_clipboard(this.store.get_selections());
         }
         if (e.ctrlKey && key === "v") {
+          e.preventDefault();
           this.store.add(this.store.get_clipboard());
         }
+        if (e.ctrlKey && key === "d") {
+          e.preventDefault();
+          this.store.duplicate();
+        }
         if (key === "delete") {
+          e.preventDefault();
           this.store.remove();
         }
       }
