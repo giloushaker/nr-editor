@@ -591,12 +591,13 @@ export const useEditorStore = defineStore("editor", {
     },
     async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
-        if (obj.target.catalogue !== obj.catalogue) {
+        const targetCatalogue = obj.target.isCatalogue() ? obj.target : obj.target.catalogue;
+        if (targetCatalogue !== obj.catalogue) {
           if (!this.$router) {
             console.warn("Cannot follow link to another catalogue without $router set");
             return;
           }
-          const id = getDataDbId(obj.target.catalogue);
+          const id = getDataDbId(targetCatalogue);
           this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
           this.$nextTick = new Promise((resolve, reject) => {
             this.$nextTickResolve = resolve;

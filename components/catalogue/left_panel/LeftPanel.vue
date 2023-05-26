@@ -17,9 +17,11 @@ import { useEditorStore } from "~/stores/editorState";
 
 export default {
   setup() {
-    return toRefs({ store: useEditorStore(), filtered: [] as EditorBase[], showImported: false });
+    return { store: useEditorStore() };
   },
-
+  data() {
+    return { showImported: false, filtered: [] as EditorBase[] };
+  },
   mounted() {
     addEventListener("keydown", this.keydown);
   },
@@ -111,7 +113,7 @@ export default {
           for (const p of this.filtered) {
             if (!p.parent) continue;
             try {
-              await this.store.open(p, true);
+              await this.store.open(p as EditorBase, true);
             } catch (e) {
               continue;
             }

@@ -64,10 +64,11 @@ export default {
       systemFiles: null as GameSystemFiles | null,
       loading: false,
       id: "",
+      cat: null as Catalogue | null,
     };
   },
   setup() {
-    return toRefs({ cataloguesStore: useCataloguesStore(), store: useEditorStore(), cat: null as Catalogue | null });
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -80,11 +81,11 @@ export default {
   computed: {
     changed() {
       if (!this.cat) return false;
-      return this.store.get_catalogue_state(this.cat)?.changed || false;
+      return this.store.get_catalogue_state(this.cat as Catalogue)?.changed || false;
     },
     unsaved() {
       if (!this.cat) return false;
-      return this.store.get_catalogue_state(this.cat)?.unsaved || false;
+      return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
   },
   activated() {

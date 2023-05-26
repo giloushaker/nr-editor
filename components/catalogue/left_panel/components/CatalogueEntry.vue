@@ -21,7 +21,7 @@
           </span>
         </template>
         <template #content>
-          <template :key="entry.item.id" v-for="entry of sorted(category.items)">
+          <template :key="entry.item.id" v-for="entry of category.items">
             <CatalogueEntry
               :item="entry.item"
               :group="get_group(category.type)"
@@ -52,7 +52,7 @@
         </template>
         <template #content>
           <CatalogueEntry
-            v-for="child of sorted(mixedChildren)"
+            v-for="child of mixedChildren"
             :item="child.item"
             :group="get_group('default')"
             :key="child.item.id"
@@ -201,6 +201,20 @@ import { Link } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
+
+const order: Record<string, number> = {
+  selectionEntry: 1,
+  entryLink: 1,
+  selectionEntryGroup: 2,
+  entryGroupLink: 2,
+  constraint: 3,
+  forceEntry: 4,
+  profile: 5,
+  modifier: 6,
+  modifierGroup: 7,
+  categoryLink: 8,
+  infoLink: 9,
+};
 export default {
   components: {
     ContextMenu,
@@ -230,20 +244,6 @@ export default {
   data() {
     return {
       groups: {} as Record<string, any>,
-      msg: "",
-      order: {
-        selectionEntry: 1,
-        entryLink: 1,
-        selectionEntryGroup: 2,
-        entryGroupLink: 2,
-        constraint: 3,
-        forceEntry: 4,
-        profile: 5,
-        modifier: 6,
-        modifierGroup: 7,
-        categoryLink: 8,
-        infoLink: 9,
-      } as Record<string, number>,
       contextmenuopen: false,
     };
   },
@@ -308,7 +308,7 @@ export default {
 
     sorted(items: CatalogueEntryItem[]) {
       const a = sortByAscending(items, (o) => o.item.getName() || "");
-      return sortByDescending(a, (o) => this.order[o.item.editorTypeName] || 1000);
+      return sortByDescending(a, (o) => order[o.item.editorTypeName] || 1000);
     },
 
     menu(ref: string) {
@@ -340,17 +340,11 @@ export default {
     nestedcontextmenu() {
       return this.menu("nestedcontextmenu");
     },
-    categories() {
-      return categories;
-    },
     catalogue() {
       return this.item.isCatalogue() ? this.item : this.item.catalogue;
     },
     catalogues() {
       return this.catalogue.imports;
-    },
-    possibleChildren() {
-      return possibleChildren;
     },
 
     allowedChildren() {
@@ -361,7 +355,7 @@ export default {
     },
     mixedChildren(): Array<CatalogueEntryItem> {
       const res = [];
-      for (const cat of this.possibleChildren) {
+      for (const cat of possibleChildren) {
         const sub = (this.item as any)[cat] as Array<EditorBase & ItemTypes>;
         if (!sub || !Array.isArray(sub)) continue;
         for (const elt of sub) {
@@ -369,10 +363,10 @@ export default {
           res.push({ type: cat, item: elt });
         }
       }
-      return res;
+      return this.sorted(res);
     },
     groupedCategories() {
-      return this.categories.map((o) => ({
+      return categories.map((o) => ({
         ...o,
         items: this.getTypedArray(this.item as unknown as Catalogue, o.type).concat(
           this.getTypedArray(this.item as unknown as Catalogue, o.links)
