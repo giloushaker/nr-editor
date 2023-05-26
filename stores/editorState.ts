@@ -467,10 +467,10 @@ export const useEditorStore = defineStore("editor", {
         to[catalogueKey]!.push(copy);
 
         // replace previous obj with link to moved obj
-        if (obj.parentKey === "selectionEntries") {
+        if (obj.parentKey === "selectionEntries" || obj.parentKey == "selectionEntryGroups") {
           const link: any = {
             targetId: copy.id,
-            id: generateBattlescribeId(),
+            id: from.generateNonConflictingId(),
             type: obj.editorTypeName,
             name: obj.getName(),
             hidden: obj.hidden,

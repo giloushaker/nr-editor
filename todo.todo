@@ -45,10 +45,11 @@ Editor:
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)
         ✔ subdialog @done(23-05-25 23:06)
-        ☐ move to
+        ✔ move to @done(23-05-26 02:01)
             Would allow the used to right click on an entry to move it somewhere else, 
             like an imported catalogue for example, 
             we would do that automatically without breaking previous links
+            make entrylinks/grouplinks within entries
         ☐ errors
         ☐ references from
         ☐ build dependency graph
