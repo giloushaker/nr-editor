@@ -39,9 +39,9 @@
           <span class="status mx-2">saved</span>
         </template>
       </template>
-      <!-- <template v-if="systemFiles && !systemFiles.allLoaded">
+      <template v-if="systemFiles && !systemFiles.allLoaded">
         <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
-      </template> -->
+      </template>
     </div>
   </Teleport>
 </template>

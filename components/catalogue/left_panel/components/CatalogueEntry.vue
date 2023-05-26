@@ -47,7 +47,7 @@
           <span :class="{ imported: imported }">
             <img :src="`assets/bsicons/${item.editorTypeName}.png`" />
             <span>{{ getName(item) }}</span>
-            <span class="gray">{{ getNameExtra(item) }} </span>
+            <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
           </span>
         </template>
         <template #content>
