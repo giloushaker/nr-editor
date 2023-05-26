@@ -47,28 +47,32 @@ Editor:
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)
         ✔ subdialog @done(23-05-25 23:06)
+        ✔ references to @done(23-05-25 19:16)
         ✔ move to @done(23-05-26 02:01)
             Would allow the used to right click on an entry to move it somewhere else, 
             like an imported catalogue for example, 
             we would do that automatically without breaking previous links
             make entrylinks/grouplinks within entries
+            ✔ build dependency graph @done(23-05-26 20:35)
+            
+        @critical
+            ☐ load systems from bs initially in some fast way
+            ☐ save to disk in app
+            ☐ load a roster in ui 
+            
         ☐ errors
         ☐ references from
-        ✔ build dependency graph @done(23-05-26 20:35)
-        ☐ load systems from bs initially in some fast way
-        ☐ save to disk in app
-        ✔ references to @done(23-05-25 19:16)
         ☐ move back/forward (like browser navigation)
+        ☐ save collapsible box states
+        ☐ preview profiles/rules (like in builder)
+        ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
+        ☐ upload to github
+        ☐ view old versions, changes
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)
-        ☐ upload to github
-        ☐ preview profiles/rules (like in builder)
         ✔ download from github (needs proxy) @done(23-05-08 18:43)
-        ☐ https://github.com/BattleScribe/Release/issues/63
-        ☐ view old versions, changes
-        ☐ load a roster in ui
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
             ✔ show childs of found @done(23-05-21 01:08)

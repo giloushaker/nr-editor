@@ -160,6 +160,11 @@ export default {
         this.collapseSwitch();
       }
     },
+    close() {
+      if (!this.collapsed) {
+        this.collapseSwitch();
+      }
+    },
     do_select(e: MouseEvent) {
       this.store.do_select(e, this as any, this.group);
     },

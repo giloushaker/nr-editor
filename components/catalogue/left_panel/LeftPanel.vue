@@ -17,7 +17,7 @@ import { useEditorStore } from "~/stores/editorState";
 
 export default {
   setup() {
-    return { store: useEditorStore() };
+    return toRefs({ store: useEditorStore(), filtered: [] as EditorBase[], showImported: false });
   },
 
   mounted() {
@@ -26,12 +26,7 @@ export default {
   unmounted() {
     removeEventListener("keydown", this.keydown);
   },
-  data() {
-    return {
-      filtered: [] as EditorBase[],
-      showImported: false,
-    };
-  },
+
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -92,7 +87,7 @@ export default {
         return this.store.filter;
       },
 
-      set(v: string) {
+      async set(v: string) {
         const prev = this.filtered as EditorBase[];
         for (const p of prev) {
           delete p.showInEditor;
@@ -111,6 +106,17 @@ export default {
           });
         }
         this.store.set_filter(v);
+        if (v.length > 2) {
+          await nextTick();
+          for (const p of this.filtered) {
+            if (!p.parent) continue;
+            try {
+              await this.store.open(p, true);
+            } catch (e) {
+              continue;
+            }
+          }
+        }
       },
     },
   },

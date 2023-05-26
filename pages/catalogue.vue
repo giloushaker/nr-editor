@@ -63,6 +63,7 @@ export default {
       item: null as ItemTypes | null,
       systemFiles: null as GameSystemFiles | null,
       loading: false,
+      id: "",
     };
   },
   setup() {
@@ -86,13 +87,20 @@ export default {
       return this.store.get_catalogue_state(this.cat)?.unsaved || false;
     },
   },
+  activated() {
+    console.log("activated", this.$route.query.id);
+  },
+  deactivated() {
+    console.log("deactivated", this.id);
+  },
   watch: {
-    "$route.params": {
+    "$route.query.id": {
       async handler(newVal, oldVal) {
-        if (newVal !== oldVal) {
+        if (newVal && newVal !== oldVal) {
+          this.id = newVal;
           this.store.unselect();
           try {
-            await this.load(this.$route.query?.id as string);
+            await this.load(newVal as string);
             this.error = null;
 
             // Resolve a promise in the store so that code elsewhere can wait for this to load

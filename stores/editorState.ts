@@ -150,7 +150,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     save_catalogue(catalogue: Catalogue) {
-      saveCatalogue(catalogue, catalogue as any);
+      saveCatalogue(catalogue, catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
       cataloguesStore.updateCatalogue(catalogue);
@@ -531,7 +531,7 @@ export const useEditorStore = defineStore("editor", {
       }
       return new Set(result);
     },
-    async open(obj: EditorBase) {
+    async open(obj: EditorBase, closeLast?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
@@ -540,6 +540,11 @@ export const useEditorStore = defineStore("editor", {
       async function open_el(el: any) {
         const context = get_ctx(el);
         context.open();
+        await context.$nextTick();
+      }
+      async function close_el(el: any) {
+        const context = get_ctx(el);
+        context.close();
         await context.$nextTick();
       }
 
@@ -565,7 +570,11 @@ export const useEditorStore = defineStore("editor", {
         if (node !== last) {
           await open_el(current);
         }
+        if (node === last && closeLast) {
+          await close_el(current);
+        }
       }
+
       return current;
     },
     async goto(obj: EditorBase) {

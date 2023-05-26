@@ -72,7 +72,7 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
 }
 
-export function saveCatalogue(data: Catalogue, raw: BSIData) {
+export function saveCatalogue(data: Catalogue, raw: BSIData | Catalogue) {
   const stringed = rootToJson(data, raw);
   if (data.isGameSystem()) {
     db.systems.put({
