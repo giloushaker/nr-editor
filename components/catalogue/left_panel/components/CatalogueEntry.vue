@@ -260,21 +260,33 @@ export default {
       return this.groups[key];
     },
     debug() {
-      console.log(this.item.name, this.item.editorTypeName, this.item, this);
-    },
-    getTypedArray(item: Catalogue, type: ItemKeys | undefined): CatalogueEntryItem[] {
-      if (!type) {
-        return [];
-      }
-      const key = type as keyof Catalogue;
-      const result = [] as CatalogueEntryItem[];
+      console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
+      console.log("component", this);
+      console.log(this.mixedChildren.length, "childs");
 
+      const local_mixedChildren = () => {
+        const res = [];
+        for (const cat of possibleChildren) {
+          const sub = (this.item as any)[cat] as Array<EditorBase & ItemTypes>;
+          if (!sub?.length) continue;
+          for (const elt of sub) {
+            if (!this.filter_child(elt)) continue;
+            res.push({ type: cat, item: elt });
+          }
+        }
+        return this.sorted(res);
+      };
+      console.log(local_mixedChildren().length, "actual childs");
+    },
+    getTypedArray(item: Catalogue, type: ItemKeys, output: CatalogueEntryItem[]) {
+      if (!type) return;
+      const key = type as keyof Catalogue;
       const found = item[key];
       if (found && Array.isArray(found)) {
         for (const child of found) {
           if (!this.filter_child(child as EditorBase)) continue;
           // if (child === null) debugger;
-          result.push({ item: child as ItemTypes & EditorBase, type });
+          output.push({ item: child as ItemTypes & EditorBase, type });
         }
       }
       if (this.showImported) {
@@ -283,12 +295,11 @@ export default {
           if (found && Array.isArray(found)) {
             for (const child of found) {
               if (!this.filter_child(child as EditorBase)) continue;
-              result.push({ item: child as ItemTypes & EditorBase, type, imported: true });
+              output.push({ item: child as ItemTypes & EditorBase, type, imported: true });
             }
           }
         }
       }
-      return result;
     },
     allowed(child: string | string[]) {
       if (Array.isArray(child)) {
@@ -325,6 +336,9 @@ export default {
         },
       };
     },
+    get_field(field: string) {
+      return (this.item as any)[field];
+    },
   },
 
   computed: {
@@ -353,25 +367,31 @@ export default {
     forceShow() {
       return this.item.showChildsInEditor || this.forceShowRecursive;
     },
+
     mixedChildren(): Array<CatalogueEntryItem> {
       const res = [];
-      for (const cat of possibleChildren) {
-        const sub = (this.item as any)[cat] as Array<EditorBase & ItemTypes>;
-        if (!sub || !Array.isArray(sub)) continue;
+      this.reactivityKey;
+      for (const cat of this.allowedChildren) {
+        const sub = this.get_field(cat);
+        if (!sub?.length) continue;
         for (const elt of sub) {
           if (!this.filter_child(elt)) continue;
-          res.push({ type: cat, item: elt });
+          res.push({ type: cat as ItemKeys, item: elt });
         }
       }
       return this.sorted(res);
     },
     groupedCategories() {
-      return categories.map((o) => ({
-        ...o,
-        items: this.getTypedArray(this.item as unknown as Catalogue, o.type).concat(
-          this.getTypedArray(this.item as unknown as Catalogue, o.links)
-        ),
-      }));
+      this.reactivityKey;
+      return categories.map((o) => {
+        const items = [] as CatalogueEntryItem[];
+        if (o.type) this.getTypedArray(this.item as any, o.type, items);
+        if (o.links) this.getTypedArray(this.item as any, o.links, items);
+        return {
+          ...o,
+          items,
+        };
+      });
     },
   },
 };
