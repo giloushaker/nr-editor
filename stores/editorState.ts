@@ -147,13 +147,12 @@ export const useEditorStore = defineStore("editor", {
       if (state) {
         this.unsavedChanges[id].changed = true;
       }
-
-      const obj = this.unsavedChanges[id];
     },
     save_catalogue(catalogue: Catalogue) {
       saveCatalogue(catalogue, catalogue as any);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
+      cataloguesStore.updateCatalogue(catalogue);
       cataloguesStore.setEdited(id, true);
       const state = this.get_catalogue_state(catalogue);
       state.unsaved = false;

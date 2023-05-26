@@ -47,9 +47,11 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
   async loadAll() {
     if (this.gameSystem) {
-      await this.loadCatalogue({ targetId: this.gameSystem.gameSystem.id });
+      const loadedSys = await this.loadCatalogue({ targetId: this.gameSystem.gameSystem.id });
+      loadedSys.processForEditor();
       for (const catalogue of Object.values(this.catalogueFiles)) {
-        await this.loadCatalogue({ targetId: catalogue.catalogue.id });
+        const loaded = await this.loadCatalogue({ targetId: catalogue.catalogue.id });
+        loaded.processForEditor();
       }
     }
     this.allLoaded = true;

@@ -54,8 +54,9 @@ Editor:
             make entrylinks/grouplinks within entries
         ☐ errors
         ☐ references from
-        ☐ build dependency graph
+        ✔ build dependency graph @done(23-05-26 20:35)
         ☐ load systems from bs initially in some fast way
+        ☐ save to disk in app
         ✔ references to @done(23-05-25 19:16)
         ☐ move back/forward (like browser navigation)
         ✔ load multiple catalogues @done(23-05-22 14:36)
@@ -71,6 +72,11 @@ Editor:
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
             ✔ show childs of found @done(23-05-21 01:08)
+
+
+        lower prio
+
+        
     Bugs:
         ✔ Unable to create new links @done(23-05-21 16:28)
         ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)

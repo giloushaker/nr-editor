@@ -4,7 +4,7 @@
     <table class="editorTable">
       <tr>
         <td>
-          <label for="name"> Name: </label>
+          <label for="name"> name: </label>
         </td>
         <td>
           <input type="text" id="name" v-model="cataloguedata.name" />
@@ -23,11 +23,7 @@
           <label for="authorContact"> authorContact: </label>
         </td>
         <td>
-          <input
-            type="text"
-            id="authorContact"
-            v-model="cataloguedata.authorContact"
-          />
+          <input type="text" id="authorContact" v-model="cataloguedata.authorContact" />
         </td>
       </tr>
       <tr>
@@ -36,44 +32,33 @@
         </td>
 
         <td>
-          <input
-            type="text"
-            id="authorName"
-            v-model="cataloguedata.authorName"
-          />
+          <input type="text" id="authorName" v-model="cataloguedata.authorName" />
+        </td>
+      </tr>
+      <tr>
+        <td>id:</td>
+        <td>
+          <input type="text" class="gray" id="id" v-model="cataloguedata.id" />
         </td>
       </tr>
       <tr>
         <td>
-          <label for="library"> Library: </label>
+          <label for="library"> library: </label>
         </td>
         <td>
           <input type="checkbox" id="library" v-model="cataloguedata.library" />
         </td>
       </tr>
-      <tr>
-        <td>Id:</td>
-        <td>
-          <span class="gray">{{ cataloguedata.id }}</span>
-        </td>
-      </tr>
     </table>
 
-    <button class="bouton" @click="$emit('create', catalogue)">
-      Create Catalogue
-    </button>
+    <button class="bouton" @click="$emit('create', catalogue)"> Create Catalogue </button>
   </fieldset>
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
-import {
-  BSIDataCatalogue,
-  BSIDataSystem,
-  BSICatalogue,
-  BSIGameSystem,
-} from "~/assets/shared/battlescribe/bs_types";
+import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["create"],

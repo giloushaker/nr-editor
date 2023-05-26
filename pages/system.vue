@@ -58,7 +58,6 @@ import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers"
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
 import ImportFromGithub from "~/components/ImportFromGithub.vue";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default defineComponent({
   components: {
@@ -73,6 +72,7 @@ export default defineComponent({
     };
   },
   data() {
+    console.log("hello");
     return {
       msg: "",
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
@@ -86,7 +86,6 @@ export default defineComponent({
   created() {
     this.store.load_systems_from_db();
   },
-  updated() {},
   methods: {
     systemAndCatalogues(gst: GameSystemFiles) {
       let res = [];
@@ -167,6 +166,15 @@ export default defineComponent({
         name: "catalogue",
         query: { id: getDataDbId(file) },
       });
+    },
+  },
+  watch: {
+    "$route.params.system": {
+      immediate: true,
+      handler(newVal, oldVal) {
+        if (oldVal !== newVal) {
+        }
+      },
     },
   },
 });

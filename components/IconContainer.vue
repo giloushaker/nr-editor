@@ -7,15 +7,7 @@
       @click="elementClicked(item)"
     >
       <ErrorIcon class="error" :errors="errors(item)" />
-      <template v-if="item.gameSystem">
-        <img src="assets/icons/system1.png" />
-      </template>
-      <template v-else-if="item.catalogue!.library">
-        <img src="assets/icons/library.png" />
-      </template>
-      <template v-else>
-        <img src="assets/icons/book.png" />
-      </template>
+      <img :src="getType(item).icon" />
       <div>{{ name(item) }}</div>
     </div>
     <div class="relative item add" @click="add">
@@ -33,7 +25,7 @@ import ErrorIcon from "./ErrorIcon.vue";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+
 import { ErrorMessage } from "~/assets/shared/error_manager";
 export default {
   emits: ["new", "itemClicked"],
@@ -50,6 +42,15 @@ export default {
     },
   },
   methods: {
+    getType(item: BSIData) {
+      if (item.gameSystem) {
+        return { icon: "assets/icons/system1.png", order: 1 };
+      } else if (item.catalogue?.library) {
+        return { icon: "assets/icons/library.png", order: 2 };
+      } else {
+        return { icon: "assets/icons/book.png", order: 3 };
+      }
+    },
     elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
     },
@@ -76,7 +77,10 @@ export default {
   },
   computed: {
     sortedItems() {
-      return sortByAscending(this.items, (o) => this.name(o));
+      return sortByAscending(
+        sortByAscending(this.items, (o) => this.name(o)),
+        (o) => this.getType(o).order
+      );
     },
   },
   components: { ErrorIcon },

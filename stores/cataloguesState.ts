@@ -1,4 +1,7 @@
 import { defineStore } from "pinia";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { BSICatalogue, BSIDataCatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 export interface ICatalogueState {
   edited?: boolean;
   errors?: string[];
@@ -7,9 +10,10 @@ export interface ICatalogueState {
 }
 
 export interface Dependency {
-  id: string;
-  source: string;
-  type?: "import" | "link" | "condition";
+  targetId: string;
+  sourceId: string;
+  sourceName?: string;
+  importRootEntries?: boolean;
 }
 /**
  * Stores info about catalogues, wich will be persisted to disk.
@@ -45,8 +49,38 @@ export const useCataloguesStore = defineStore("catalogues", {
     getDependents(id: string) {
       return this.get(id).dependents;
     },
-    setDependencies(id: string, dependencies: Dependency[]) {
-      this.get(id).dependencies = dependencies;
+    updateCatalogue(catalogue: Catalogue | BSICatalogue | BSIGameSystem) {
+      const id = catalogue.id;
+      const gstId = catalogue.gameSystemId || catalogue.id;
+      const dependencies = catalogue.catalogueLinks?.map((o) => ({
+        targetId: o.targetId === gstId ? gstId : `${gstId}-${o.targetId}`,
+        sourceId: id === gstId ? gstId : `${gstId}-${id}`,
+        importRootEntries: o.importRootEntries,
+        sourceName: catalogue.name,
+      }));
+      if (catalogue.gameSystemId) {
+        dependencies?.push({
+          targetId: catalogue.gameSystemId,
+          sourceId: id,
+          importRootEntries: true,
+          sourceName: catalogue.name,
+        });
+      }
+      this.setDependencies(id, dependencies);
+    },
+    setDependencies(id: string, dependencies?: Dependency[]) {
+      const previousDependencies = this.get(id)?.dependencies;
+      if (previousDependencies) {
+        for (const dependency of previousDependencies) {
+          this.removeDependent(dependency.targetId, dependency);
+        }
+      }
+      if (dependencies) {
+        for (const dependency of dependencies) {
+          this.addDependent(dependency.targetId, dependency);
+        }
+      }
+      this.get(id).dependencies = dependencies || [];
     },
     setDependents(id: string, dependents: Dependency[]) {
       this.get(id).dependents = dependents;
@@ -57,9 +91,10 @@ export const useCataloguesStore = defineStore("catalogues", {
       state.dependents.push(dependency);
     },
     removeDependent(id: string, dependency: Dependency) {
-      const state = this.get(id);
-      if (state.dependents) {
-        state.dependents = state.dependents.filter((d) => d.id !== dependency.id);
+      const dependents = this.get(id)?.dependents;
+      if (dependents) {
+        const idx = dependents.findIndex((o) => o.sourceId === dependency.sourceId);
+        if (idx >= 0) dependents.splice(idx, 1);
       }
     },
   },

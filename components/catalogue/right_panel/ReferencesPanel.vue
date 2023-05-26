@@ -1,11 +1,12 @@
 <template>
   <div>
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
+    note: this tab is currently missing:
     <span class="gray">
-      note: this tab is currently missing:
       <div> conditions/constraints/repeats refering to (by id)</div>
       <div> categories given by modifiers </div>
-      <div> profile related refs</div>
+      <div> profile type refs</div>
+      <div> root entry / catalogue refs</div>
     </span>
 
     <table class="mb-20px">
@@ -40,6 +41,9 @@ export default {
   computed: {
     links() {
       return this.item?.links || [];
+    },
+    other_links() {
+      return this.item?.other_links || [];
     },
     label() {
       return getName(this.item);

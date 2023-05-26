@@ -9,14 +9,24 @@
       {{ cataloguedata.authorContact }}
     </div>
     <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
-    <div>
-      <span class="grey">imports:</span>
-      <div
-        v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length"
-        v-for="link in (cataloguedata as BSICatalogue).catalogueLinks"
-      >
-        {{ link.name }}
-        <span class="grey">{{ link.targetId }}</span> importRootEntries={{ link.importRootEntries ? "true" : "false" }}
+    <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
+      <span class="bold">imports:</span>
+      <div class="ml-10px">
+        <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
+          <span :class="{ grey: !link.importRootEntries }">
+            {{ link.name }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div v-if="refs.length">
+      <span class="bold">imported by:</span>
+      <div class="ml-10px">
+        <div v-for="ref in refs">
+          <span :class="{ grey: !ref.importRootEntries }">
+            {{ ref.sourceName }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -40,12 +50,11 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
-import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
 import PopupDialog from "~/shared_components/PopupDialog.vue";
+import { useCataloguesStore } from "~/stores/cataloguesState";
 export default {
   emits: ["edit", "delete"],
   props: {
@@ -53,6 +62,9 @@ export default {
       type: Object as PropType<BSIDataCatalogue | BSIDataSystem>,
       required: true,
     },
+  },
+  setup() {
+    return { catalogueStore: useCataloguesStore() };
   },
   data() {
     return {
@@ -68,6 +80,12 @@ export default {
   },
   components: { PopupDialog },
   computed: {
+    imports() {
+      return (this.cataloguedata as BSICatalogue).catalogueLinks || [];
+    },
+    refs() {
+      return this.catalogueStore.getDependents(getDataDbId(this.catalogue)) || [];
+    },
     cataloguedata(): BSICatalogue | BSIGameSystem {
       return getDataObject(this.catalogue);
     },
