@@ -1,9 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import { fstat } from "fs";
 import { defineNuxtConfig } from "nuxt/config";
 const electron = process.argv.includes("--electron");
 export default defineNuxtConfig({
-  ssr: true,
+  ssr: false,
   // @ts-ignore
   env: {
     PROD_BUILD: true,
@@ -15,10 +14,6 @@ export default defineNuxtConfig({
     editor: true,
     electron: electron,
   },
-  routeRules: {
-    "*": { ssr: false, prerender: false },
-    "/**": { ssr: false, prerender: false },
-  },
   modules: [
     "nuxt-windicss",
     "@pinia/nuxt",
@@ -29,13 +24,12 @@ export default defineNuxtConfig({
     ...(electron
       ? [
           {
-            ssr: false,
+            mode: "client",
             src: "electron/renderer.js",
           },
         ]
       : []),
   ],
-
   typescript: {
     strict: true,
   },
@@ -54,15 +48,14 @@ export default defineNuxtConfig({
     "nitro:build:public-assets"(nitro) {
       if (electron) {
         const outputDir = nitro.options.output.publicDir;
-        const { copyFileSync } = require("fs");
-        copyFileSync("package.json", `${outputDir}/package.json`);
+        const { copyFileSync, symlinkSync } = require("fs");
         copyFileSync("electron/index.js", `${outputDir}/index.js`);
         copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
+        // symlinkSync("node_modules", `${outputDir}/node_modules`, "dir");
+        copyFileSync("package.json", `${outputDir}/package.json`);
+        // copyFileSync("electron/electron-package.json", `${outputDir}/package.json`);
       }
     },
-  },
-  alias: {
-    "./js/teleport": "vue",
   },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   head: {

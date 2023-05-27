@@ -1,0 +1,31 @@
+{
+  "name": "NR-Editor",
+  "private": true,
+  "description": "New Recruit Data Editor",
+  "author": "New Recruit",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@types/node": "18",
+    "electron": "24.3.1",
+    "electron-builder": "23.6.0",
+    "nuxt": "3.4.3",
+    "nuxt-electron": "0.5.0",
+    "nuxt-windicss": "2.6.1",
+    "sass": "1.62.1",
+    "vite-plugin-electron": "0.11.2",
+    "vite-plugin-electron-renderer": "0.14.5",
+    "vite": "4.3.8",
+    "vite-plugin-commonjs": "0.7.0"
+  },
+  "dependencies": {
+    "@pinia-plugin-persistedstate/nuxt": "1.1.1",
+    "@pinia/nuxt": "0.4.10",
+    "click-outside-vue3": "4.0.1",
+    "dexie": "3.2.3",
+    "fast-xml-parser": "4.2.2",
+    "jszip": "3.10.1",
+    "mongodb": "4.16.0",
+    "pinia": "2.0.36",
+    "unzipit": "1.4.3"
+  }
+}

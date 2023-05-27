@@ -1,20 +1,33 @@
 {
   "name": "NR-Editor",
   "private": true,
+  "description": "New Recruit Data Editor",
+  "author": "New Recruit",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "start": "nuxt start",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "build:app": "nuxi generate --electron && npx electron-packager .output/public NewRecruit Editor --out=.build --overwrite --icon=public/favicon.ico",
-    "build:app:windows": "nuxi generate --electron && npx electron-packager .output/public NewRecruit Editor --out=.build --overwrite --icon=public/favicon.ico --platform=win32",
-    "build:app:mac": "nuxi generate --electron && npx electron-packager .output/public NewRecruit Editor --out=.build --overwrite --icon=public/favicon.ico --platform=darwin",
-    "build:app:linux": "nuxi generate --electron && npx electron-packager .output/public NewRecruit Editor --out=.build --overwrite --icon=public/favicon.ico --platform=linux",
-    "build:app:mas": "nuxi generate --electron && npx electron-packager .output/public NewRecruit Editor --out=.build --overwrite --icon=public/favicon.ico --platform=mas",
-    "electron": "electron dist",
-    "build:electron": "nuxi generate --electron && electron dist"
+    "postinstall": "nuxt prepare"
+  },
+  "build": {
+    "appId": "nr-editor",
+    "productName": "NewRecruit Editor",
+    "directories": {
+      "output": ".release"
+    },
+    "win": {
+      "icon": "dist/favicon.ico"
+    },
+    "files": [
+      {
+        "from": "dist",
+        "to": ""
+      }
+    ]
   },
   "devDependencies": {
     "@types/node": "^18",
@@ -25,21 +38,20 @@
     "nuxt-windicss": "^2.6.1",
     "sass": "^1.62.1",
     "vite-plugin-electron": "^0.11.2",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vite": "^4.3.8",
+    "vite-plugin-commonjs": "^0.7.0"
   },
   "dependencies": {
     "@pinia-plugin-persistedstate/nuxt": "^1.1.1",
     "@pinia/nuxt": "^0.4.10",
-    "@sidebase/nuxt-session": "^0.2.7",
     "click-outside-vue3": "^4.0.1",
     "dexie": "^3.2.3",
     "fast-xml-parser": "^4.2.2",
     "jszip": "^3.10.1",
     "mongodb": "^4.16.0",
     "pinia": "^2.0.36",
-    "unzipit": "^1.4.3",
-    "vite": "^4.3.8",
-    "vite-plugin-commonjs": "^0.7.0"
+    "unzipit": "^1.4.3"
   },
   "prettier": {
     "printWidth": 120,
