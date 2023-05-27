@@ -10,7 +10,7 @@
         :group="get_group('entries')"
         :payload="item"
         @contextmenu.stop="contextmenu.show($event, category.type)"
-        :class="category.type"
+        :class="[category.type, category.links, `depth-${depth}`]"
         nobox
         :defcollapsed="true"
       >
@@ -27,6 +27,7 @@
               :group="get_group(category.type)"
               :forceShowRecursive="forceShow"
               :imported="entry.imported"
+              :depth="depth + 1"
             />
           </template>
         </template>
@@ -41,7 +42,7 @@
         :titleCollapse="false"
         :group="group || []"
         :payload="item"
-        :class="item.parentKey"
+        :class="[item.parentKey, `depth-${depth}`]"
       >
         <template #title>
           <span :class="{ imported: imported }">
@@ -58,6 +59,7 @@
             :key="child.item.id"
             :forceShowRecursive="forceShow"
             :imported="imported"
+            :depth="depth + 1"
           />
         </template>
       </CatalogueLeftPanelComponentsEditorCollapsibleBox>
@@ -240,6 +242,10 @@ export default {
     imported: {
       type: Boolean,
     },
+    depth: {
+      type: Number,
+      default: 0,
+    },
   },
   data() {
     return {
@@ -370,7 +376,6 @@ export default {
 
     mixedChildren(): Array<CatalogueEntryItem> {
       const res = [];
-      this.reactivityKey;
       for (const cat of this.allowedChildren) {
         const sub = this.get_field(cat);
         if (!sub?.length) continue;
@@ -382,7 +387,6 @@ export default {
       return this.sorted(res);
     },
     groupedCategories() {
-      this.reactivityKey;
       return categories.map((o) => {
         const items = [] as CatalogueEntryItem[];
         if (o.type) this.getTypedArray(this.item as any, o.type, items);

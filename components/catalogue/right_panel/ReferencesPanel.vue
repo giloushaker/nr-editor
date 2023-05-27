@@ -16,10 +16,13 @@
       </tr>
       <tr v-for="link of links">
         <td class="gray">
-          {{ link.catalogue.getName() }}
+          {{ link.isCatalogue() ? link.getName() : link.catalogue?.getName() }}
         </td>
         <td>
-          {{ link.getName() }}
+          {{ link.parent?.getName() || "No parent (likely a bug)" }}
+        </td>
+        <td>
+          <button @click="store.goto(gotoTarget(link))">Goto</button>
         </td>
       </tr>
     </table>
@@ -30,12 +33,24 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { getName } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorState";
 
 export default {
   props: {
     item: {
       type: Object as PropType<EditorBase>,
       required: true,
+    },
+  },
+  setup() {
+    return { store: useEditorStore() };
+  },
+  methods: {
+    gotoTarget(link: EditorBase) {
+      if (link.isCategory()) {
+        return link.parent!;
+      }
+      return link;
     },
   },
   computed: {

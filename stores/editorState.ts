@@ -549,7 +549,7 @@ export const useEditorStore = defineStore("editor", {
       }
 
       const path = getEntryPath(obj);
-      current = current.getElementsByClassName(`EditorCollapsibleBox ${path[0].key}`)[0];
+      current = current.getElementsByClassName(`depth-0 ${path[0].key}`)[0];
       await open_el(current);
       const nodes = [] as EditorBase[];
       forEachParent(obj, (parent) => {
@@ -559,11 +559,12 @@ export const useEditorStore = defineStore("editor", {
       nodes.reverse();
       nodes.push(obj);
       const last = nodes[nodes.length - 1];
-      for (const node of nodes) {
-        const childs = current.getElementsByClassName(`EditorCollapsibleBox ${node.parentKey}`);
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
         const child = [...childs].find((o) => this.get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
-          console.error(path);
+          console.error("Invalid path", path);
           throw new Error("Invalid path");
         }
         current = child;
@@ -578,6 +579,20 @@ export const useEditorStore = defineStore("editor", {
       return current;
     },
     async goto(obj: EditorBase) {
+      const targetCatalogue = obj.isCatalogue() ? obj : obj.catalogue;
+      if (targetCatalogue !== obj.catalogue) {
+        if (!this.$router) {
+          console.warn("Cannot follow link to another catalogue without $router set");
+          return;
+        }
+        const id = getDataDbId(targetCatalogue);
+        this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
+        this.$nextTick = new Promise((resolve, reject) => {
+          this.$nextTickResolve = resolve;
+        });
+        await this.$nextTick;
+      }
+
       const el = await this.open(obj as EditorBase);
       if (el) {
         const context = get_ctx(el);
