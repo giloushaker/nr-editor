@@ -27,6 +27,14 @@
         "from": "dist",
         "to": ""
       }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "vflam",
+        "repo": "nr-editor",
+        "releaseType": "release"
+      }
     ]
   },
   "devDependencies": {
