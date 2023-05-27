@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.0.5",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "build": "nuxt build",
@@ -31,7 +31,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "vflam",
+        "owner": "giloushaker",
         "repo": "nr-editor",
         "releaseType": "release"
       }
