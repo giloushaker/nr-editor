@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { defineNuxtConfig } from "nuxt/config";
+import pkg from "./package.json";
 const electron = process.argv.includes("--electron");
 export default defineNuxtConfig({
   ssr: false,
@@ -9,10 +10,13 @@ export default defineNuxtConfig({
     editor: true,
     electron: electron,
   },
-  publicRuntimeConfig: {
-    PROD_BUILD: true,
-    editor: true,
-    electron: electron,
+  runtimeConfig: {
+    public: {
+      PROD_BUILD: true,
+      editor: true,
+      electron: electron,
+      clientVersion: pkg.version,
+    },
   },
   modules: [
     "nuxt-windicss",

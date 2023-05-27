@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "main": "index.js",
   "scripts": {
     "build": "nuxt build",
