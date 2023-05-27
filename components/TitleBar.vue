@@ -25,6 +25,7 @@
       <div v-if="electron">
         <img src="assets/icons/electron32.png" />
       </div>
+      <span>test v1.0.2</span>
 
       <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">
         <div class="m-20px">
