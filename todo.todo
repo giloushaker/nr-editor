@@ -68,6 +68,7 @@ Editor:
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ upload to github
         ☐ view old versions, changes
+        ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)

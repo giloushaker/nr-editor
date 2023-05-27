@@ -99,16 +99,17 @@ export default {
             delete p.showChildsInEditor;
           });
         }
-        this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
-        for (const p of this.filtered) {
-          p.showInEditor = true;
-          p.showChildsInEditor = true;
-          forEachParent(p as EditorBase, (parent) => {
-            parent.showInEditor = true;
-          });
-        }
+
         this.store.set_filter(v);
-        if (v.length > 2) {
+        if (v.length > 0) {
+          this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
+          for (const p of this.filtered) {
+            p.showInEditor = true;
+            p.showChildsInEditor = true;
+            forEachParent(p as EditorBase, (parent) => {
+              parent.showInEditor = true;
+            });
+          }
           await nextTick();
           for (const p of this.filtered) {
             if (!p.parent) continue;
@@ -118,6 +119,8 @@ export default {
               continue;
             }
           }
+        } else {
+          this.filtered = [];
         }
       },
     },

@@ -46,7 +46,7 @@
         <template #title>
           <span :class="{ imported: imported }">
             <img :src="`assets/bsicons/${item.editorTypeName}.png`" />
-            <span>{{ getName(item) }}</span>
+            <span :class="{ filtered: item.showChildsInEditor }">{{ getName(item) }}</span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
           </span>
         </template>
@@ -402,5 +402,8 @@ export default {
 .imported {
   color: gray;
   font-style: italic;
+}
+.filtered {
+  background-color: rgba(10, 80, 255, 0.15);
 }
 </style>
