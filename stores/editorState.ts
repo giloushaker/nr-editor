@@ -580,12 +580,12 @@ export const useEditorStore = defineStore("editor", {
     },
     async goto(obj: EditorBase) {
       const targetCatalogue = obj.isCatalogue() ? obj : obj.catalogue;
-      if (targetCatalogue !== obj.catalogue) {
-        if (!this.$router) {
-          console.warn("Cannot follow link to another catalogue without $router set");
-          return;
-        }
-        const id = getDataDbId(targetCatalogue);
+      if (!this.$router) {
+        console.warn("Cannot follow link to another catalogue without $router set");
+        return;
+      }
+      const id = getDataDbId(targetCatalogue);
+      if (id !== this.$router.currentRoute.query?.id) {
         this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
         this.$nextTick = new Promise((resolve, reject) => {
           this.$nextTickResolve = resolve;
@@ -606,19 +606,6 @@ export const useEditorStore = defineStore("editor", {
     },
     async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
-        const targetCatalogue = obj.target.isCatalogue() ? obj.target : obj.target.catalogue;
-        if (targetCatalogue !== obj.catalogue) {
-          if (!this.$router) {
-            console.warn("Cannot follow link to another catalogue without $router set");
-            return;
-          }
-          const id = getDataDbId(targetCatalogue);
-          this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
-          this.$nextTick = new Promise((resolve, reject) => {
-            this.$nextTickResolve = resolve;
-          });
-          await this.$nextTick;
-        }
         await this.goto(obj.target as EditorBase);
       }
     },
