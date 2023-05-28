@@ -42,6 +42,9 @@ const createWindow = () => {
     },
   });
   win.loadFile("index.html");
+  ipcMain.handle("showOpenDialog", async (event, ...args) => {
+    return await dialog.showOpenDialog(win, ...args);
+  });
 };
 
 app.whenReady().then(() => {
@@ -57,3 +60,11 @@ for (const [key, val] of Object.entries(fs)) {
     });
   }
 }
+ipcMain.handle("isDirectory", async (event, ...args) => {
+  const stats = fs.statSync(...args);
+  return stats.isDirectory();
+});
+ipcMain.handle("isFile", async (event, ...args) => {
+  const stats = fs.statSync(...args);
+  return stats.isFile();
+});

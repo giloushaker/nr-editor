@@ -16,7 +16,9 @@
       >
         <template #title>
           <span>
-            <img :src="`assets/bsicons/${category.icon}`" />
+            <span class="typeIcon-wrapper">
+              <img class="typeIcon" :src="`assets/bsicons/${category.icon}`" />
+            </span>
             {{ category.name }}
           </span>
         </template>
@@ -46,7 +48,9 @@
       >
         <template #title>
           <span :class="{ imported: imported }">
-            <img :src="`assets/bsicons/${item.editorTypeName}.png`" />
+            <span class="typeIcon-wrapper">
+              <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
+            </span>
             <span :class="{ filtered: item.showChildsInEditor }">{{ getName(item) }}</span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
           </span>
@@ -409,5 +413,13 @@ export default {
 }
 .filtered {
   background-color: rgba(10, 80, 255, 0.15);
+}
+.typeIcon {
+  max-width: 18px;
+}
+.typeIcon-wrapper {
+  display: inline-block;
+  min-width: 20px;
+  min-height: 1px;
 }
 </style>

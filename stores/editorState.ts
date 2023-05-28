@@ -28,6 +28,12 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
 import ConditionGroupPanel from "~/components/catalogue/right_panel/ConditionGroupPanel.vue";
+import {
+  convertToJson,
+  getExtension,
+  isAllowedExtension,
+  isZipExtension,
+} from "~/assets/shared/battlescribe/bs_convert";
 export interface IEditorState {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -90,7 +96,15 @@ export const useEditorStore = defineStore("editor", {
         throw new Error("Not running in electron");
       }
       const files = await getFolderFiles(folder);
-      console.log(files);
+      if (files) {
+        const result_files = [];
+        console.log("Loading", files.length, "files", files);
+
+        for (const file of files.filter((o) => isAllowedExtension(o.name))) {
+          const asJson = await convertToJson(file.data, getExtension(file.name));
+          result_files.push(asJson);
+        }
+      }
       return files;
     },
     async load_system_from_db(id: string) {
@@ -150,7 +164,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     save_catalogue(catalogue: Catalogue) {
-      saveCatalogue(catalogue, catalogue);
+      saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
       cataloguesStore.updateCatalogue(catalogue);

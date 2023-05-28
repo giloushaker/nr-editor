@@ -59,6 +59,8 @@ Editor:
             ☐ load systems from bs initially in some fast way
             ☐ save to disk in app
             ☐ load a roster in ui 
+            ✔ release/installed/auto updater @done(23-05-27 22:28)
+                https://github.com/giloushaker/nr-editor/releases
             
         ☐ errors
         ☐ references from

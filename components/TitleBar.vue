@@ -1,7 +1,7 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline">
+      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
         <h1 class="flex">
           <img class="w-30px h-30px" src="assets/icons/icon.png" />
           <span class="m-auto"> NR-Editor </span>
@@ -24,8 +24,8 @@
       </a>
       <div v-if="electron">
         <img src="assets/icons/electron32.png" />
+        <span>v{{ version }}</span>
       </div>
-      <span>v{{ version }}</span>
 
       <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">
         <div class="m-20px">

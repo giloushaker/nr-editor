@@ -3,7 +3,8 @@
     <div class="box">
       <h3>My Catalogues</h3>
       <div class="boutons">
-        <UploadJson @uploaded="filesUploaded" />
+        <SelectFile v-if="electron" @uploaded="filesUploaded" />
+        <UploadJson v-if="!electron" @uploaded="filesUploaded" />
         <ImportFromGithub @uploaded="filesUploaded" />
       </div>
     </div>
@@ -26,6 +27,7 @@
             <IconContainer
               :items="systemAndCatalogues(gst)"
               @itemClicked="itemClicked"
+              @itemDoubleClicked="itemDoubleClicked"
               @new="newCatalogue(gst)"
               v-model="selectedItem"
             />
@@ -33,9 +35,9 @@
         </div>
       </template>
       <template #right>
-        <div v-if="selectedItem">
+        <div v-if="selectedItem" class="scrollable">
           <template v-if="mode === 'create'">
-            <CataloguesCreate class="fixed" @create="createCatalogue" :catalogue="selectedItem" />
+            <CataloguesCreate @create="createCatalogue" :catalogue="selectedItem" />
           </template>
           <template v-else>
             <CataloguesDetail @delete="deleteCatalogue" @edit="editCatalogue" :catalogue="selectedItem" />
@@ -59,6 +61,7 @@ import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorState";
 import ImportFromGithub from "~/components/ImportFromGithub.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import SelectFile from "~/components/SelectFile.vue";
 
 export default defineComponent({
   components: {
@@ -66,6 +69,7 @@ export default defineComponent({
     CataloguesDetail,
     ImportFromGithub,
     CataloguesCreate,
+    SelectFile,
   },
   head() {
     return {
@@ -86,7 +90,11 @@ export default defineComponent({
   created() {
     this.store.load_systems_from_db();
   },
-  updated() {},
+  computed: {
+    electron() {
+      return Boolean(globalThis.electron);
+    },
+  },
   methods: {
     systemAndCatalogues(gst: GameSystemFiles) {
       let res = [];
@@ -102,6 +110,13 @@ export default defineComponent({
     itemClicked(item: BSIDataCatalogue) {
       this.selectedItem = item;
       this.mode = "edit";
+    },
+
+    itemDoubleClicked(item: BSIDataCatalogue) {
+      this.$router.push({
+        name: "catalogue",
+        query: { id: getDataDbId(item) },
+      });
     },
     newCatalogue(gst: GameSystemFiles) {
       if (!gst.gameSystem) return;
@@ -161,7 +176,9 @@ export default defineComponent({
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
     },
-
+    loadSystem(path: string) {
+      // Electron only
+    },
     async editCatalogue(file: BSIData) {
       this.$router.push({
         name: "catalogue",

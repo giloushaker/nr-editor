@@ -1,31 +1,33 @@
 <template>
   <fieldset class="details">
-    <legend>{{ cataloguedata.name }}</legend>
-    <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
-    <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
-    <div> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
     <div>
-      <span class="grey">authorContact:</span>
-      {{ cataloguedata.authorContact }}
-    </div>
-    <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
-    <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
-      <span class="bold">imports:</span>
-      <div class="ml-10px">
-        <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
-          <span :class="{ grey: !link.importRootEntries }">
-            {{ link.name }}
-          </span>
+      <legend>{{ cataloguedata.name }}</legend>
+      <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
+      <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
+      <div> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
+      <div>
+        <span class="grey">authorContact:</span>
+        {{ cataloguedata.authorContact }}
+      </div>
+      <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
+      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
+        <span class="bold">imports:</span>
+        <div class="ml-10px">
+          <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
+            <span :class="{ grey: !link.importRootEntries }">
+              {{ link.name }}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
-    <div v-if="refs.length">
-      <span class="bold">imported by:</span>
-      <div class="ml-10px">
-        <div v-for="ref in refs">
-          <span :class="{ grey: !ref.importRootEntries }">
-            {{ ref.sourceName }}
-          </span>
+      <div v-if="refs.length">
+        <span class="bold">imported by:</span>
+        <div class="ml-10px">
+          <div v-for="ref in refs">
+            <span :class="{ grey: !ref.importRootEntries }">
+              {{ ref.sourceName }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

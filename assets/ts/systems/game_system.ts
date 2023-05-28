@@ -72,8 +72,8 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
 }
 
-export function saveCatalogue(data: Catalogue, raw: BSIData | Catalogue) {
-  const stringed = rootToJson(data, raw);
+export function saveCatalogueInDb(data: Catalogue) {
+  const stringed = rootToJson(data, data);
   if (data.isGameSystem()) {
     db.systems.put({
       content: JSON.parse(stringed),
@@ -85,4 +85,21 @@ export function saveCatalogue(data: Catalogue, raw: BSIData | Catalogue) {
       id: `${data.gameSystem.getId()}-${data.getId()}`,
     });
   }
+}
+export function saveCatalogueInFiles(data: Catalogue) {
+  const stringed = rootToJson(data, data);
+  if (data.isGameSystem()) {
+    db.systems.put({
+      content: JSON.parse(stringed),
+      id: data.getId(),
+    });
+  } else {
+    db.catalogues.put({
+      content: JSON.parse(stringed),
+      id: `${data.gameSystem.getId()}-${data.getId()}`,
+    });
+  }
+}
+export function saveCatalogue(data: Catalogue) {
+  globalThis.electron ? saveCatalogueInFiles(data) : saveCatalogueInDb(data);
 }

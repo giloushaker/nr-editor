@@ -8,10 +8,9 @@
       verticalbox: collapsed && vertical,
     }"
     class="EditorCollapsibleBox"
-    @click.stop="do_select"
     @contextmenu="do_rightcllick_select"
   >
-    <div class="title" :class="{ selected }" @dblclick="collapseSwitch">
+    <div class="title" :class="{ selected }" @click.stop="do_select" @dblclick="collapseSwitch">
       <h3
         v-if="!notitle"
         :class="[
@@ -21,9 +20,10 @@
             collapsed: collapsible && collapsed,
           },
         ]"
-        @click="titleSwitch"
       >
-        <img :class="{ hide: !collapsible }" :src="dropdownSrc" class="icon arrow" @click.stop="collapseSwitch" />
+        <div class="arrow-wrap" @click.stop="collapseSwitch">
+          <img :class="{ hide: !collapsible }" :src="dropdownSrc" class="arrow" />
+        </div>
 
         <slot name="title" class="title" />
       </h3>
@@ -199,21 +199,30 @@ export default {
   position: relative;
 
   img.arrow {
-    vertical-align: middle;
-    // padding: 4px;
+    margin-left: 4px;
+    margin-right: 4px;
   }
 }
 .title {
   white-space: nowrap;
-  h3 {
-    padding: 4px;
-  }
+  min-height: 23px;
 }
 h3 {
   font-size: 16px;
   font-weight: normal;
 }
+.arrow {
+  height: 12px;
+}
+.arrow-wrap {
+  vertical-align: middle;
 
+  display: inline-block;
+  min-height: 1px;
+  width: 22px;
+  margin-left: 2px;
+}
+// indent
 .nobox > .boxContent {
   padding-left: 15px;
 }
@@ -226,13 +235,6 @@ h3 {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.arrow {
-  height: 12px;
-}
-
-.nocollapse {
-  padding-left: 14px;
-}
 .hide {
   display: none;
 }

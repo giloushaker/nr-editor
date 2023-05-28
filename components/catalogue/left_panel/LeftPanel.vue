@@ -37,6 +37,7 @@ export default {
   },
   methods: {
     keydown(e: KeyboardEvent) {
+      if (this.$route.name !== "catalogue") return;
       if (!e.target) return;
       const tagName = (e.target as HTMLSelectElement)?.tagName?.toLowerCase();
       const key = e.key.toLowerCase();

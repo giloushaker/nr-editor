@@ -5,6 +5,7 @@
       class="relative item"
       :class="{ edited: edited(item), selected: item === modelValue }"
       @click="elementClicked(item)"
+      @dblclick="elementDoubleClicked(item)"
     >
       <ErrorIcon class="error" :errors="errors(item)" />
       <img :src="getType(item).icon" />
@@ -28,7 +29,7 @@ import { useEditorStore } from "~/stores/editorState";
 
 import { ErrorMessage } from "~/assets/shared/error_manager";
 export default {
-  emits: ["new", "itemClicked"],
+  emits: ["new", "itemClicked", "itemDoubleClicked"],
   setup() {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
@@ -50,6 +51,9 @@ export default {
       } else {
         return { icon: "assets/icons/book.png", order: 3 };
       }
+    },
+    elementDoubleClicked(item: BSIData) {
+      this.$emit("itemDoubleClicked", item);
     },
     elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
