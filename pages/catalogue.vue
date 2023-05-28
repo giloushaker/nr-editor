@@ -33,7 +33,10 @@
       Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       <template v-if="changed">
         <template v-if="unsaved">
-          <button class="bouton save ml-10px" @click="store.save_catalogue(cat as Catalogue)">Save</button>
+          <button class="bouton save ml-10px" @click="save">Save</button>
+        </template>
+        <template v-else-if="failed">
+          <span class="status mx-2 text-red">failed to save</span>
         </template>
         <template v-else>
           <span class="status mx-2">saved</span>
@@ -65,6 +68,7 @@ export default {
       loading: false,
       id: "",
       cat: null as Catalogue | null,
+      failed: false,
     };
   },
   setup() {
@@ -118,6 +122,14 @@ export default {
     },
   },
   methods: {
+    save() {
+      try {
+        this.store.save_catalogue(this.cat as Catalogue);
+        this.failed = false;
+      } catch (e) {
+        this.failed = true;
+      }
+    },
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";

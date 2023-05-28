@@ -23,8 +23,8 @@
         <span class="icontext">Discord</span>
       </a>
       <div v-if="electron">
-        <img src="assets/icons/electron32.png" />
         <span>v{{ version }}</span>
+        <img src="assets/icons/electron32.png" />
       </div>
 
       <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">

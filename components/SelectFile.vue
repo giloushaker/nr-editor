@@ -14,7 +14,6 @@ import {
 } from "~/assets/shared/battlescribe/bs_convert";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { getFolderFiles, showOpenDialog } from "~/electron/node_helpers";
-const fileinput = ref(null);
 const uploading = ref(false);
 const emit = defineEmits<{
   (e: "uploaded", files: Object[]): void;
@@ -23,12 +22,11 @@ const emit = defineEmits<{
 async function onFilesSelected(filePaths: string[]) {
   const result_files = [] as Object[];
   for (const path of filePaths) {
-    const files = await getFolderFiles(filePaths[0]);
+    const files = await getFolderFiles(path);
     if (!files?.length) return;
     for (const file of files.filter((o) => isAllowedExtension(o.name))) {
       const asJson = await convertToJson(file.data, getExtension(file.name));
-      const object = getDataObject(asJson) as any;
-      object.fullFilePath = file.path;
+      (getDataObject(asJson) as any).fullFilePath = file.path;
       result_files.push(asJson);
     }
   }

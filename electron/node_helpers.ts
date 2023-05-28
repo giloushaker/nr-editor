@@ -1,17 +1,20 @@
-import type { Stats } from "fs";
+import type { Stats, writeFileSync } from "fs";
 import { isZipExtension } from "~/assets/shared/battlescribe/bs_convert";
 
-/**
- *
- * @param {string} folderPath
- */
+export function dirname(path: string) {
+  return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
+}
+export function filename(path: string) {
+  const split = path.replaceAll("\\", "/").split("/");
+  return split[split.length - 1];
+}
 export async function getFolderFiles(folderPath: string) {
   if (!electron) return;
   try {
     const fileObjects = [];
     const isPathFile = (await electron.invoke("isFile", folderPath)) as Stats;
     if (isPathFile) {
-      folderPath = folderPath.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
+      folderPath = dirname(folderPath);
     }
 
     const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
@@ -41,6 +44,13 @@ export async function getFolderFiles(folderPath: string) {
     console.error("Error:", error);
     throw error;
   }
+}
+
+export async function writeFile(filePath: string, data: string | Blob | Buffer | Uint8Array) {
+  if (!electron) return;
+  const dirPath = dirname(filePath);
+  await electron.invoke("mkdirSync", dirPath, { recursive: true });
+  await electron.invoke("writeFileSync", filePath, data);
 }
 export async function showOpenDialog(options: Electron.OpenDialogOptions) {
   if (!electron) return;

@@ -4,7 +4,8 @@
       <legend>{{ cataloguedata.name }}</legend>
       <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
       <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
-      <div> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
+      <div><span class="grey">path:</span> {{ cataloguedata.fullFilePath }}</div>
+      <div v-if="electron"> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
       <div>
         <span class="grey">authorContact:</span>
         {{ cataloguedata.authorContact }}
@@ -82,6 +83,9 @@ export default {
   },
   components: { PopupDialog },
   computed: {
+    electron() {
+      return Boolean(globalThis.electron);
+    },
     imports() {
       return (this.cataloguedata as BSICatalogue).catalogueLinks || [];
     },
