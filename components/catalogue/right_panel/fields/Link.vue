@@ -25,11 +25,11 @@
         <td>Link To:</td>
         <td>
           <template v-if="item.target">
-            <img class="linkIcon" v-if="item.type" :src="`./assetsbsicons/${getType(item)}.png`" />
+            <img class="linkIcon" v-if="item.type" :src="`./assets/bsicons/${getType(item)}.png`" />
             {{ item.target.name }}
           </template>
           <template v-else>
-            <img class="errIcon" src="./assets/icons/error_exclamation.png" /> No target selected
+            <img class="errIcon" src="/assets/icons/error_exclamation.png" /> No target selected
           </template>
         </td>
       </tr>
@@ -52,7 +52,7 @@
           >
             <template #option="opt">
               <div>
-                <img class="mr-1 align-middle" :src="`./assetsbsicons/${opt.option.editorTypeName}.png`" />
+                <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
               </div>
             </template>

@@ -10,7 +10,7 @@ export const useEditorUIState = defineStore("editor-ui", {
     storage: globalThis.localStorage,
   },
   actions: {
-    save(id: string, selection?: EntryPathEntry[]) {
+    save(id: string, data: Record<string, any>) {
       // Get all open collapsible boxes and save their state
       function get_ctx(el: any): any {
         return el.__vnode.ctx.ctx;
@@ -52,15 +52,15 @@ export const useEditorUIState = defineStore("editor-ui", {
       }
       const result = {};
       recurseFn(document.documentElement, result);
-      this.$state[id] = { open: result, selection };
+      this.$state[id] = { ...data, open: result };
       console.log("saved editor ui state for id", id);
       return result;
     },
 
-    get_selection(id: string): EntryPathEntry[] | undefined {
+    get_data(id: string): Record<string, any> {
       const current = this.$state[id];
-      if (!current) return undefined;
-      return current.selection;
+      if (!current) return {};
+      return current;
     },
     get_root(id: string, key: string): boolean {
       let current = this.$state[id];

@@ -1,5 +1,5 @@
 <template>
-  <ClientOnly>
+  <div>
     <Head>
       <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
     </Head>
@@ -46,10 +46,10 @@
         <template v-if="systemFiles && !systemFiles.allLoaded">
           <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
         </template>
-        <button class="bouton save ml-10px" @click="uistate.save(id)">Test</button>
+        <button class="bouton save ml-10px" @click="get_scroll">Test</button>
       </div>
     </Teleport>
-  </ClientOnly>
+  </div>
 </template>
 
 <script lang="ts">
@@ -98,6 +98,9 @@ export default {
       if (!this.cat) return false;
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
+    scrollable_el() {
+      return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
+    },
   },
   activated() {
     console.log("activated", this.$route.query.id);
@@ -129,6 +132,12 @@ export default {
     },
   },
   methods: {
+    get_scroll() {
+      return this.scrollable_el.scrollTop;
+    },
+    set_scroll(scroll: number) {
+      this.scrollable_el.scrollTop = scroll;
+    },
     save() {
       try {
         this.store.save_catalogue(this.cat as Catalogue);
@@ -140,7 +149,10 @@ export default {
     beforeUnload(event: BeforeUnloadEvent) {
       if (this.cat) {
         const selected = this.store.get_selected();
-        this.uistate.save(this.cat.id, selected ? getEntryPath(selected) : undefined);
+        this.uistate.save(this.cat.id, {
+          selection: selected ? getEntryPath(selected) : undefined,
+          scroll: this.get_scroll(),
+        });
       }
       if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";
@@ -179,15 +191,16 @@ export default {
         this.systemFiles = system;
         this.cat = loaded;
         this.$nextTick(async () => {
-          if (loaded) {
-            const path = this.uistate.get_selection(loaded.id);
-            if (path) {
-              const obj = getAtEntryPath(loaded, path);
-              const el = await this.store.open(obj);
-              const ctx = get_ctx(el);
-              ctx.do_select();
-            }
-          }
+          if (!loaded) return;
+          const { selection, scroll } = this.uistate.get_data(loaded.id);
+          this.set_scroll(scroll);
+          if (!selection) return;
+          const obj = getAtEntryPath(loaded, selection);
+          if (!obj) return;
+          const el = await this.store.open(obj);
+          if (!el) return;
+          const ctx = get_ctx(el);
+          ctx.do_select();
         });
       } finally {
         this.loading = false;

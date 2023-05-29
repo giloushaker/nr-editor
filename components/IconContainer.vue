@@ -12,7 +12,7 @@
       <div>{{ name(item) }}</div>
     </div>
     <div class="relative item add" @click="add">
-      <img class="w-40px h-40px" src="./assets/icons/iconeplus.png" />
+      <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
       <div class="bold text-blue">New</div>
     </div>
   </div>

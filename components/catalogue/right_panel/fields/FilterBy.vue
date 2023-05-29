@@ -6,7 +6,7 @@
         <td>Of:</td>
         <td>
           <span v-if="child">
-            <img class="mr-1 align-middle" :src="`./assetsbsicons/${child.editorTypeName}.png`" />
+            <img class="mr-1 align-middle" :src="`./assets/bsicons/${child.editorTypeName}.png`" />
             {{ child.name }}</span
           >
         </td>
@@ -30,7 +30,7 @@
                 <template v-if="opt.option.indent >= 2 && !opt.selected"
                   ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
                 >
-                <img class="mr-1 align-middle" :src="`./assetsbsicons/${opt.option.editorTypeName}.png`" />
+                <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
 
                 {{ opt.option.name }}
               </div>

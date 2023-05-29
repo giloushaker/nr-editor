@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="top" @keydown.capture="keydown">
+    <div class="top scrollable" @keydown.capture="keydown">
       <CatalogueEntry :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
@@ -138,8 +138,6 @@ export default {
   flex-grow: 1;
 }
 .top {
-  height: 100%;
-  overflow-y: auto;
   position: relative;
 }
 .bottom {
