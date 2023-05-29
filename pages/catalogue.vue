@@ -185,7 +185,7 @@ export default {
               const obj = getAtEntryPath(loaded, path);
               const el = await this.store.open(obj);
               const ctx = get_ctx(el);
-              ctx.select();
+              ctx.do_select();
             }
           }
         });
