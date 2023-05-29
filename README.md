@@ -21,6 +21,9 @@ Once installed, launch the NewRecruit Data Editor application on your desktop.
 
 ## Usage
 Launch the NewRecruit Data Editor application.
+
 Open an existing data file or create a new one.
+
 Save your changes.
+
 Enjoy playing with your updated data file!
