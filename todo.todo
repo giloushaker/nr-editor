@@ -42,7 +42,7 @@ Editor:
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
-            Catalogue.findOptionsByName(query) then filter 
+            Catalogue.findOptionsByText(query) then filter 
             ✔ add in ui @done(23-05-15 19:09)
         ✔ copy, paste, move, delete @done(23-05-15 19:09)
         ✔ undo/redo @done(23-05-15 19:09)

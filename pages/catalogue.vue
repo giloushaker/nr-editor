@@ -137,7 +137,6 @@ export default {
   methods: {
     onscrolltop(event: Event) {
       this.scroll = (event.target as HTMLDivElement).scrollTop;
-      console.log(this.id, this.scroll);
     },
     get_scroll() {
       return this.scroll;

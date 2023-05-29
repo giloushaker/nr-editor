@@ -91,6 +91,7 @@ export default {
         return this.store.filter;
       },
       async set(v: string) {
+        v = v.trim();
         const prev = this.filtered as EditorBase[];
         for (const p of prev) {
           delete p.showInEditor;
@@ -102,7 +103,7 @@ export default {
         }
         this.store.set_filter(v);
         if (v.length > 0) {
-          this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
+          this.filtered = this.catalogue.findOptionsByText(v) as EditorBase[];
           for (const p of this.filtered) {
             p.showInEditor = true;
             p.showChildsInEditor = true;

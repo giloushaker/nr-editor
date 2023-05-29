@@ -117,7 +117,7 @@ export default {
 
   methods: {
     updateTargets() {
-      let all = this.catalogue.findOptionsByName("").filter((o) => {
+      let all = this.catalogue.findOptionsByText("").filter((o) => {
         if (this.targetIsValid(o as ItemTypes) == false) {
           return false;
         }
