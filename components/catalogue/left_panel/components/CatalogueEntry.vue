@@ -266,21 +266,13 @@ export default {
   created() {
     this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
   },
-  mounted() {
-    addEventListener("beforeunload", this.onbeforeunload);
-  },
-  unmounted() {
-    removeEventListener("beforeunload", this.onbeforeunload);
-  },
   methods: {
     escapeXml,
     getTypeName,
     getTypeLabel,
     getName,
     getNameExtra,
-    onbeforeunload() {
-      this.state.save(this.catalogue.id);
-    },
+
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];

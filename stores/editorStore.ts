@@ -64,9 +64,13 @@ export interface CatalogueState {
   unsaved: boolean;
   savingPromise?: Promise<any>;
 }
-function get_ctx(el: any): any {
+export function get_ctx(el: any): any {
   return el.__vnode.ctx.ctx;
 }
+export function get_base_from_vue_el(vue_el: any) {
+  return vue_el.$parent.item;
+}
+type VueComponent = any;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
   state: (): IeditorStore => ({
@@ -205,12 +209,12 @@ export const useEditorStore = defineStore("editor", {
     is_el_selected(obj: any) {
       return this.selections.find((o) => o.obj === obj) !== undefined;
     },
-    select(obj: any, onunselected: () => unknown, payload?: any) {
+    select(obj: VueComponent, onunselected: () => unknown, payload?: any) {
       if (!this.is_el_selected(obj)) {
         this.selections.push({ obj, onunselected, payload });
       }
     },
-    is_selected(obj: any) {
+    is_selected(obj: VueComponent) {
       return this.selections.findIndex((o) => o.obj === obj) !== -1;
     },
     do_select(e: MouseEvent | null, el: VueElement, group: VueElement | VueElement[]) {
@@ -246,11 +250,9 @@ export const useEditorStore = defineStore("editor", {
       if (this.is_selected(el)) return;
       this.do_select(e, el, group);
     },
-    get_base_from_vue_el(vue_el: any) {
-      return vue_el.$parent.item;
-    },
+
     get_selections(): EditorBase[] {
-      return this.selections.map((o) => this.get_base_from_vue_el(o.obj));
+      return this.selections.map((o) => get_base_from_vue_el(o.obj));
     },
     get_selected(): EditorBase | undefined {
       return this.selectedItem?.$parent?.item;
@@ -576,7 +578,7 @@ export const useEditorStore = defineStore("editor", {
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-        const child = [...childs].find((o) => this.get_base_from_vue_el(get_ctx(o)) === node);
+        const child = [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
           console.error("Invalid path", path);
           throw new Error("Invalid path");

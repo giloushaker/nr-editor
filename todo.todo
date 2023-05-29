@@ -65,7 +65,8 @@ Editor:
         ☐ errors
         ☐ references from
         ☐ move back/forward (like browser navigation)
-        ☐ save collapsible box states and selection
+        ✔ save collapsible box states @done(23-05-29 04:22)
+        ☐ save selection
         ☐ preview profiles/rules (like in builder)
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ upload to github

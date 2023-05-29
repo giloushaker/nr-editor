@@ -1,18 +1,16 @@
 import { defineStore } from "pinia";
-import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import { getEntryPath, type EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import { goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export const useEditorUIState = defineStore("editor-ui", {
-  state: () => ({
-    open: {} as any,
-  }),
+  state: () => ({} as Record<string, any>),
 
   persist: {
     storage: globalThis.localStorage,
   },
   actions: {
-    save(id: string) {
+    save(id: string, selection?: EntryPathEntry[]) {
       // Get all open collapsible boxes and save their state
       function get_ctx(el: any): any {
         return el.__vnode.ctx.ctx;
@@ -54,24 +52,28 @@ export const useEditorUIState = defineStore("editor-ui", {
       }
       const result = {};
       recurseFn(document.documentElement, result);
-      this.$state.open[id] = result;
+      this.$state[id] = { open: result, selection };
       console.log("saved editor ui state for id", id);
+      return result;
     },
-    load(id: string) {},
+
+    get_selection(id: string): EntryPathEntry[] | undefined {
+      const current = this.$state[id];
+      if (!current) return undefined;
+      return current.selection;
+    },
     get_root(id: string, key: string): boolean {
-      let current = this.$state.open;
-      current = current[id];
+      let current = this.$state[id];
       if (!current) return false;
-      current = current[key];
+      current = current.open[key];
       if (!current) return false;
       return true;
     },
     get(id: string, path: EntryPathEntry[]): boolean {
       if (!path.length) return false;
-      let current = this.$state.open;
-      current = current[id];
+      let current = this.$state[id];
       if (!current) return false;
-      current = current[path[0].key];
+      current = current.open[path[0].key];
       if (!current) return false;
       current = current[0];
       if (!current) return false;

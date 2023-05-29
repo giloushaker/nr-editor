@@ -46,7 +46,7 @@
         <template v-if="systemFiles && !systemFiles.allLoaded">
           <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
         </template>
-        <button class="bouton save ml-10px" @click="state.save(id)">Test</button>
+        <button class="bouton save ml-10px" @click="uistate.save(id)">Test</button>
       </div>
     </Teleport>
   </ClientOnly>
@@ -57,8 +57,8 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorStore";
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { get_ctx, useEditorStore } from "~/stores/editorStore";
+import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import { useEditorUIState } from "~/stores/editorUIState";
 
@@ -76,7 +76,7 @@ export default {
     };
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), state: useEditorUIState() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), uistate: useEditorUIState() };
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -138,6 +138,10 @@ export default {
       }
     },
     beforeUnload(event: BeforeUnloadEvent) {
+      if (this.cat) {
+        const selected = this.store.get_selected();
+        this.uistate.save(this.cat.id, selected ? getEntryPath(selected) : undefined);
+      }
       if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
@@ -174,6 +178,17 @@ export default {
         }
         this.systemFiles = system;
         this.cat = loaded;
+        this.$nextTick(async () => {
+          if (loaded) {
+            const path = this.uistate.get_selection(loaded.id);
+            if (path) {
+              const obj = getAtEntryPath(loaded, path);
+              const el = await this.store.open(obj);
+              const ctx = get_ctx(el);
+              ctx.select();
+            }
+          }
+        });
       } finally {
         this.loading = false;
       }
