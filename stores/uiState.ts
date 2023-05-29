@@ -4,7 +4,7 @@ export const useUIState = defineStore("ui", {
   state: () => ({} as Record<string, number>),
 
   persist: {
-    storage: localStorage,
+    storage: globalThis.localStorage,
   },
   actions: {
     get(splitViewId: string, subId: string): number | undefined {

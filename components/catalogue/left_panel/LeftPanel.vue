@@ -13,7 +13,8 @@
 <script lang="ts">
 import { forEachParent } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
+import CatalogueEntry from "./components/CatalogueEntry.vue";
 
 export default {
   setup() {
@@ -28,7 +29,6 @@ export default {
   unmounted() {
     removeEventListener("keydown", this.keydown);
   },
-
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -89,7 +89,6 @@ export default {
       get(): string {
         return this.store.filter;
       },
-
       async set(v: string) {
         const prev = this.filtered as EditorBase[];
         for (const p of prev) {
@@ -100,7 +99,6 @@ export default {
             delete p.showChildsInEditor;
           });
         }
-
         this.store.set_filter(v);
         if (v.length > 0) {
           this.filtered = this.catalogue.findOptionsByName(v) as EditorBase[];
@@ -126,6 +124,7 @@ export default {
       },
     },
   },
+  components: { CatalogueEntry },
 };
 </script>
 

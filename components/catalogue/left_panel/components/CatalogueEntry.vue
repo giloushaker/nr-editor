@@ -4,20 +4,19 @@
       v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'"
       v-for="category of groupedCategories"
     >
-      <CatalogueLeftPanelComponentsEditorCollapsibleBox
-        :titleCollapse="false"
+      <EditorCollapsibleBox
         :collapsible="category.items.length > 0"
         :group="get_group('entries')"
         :payload="item"
         @contextmenu.stop="contextmenu.show($event, category.type)"
         :class="[category.type, category.links, `depth-${depth}`]"
         nobox
-        :defcollapsed="true"
+        :defcollapsed="!should_be_open(category.type)"
       >
         <template #title>
           <span>
             <span class="typeIcon-wrapper">
-              <img class="typeIcon" :src="`assets/bsicons/${category.icon}`" />
+              <img class="typeIcon" :src="`./assets/bsicons/${category.icon}`" />
             </span>
             {{ category.name }}
           </span>
@@ -33,23 +32,23 @@
             />
           </template>
         </template>
-      </CatalogueLeftPanelComponentsEditorCollapsibleBox>
+      </EditorCollapsibleBox>
     </template>
 
     <template v-else>
-      <CatalogueLeftPanelComponentsEditorCollapsibleBox
-        nobox
+      <EditorCollapsibleBox
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
-        :titleCollapse="false"
         :group="group || []"
         :payload="item"
         :class="[item.parentKey, `depth-${depth}`]"
+        :defcollapsed="!open"
+        nobox
       >
         <template #title>
           <span :class="{ imported: imported }">
             <span class="typeIcon-wrapper">
-              <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
+              <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
             <span :class="{ filtered: item.showChildsInEditor }">{{ getName(item) }}</span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
@@ -66,7 +65,7 @@
             :depth="depth + 1"
           />
         </template>
-      </CatalogueLeftPanelComponentsEditorCollapsibleBox>
+      </EditorCollapsibleBox>
     </template>
 
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
@@ -89,73 +88,73 @@
         </template>
         <template v-if="payload">
           <div @click="store.create(payload)">
-            <img class="pr-4px" :src="`assets/bsicons/${getTypeName(payload)}.png`" />
+            <img class="pr-4px" :src="`./assetsbsicons/${getTypeName(payload)}.png`" />
             {{ getTypeLabel(getTypeName(payload)) }}
           </div>
           <div @click="store.create('entryLinks')" v-if="payload === 'selectionEntries'">
-            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
+            <img class="pr-4px" :src="`./assetsbsicons/link.png`" />
             Link
           </div>
           <div @click="store.create('infoLinks', { type: 'rule' })" v-if="payload === 'rules'">
-            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
+            <img class="pr-4px" :src="`./assetsbsicons/link.png`" />
             Link
           </div>
           <Separator />
         </template>
         <template v-else>
           <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
-            <img class="pr-4px" src="assets/bsicons/selectionEntry.png" />
+            <img class="pr-4px" src="./assetsbsicons/selectionEntry.png" />
             Entry
           </div>
           <div @click="store.create('selectionEntryGroups')" v-if="allowed('selectionEntryGroups')">
-            <img class="pr-4px" src="assets/bsicons/selectionEntryGroup.png" />
+            <img class="pr-4px" src="./assetsbsicons/selectionEntryGroup.png" />
             Group
           </div>
           <div @click="store.create('entryLinks')" v-if="allowed('entryLinks')">
-            <img class="pr-4px" src="assets/bsicons/link.png" />
+            <img class="pr-4px" src="./assetsbsicons/link.png" />
             Link
           </div>
           <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
           <div @click="store.create('profiles')" v-if="allowed('profiles')">
-            <img class="pr-4px" src="assets/bsicons/profile.png" />
+            <img class="pr-4px" src="./assetsbsicons/profile.png" />
             Profile
           </div>
           <div @click="store.create('rules')" v-if="allowed('rules')">
-            <img class="pr-4px" src="assets/bsicons/rule.png" />
+            <img class="pr-4px" src="./assetsbsicons/rule.png" />
             Rule
           </div>
           <div @click="store.create('infoGroups')" v-if="allowed('infoGroups')">
-            <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
+            <img class="pr-4px" src="./assetsbsicons/infoGroup.png" />
             Info Group
           </div>
           <div @click="store.create('infoLinks')" v-if="allowed('infoLinks')">
-            <img class="pr-4px" src="assets/bsicons/link.png" />
+            <img class="pr-4px" src="./assetsbsicons/link.png" />
             Info Link
           </div>
           <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
-            <img class="pr-4px" src="assets/bsicons/condition.png" />
+            <img class="pr-4px" src="./assetsbsicons/condition.png" />
             Condition
           </div>
           <div @click="store.create('conditionGroups')" v-if="allowed('conditionGroups')">
-            <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
+            <img class="pr-4px" src="./assetsbsicons/conditionGroup.png" />
             Condition Group
           </div>
           <div @click="store.create('repeats')" v-if="allowed('repeats')">
-            <img class="pr-4px" src="assets/bsicons/repeat.png" />
+            <img class="pr-4px" src="./assetsbsicons/repeat.png" />
             Repeat
           </div>
           <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
           <div @click="store.create('constraints')" v-if="allowed('constraints')">
-            <img class="pr-4px" src="assets/bsicons/constraint.png" />
+            <img class="pr-4px" src="./assetsbsicons/constraint.png" />
             Constraint
           </div>
           <div @click="store.create('modifiers')" v-if="allowed('modifiers')">
-            <img class="pr-4px" src="assets/bsicons/modifier.png" />
+            <img class="pr-4px" src="./assetsbsicons/modifier.png" />
             Modifier
           </div>
           <div @click="store.create('modifierGroups')" v-if="allowed('modifierGroups')">
-            <img class="pr-4px" src="assets/bsicons/modifierGroup.png" />
+            <img class="pr-4px" src="./assetsbsicons/modifierGroup.png" />
             Modifier Group
           </div>
           <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />
@@ -179,7 +178,7 @@
         </template>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
-          <img class="w-12px pr-4px" src="assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
+          <img class="w-12px pr-4px" src="./assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
             >Del</span
           >
         </div>
@@ -190,8 +189,8 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { CatalogueEntryItem } from "@/stores/editorState";
-import { useEditorStore } from "~/stores/editorState";
+import { CatalogueEntryItem } from "@/stores/editorStore";
+import { useEditorStore } from "~/stores/editorStore";
 import {
   ItemKeys,
   ItemTypes,
@@ -201,12 +200,16 @@ import {
   categories,
   possibleChildren,
   getNameExtra,
+  CategoryEntry,
+  getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
+import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
+import { useEditorUIState } from "~/stores/editorUIState";
 
 const order: Record<string, number> = {
   selectionEntry: 1,
@@ -222,11 +225,13 @@ const order: Record<string, number> = {
   infoLink: 9,
 };
 export default {
+  name: "CatalogueEntry",
   components: {
     ContextMenu,
+    EditorCollapsibleBox,
   },
   setup() {
-    return { store: useEditorStore() };
+    return { store: useEditorStore(), state: useEditorUIState() };
   },
   props: {
     item: {
@@ -255,7 +260,17 @@ export default {
     return {
       groups: {} as Record<string, any>,
       contextmenuopen: false,
+      open: false,
     };
+  },
+  created() {
+    this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+  },
+  mounted() {
+    addEventListener("beforeunload", this.onbeforeunload);
+  },
+  unmounted() {
+    removeEventListener("beforeunload", this.onbeforeunload);
   },
   methods: {
     escapeXml,
@@ -263,30 +278,21 @@ export default {
     getTypeLabel,
     getName,
     getNameExtra,
+    onbeforeunload() {
+      this.state.save(this.catalogue.id);
+    },
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];
       }
       return this.groups[key];
     },
+    should_be_open(category: string) {
+      return this.state.get_root(this.catalogue.id, category);
+    },
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
       console.log("component", this);
-      console.log(this.mixedChildren.length, "childs");
-
-      const local_mixedChildren = () => {
-        const res = [];
-        for (const cat of possibleChildren) {
-          const sub = (this.item as any)[cat] as Array<EditorBase & ItemTypes>;
-          if (!sub?.length) continue;
-          for (const elt of sub) {
-            if (!this.filter_child(elt)) continue;
-            res.push({ type: cat, item: elt });
-          }
-        }
-        return this.sorted(res);
-      };
-      console.log(local_mixedChildren().length, "actual childs");
     },
     getTypedArray(item: Catalogue, type: ItemKeys, output: CatalogueEntryItem[]) {
       if (!type) return;

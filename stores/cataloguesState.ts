@@ -25,7 +25,7 @@ export const useCataloguesStore = defineStore("catalogues", {
   }),
 
   persist: {
-    storage: localStorage,
+    storage: globalThis.localStorage,
   },
   actions: {
     get(id: string) {

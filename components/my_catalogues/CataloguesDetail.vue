@@ -56,7 +56,6 @@ import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
-import PopupDialog from "~/shared_components/PopupDialog.vue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 export default {
   emits: ["edit", "delete"],
@@ -81,7 +80,6 @@ export default {
       download((data as any).gameSystem ? `${data.name}.gst` : `${data.name}.cat`, "application/xml", xml);
     },
   },
-  components: { PopupDialog },
   computed: {
     electron() {
       return Boolean(globalThis.electron);

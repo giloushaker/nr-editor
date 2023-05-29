@@ -10,6 +10,10 @@ export default defineNuxtConfig({
     editor: true,
     electron: electron,
   },
+
+  app: {
+    baseURL: "./",
+  },
   runtimeConfig: {
     public: {
       PROD_BUILD: true,
@@ -44,20 +48,15 @@ export default defineNuxtConfig({
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
   },
+  ignore: [".release/**"],
   hooks: {
-    "nitro:build:before"(nitro) {
-      if (electron) {
-      }
-    },
     "nitro:build:public-assets"(nitro) {
       if (electron) {
         const outputDir = nitro.options.output.publicDir;
-        const { copyFileSync, symlinkSync } = require("fs");
+        const { copyFileSync } = require("fs");
         copyFileSync("electron/index.js", `${outputDir}/index.js`);
         copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
-        // symlinkSync("node_modules", `${outputDir}/node_modules`, "dir");
         copyFileSync("package.json", `${outputDir}/package.json`);
-        // copyFileSync("electron/electron-package.json", `${outputDir}/package.json`);
       }
     },
   },

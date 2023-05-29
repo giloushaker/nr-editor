@@ -25,11 +25,11 @@
         <td>Link To:</td>
         <td>
           <template v-if="item.target">
-            <img class="linkIcon" v-if="item.type" :src="`assets/bsicons/${getType(item)}.png`" />
+            <img class="linkIcon" v-if="item.type" :src="`./assetsbsicons/${getType(item)}.png`" />
             {{ item.target.name }}
           </template>
           <template v-else>
-            <img class="errIcon" src="assets/icons/error_exclamation.png" /> No target selected
+            <img class="errIcon" src="./assets/icons/error_exclamation.png" /> No target selected
           </template>
         </td>
       </tr>
@@ -52,7 +52,7 @@
           >
             <template #option="opt">
               <div>
-                <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
+                <img class="mr-1 align-middle" :src="`./assetsbsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
               </div>
             </template>
@@ -68,7 +68,7 @@ import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 
 export default {
   setup() {

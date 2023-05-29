@@ -3,7 +3,7 @@
     <div class="titlebar-content titlebar-left" id="titlebar-content">
       <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
         <h1 class="flex">
-          <img class="w-30px h-30px" src="assets/icons/icon.png" />
+          <img class="w-30px h-30px" src="/assets/icons/icon.png" />
           <span class="m-auto"> NR-Editor </span>
         </h1>
       </NuxtLink>
@@ -11,20 +11,20 @@
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
       <div class="iconbox" @click="bug = true">
-        <img src="assets/icons/bug.png" class="icon" />
+        <img src="/assets/icons/bug.png" class="icon" />
         <span class="icontext">Bug</span>
       </div>
       <div class="iconbox" @click="feedback = true">
-        <img src="assets/icons/feedback.png" class="icon" />
+        <img src="/assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
       </div>
       <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
-        <img class="icon" src="assets/icons/discord.png" />
+        <img class="icon" src="/assets/icons/discord.png" />
         <span class="icontext">Discord</span>
       </a>
       <div v-if="electron">
         <span>v{{ version }}</span>
-        <img src="assets/icons/electron32.png" />
+        <img src="/assets/icons/electron32.png" />
       </div>
 
       <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">

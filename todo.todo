@@ -56,8 +56,8 @@ Editor:
             ✔ build dependency graph @done(23-05-26 20:35)
             
         @critical
-            ☐ load systems from bs initially in some fast way
-            ☐ save to disk in app
+            ✔ load systems from bs initially in some fast way @done(23-05-28 19:52)
+            ✔ save to disk in app @done(23-05-28 19:52)
             ☐ load a roster in ui 
             ✔ release/installed/auto updater @done(23-05-27 22:28)
                 https://github.com/giloushaker/nr-editor/releases
@@ -65,12 +65,13 @@ Editor:
         ☐ errors
         ☐ references from
         ☐ move back/forward (like browser navigation)
-        ☐ save collapsible box states
+        ☐ save collapsible box states and selection
         ☐ preview profiles/rules (like in builder)
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ upload to github
         ☐ view old versions, changes
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
+        ☐ dexie on electron version doesnt work if process is opened more than once
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)

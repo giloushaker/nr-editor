@@ -21,7 +21,7 @@
       >
         <template #option="opt">
           <div>
-            <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
+            <img class="mr-1 align-middle" :src="`./assetsbsicons/${opt.option.editorTypeName}.png`" />
             {{ opt.option.name }}
           </div>
         </template>

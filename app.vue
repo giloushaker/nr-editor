@@ -2,12 +2,14 @@
   <div id="popups" />
   <div id="dialogs" />
   <div id="app">
-    <div class="title" ref="title" @resize="update">
-      <TitleBar />
-    </div>
-    <div class="content" :style="{ height: `calc(100vh - ${titleSize}px)` }">
-      <NuxtPage :keepalive="true" />
-    </div>
+    <ClientOnly>
+      <div class="title" ref="title" @resize="update">
+        <TitleBar />
+      </div>
+      <div class="content" :style="{ height: `calc(100vh - ${titleSize}px)` }">
+        <NuxtPage :keepalive="true" />
+      </div>
+    </ClientOnly>
   </div>
 </template>
 
@@ -15,7 +17,6 @@
 import { AppearanceTheme } from "./assets/shared/types/stateOptions";
 import { updateCssVars } from "./assets/shared/js/util";
 import TitleBar from "./components/TitleBar.vue";
-import { useEditorStore } from "./stores/editorState";
 export const defaultAppearence: AppearanceTheme = {
   background: "#f0f5ff",
   backgroundTexture: "url(assets/images/no.jpg)",
@@ -63,10 +64,6 @@ export default defineComponent({
       titleSize: 50,
     };
   },
-  async setup() {
-    const editor = useEditorStore();
-    return { store: editor };
-  },
   methods: {
     update() {
       this.titleSize = (this.$refs.title as HTMLDivElement).clientHeight;
@@ -79,7 +76,6 @@ export default defineComponent({
     removeEventListener("resize", this.update);
   },
   async created() {
-    this.store.init(this.$router);
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
     if (!globalThis.electron) {
@@ -89,8 +85,6 @@ export default defineComponent({
   components: { TitleBar },
 });
 </script>
-
-<style scoped></style>
 
 <style lang="scss">
 @import "@/shared_components/css/vars.scss";

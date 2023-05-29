@@ -12,7 +12,7 @@
       <div>{{ name(item) }}</div>
     </div>
     <div class="relative item add" @click="add">
-      <img class="w-40px h-40px" src="assets/icons/iconeplus.png" />
+      <img class="w-40px h-40px" src="./assets/icons/iconeplus.png" />
       <div class="bold text-blue">New</div>
     </div>
   </div>
@@ -25,7 +25,7 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "./ErrorIcon.vue";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 
 import { ErrorMessage } from "~/assets/shared/error_manager";
 export default {
@@ -45,11 +45,11 @@ export default {
   methods: {
     getType(item: BSIData) {
       if (item.gameSystem) {
-        return { icon: "assets/icons/system1.png", order: 1 };
+        return { icon: "./assets/icons/system1.png", order: 1 };
       } else if (item.catalogue?.library) {
-        return { icon: "assets/icons/library.png", order: 2 };
+        return { icon: "./assets/icons/library.png", order: 2 };
       } else {
-        return { icon: "assets/icons/book.png", order: 3 };
+        return { icon: "./assets/icons/book.png", order: 3 };
       }
     },
     elementDoubleClicked(item: BSIData) {

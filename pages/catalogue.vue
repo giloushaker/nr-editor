@@ -1,52 +1,55 @@
 <template>
-  <Head>
-    <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
-  </Head>
-  <template v-if="error">
-    <span>
-      {{ error }}
-    </span>
-  </template>
-  <template v-else-if="loading">
-    <div class="h-7/8 flex items-center justify-center"><span> Loading... </span> </div>
-  </template>
-  <template v-else-if="cat">
-    <SplitView
-      class="h-full"
-      draggable
-      :split="true"
-      :double="true"
-      :showRight="store.selectedItem != null"
-      id="catalogueView"
-    >
-      <template #left>
-        <LeftPanel class="h-full" :catalogue="cat" />
-      </template>
-      <template #right>
-        <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
-      </template>
-    </SplitView>
-  </template>
+  <ClientOnly>
+    <Head>
+      <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
+    </Head>
+    <template v-if="error">
+      <span>
+        {{ error }}
+      </span>
+    </template>
+    <template v-else-if="loading">
+      <div class="h-7/8 flex items-center justify-center"><span> Loading... </span> </div>
+    </template>
+    <template v-else-if="cat">
+      <SplitView
+        class="h-full"
+        draggable
+        :split="true"
+        :double="true"
+        :showRight="store.selectedItem != null"
+        id="catalogueView"
+      >
+        <template #left>
+          <LeftPanel class="h-full" :catalogue="cat" />
+        </template>
+        <template #right>
+          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
+        </template>
+      </SplitView>
+    </template>
 
-  <Teleport to="#titlebar-content" v-if="cat">
-    <div class="ml-10px">
-      Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
-      <template v-if="changed">
-        <template v-if="unsaved">
-          <button class="bouton save ml-10px" @click="save">Save</button>
+    <Teleport to="#titlebar-content" v-if="cat">
+      <div class="ml-10px">
+        Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
+        <template v-if="changed">
+          <template v-if="unsaved">
+            <button class="bouton save ml-10px" @click="save">Save</button>
+          </template>
+          <template v-else-if="failed">
+            <span class="status mx-2 text-red">failed to save</span>
+          </template>
+          <template v-else>
+            <span class="status mx-2">saved</span>
+          </template>
         </template>
-        <template v-else-if="failed">
-          <span class="status mx-2 text-red">failed to save</span>
+        <template v-if="systemFiles && !systemFiles.allLoaded">
+          <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
         </template>
-        <template v-else>
-          <span class="status mx-2">saved</span>
-        </template>
-      </template>
-      <template v-if="systemFiles && !systemFiles.allLoaded">
-        <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
-      </template>
-    </div>
-  </Teleport>
+        <button class="bouton save ml-10px" @click="state.save(id)">Test</button>
+      </div>
+    </Teleport>
+  </ClientOnly>
 </template>
 
 <script lang="ts">
@@ -54,9 +57,10 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { db } from "~/assets/ts/dexie";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
+import { useEditorUIState } from "~/stores/editorUIState";
 
 export default {
   components: { LeftPanel },
@@ -72,7 +76,7 @@ export default {
     };
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), state: useEditorUIState() };
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -81,6 +85,9 @@ export default {
   unmounted() {
     window.removeEventListener("beforeunload", this.beforeUnload);
     document.removeEventListener("keydown", this.onKeydown);
+  },
+  created() {
+    this.store.init(this.$router);
   },
   computed: {
     changed() {

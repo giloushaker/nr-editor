@@ -58,11 +58,12 @@ import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 import ImportFromGithub from "~/components/ImportFromGithub.vue";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import SelectFile from "~/components/SelectFile.vue";
 import { dirname } from "~/electron/node_helpers";
+import IconContainer from "~/components/IconContainer.vue";
+import SplitView from "~/components/SplitView.vue";
 
 export default defineComponent({
   components: {
@@ -71,6 +72,8 @@ export default defineComponent({
     ImportFromGithub,
     CataloguesCreate,
     SelectFile,
+    IconContainer,
+    SplitView,
   },
   head() {
     return {
@@ -89,6 +92,7 @@ export default defineComponent({
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
   created() {
+    this.store.init(this.$router);
     this.store.load_systems_from_db();
   },
   computed: {

@@ -1,34 +1,26 @@
 <template>
   <div
-    :class="{
-      nobox,
-      noboxindent,
-      box: !nobox && !noboxindent,
-      nocollapse: !collapsible,
-      verticalbox: collapsed && vertical,
-    }"
-    class="EditorCollapsibleBox"
+    :class="{ box, nobox, nocollapse, collapsed, opened }"
+    class="collapsible-box"
     @contextmenu="do_rightcllick_select"
   >
     <div class="title" :class="{ selected }" @click.stop="do_select" @dblclick="collapseSwitch">
       <h3
         v-if="!notitle"
-        :class="[
-          {
-            arrowTitle: collapsible,
-            normalTitle: !collapsible,
-            collapsed: collapsible && collapsed,
-          },
-        ]"
+        :class="{
+          arrowTitle: collapsible,
+          normalTitle: !collapsible,
+          collapsed: collapsible && collapsed,
+        }"
       >
         <div class="arrow-wrap" @click.stop="collapseSwitch">
-          <img :class="{ hide: !collapsible }" :src="dropdownSrc" class="arrow" />
+          <img :class="{ hide }" :src="dropdownSrc" class="arrow" />
         </div>
 
-        <slot name="title" class="title" />
+        <slot name="title" />
       </h3>
     </div>
-    <div v-if="initiated && !empty" v-show="!collapsed || !collapsible" class="boxContent">
+    <div v-if="initiated" v-show="!collapsed || !collapsible" class="content">
       <slot name="content" />
     </div>
   </div>
@@ -36,16 +28,12 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 
 export default {
   props: {
     payload: {
       type: Object,
-    },
-    empty: {
-      type: Boolean,
-      default: false,
     },
 
     collapsible: {
@@ -57,12 +45,6 @@ export default {
       type: Boolean,
       default: false,
     },
-
-    noboxindent: {
-      type: Boolean,
-      default: false,
-    },
-
     defcollapsed: {
       type: Boolean,
       default: true,
@@ -79,11 +61,6 @@ export default {
       default: "titreCategory",
     },
 
-    vertical: {
-      type: Boolean,
-      default: false,
-    },
-
     titleCollapse: {
       type: Boolean,
       default: true,
@@ -91,6 +68,9 @@ export default {
     group: {
       type: Array as PropType<any[]>,
       required: true,
+    },
+    modelValue: {
+      default: true,
     },
   },
 
@@ -126,16 +106,35 @@ export default {
     payload(data) {
       this.init(data);
     },
+    collapsed(newVal) {
+      if (newVal !== this.modelValue) {
+        this.$emit("update:modelValue", newVal);
+      }
+    },
+    modelValue(modelValue) {
+      if (modelValue != this.collapsed) {
+        this.collapsed = modelValue;
+      }
+    },
   },
   computed: {
     dropdownSrc() {
       let n = 2;
-      let images = [`assets/icons/right${n}.png`, `assets/icons/down${n}.png`];
+      let images = [`./assets/icons/right${n}.png`, `./assets/icons/down${n}.png`];
       let index = this.collapsed ? 0 : 1;
-      if (this.vertical) {
-        index = 1 - index;
-      }
       return images[index];
+    },
+    hide() {
+      return !this.collapsible;
+    },
+    nocollapse() {
+      return !this.collapsible;
+    },
+    box() {
+      return !this.nobox;
+    },
+    opened() {
+      return this.collapsible && !this.collapsed;
     },
   },
 
@@ -180,14 +179,6 @@ export default {
         this.$emit("close");
       }
     },
-
-    titleSwitch() {
-      if (this.titleCollapse) {
-        this.collapseSwitch();
-      } else {
-        this.$emit("titleClick");
-      }
-    },
   },
 };
 </script>
@@ -223,7 +214,7 @@ h3 {
   margin-left: 2px;
 }
 // indent
-.nobox > .boxContent {
+.nobox > .content {
   padding-left: 15px;
 }
 

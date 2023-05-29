@@ -58,7 +58,7 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { findParentWhere, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { useEditorStore } from "~/stores/editorState";
+import { useEditorStore } from "~/stores/editorStore";
 
 export default {
   props: {

@@ -2,6 +2,8 @@ import { VueElement } from "nuxt/dist/app/compat/capi";
 
 declare global {
   var isEditor: boolean | undefined;
+  var $set: (o, k, v) => unknown;
+  var $delete: (o, k) => unknown;
   var electron:
     | undefined
     | {

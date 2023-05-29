@@ -34,7 +34,7 @@ import {
   isAllowedExtension,
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
-export interface IEditorState {
+export interface IeditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
   selectedElementGroup: any | null;
@@ -69,7 +69,7 @@ function get_ctx(el: any): any {
 }
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
-  state: (): IEditorState => ({
+  state: (): IeditorStore => ({
     selections: [],
     selectedElementGroup: null,
     selectedElement: null,
