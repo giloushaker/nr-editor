@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="top scrollable" @keydown.capture="keydown">
+    <div class="top scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
       <CatalogueEntry :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
@@ -17,6 +17,7 @@ import { useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 
 export default {
+  emits: ["scrolltop"],
   setup() {
     return { store: useEditorStore() };
   },

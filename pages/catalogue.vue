@@ -21,7 +21,7 @@
         id="catalogueView"
       >
         <template #left>
-          <LeftPanel class="h-full" :catalogue="cat" />
+          <LeftPanel @scrolltop="onscrolltop" class="h-full" :catalogue="cat" />
         </template>
         <template #right>
           <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
@@ -46,7 +46,6 @@
         <template v-if="systemFiles && !systemFiles.allLoaded">
           <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
         </template>
-        <button class="bouton save ml-10px" @click="get_scroll">Test</button>
       </div>
     </Teleport>
   </div>
@@ -73,6 +72,7 @@ export default {
       id: "",
       cat: null as Catalogue | null,
       failed: false,
+      scroll: 0,
     };
   },
   setup() {
@@ -86,6 +86,12 @@ export default {
     window.removeEventListener("beforeunload", this.beforeUnload);
     document.removeEventListener("keydown", this.onKeydown);
   },
+  beforeRouteUpdate() {
+    console.log("beforeRouteUpdate");
+    if (this.id) {
+      this.save_state();
+    }
+  },
   created() {
     this.store.init(this.$router);
   },
@@ -97,9 +103,6 @@ export default {
     unsaved() {
       if (!this.cat) return false;
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
-    },
-    scrollable_el() {
-      return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
     },
   },
   activated() {
@@ -115,7 +118,7 @@ export default {
           this.id = newVal;
           this.store.unselect();
           try {
-            await this.load(newVal as string);
+            await this.load(newVal as string, oldVal);
             this.error = null;
 
             // Resolve a promise in the store so that code elsewhere can wait for this to load
@@ -132,11 +135,18 @@ export default {
     },
   },
   methods: {
+    onscrolltop(event: Event) {
+      this.scroll = (event.target as HTMLDivElement).scrollTop;
+      console.log(this.id, this.scroll);
+    },
     get_scroll() {
-      return this.scrollable_el.scrollTop;
+      return this.scroll;
+    },
+    get_scrollable_el() {
+      return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
     },
     set_scroll(scroll: number) {
-      this.scrollable_el.scrollTop = scroll;
+      this.get_scrollable_el().scrollTop = scroll;
     },
     save() {
       try {
@@ -146,13 +156,18 @@ export default {
         this.failed = true;
       }
     },
-    beforeUnload(event: BeforeUnloadEvent) {
+    save_state() {
       if (this.cat) {
         const selected = this.store.get_selected();
         this.uistate.save(this.cat.id, {
           selection: selected ? getEntryPath(selected) : undefined,
           scroll: this.get_scroll(),
         });
+      }
+    },
+    beforeUnload(event: BeforeUnloadEvent) {
+      if (!this.loading) {
+        this.save_state();
       }
       if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";
@@ -170,13 +185,27 @@ export default {
     onChanged() {
       this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
-
-    async load(catalogueFileId: string) {
+    async load_state(data: Record<string, any>) {
+      const { selection, scroll } = data;
+      this.set_scroll(scroll);
+      if (!selection) return;
+      const obj = getAtEntryPath(this.cat as Catalogue, selection);
+      if (!obj) return;
+      const el = await this.store.open(obj);
+      if (!el) return;
+      const ctx = get_ctx(el);
+      await ctx.do_select();
+      this.$nextTick(() => {
+        this.set_scroll(scroll);
+      });
+    },
+    async load(catalogueFileId: string, oldId?: string) {
       if (!catalogueFileId) {
         throw new Error("couldn't load catalogue: no id");
       }
       try {
         this.loading = true;
+        this.scroll = 0;
         const catFile = await db.catalogues.get(catalogueFileId);
         const systemId = catFile ? catFile.content.catalogue.gameSystemId : catalogueFileId;
         const catalogueId = catFile ? catFile.content.catalogue.id : catalogueFileId;
@@ -191,16 +220,10 @@ export default {
         this.systemFiles = system;
         this.cat = loaded;
         this.$nextTick(async () => {
-          if (!loaded) return;
-          const { selection, scroll } = this.uistate.get_data(loaded.id);
-          this.set_scroll(scroll);
-          if (!selection) return;
-          const obj = getAtEntryPath(loaded, selection);
-          if (!obj) return;
-          const el = await this.store.open(obj);
-          if (!el) return;
-          const ctx = get_ctx(el);
-          ctx.do_select();
+          if (loaded) {
+            const data = this.uistate.get_data(loaded.id);
+            this.load_state(data);
+          }
         });
       } finally {
         this.loading = false;

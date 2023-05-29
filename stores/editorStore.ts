@@ -565,6 +565,9 @@ export const useEditorStore = defineStore("editor", {
       }
 
       const path = getEntryPath(obj);
+      if (!path?.length) {
+        return;
+      }
       current = current.getElementsByClassName(`depth-0 ${path[0].key}`)[0];
       await open_el(current);
       const nodes = [] as EditorBase[];
@@ -580,7 +583,7 @@ export const useEditorStore = defineStore("editor", {
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
         const child = [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
-          console.error("Invalid path", path);
+          // console.error("Invalid path", path);
           throw new Error("Invalid path");
         }
         current = child;

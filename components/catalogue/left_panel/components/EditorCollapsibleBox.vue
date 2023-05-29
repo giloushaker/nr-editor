@@ -4,22 +4,19 @@
     class="collapsible-box"
     @contextmenu="do_rightcllick_select"
   >
-    <div class="title" :class="{ selected }" @click.stop="do_select" @dblclick="collapseSwitch">
-      <h3
-        v-if="!notitle"
-        :class="{
-          arrowTitle: collapsible,
-          normalTitle: !collapsible,
-          collapsed: collapsible && collapsed,
-        }"
-      >
-        <div class="arrow-wrap" @click.stop="collapseSwitch">
-          <img :class="{ hide }" :src="dropdownSrc" class="arrow" />
-        </div>
+    <h3
+      v-if="!notitle"
+      class="title"
+      :class="{ selected, arrowTitle: collapsible, normalTitle: !collapsible, collapsed: collapsible && collapsed }"
+      @click.stop="do_select"
+      @dblclick="collapseSwitch"
+    >
+      <div class="arrow-wrap" @click.stop="collapseSwitch">
+        <img :class="{ hide }" :src="dropdownSrc" class="arrow" />
+      </div>
 
-        <slot name="title" />
-      </h3>
-    </div>
+      <slot name="title" />
+    </h3>
     <div v-if="initiated" v-show="!collapsed || !collapsible" class="content">
       <slot name="content" />
     </div>
@@ -197,6 +194,10 @@ export default {
 .title {
   white-space: nowrap;
   min-height: 23px;
+  vertical-align: middle;
+  display: flex;
+  align-items: center;
+  // padding-top: 2px;
 }
 h3 {
   font-size: 16px;
@@ -216,10 +217,6 @@ h3 {
 // indent
 .nobox > .content {
   padding-left: 15px;
-}
-
-.collapsed {
-  filter: brightness(95%);
 }
 
 .selected {
