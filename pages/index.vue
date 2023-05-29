@@ -5,7 +5,7 @@
       <div class="boutons">
         <SelectFile v-if="electron" @uploaded="filesUploaded" />
         <UploadJson v-if="!electron" @uploaded="filesUploaded" />
-        <ImportFromGithub @uploaded="filesUploaded" />
+        <ImportFromGithub v-if="!electron" @uploaded="filesUploaded" />
       </div>
     </div>
   </div>

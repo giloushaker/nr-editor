@@ -574,7 +574,7 @@ export const useEditorStore = defineStore("editor", {
       forEachParent(obj, (parent) => {
         nodes.push(parent);
       });
-      const catalogue = nodes.pop();
+      nodes.pop(); // pop catalogue
       nodes.reverse();
       nodes.push(obj);
       const last = nodes[nodes.length - 1];

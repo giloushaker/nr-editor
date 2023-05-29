@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "main": "index.js",
   "scripts": {
     "build": "nuxt build",
@@ -26,7 +26,9 @@
       }
     ],
     "win": {
-      "icon": "dist/favicon.ico"
+      "icon": "dist/favicon.ico",
+      "publisherName": "New Recruit",
+      "certificateFile": "New Recruit.pfx"
     },
     "files": [
       {

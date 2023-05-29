@@ -73,6 +73,7 @@ Editor:
         ☐ view old versions, changes
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ dexie on electron version doesnt work if process is opened more than once
+        ☐ changing catalogues in another program will not reflect in the nr editor
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
         ✔ save @done(23-05-08 18:48)

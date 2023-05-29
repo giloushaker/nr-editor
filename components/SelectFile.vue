@@ -21,6 +21,8 @@ const emit = defineEmits<{
 
 async function onFilesSelected(filePaths: string[]) {
   const result_files = [] as Object[];
+  if (!filePaths.length) return;
+  filePaths = [filePaths[0]];
   for (const path of filePaths) {
     const files = await getFolderFiles(path);
     if (!files?.length) return;
@@ -39,14 +41,17 @@ async function popFileInput() {
     throw new Error("SelectFile is for use in electron app only");
   }
   try {
+    uploading.value = true;
     const result = await showOpenDialog({
       properties: ["openFile"],
     });
     if (result?.filePaths?.length) {
       await onFilesSelected(result.filePaths);
+      uploading.value = false;
     }
   } catch (e) {
     console.error(e);
+    uploading.value = false;
     return;
   }
 }
