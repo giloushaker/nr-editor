@@ -105,12 +105,6 @@ export default {
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
   },
-  activated() {
-    console.log("activated", this.$route.query.id);
-  },
-  deactivated() {
-    console.log("deactivated", this.id);
-  },
   watch: {
     "$route.query.id": {
       async handler(newVal, oldVal) {

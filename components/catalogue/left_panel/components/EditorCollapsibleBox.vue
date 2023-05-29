@@ -216,7 +216,7 @@ h3 {
 }
 // indent
 .nobox > .content {
-  padding-left: 15px;
+  padding-left: 20px;
 }
 
 .selected {
