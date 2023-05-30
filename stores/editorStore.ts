@@ -95,21 +95,38 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
-    async load_systems_from_folder(folder: string) {
+    async load_systems_from_folder(
+      folder: string,
+      progress?: (current: number, max: number, msg?: string) => Promise<unknown>
+    ) {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
       }
       const files = await getFolderFiles(folder);
+      const result = [] as string[];
       if (files) {
         const result_files = [];
         console.log("Loading", files.length, "files", files);
-
-        for (const file of files.filter((o) => isAllowedExtension(o.name))) {
+        const allowed = files.filter((o) => isAllowedExtension(o.name));
+        for (const file of allowed) {
+          progress && (await progress(result_files.length, allowed.length, file.path));
           const asJson = await convertToJson(file.data, getExtension(file.name));
+          const systemId = asJson?.gameSystem?.id;
+          const catalogueId = asJson?.catalogue?.id;
+          if (systemId) {
+            result.push(systemId);
+            const systemFiles = this.get_system(systemId);
+            systemFiles.setSystem(asJson);
+          }
+          if (catalogueId) {
+            const systemFiles = this.get_system(asJson.catalogue.gameSystemId);
+            systemFiles.catalogueFiles[catalogueId] = asJson;
+          }
           result_files.push(asJson);
         }
+        progress && (await progress(result_files.length, allowed.length));
       }
-      return files;
+      return result;
     },
     async load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);

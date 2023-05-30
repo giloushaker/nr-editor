@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol } = require("electron");
+const { app, BrowserWindow, ipcMain, protocol, session } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
@@ -41,13 +41,30 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
     },
   });
-  win.loadFile("index.html");
+  win.loadFile("index.html", {
+    hash: "/system",
+  });
   ipcMain.handle("showOpenDialog", async (event, ...args) => {
     return await dialog.showOpenDialog(win, ...args);
   });
+  ipcMain.handle("getPath", async (event, ...args) => {
+    return await app.getPath(...args);
+  });
 };
-
+const filter = { urls: ["https://*/*"] };
 app.whenReady().then(() => {
+  session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
+    delete details.requestHeaders["Origin"];
+    delete details.requestHeaders["Referer"];
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
+    if (details.responseHeaders) {
+      details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
+    }
+    callback({ responseHeaders: details.responseHeaders });
+  });
   createWindow();
 });
 

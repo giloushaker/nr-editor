@@ -11,9 +11,6 @@ export default defineNuxtConfig({
     electron: electron,
   },
 
-  app: {
-    baseURL: "./",
-  },
   runtimeConfig: {
     public: {
       PROD_BUILD: true,

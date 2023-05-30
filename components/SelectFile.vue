@@ -1,8 +1,9 @@
 <template>
-  <button @click="popFileInput" class="bouton" :disabled="uploading">
-    <template v-if="!uploading"> Import Catalogues </template>
+  <button @click="popFileInput" class="bouton" :disabled="uploading" v-if="electron">
+    <template v-if="!uploading"> Import </template>
     <template v-else> ... </template>
   </button>
+  <span v-else>&lt;SelectFile&gt; is only available in electron app</span>
 </template>
 
 <script setup lang="ts">
@@ -18,7 +19,7 @@ const uploading = ref(false);
 const emit = defineEmits<{
   (e: "uploaded", files: Object[]): void;
 }>();
-
+const electron = computed(() => Boolean(global.electron));
 async function onFilesSelected(filePaths: string[]) {
   const result_files = [] as Object[];
   if (!filePaths.length) return;

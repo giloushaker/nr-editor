@@ -1,73 +1,46 @@
 <template>
-  <div class="p-10px">
-    <div class="box">
-      <h3>My Catalogues</h3>
-      <div class="boutons">
-        <UploadJson @uploaded="filesUploaded" />
-        <ImportFromGithub @uploaded="filesUploaded" />
+  <div class="scrollable" v-if="!loading">
+    <div class="mt-10px p-10px">
+      <h2 class="inline">Select a system to load, or browse for one:</h2>
+      <SelectFile class="ml-10px" @uploaded="uploaded" />
+    </div>
+    <div class="p-10px">
+      <div
+        v-for="system in systems"
+        class="item p-2px mt-2px border-gray border-solid border-1px cursor-pointer"
+        @click="selected(system)"
+      >
+        {{ system.name }}
       </div>
     </div>
   </div>
-
-  <div class="mx-10px box h-full pb-200px">
-    <SplitView
-      :split="true"
-      :double="true"
-      :showRight="selectedItem != null"
-      leftWidth="calc(100% - 400px)"
-      rightWidth="400px"
-    >
-      <template #left>
-        <div class="scrollable">
-          <fieldset v-for="gst in store.gameSystems">
-            <legend>
-              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
-            </legend>
-            <IconContainer
-              :items="systemAndCatalogues(gst)"
-              @itemClicked="itemClicked"
-              @new="newCatalogue(gst)"
-              v-model="selectedItem"
-            />
-          </fieldset>
+  <div v-else class="h-full">
+    <div class="flex items-center h-full">
+      <div class="m-auto items-center flex flex-col">
+        <div class="items-center flex">
+          <img class="w-20px h-20px" src="/assets/icons/spin.gif" />
+          <span class="ml-5px"> Loading... </span>
         </div>
-      </template>
-      <template #right>
-        <div v-if="selectedItem">
-          <template v-if="mode === 'create'">
-            <CataloguesCreate class="fixed" @create="createCatalogue" :catalogue="selectedItem" />
-          </template>
-          <template v-else>
-            <CataloguesDetail @delete="deleteCatalogue" @edit="editCatalogue" :catalogue="selectedItem" />
-          </template>
+        <div>
+          <div class="text-center" v-if="progress_max">{{ progress }}/{{ progress_max }}</div>
+          <div v-if="progress_msg">{{ progress_msg }}</div>
         </div>
-      </template>
-    </SplitView>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
+import { fetch_bs_repos_datas } from "~/assets/shared/battlescribe/bs_import_data";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
-import UploadJson from "~/components/UploadJson.vue";
-import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
+import { BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import { range } from "~/assets/shared/blossomJs/belt_Array";
 import { db } from "~/assets/ts/dexie";
-import { GameSystemFiles } from "~/assets/ts/systems/game_system";
-import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
-import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
-import ImportFromGithub from "~/components/ImportFromGithub.vue";
-import SplitView from "~/components/SplitView.vue";
-
 export default defineComponent({
-  components: {
-    UploadJson,
-    CataloguesDetail,
-    ImportFromGithub,
-    CataloguesCreate,
-    SplitView,
-  },
   head() {
     return {
       title: "NR-Editor",
@@ -75,10 +48,11 @@ export default defineComponent({
   },
   data() {
     return {
-      msg: "",
-      selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
-      mode: "edit",
-      editingItem: null as BSIData | null,
+      loading: true,
+      systems: [] as Array<{ name: string; path: string }>,
+      progress: 0,
+      progress_max: 0,
+      progress_msg: "",
     };
   },
   setup() {
@@ -88,65 +62,30 @@ export default defineComponent({
     console.log(this.$route);
   },
   methods: {
-    systemAndCatalogues(gst: GameSystemFiles) {
-      let res = [];
-      if (gst.gameSystem) {
-        res.push(gst.gameSystem);
+    async selected(item: { name: string; path: string }) {
+      if (electron) {
+        this.loading = true;
+        const loaded = await this.store.load_systems_from_folder(item.path, async (cur, max, msg) => {
+          this.progress = cur;
+          this.progress_max = max;
+          this.progress_msg = msg || "";
+          console.log(this.progress, this.progress_max, this.progress_msg);
+          const promise = new Promise((resolve) => setTimeout(resolve, 10));
+          return promise;
+        });
+        this.loading = false;
+        this.$router.push(`/?id=${loaded.join(",")}`);
       }
-      if (gst.catalogueFiles) {
-        res.push(...Object.values(gst.catalogueFiles));
-      }
-      return res;
     },
-
-    itemClicked(item: BSIDataCatalogue) {
-      this.selectedItem = item;
-      this.mode = "edit";
-    },
-    newCatalogue(gst: GameSystemFiles) {
-      if (!gst.gameSystem) return;
-      const gameSystem = gst.gameSystem.gameSystem;
-      this.mode = "create";
-      this.selectedItem = {
-        catalogue: {
-          library: false,
-          id: generateBattlescribeId(),
-          name: "New Catalogue",
-          gameSystemId: gameSystem.id,
-          gameSystemRevision: gameSystem.revision,
-          revision: 1,
-        },
-      } as any;
-    },
-    createCatalogue(data: BSIDataCatalogue) {
-      this.getSystem(data.catalogue.gameSystemId).setCatalogue(data);
-      this.cataloguesStore.setEdited(getDataDbId(data), true);
-      this.selectedItem = data;
-      db.catalogues.put({
-        content: JSON.parse(JSON.stringify(data)),
-        id: getDataDbId(data),
-      });
-      this.mode = "edit";
-    },
-    deleteCatalogue(data: BSIDataCatalogue) {
-      console.log("Deleted catalogue", data);
-      this.getSystem(data.catalogue.gameSystemId).removeCatalogue(data);
-      db.catalogues.delete(getDataDbId(data));
-      this.selectedItem = null;
-    },
-    getSystem(id: string) {
-      if (!(id in this.store.gameSystems)) {
-        this.store.gameSystems[id] = new GameSystemFiles();
-      }
-      return this.store.gameSystems[id];
-    },
-    filesUploaded(files: any[]) {
+    async uploaded(files: any[]) {
       console.log("Uploaded", files.length, "files", files);
       const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
+      const ids = [];
       for (const system of systems) {
         const systemId = system.gameSystem.id;
+        ids.push(systemId);
         const dbId = getDataDbId(system);
-        this.getSystem(systemId).setSystem(system);
+        this.store.get_system(systemId).setSystem(system);
         db.systems.put({ content: system, id: dbId });
         this.cataloguesStore.updateCatalogue(system.gameSystem);
         this.cataloguesStore.setEdited(dbId, false);
@@ -155,36 +94,38 @@ export default defineComponent({
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
-        this.getSystem(systemId).setCatalogue(catalogue);
+        this.store.get_system(systemId).setCatalogue(catalogue);
         db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
-    },
-
-    async editCatalogue(file: BSIData) {
-      this.$router.push({
-        name: "catalogue",
-        query: { id: getDataDbId(file) },
-      });
+      this.$router.push(`/?id=${ids.join(",")}`);
     },
   },
-  watch: {
-    "$route.query.id": {
-      immediate: true,
-      async handler(newVal, oldVal) {
-        if (oldVal !== newVal) {
-          await this.store.load_system_from_db(newVal);
-        }
-      },
-    },
+  async mounted() {
+    const result = [] as Array<{ name: string; path: string }>;
+    if (!electron) {
+      // const repos = await fetch_bs_repos_datas(true);
+      // for (const repo of repos.repositories) {
+      // result.push({ name: repo.name, path: repo.repositoryUrl });
+      // }
+      for (let i = 0; i < 100; i++) {
+        result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
+      }
+    } else {
+      const home = await getPath("home");
+      const systems = await getFolderFolders(`${home}/Battlescribe/data`);
+      if (systems) {
+        result.push(...systems);
+      }
+    }
+    this.systems = sortByAscending(result, (o) => o.name);
+    this.loading = false;
   },
 });
 </script>
-
-<style scope>
-.scrollable {
-  height: 100%;
-  overflow-y: auto;
+<style scoped>
+.item:hover {
+  background-color: rgba(0, 0, 0, 0.15);
 }
 </style>

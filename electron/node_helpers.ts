@@ -12,7 +12,7 @@ export async function getFolderFiles(folderPath: string) {
   if (!electron) return;
   try {
     const fileObjects = [];
-    const isPathFile = (await electron.invoke("isFile", folderPath)) as Stats;
+    const isPathFile = (await electron.invoke("isFile", folderPath)) as boolean;
     if (isPathFile) {
       folderPath = dirname(folderPath);
     }
@@ -23,7 +23,7 @@ export async function getFolderFiles(folderPath: string) {
       const filePath = `${folderPath}/${entry}`;
 
       try {
-        const isFile = (await electron.invoke("isFile", filePath)) as Stats;
+        const isFile = (await electron.invoke("isFile", filePath)) as boolean;
         if (isFile) {
           const data = await electron.invoke("readFileSync", filePath, isZipExtension(entry) ? undefined : "utf-8");
           const fileObject = {
@@ -45,6 +45,40 @@ export async function getFolderFiles(folderPath: string) {
     throw error;
   }
 }
+export async function getFolderFolders(folderPath: string) {
+  if (!electron) return;
+  try {
+    const fileObjects = [];
+    const pathIsDir = (await electron.invoke("isDirectory", folderPath)) as boolean;
+    console.log("pathiddir", pathIsDir);
+    if (!pathIsDir) return [];
+
+    const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
+
+    for (const entry of entries) {
+      const filePath = `${folderPath}/${entry}`;
+
+      try {
+        const isDir = (await electron.invoke("isDirectory", filePath)) as boolean;
+        if (isDir) {
+          const fileObject = {
+            name: entry,
+            path: filePath,
+          };
+          fileObjects.push(fileObject);
+        }
+      } catch (error) {
+        console.error("Error reading dir:", filePath, error);
+        continue;
+      }
+    }
+
+    return fileObjects;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+}
 
 export async function writeFile(filePath: string, data: string | Blob | Buffer | Uint8Array) {
   if (!electron) return;
@@ -55,4 +89,26 @@ export async function writeFile(filePath: string, data: string | Blob | Buffer |
 export async function showOpenDialog(options: Electron.OpenDialogOptions) {
   if (!electron) return;
   return electron.invoke("showOpenDialog", options) as Electron.OpenDialogReturnValue;
+}
+export async function getPath(
+  name:
+    | "home"
+    | "appData"
+    | "userData"
+    | "sessionData"
+    | "temp"
+    | "exe"
+    | "module"
+    | "desktop"
+    | "documents"
+    | "downloads"
+    | "music"
+    | "pictures"
+    | "videos"
+    | "recent"
+    | "logs"
+    | "crashDumps"
+) {
+  if (!electron) return;
+  return (await electron.invoke("getPath", name)) as string;
 }
