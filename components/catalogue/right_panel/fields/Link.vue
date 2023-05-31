@@ -5,7 +5,7 @@
       <tr v-if="type == 'entry'">
         <td>Link Type:</td>
         <td>
-          <select @change="changed" v-model="itemType">
+          <select @change="changed" v-model="item.type">
             <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
             <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
           </select>
@@ -14,7 +14,7 @@
       <tr v-if="type == 'info'">
         <td>Link Type:</td>
         <td>
-          <select @change="changed" v-model="itemType">
+          <select @change="changed" v-model="item.type">
             <option :value="'profile'">Profile</option>
             <option :value="'rule'"> Rule </option>
             <option :value="'infoGroup'"> Info Group </option>
@@ -92,7 +92,6 @@ export default {
       filter: "",
       val: null as any,
       availableTargets: [] as Array<{ name: string; id: string }>,
-      itemType: "selectionEntry" as string | undefined,
     };
   },
 
@@ -113,7 +112,6 @@ export default {
 
   created() {
     this.updateTargets();
-    this.itemType = this.item.type;
   },
 
   computed: {
@@ -173,7 +171,6 @@ export default {
         console.log(this.catalogue.catalogueLinks?.map((o) => o.target.name));
       } else {
         this.catalogue.updateLink(this.item);
-        this.itemType = this.item.type;
       }
     },
     changedImportRootEntries() {
@@ -201,10 +198,10 @@ export default {
     },
 
     targetIsValid(target: ItemTypes) {
-      if (this.itemType == undefined) {
+      if (this.item.type == undefined) {
         return target.editorTypeName == "category";
       }
-      return target.editorTypeName == this.itemType;
+      return target.editorTypeName == this.item.type;
     },
   },
 
@@ -213,7 +210,7 @@ export default {
       this.updateTargets();
     },
 
-    itemType() {
+    "item.type"() {
       this.updateTargets();
     },
   },
