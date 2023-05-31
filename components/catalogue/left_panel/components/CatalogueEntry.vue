@@ -47,6 +47,7 @@
       >
         <template #title>
           <span :class="{ imported: imported }">
+            {{ item.editorTypeName }}
             <span class="typeIcon-wrapper">
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
@@ -356,7 +357,7 @@ export default {
       return this.item as Link & EditorBase;
     },
     iscollapsible() {
-      return this.mixedChildren.length > 0 && this.hiddenChilds < this.mixedChildren.length;
+      return this.mixedChildren.length > 0;
     },
     contextmenu() {
       return this.menu("contextmenu");
