@@ -76,6 +76,7 @@ export default defineComponent({
     async selected(item: { name: string; path: string }) {
       if (electron) {
         this.loading = true;
+        this.progress_msg = "";
         const loaded = await this.store.load_systems_from_folder(item.path, async (cur, max, msg) => {
           this.progress = cur;
           this.progress_max = max;

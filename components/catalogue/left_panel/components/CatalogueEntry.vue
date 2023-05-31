@@ -94,18 +94,18 @@
             <img class="pr-4px" :src="`assets/bsicons/${getTypeName(payload)}.png`" />
             {{ getTypeLabel(getTypeName(payload)) }}
           </div>
-          <div @click="store.create('entryLinks')" v-if="payload === 'selectionEntries'">
+          <div @click="store.create('entryLinks', { type: 'selectionEntry' })" v-if="payload === 'selectionEntries'">
             <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
-          <div @click="store.create('infoLinks', { type: 'rule' })" v-if="payload === 'rules'">
+          <div @click="store.create('infoLinks', { type: 'profile' })" v-if="payload === 'rules'">
             <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
           <Separator />
         </template>
         <template v-else>
-          <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
+          <div @click="store.create('selectionEntries', { type: 'upgrade' })" v-if="allowed('selectionEntries')">
             <img class="pr-4px" src="assets/bsicons/selectionEntry.png" />
             Entry
           </div>
@@ -113,7 +113,7 @@
             <img class="pr-4px" src="assets/bsicons/selectionEntryGroup.png" />
             Group
           </div>
-          <div @click="store.create('entryLinks')" v-if="allowed('entryLinks')">
+          <div @click="store.create('entryLinks', { type: 'selectionEntry' })" v-if="allowed('entryLinks')">
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Link
           </div>
@@ -130,7 +130,7 @@
             <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
             Info Group
           </div>
-          <div @click="store.create('infoLinks')" v-if="allowed('infoLinks')">
+          <div @click="store.create('infoLinks', { type: 'profile' })" v-if="allowed('infoLinks')">
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Info Link
           </div>
