@@ -48,12 +48,11 @@ async function popFileInput() {
     });
     if (result?.filePaths?.length) {
       await onFilesSelected(result.filePaths);
-      uploading.value = false;
     }
   } catch (e) {
     console.error(e);
+  } finally {
     uploading.value = false;
-    return;
   }
 }
 </script>

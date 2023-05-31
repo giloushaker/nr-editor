@@ -53,6 +53,7 @@ export default defineComponent({
       progress: 0,
       progress_max: 0,
       progress_msg: "",
+      error_msg: "",
     };
   },
   setup() {
