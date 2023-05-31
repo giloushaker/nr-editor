@@ -74,8 +74,9 @@ Editor:
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ move intuitive way to return to catalogue list
         ☐ progress bar on auto update
+        ☐ save all
+        
         ✔ load multiple catalogues @done(23-05-22 14:36)
-            ☐  think of a way to handle saving
         ✔ references from @done(23-05-30 00:46)
         ✔ save collapsible box states @done(23-05-29 04:22)
         ✔ save selection @done(23-05-29 17:11)

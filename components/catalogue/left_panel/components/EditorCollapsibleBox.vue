@@ -215,7 +215,7 @@ h3 {
 
   display: inline-block;
   min-height: 1px;
-  width: 22px;
+  min-width: 22px;
   margin-left: 2px;
 }
 // indent
