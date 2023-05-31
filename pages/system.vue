@@ -40,6 +40,7 @@ import { db } from "~/assets/ts/dexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
+import { useSettingsStore } from "~/stores/settingsState";
 export default defineComponent({
   head() {
     return {
@@ -57,7 +58,7 @@ export default defineComponent({
     };
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
   },
 
   methods: {
@@ -104,29 +105,40 @@ export default defineComponent({
       }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
-  },
-  async mounted() {
-    try {
-      const result = [] as Array<{ name: string; path: string }>;
-      if (!electron) {
-        // const repos = await fetch_bs_repos_datas(true);
-        // for (const repo of repos.repositories) {
-        // result.push({ name: repo.name, path: repo.repositoryUrl });
-        // }
-        for (let i = 0; i < 100; i++) {
-          result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
+    async update() {
+      try {
+        const result = [] as Array<{ name: string; path: string }>;
+        if (!electron) {
+          // const repos = await fetch_bs_repos_datas(true);
+          // for (const repo of repos.repositories) {
+          // result.push({ name: repo.name, path: repo.repositoryUrl });
+          // }
+          for (let i = 0; i < 100; i++) {
+            result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
+          }
+        } else {
+          if (this.settings.systemsFolder) {
+            const systems = await getFolderFolders(this.settings.systemsFolder);
+            if (systems) {
+              result.push(...systems);
+            }
+          } else {
+            const home = await getPath("home");
+            const systems = await getFolderFolders(`${home}/BattleScribe/data`);
+            if (systems) {
+              result.push(...systems);
+            }
+          }
         }
-      } else {
-        const home = await getPath("home");
-        const systems = await getFolderFolders(`${home}/BattleScribe/data`);
-        if (systems) {
-          result.push(...systems);
-        }
+        this.systems = sortByAscending(result, (o) => o.name);
+      } finally {
+        this.loading = false;
       }
-      this.systems = sortByAscending(result, (o) => o.name);
-    } finally {
-      this.loading = false;
-    }
+    },
+  },
+
+  async mounted() {
+    await this.update();
   },
 });
 </script>

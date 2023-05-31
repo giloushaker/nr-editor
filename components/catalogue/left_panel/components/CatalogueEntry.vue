@@ -300,7 +300,9 @@ export default {
         }
       }
       if (this.showImported) {
-        for (const catalogue of item.importRootEntries) {
+        const useRoot = ["selectionEntries", "selectionEntryLinks", "rules"];
+        const imports = useRoot.includes(type) ? item.importRootEntries : item.imports;
+        for (const catalogue of imports) {
           const found = catalogue[key];
           const system = catalogue.isGameSystem();
           if (found && Array.isArray(found)) {
