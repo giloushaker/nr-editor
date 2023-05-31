@@ -22,7 +22,7 @@ import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
@@ -118,6 +118,7 @@ export const useEditorStore = defineStore("editor", {
           const asJson = await convertToJson(file.data, getExtension(file.name));
           const systemId = asJson?.gameSystem?.id;
           const catalogueId = asJson?.catalogue?.id;
+          getDataObject(asJson).fullFilePath = file.path;
           if (systemId) {
             result.push(systemId);
             const systemFiles = this.get_system(systemId);
