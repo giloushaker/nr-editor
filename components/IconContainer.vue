@@ -2,7 +2,7 @@
   <div class="items">
     <div
       v-for="item of sortedItems"
-      class="relative item"
+      class="relative item unselectable"
       :class="{ edited: edited(item), selected: item === modelValue }"
       @click="elementClicked(item)"
       @dblclick="elementDoubleClicked(item)"
@@ -11,7 +11,7 @@
       <img :src="getType(item).icon" />
       <div>{{ name(item) }}</div>
     </div>
-    <div class="relative item add" @click="add">
+    <div class="relative item add unselectable" @click="add">
       <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
       <div class="bold text-blue">New</div>
     </div>
