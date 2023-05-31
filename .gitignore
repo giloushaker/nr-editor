@@ -9,7 +9,6 @@ node_modules
 dist
 .DS_Store
 *.diff
-shared_components
 .release
 nr-win32-x64
 dist-electron
