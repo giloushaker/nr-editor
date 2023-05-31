@@ -80,9 +80,9 @@
               &nbsp;({{ link.target.catalogue?.getName() || link.target.getName() }})
             </span>
           </div>
-          <div v-if="imported" @click="store.follow(link)">
+          <div v-if="imported" @click="store.goto(item)">
             Goto
-            <span class="gray"> &nbsp;({{ item.catalogue.getName() }}) </span>
+            <span class="gray"> &nbsp;({{ item.catalogue?.getName() }}) </span>
           </div>
           <div v-if="item.links" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
