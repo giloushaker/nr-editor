@@ -143,7 +143,10 @@ export default {
       return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
     },
     set_scroll(scroll: number) {
-      this.get_scrollable_el().scrollTop = scroll;
+      const el = this.get_scrollable_el();
+      if (el) {
+        el.scrollTop = scroll;
+      }
     },
     save() {
       try {

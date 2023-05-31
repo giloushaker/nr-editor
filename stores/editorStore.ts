@@ -565,7 +565,7 @@ export const useEditorStore = defineStore("editor", {
       while (typeof result === "string") {
         const new_key = (obj as any)[result];
         if (typeof new_key !== "string" || new_key === result) {
-          throw new Error("Invalid children key");
+          return new Set();
         }
         result = (entries as any)[new_key].allowedChildrens;
       }
