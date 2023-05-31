@@ -62,10 +62,12 @@
       <tr v-if="type === 'catalogue'">
         <td></td>
         <td
-          ><input @change="changed" id="importRoot" type="checkbox" v-model="item.importRootEntries" /><label
-            for="importRoot"
-            >Import Root Entries</label
-          ></td
+          ><input
+            @change="changedImportRootEntries"
+            id="importRoot"
+            type="checkbox"
+            v-model="item.importRootEntries"
+          /><label for="importRoot">Import Root Entries</label></td
         >
       </tr>
     </table>
@@ -174,7 +176,10 @@ export default {
         this.itemType = this.item.type;
       }
     },
-
+    changedImportRootEntries() {
+      this.updateLink();
+      this.changed();
+    },
     changed() {
       this.$emit("catalogueChanged");
     },
