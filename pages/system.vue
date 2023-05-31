@@ -107,24 +107,27 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const result = [] as Array<{ name: string; path: string }>;
-    if (!electron) {
-      // const repos = await fetch_bs_repos_datas(true);
-      // for (const repo of repos.repositories) {
-      // result.push({ name: repo.name, path: repo.repositoryUrl });
-      // }
-      for (let i = 0; i < 100; i++) {
-        result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
+    try {
+      const result = [] as Array<{ name: string; path: string }>;
+      if (!electron) {
+        // const repos = await fetch_bs_repos_datas(true);
+        // for (const repo of repos.repositories) {
+        // result.push({ name: repo.name, path: repo.repositoryUrl });
+        // }
+        for (let i = 0; i < 100; i++) {
+          result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
+        }
+      } else {
+        const home = await getPath("home");
+        const systems = await getFolderFolders(`${home}/BattleScribe/data`);
+        if (systems) {
+          result.push(...systems);
+        }
       }
-    } else {
-      const home = await getPath("home");
-      const systems = await getFolderFolders(`${home}/Battlescribe/data`);
-      if (systems) {
-        result.push(...systems);
-      }
+      this.systems = sortByAscending(result, (o) => o.name);
+    } catch (e) {
+      this.loading = false;
     }
-    this.systems = sortByAscending(result, (o) => o.name);
-    this.loading = false;
   },
 });
 </script>
