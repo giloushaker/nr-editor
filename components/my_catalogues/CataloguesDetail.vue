@@ -76,8 +76,8 @@ export default {
   methods: {
     download_file() {
       const data = getDataObject(this.catalogue);
-      const xml = convertToXml(this.catalogue);
-      download((data as any).gameSystem ? `${data.name}.gst` : `${data.name}.cat`, "application/xml", xml);
+      const xml = convertToXml(data);
+      download((data as any).gameSystemId ? `${data.name}.cat` : `${data.name}.gst`, "application/xml", xml);
     },
   },
   computed: {
