@@ -67,7 +67,12 @@ export function get_ctx(el: any): any {
   return el.vnode;
 }
 export function get_base_from_vue_el(vue_el: any) {
-  return vue_el.$parent.item;
+  const p1 = vue_el.$parent;
+  if (p1.item) return p1.item;
+  const p2 = p1.$parent;
+  if (p2.item) return p2.item;
+  const p3 = p2.$parent;
+  return p3.item;
 }
 type VueComponent = any;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
@@ -272,7 +277,7 @@ export const useEditorStore = defineStore("editor", {
       return this.selections.map((o) => get_base_from_vue_el(o.obj));
     },
     get_selected(): EditorBase | undefined {
-      return this.selectedItem?.$parent?.item;
+      return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
     do_action(type: string, undo: () => void, redo: () => void) {
       redo();
@@ -390,7 +395,7 @@ export const useEditorStore = defineStore("editor", {
       if (!selections.length) return;
       if (!Array.isArray(data)) data = [data];
       const first = selections[0];
-      const catalogue = first instanceof Catalogue ? first : first.catalogue;
+      const catalogue = first.isCatalogue() ? first : first.catalogue;
       let addeds = [] as EditorBase[];
       const redo = () => {
         addeds = [];
