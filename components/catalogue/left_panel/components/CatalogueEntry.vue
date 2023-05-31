@@ -74,7 +74,7 @@
           <div v-if="link.target" @click="store.follow(link)">
             Follow
             <span class="gray" v-if="link.target.catalogue !== item.catalogue">
-              &nbsp;({{ link.target.catalogue.getName() }})
+              &nbsp;({{ link.target.catalogue?.getName() || link.target.getName() }})
             </span>
           </div>
           <div v-if="imported" @click="store.follow(link)">
