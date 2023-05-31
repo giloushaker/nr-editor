@@ -121,7 +121,7 @@ export default {
         const id = this.catalogue.gameSystemId || this.catalogue.id;
         const values = Object.values(this.store.get_system(id).catalogueFiles);
         const catalogues = values.map((elt) => {
-          return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLinks" };
+          return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLink" };
         });
         this.availableTargets = catalogues;
         return;
