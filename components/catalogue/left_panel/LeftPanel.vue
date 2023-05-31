@@ -5,9 +5,9 @@
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
       <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
-      <span class="text-right">
-        <input v-model="showImported" type="checkbox" id="showimport" />
-        <label for="showimport">No Profiles/Rules</label>
+      <span class="absolute right-5px">
+        <input v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
+        <label for="ignoreProfilesRules">Ignore Profiles/Rules</label>
       </span>
       <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
     </div>
@@ -26,7 +26,11 @@ export default {
     return { store: useEditorStore() };
   },
   data() {
-    return { showImported: false, filtered: [] as EditorBase[] };
+    return {
+      showImported: false,
+      ignoreProfilesRules: false,
+      filtered: [] as EditorBase[],
+    };
   },
   mounted() {
     addEventListener("keydown", this.keydown);
@@ -85,49 +89,63 @@ export default {
         }
       }
     },
+    async update(data: any) {
+      const { filter, ignoreProfilesRules } = data;
+      const prev = this.filtered as EditorBase[];
+      for (const p of prev) {
+        delete p.showInEditor;
+        delete p.showChildsInEditor;
+        forEachParent(p as EditorBase, (parent) => {
+          delete parent.showInEditor;
+          delete p.showChildsInEditor;
+        });
+      }
+      this.store.set_filter(filter);
+      if (filter.length > 0) {
+        this.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
+        if (ignoreProfilesRules) {
+          this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+        }
+        for (const p of this.filtered) {
+          p.showInEditor = true;
+          p.showChildsInEditor = true;
+          forEachParent(p as EditorBase, (parent) => {
+            parent.showInEditor = true;
+          });
+        }
+        await nextTick();
+        for (const p of this.filtered) {
+          if (!p.parent) continue;
+          try {
+            await this.store.open(p as EditorBase, true);
+          } catch (e) {
+            continue;
+          }
+        }
+      } else {
+        this.filtered = [];
+      }
+    },
   },
   computed: {
-    availableItems() {
-      return this.items;
+    filterData() {
+      return {
+        filter: this.store.filter,
+        ignoreProfilesRules: this.ignoreProfilesRules,
+      };
     },
     storeFilter: {
       get(): string {
         return this.store.filter;
       },
       async set(v: string) {
-        v = v.trim();
-        const prev = this.filtered as EditorBase[];
-        for (const p of prev) {
-          delete p.showInEditor;
-          delete p.showChildsInEditor;
-          forEachParent(p as EditorBase, (parent) => {
-            delete parent.showInEditor;
-            delete p.showChildsInEditor;
-          });
-        }
-        this.store.set_filter(v);
-        if (v.length > 0) {
-          this.filtered = this.catalogue.findOptionsByText(v) as EditorBase[];
-          for (const p of this.filtered) {
-            p.showInEditor = true;
-            p.showChildsInEditor = true;
-            forEachParent(p as EditorBase, (parent) => {
-              parent.showInEditor = true;
-            });
-          }
-          await nextTick();
-          for (const p of this.filtered) {
-            if (!p.parent) continue;
-            try {
-              await this.store.open(p as EditorBase, true);
-            } catch (e) {
-              continue;
-            }
-          }
-        } else {
-          this.filtered = [];
-        }
+        this.store.filter = v.trim();
       },
+    },
+  },
+  watch: {
+    filterData(data) {
+      this.update(data);
     },
   },
   components: { CatalogueEntry },
