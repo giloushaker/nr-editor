@@ -11,7 +11,7 @@
         {{ cataloguedata.authorContact }}
       </div>
       <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
-      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length && !isSystem">
+      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length ">
         <span class="bold">imports:</span>
         <div class="ml-10px">
           <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
@@ -21,7 +21,7 @@
           </div>
         </div>
       </div>
-      <div v-if="refs.length">
+      <div v-if="refs.length && !isSystem">
         <span class="bold">imported by:</span>
         <div class="ml-10px">
           <div v-for="ref in refs">
