@@ -158,9 +158,21 @@ export default {
       this.changed();
     },
 
-    updateLink() {
-      this.catalogue.updateLink(this.item);
-      this.itemType = this.item.type;
+    async updateLink() {
+      if (this.type === "catalogue" && this.item.targetId) {
+        console.log(this.item.targetId);
+        const id = this.catalogue.gameSystemId || this.catalogue.id;
+        const sys = this.store.get_system(id);
+        delete this.catalogue.loaded;
+        delete this.catalogue.loaded_editor;
+        delete this.catalogue.imports;
+        const loaded = await sys.loadData({ catalogue: this.catalogue } as any);
+        this.item.name = this.item.target.name;
+        console.log(this.catalogue.catalogueLinks?.map((o) => o.target.name));
+      } else {
+        this.catalogue.updateLink(this.item);
+        this.itemType = this.item.type;
+      }
     },
 
     changed() {
