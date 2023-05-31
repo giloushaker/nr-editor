@@ -50,7 +50,7 @@
             <span class="typeIcon-wrapper">
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
-            <span :class="{ filtered: item.showChildsInEditor }">{{ getName(item) }}</span>
+            <span :class="{ filtered: item.highlight }">{{ getName(item) }}</span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
           </span>
         </template>

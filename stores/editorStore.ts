@@ -34,21 +34,26 @@ import {
   isAllowedExtension,
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
-export interface IeditorStore {
+export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
   selectedElementGroup: any | null;
   selectedElement: any | null;
   selectedItem: any | null;
+
   filter: string;
   filterRegex: RegExp;
+  filtered: EditorBase[];
+
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
   clipboard: EditorBase[];
+
   mode: "edit" | "references";
+  unsavedChanges: Record<string, CatalogueState>;
   gameSystemsLoaded: boolean;
   gameSystems: Record<string, GameSystemFiles>;
-  unsavedChanges: Record<string, CatalogueState>;
+
   $router?: Router;
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
@@ -73,7 +78,7 @@ export function get_base_from_vue_el(vue_el: any) {
 type VueComponent = any;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
-  state: (): IeditorStore => ({
+  state: (): IEditorStore => ({
     selections: [],
     selectedElementGroup: null,
     selectedElement: null,
@@ -81,6 +86,7 @@ export const useEditorStore = defineStore("editor", {
 
     filter: "",
     filterRegex: RegExp(""),
+    filtered: [],
 
     undoStack: [],
     undoStackPos: -1,
@@ -392,7 +398,7 @@ export const useEditorStore = defineStore("editor", {
       const first = selections[0];
       const catalogue = first instanceof Catalogue ? first : first.catalogue;
       let addeds = [] as EditorBase[];
-      function redo() {
+      const redo = () => {
         addeds = [];
         for (const item of selections) {
           for (const entry of data as (EditorBase | Record<string, any>)[]) {
@@ -409,11 +415,18 @@ export const useEditorStore = defineStore("editor", {
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
             onAddEntry(copy, catalogue, item);
+            copy.showChildsInEditor = true;
+            let parent = copy;
+            while (parent) {
+              parent.showInEditor = true;
+              parent = parent.parent;
+            }
+            this.filtered.push(copy);
             arr.push(copy);
             addeds.push(copy);
           }
         }
-      }
+      };
       function undo() {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));

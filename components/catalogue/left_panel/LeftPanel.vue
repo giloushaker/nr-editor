@@ -29,7 +29,6 @@ export default {
     return {
       showImported: false,
       ignoreProfilesRules: false,
-      filtered: [] as EditorBase[],
     };
   },
   mounted() {
@@ -91,10 +90,11 @@ export default {
     },
     async update(data: any) {
       const { filter, ignoreProfilesRules } = data;
-      const prev = this.filtered as EditorBase[];
+      const prev = this.store.filtered as EditorBase[];
       for (const p of prev) {
         delete p.showInEditor;
         delete p.showChildsInEditor;
+        delete p.highlight;
         forEachParent(p as EditorBase, (parent) => {
           delete parent.showInEditor;
           delete p.showChildsInEditor;
@@ -102,19 +102,20 @@ export default {
       }
       this.store.set_filter(filter);
       if (filter.length > 0) {
-        this.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
+        this.store.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
         if (ignoreProfilesRules) {
-          this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+          this.store.filtered = this.store.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
         }
-        for (const p of this.filtered) {
+        for (const p of this.store.filtered) {
           p.showInEditor = true;
           p.showChildsInEditor = true;
+          p.highlight = true;
           forEachParent(p as EditorBase, (parent) => {
             parent.showInEditor = true;
           });
         }
         await nextTick();
-        for (const p of this.filtered) {
+        for (const p of this.store.filtered) {
           if (!p.parent) continue;
           try {
             await this.store.open(p as EditorBase, true);
@@ -123,7 +124,7 @@ export default {
           }
         }
       } else {
-        this.filtered = [];
+        this.store.filtered = [];
       }
     },
   },
