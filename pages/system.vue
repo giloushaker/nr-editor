@@ -3,6 +3,7 @@
     <div class="mt-10px p-10px">
       <h2 class="inline">Select a system to load, or browse for one:</h2>
       <SelectFile class="ml-10px" @uploaded="uploaded" />
+      <SelectFolder class="ml-10px" @selected="selectedFolder" />
     </div>
     <div class="p-10px">
       <div
@@ -32,10 +33,8 @@
 
 <script lang="ts">
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { fetch_bs_repos_datas } from "~/assets/shared/battlescribe/bs_import_data";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { range } from "~/assets/shared/blossomJs/belt_Array";
 import { db } from "~/assets/ts/dexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
@@ -62,6 +61,10 @@ export default defineComponent({
   },
 
   methods: {
+    async selectedFolder(folder: string[]) {
+      this.settings.systemsFolder = Array.isArray(folder) ? folder[0] : folder;
+      this.update();
+    },
     async selected(item: { name: string; path: string }) {
       if (electron) {
         this.loading = true;
