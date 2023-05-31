@@ -1,42 +1,44 @@
 <template>
   <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
-      <EditorCollapsibleBox :payload="catalogue" nobox :group="[]">
-        <template #title><img src="/assets/bsicons/catalogue.png" /> {{ catalogue.name }}</template>
-        <template #content>
-          <template v-for="category of groupedCategories">
-            <EditorCollapsibleBox
-              :collapsible="category.items.length > 0"
-              :group="get_group('entries')"
-              :payload="item"
-              @contextmenu.stop="contextmenu.show($event, category.type)"
-              :class="[category.type, category.links, `depth-${depth}`]"
-              nobox
-              :defcollapsed="!should_be_open(category.type)"
-            >
-              <template #title>
-                <span>
-                  <span class="typeIcon-wrapper">
-                    <img class="typeIcon" :src="`./assets/bsicons/${category.icon}`" />
-                  </span>
-                  {{ category.name }}
-                </span>
-              </template>
-              <template #content>
-                <template :key="entry.item.id" v-for="entry of category.items">
-                  <CatalogueEntry
-                    :item="entry.item"
-                    :group="get_group(category.type)"
-                    :forceShowRecursive="forceShow"
-                    :imported="entry.imported"
-                    :depth="depth + 1"
-                  />
-                </template>
-              </template>
-            </EditorCollapsibleBox>
+      <div class="head">
+        <EditorCollapsibleBox :payload="catalogue" nobox :group="[]" :collapsible="false">
+          <template #title><img src="/assets/bsicons/catalogue.png" /> {{ catalogue.name }}</template>
+          <template #content></template>
+        </EditorCollapsibleBox>
+      </div>
+
+      <template v-for="category of groupedCategories">
+        <EditorCollapsibleBox
+          :collapsible="category.items.length > 0"
+          :group="get_group('entries')"
+          :payload="item"
+          @contextmenu.stop="contextmenu.show($event, category.type)"
+          :class="[category.type, category.links, `depth-${depth}`]"
+          nobox
+          :defcollapsed="!should_be_open(category.type)"
+        >
+          <template #title>
+            <span>
+              <span class="typeIcon-wrapper">
+                <img class="typeIcon" :src="`./assets/bsicons/${category.icon}`" />
+              </span>
+              {{ category.name }}
+            </span>
           </template>
-        </template>
-      </EditorCollapsibleBox>
+          <template #content>
+            <template :key="entry.item.id" v-for="entry of category.items">
+              <CatalogueEntry
+                :item="entry.item"
+                :group="get_group(category.type)"
+                :forceShowRecursive="forceShow"
+                :imported="entry.imported"
+                :depth="depth + 1"
+              />
+            </template>
+          </template>
+        </EditorCollapsibleBox>
+      </template>
     </template>
     <template v-else>
       <EditorCollapsibleBox
@@ -428,5 +430,9 @@ export default {
   display: inline-block;
   min-width: 20px;
   min-height: 1px;
+}
+
+.head {
+  margin-left: -20px;
 }
 </style>
