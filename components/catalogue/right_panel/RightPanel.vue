@@ -113,6 +113,13 @@
         @catalogueChanged="changed"
         type="catalogue"
       />
+      <CatalogueRightPanelCataloguePanel
+        v-else-if="typeName == 'catalogue'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="catalogue"
+      />
     </template>
     <template v-else-if="store.mode === 'references'">
       <CatalogueRightPanelReferencesPanel :item="item" :catalogue="catalogue" />
