@@ -111,6 +111,7 @@ export async function saveCatalogueInFiles(data: Catalogue) {
 export function saveCatalogue(data: Catalogue) {
   if (globalThis.electron) {
     saveCatalogueInFiles(data);
+  } else {
+    saveCatalogueInDb(data);
   }
-  saveCatalogueInDb(data);
 }

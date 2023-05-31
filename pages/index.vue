@@ -7,6 +7,9 @@
         <UploadJson v-if="!electron" @uploaded="filesUploaded" />
         <ImportFromGithub v-if="!electron" @uploaded="filesUploaded" />
       </div>
+      <div v-if="electron">
+        Note: if you modify an already imported file in another program, you will need to import it again
+      </div>
     </div>
   </div>
 
@@ -20,7 +23,7 @@
     >
       <template #left>
         <div class="scrollable">
-          <fieldset v-for="gst in store.gameSystems">
+          <fieldset v-for="gst in systems">
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
             </legend>
@@ -93,11 +96,34 @@ export default defineComponent({
   },
   created() {
     this.store.init(this.$router);
-    this.store.load_systems_from_db();
+    if (!electron) {
+      this.store.load_systems_from_db();
+    }
   },
   computed: {
     electron() {
       return Boolean(globalThis.electron);
+    },
+    filter() {
+      const id = this.$route.query?.id;
+      if (!id) return undefined;
+      return (id as string).split(",");
+    },
+    systems(): Record<string, GameSystemFiles> {
+      console.log(this.$route);
+      if (this.filter) {
+        const result = {} as Record<string, GameSystemFiles>;
+        for (const id of this.filter) {
+          const found = this.store.gameSystems[id];
+          if (found) {
+            result[id] = found;
+          }
+
+          return result;
+        }
+      }
+
+      return this.store.gameSystems;
     },
   },
   methods: {
@@ -118,9 +144,11 @@ export default defineComponent({
     },
 
     itemDoubleClicked(item: BSIDataCatalogue) {
+      const id = getDataObject(item).id;
+      const systemId = getDataObject(item).gameSystemId || id;
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataDbId(item) },
+        query: { systemId, id },
       });
     },
     newCatalogue(gst: GameSystemFiles) {
@@ -139,7 +167,7 @@ export default defineComponent({
       } as any;
     },
     createCatalogue(data: BSIDataCatalogue) {
-      const system = this.getSystem(data.catalogue.gameSystemId);
+      const system = this.store.get_system(data.catalogue.gameSystemId);
       system.setCatalogue(data);
       this.cataloguesStore.setEdited(getDataDbId(data), true);
       this.selectedItem = data;
@@ -159,32 +187,34 @@ export default defineComponent({
         const folder = dirname(systemPath);
         (getDataObject(copy) as any).fullFilePath = `${folder}/${name}`;
       }
-      db.catalogues.put({
-        content: copy,
-        id: getDataDbId(data),
-      });
+      if (!electron) {
+        db.catalogues.put({
+          content: copy,
+          id: getDataDbId(data),
+        });
+      }
       this.mode = "edit";
     },
     deleteCatalogue(data: BSIDataCatalogue) {
       console.log("Deleted catalogue", data);
-      this.getSystem(data.catalogue.gameSystemId).removeCatalogue(data);
-      db.catalogues.delete(getDataDbId(data));
+      this.store.get_system(data.catalogue.gameSystemId).removeCatalogue(data);
+      if (!electron) {
+        db.catalogues.delete(getDataDbId(data));
+      }
+
       this.selectedItem = null;
     },
-    getSystem(id: string) {
-      if (!(id in this.store.gameSystems)) {
-        this.store.gameSystems[id] = new GameSystemFiles();
-      }
-      return this.store.gameSystems[id];
-    },
+
     filesUploaded(files: any[]) {
       console.log("Uploaded", files.length, "files", files);
       const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
       for (const system of systems) {
         const systemId = system.gameSystem.id;
         const dbId = getDataDbId(system);
-        this.getSystem(systemId).setSystem(system);
-        db.systems.put({ content: system, id: dbId });
+        this.store.get_system(systemId).setSystem(system);
+        if (!electron) {
+          db.systems.put({ content: system, id: dbId });
+        }
         this.cataloguesStore.updateCatalogue(system.gameSystem);
         this.cataloguesStore.setEdited(dbId, false);
       }
@@ -192,19 +222,21 @@ export default defineComponent({
       const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
-        this.getSystem(systemId).setCatalogue(catalogue);
-        db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        this.store.get_system(systemId).setCatalogue(catalogue);
+        if (!electron) {
+          db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        }
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
-    },
-    loadSystem(path: string) {
-      // Electron only
+      delete this.$route.query.id;
     },
     async editCatalogue(file: BSIData) {
+      const id = getDataObject(file).id;
+      const systemId = getDataObject(file).gameSystemId || id;
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataDbId(file) },
+        query: { systemId, id },
       });
     },
   },

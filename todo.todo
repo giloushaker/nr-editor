@@ -3,9 +3,9 @@
 
 Interface:
     Main Menu:
-        ☐ Add System
-        ☐ System Page
-        ☐ System View
+        ✔ Add System @done(23-05-31 01:13)
+        ✔ System Page @done(23-05-31 01:13)
+        ✔ System View @done(23-05-31 01:13)
             needed to not load every catalogue on startup in the app
         ✔ Add Catalogue @done(23-05-09 16:30)
         ✔ Edit Catsalogue @done(23-05-09 14:10)
@@ -40,6 +40,13 @@ Editor:
         ☐ catalogueLink
         ☐ catalogue / gameSystem obj
 
+
+    Problems: 
+        ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
+        ☐ changing catalogues in another program will not reflect in the nr editor
+        ☐ dexie on electron version doesnt work if process is opened more than once
+
+
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByText(query) then filter 
@@ -59,23 +66,18 @@ Editor:
             ✔ load systems from bs initially in some fast way @done(23-05-28 19:52)
             ✔ save to disk in app @done(23-05-28 19:52)
             ☐ load a roster in ui 
+            ☐ errors
             ✔ release/installed/auto updater @done(23-05-27 22:28)
                 https://github.com/giloushaker/nr-editor/releases
             
-        ☐ errors
-        ☐ references from
         ☐ move back/forward (like browser navigation)
-        ✔ save collapsible box states @done(23-05-29 04:22)
-        ✔ save selection @done(23-05-29 17:11)
-        ☐ preview profiles/rules (like in builder)
-        ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
-        ☐ upload to github
-        ☐ view old versions, changes
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
-        ☐ dexie on electron version doesnt work if process is opened more than once
-        ☐ changing catalogues in another program will not reflect in the nr editor
+
         ✔ load multiple catalogues @done(23-05-22 14:36)
             ☐  think of a way to handle saving
+        ✔ references from @done(23-05-30 00:46)
+        ✔ save collapsible box states @done(23-05-29 04:22)
+        ✔ save selection @done(23-05-29 17:11)
         ✔ save @done(23-05-08 18:48)
         ✔ export xml/zip @done(23-05-17 19:19)
         ✔ download from github (needs proxy) @done(23-05-08 18:43)
@@ -84,8 +86,11 @@ Editor:
             ✔ show childs of found @done(23-05-21 01:08)
 
 
-        lower prio
-
+        Low Prio:
+            ☐ view old versions, changes
+            ☐ upload to github
+            ☐ preview profiles/rules (like in builder)
+            
         
     Bugs:
         ✔ Unable to create new links @done(23-05-21 16:28)
