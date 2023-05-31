@@ -1,7 +1,13 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
   <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsReference
+    v-if="type != 'catalogue'"
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    class="section"
+  />
 
   <CatalogueRightPanelFieldsLink
     :item="item"
@@ -19,7 +25,12 @@
     class="section"
   />
 
-  <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed" class="section">
+  <CatalogueRightPanelFieldsBooleans
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+    v-if="type != 'catalogue'"
+  >
     Entry
   </CatalogueRightPanelFieldsBooleans>
 

@@ -47,6 +47,7 @@
       >
         <template #title>
           <span :class="{ imported: imported }">
+            {{ item.editorTypeName }}
             <span class="typeIcon-wrapper">
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>

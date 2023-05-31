@@ -1,19 +1,12 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsModifier
-    class="section"
-    :item="item"
-    @catalogueChanged="changed"
-    :catalogue="catalogue"
-  />
+  <CatalogueRightPanelFieldsModifier class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
 </template>
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import {
-  Catalogue,
-  Publication,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -23,7 +16,7 @@ export default {
       required: true,
     },
     item: {
-      type: Object as PropType<Publication>,
+      type: Object as PropType<BSIModifier>,
       required: true,
     },
   },

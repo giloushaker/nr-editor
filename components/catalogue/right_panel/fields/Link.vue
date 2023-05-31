@@ -80,7 +80,7 @@ export default {
     return {
       filter: "",
       val: null as any,
-      availableTargets: [] as Array<Base & EditorBase>,
+      availableTargets: [] as Array<{ name: string; id: string }>,
       itemType: "selectionEntry" as string | undefined,
     };
   },
@@ -117,6 +117,15 @@ export default {
 
   methods: {
     updateTargets() {
+      if (this.type === "catalogue" && this.catalogue.gameSystemId) {
+        const catalogues = Object.values(this.store.get_system(this.catalogue.gameSystemId).catalogueFiles).map(
+          (elt) => {
+            return { id: elt.bsid!, name: elt.name };
+          }
+        );
+        this.availableTargets = catalogues;
+      }
+
       let all = this.catalogue.findOptionsByText("").filter((o) => {
         if (this.targetIsValid(o as ItemTypes) == false) {
           return false;
