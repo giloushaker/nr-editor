@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { getEntryPath, type EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import { goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { get_base_from_vue_el, get_ctx } from "./editorStore";
 
 export const useEditorUIState = defineStore("editor-ui", {
   state: () => ({} as Record<string, any>),
@@ -12,12 +13,6 @@ export const useEditorUIState = defineStore("editor-ui", {
   actions: {
     save(id: string, data: Record<string, any>) {
       // Get all open collapsible boxes and save their state
-      function get_ctx(el: any): any {
-        return el.vnode;
-      }
-      function get_base_from_vue_el(vue_el: any): EditorBase {
-        return vue_el.$parent.item;
-      }
 
       function recurseFn(elt: Element, obj: any, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
