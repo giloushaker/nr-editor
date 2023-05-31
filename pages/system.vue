@@ -125,7 +125,7 @@ export default defineComponent({
         }
       }
       this.systems = sortByAscending(result, (o) => o.name);
-    } catch (e) {
+    } finally {
       this.loading = false;
     }
   },
