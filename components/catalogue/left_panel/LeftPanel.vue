@@ -1,9 +1,9 @@
 <template>
   <div class="leftPanel">
-    <div class="header static sticky">
+    <!-- <div class="header static sticky">
       <span class="bold p-4px">&lt;</span>
       <span class="bold p-4px">&gt;</span>
-    </div>
+    </div> -->
     <div class="top rightborder scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
