@@ -13,6 +13,7 @@
     </CatalogueRightPanelFieldsHidden>
     <CatalogueRightPanelFieldsRevision :item="item" @catalogueChanged="changed" class="section" />
     <CatalogueRightPanelFieldsCatalogue :item="item" @catalogueChanged="changed" class="section" />
+    <CatalogueRightPanelFieldsInformation :item="item" @catalogueChanged="changed" class="section" />
   </div>
 </template>
 
