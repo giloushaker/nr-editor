@@ -356,7 +356,7 @@ export default {
       return this.item as Link & EditorBase;
     },
     iscollapsible() {
-      return this.mixedChildren.length > 0 && this.hiddenChilds < this.mixedChildren.length;
+      return this.mixedChildren.length > 0;
     },
     contextmenu() {
       return this.menu("contextmenu");

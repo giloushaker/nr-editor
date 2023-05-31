@@ -110,7 +110,6 @@ export default defineComponent({
       return (id as string).split(",");
     },
     systems(): Record<string, GameSystemFiles> {
-      console.log(this.$route);
       if (this.filter) {
         const result = {} as Record<string, GameSystemFiles>;
         for (const id of this.filter) {

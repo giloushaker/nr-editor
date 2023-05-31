@@ -1,9 +1,9 @@
 <template>
   <div class="leftPanel">
-    <div class="top scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
+    <div class="top rightborder scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
-    <div class="bottom border-1px border-gray-400 border-solid">
+    <div class="bottom static">
       <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
       <span class="absolute right-5px">
         <input v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
@@ -167,11 +167,17 @@ export default {
 }
 .bottom {
   position: sticky;
-  width: 100%;
   margin-top: auto;
   bottom: 0;
 }
 input:focus::placeholder {
   color: transparent;
+}
+.static {
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(177, 177, 177);
+}
+.rightborder {
+  border-right: 1px solid rgb(177, 177, 177);
 }
 </style>

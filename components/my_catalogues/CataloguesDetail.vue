@@ -11,7 +11,7 @@
         {{ cataloguedata.authorContact }}
       </div>
       <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
-      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
+      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length && !isSystem">
         <span class="bold">imports:</span>
         <div class="ml-10px">
           <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
@@ -92,6 +92,9 @@ export default {
     },
     cataloguedata(): BSICatalogue | BSIGameSystem {
       return getDataObject(this.catalogue);
+    },
+    isSystem() {
+      return !this.cataloguedata.gameSystemId;
     },
   },
 };

@@ -59,9 +59,7 @@ export default defineComponent({
   setup() {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
   },
-  created() {
-    console.log(this.$route);
-  },
+
   methods: {
     async selected(item: { name: string; path: string }) {
       if (electron) {

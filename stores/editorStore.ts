@@ -22,18 +22,12 @@ import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
-import ConditionGroupPanel from "~/components/catalogue/right_panel/ConditionGroupPanel.vue";
-import {
-  convertToJson,
-  getExtension,
-  isAllowedExtension,
-  isZipExtension,
-} from "~/assets/shared/battlescribe/bs_convert";
+import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
