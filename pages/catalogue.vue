@@ -54,7 +54,6 @@
 <script lang="ts">
 import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { db } from "~/assets/ts/dexie";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battlescribe/bs_editor";
@@ -104,25 +103,30 @@ export default {
       if (!this.cat) return false;
       return this.store.get_catalogue_state(this.cat as Catalogue)?.unsaved || false;
     },
+    query() {
+      return {
+        gameSystemId: this.$route.query.systemId,
+        catalogueId: this.$route.query.id || this.$route.query.systemId,
+      };
+    },
   },
   watch: {
-    "$route.query.id": {
-      async handler(newVal, oldVal) {
-        if (newVal && newVal !== oldVal) {
-          this.id = newVal;
-          this.store.unselect();
-          try {
-            await this.load(newVal as string, oldVal);
-            this.error = null;
+    query: {
+      async handler(newVal) {
+        const { gameSystemId, catalogueId } = newVal;
+        this.id = catalogueId || gameSystemId;
+        this.store.unselect();
+        try {
+          await this.load(gameSystemId, this.id);
+          this.error = null;
 
-            // Resolve a promise in the store so that code elsewhere can wait for this to load
-            this.$nextTick(() => {
-              this.store.$nextTickResolve && this.store.$nextTickResolve();
-            });
-          } catch (e: any) {
-            console.error(e);
-            this.error = e;
-          }
+          // Resolve a promise in the store so that code elsewhere can wait for this to load
+          this.$nextTick(() => {
+            this.store.$nextTickResolve && this.store.$nextTickResolve();
+          });
+        } catch (e: any) {
+          console.error(e);
+          this.error = e;
         }
       },
       immediate: true,
@@ -192,22 +196,18 @@ export default {
         this.set_scroll(scroll);
       });
     },
-    async load(catalogueFileId: string, oldId?: string) {
-      if (!catalogueFileId) {
+    async load(systemId: string, catalogueId?: string) {
+      if (!catalogueId && !systemId) {
         throw new Error("couldn't load catalogue: no id");
       }
       try {
         this.loading = true;
         this.scroll = 0;
-        const catFile = await db.catalogues.get(catalogueFileId);
-        const systemId = catFile ? catFile.content.catalogue.gameSystemId : catalogueFileId;
-        const catalogueId = catFile ? catFile.content.catalogue.id : catalogueFileId;
         const system = await this.store.get_or_load_system(systemId);
-        let loaded = system.getLoadedCatalogue({ targetId: catalogueId });
+        let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
         if (!loaded) {
           loaded = await system.loadCatalogue({
-            targetId: catalogueId,
-            name: catFile?.content.catalogue.name,
+            targetId: catalogueId || systemId,
           });
         }
         this.systemFiles = system;

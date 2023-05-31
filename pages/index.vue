@@ -144,9 +144,11 @@ export default defineComponent({
     },
 
     itemDoubleClicked(item: BSIDataCatalogue) {
+      const id = getDataObject(item).id;
+      const systemId = getDataObject(item).gameSystemId || id;
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataDbId(item) },
+        query: { systemId, id },
       });
     },
     newCatalogue(gst: GameSystemFiles) {
@@ -185,16 +187,21 @@ export default defineComponent({
         const folder = dirname(systemPath);
         (getDataObject(copy) as any).fullFilePath = `${folder}/${name}`;
       }
-      db.catalogues.put({
-        content: copy,
-        id: getDataDbId(data),
-      });
+      if (!electron) {
+        db.catalogues.put({
+          content: copy,
+          id: getDataDbId(data),
+        });
+      }
       this.mode = "edit";
     },
     deleteCatalogue(data: BSIDataCatalogue) {
       console.log("Deleted catalogue", data);
       this.store.get_system(data.catalogue.gameSystemId).removeCatalogue(data);
-      db.catalogues.delete(getDataDbId(data));
+      if (!electron) {
+        db.catalogues.delete(getDataDbId(data));
+      }
+
       this.selectedItem = null;
     },
 
@@ -205,7 +212,9 @@ export default defineComponent({
         const systemId = system.gameSystem.id;
         const dbId = getDataDbId(system);
         this.store.get_system(systemId).setSystem(system);
-        db.systems.put({ content: system, id: dbId });
+        if (!electron) {
+          db.systems.put({ content: system, id: dbId });
+        }
         this.cataloguesStore.updateCatalogue(system.gameSystem);
         this.cataloguesStore.setEdited(dbId, false);
       }
@@ -214,16 +223,20 @@ export default defineComponent({
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
         this.store.get_system(systemId).setCatalogue(catalogue);
-        db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        if (!electron) {
+          db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        }
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
       delete this.$route.query.id;
     },
     async editCatalogue(file: BSIData) {
+      const id = getDataObject(file).id;
+      const systemId = getDataObject(file).gameSystemId || id;
       this.$router.push({
         name: "catalogue",
-        query: { id: getDataDbId(file) },
+        query: { systemId, id },
       });
     },
   },

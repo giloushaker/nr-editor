@@ -22,7 +22,7 @@ import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
@@ -620,9 +620,15 @@ export const useEditorStore = defineStore("editor", {
         console.warn("Cannot follow link to another catalogue without $router set");
         return;
       }
-      const id = getDataDbId(targetCatalogue);
-      if (id !== this.$router.currentRoute.query?.id) {
-        this.$router.push(`/catalogue?id=${encodeURIComponent(id)}`);
+      const curId = this.$router.currentRoute.query?.id || this.$router.currentRoute.query?.systemId;
+      if (targetCatalogue.id !== curId) {
+        const id = targetCatalogue.id;
+        const systemId = targetCatalogue.gameSystemId || id;
+        this.$router.push({
+          name: "catalogue",
+          query: { systemId, id },
+        });
+
         this.$nextTick = new Promise((resolve, reject) => {
           this.$nextTickResolve = resolve;
         });

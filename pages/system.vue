@@ -34,7 +34,7 @@
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { fetch_bs_repos_datas } from "~/assets/shared/battlescribe/bs_import_data";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
-import { BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { range } from "~/assets/shared/blossomJs/belt_Array";
 import { db } from "~/assets/ts/dexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
@@ -86,7 +86,9 @@ export default defineComponent({
         ids.push(systemId);
         const dbId = getDataDbId(system);
         this.store.get_system(systemId).setSystem(system);
-        db.systems.put({ content: system, id: dbId });
+        if (!electron) {
+          db.systems.put({ content: system, id: dbId });
+        }
         this.cataloguesStore.updateCatalogue(system.gameSystem);
         this.cataloguesStore.setEdited(dbId, false);
       }
@@ -95,7 +97,9 @@ export default defineComponent({
       for (const catalogue of catalogues) {
         const systemId = catalogue.catalogue.gameSystemId;
         this.store.get_system(systemId).setCatalogue(catalogue);
-        db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        if (!electron) {
+          db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
+        }
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
