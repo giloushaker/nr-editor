@@ -263,8 +263,10 @@ export default {
       open: false,
     };
   },
-  created() {
-    this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+  mounted() {
+    if (this.catalogue) {
+      this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+    }
   },
   methods: {
     escapeXml,

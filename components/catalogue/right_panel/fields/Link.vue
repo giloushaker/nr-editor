@@ -156,7 +156,7 @@ export default {
         const sys = this.store.get_system(id);
         delete this.catalogue.loaded;
         delete this.catalogue.loaded_editor;
-        delete this.catalogue.imports;
+        delete (this.catalogue as any).imports;
         const loaded = await sys.loadData({ catalogue: this.catalogue } as any);
         this.item.name = this.item.target.name;
         console.log(this.catalogue.catalogueLinks?.map((o) => o.target.name));
