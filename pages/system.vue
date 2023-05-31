@@ -1,9 +1,17 @@
 <template>
   <div class="scrollable" v-if="!loading">
     <div class="mt-10px p-10px">
-      <h2 class="inline">Select a system to load, or browse for one:</h2>
-      <SelectFile class="ml-10px" @uploaded="uploaded" />
+      <div
+        >Working Folder: <span class="workdir">{{ settings.systemsFolder }}</span></div
+      >
+
+      <SelectFile @uploaded="uploaded" />
       <SelectFolder class="ml-10px" @selected="selectedFolder" />
+
+      <p
+        >You can open a system by clicking any of the systems in your working folder, listed below, or click Load System
+        to load a system outside this folder.</p
+      >
     </div>
     <div class="p-10px">
       <div
@@ -141,6 +149,11 @@ export default defineComponent({
   },
 
   async mounted() {
+    if (!this.settings.systemsFolder) {
+      const home = await getPath("home");
+      this.settings.systemsFolder = `${home}/BattleScribe/data`;
+    }
+
     await this.update();
   },
 });
@@ -148,5 +161,14 @@ export default defineComponent({
 <style scoped>
 .item:hover {
   background-color: rgba(0, 0, 0, 0.15);
+}
+
+.workdir {
+  font-weight: bold;
+}
+
+p {
+  font-style: italic;
+  margin-top: 10px;
 }
 </style>

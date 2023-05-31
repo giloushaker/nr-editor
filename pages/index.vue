@@ -1,11 +1,11 @@
 <template>
-  <div class="p-10px">
+  <div class="p-10px" v-if="!electron">
     <div class="box">
       <h3>My Catalogues</h3>
       <div class="boutons">
         <SelectFile v-if="electron" @uploaded="filesUploaded" />
-        <UploadJson v-if="!electron" @uploaded="filesUploaded" />
-        <ImportFromGithub v-if="!electron" @uploaded="filesUploaded" />
+        <UploadJson @uploaded="filesUploaded" />
+        <ImportFromGithub @uploaded="filesUploaded" />
       </div>
       <div v-if="electron">
         Note: if you modify an already imported file in another program, you will need to import it again
@@ -80,7 +80,7 @@ export default defineComponent({
   },
   head() {
     return {
-      title: "NR-Editor",
+      title: "New Recruit - Editor",
     };
   },
   data() {

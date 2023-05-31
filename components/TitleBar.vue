@@ -2,9 +2,9 @@
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
       <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
-        <h1 class="flex">
+        <h1 class="flex titletext">
           <img class="w-30px h-30px" src="/assets/icons/icon.png" />
-          <span class="m-auto"> NR-Editor </span>
+          <span class="m-auto version"> New Recruit - Editor v{{ version }}</span>
         </h1>
       </NuxtLink>
       <slot />
@@ -27,7 +27,6 @@
         <span class="icontext">Systems</span>
       </NuxtLink>
       <div v-if="electron">
-        <span>v{{ version }}</span>
         <img src="/assets/icons/electron32.png" />
       </div>
 
@@ -136,6 +135,11 @@ export default {
   box-sizing: border-box;
   z-index: 2;
 }
+
+.titletext {
+  color: white;
+}
+
 .titlebar-left {
   height: 100%;
   display: flex;
@@ -176,5 +180,14 @@ export default {
 
 .textbox {
   height: 150px;
+}
+
+.version {
+  font-size: 16px;
+  font-weight: normal;
+}
+
+h1 img {
+  margin-right: 10px;
 }
 </style>
