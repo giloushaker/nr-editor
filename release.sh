@@ -1,7 +1,7 @@
 appdir="."
-user="vflam"
-server="vflam@newrecruit.eu"
-target="/home/$user/nr-editor"
+user="$1"
+server="$user@newrecruit.eu"
+target="/home/vflam/nr-editor"
 
 ssh $server "rm $target/.nuxt/dist/client/*"
 rsync -pogtrzvL $appdir/.nuxt $server:$target
