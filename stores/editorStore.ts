@@ -65,7 +65,7 @@ export interface CatalogueState {
   savingPromise?: Promise<any>;
 }
 export function get_ctx(el: any): any {
-  return el.__vnode.ctx.ctx;
+  return el.vnode;
 }
 export function get_base_from_vue_el(vue_el: any) {
   return vue_el.$parent.item;

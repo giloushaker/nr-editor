@@ -13,7 +13,7 @@ export const useEditorUIState = defineStore("editor-ui", {
     save(id: string, data: Record<string, any>) {
       // Get all open collapsible boxes and save their state
       function get_ctx(el: any): any {
-        return el.__vnode.ctx.ctx;
+        return el.vnode;
       }
       function get_base_from_vue_el(vue_el: any): EditorBase {
         return vue_el.$parent.item;

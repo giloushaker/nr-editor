@@ -88,8 +88,12 @@ export default {
     return { store: useEditorStore() };
   },
   mounted() {
+    this.$el.vnode = this;
     this.group?.push(this);
     this.init(this.payload);
+  },
+  updated() {
+    this.$el.vnode = this;
   },
   destroyed() {
     if (this.group && Array.isArray(this.group)) {
