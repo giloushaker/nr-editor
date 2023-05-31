@@ -300,9 +300,11 @@ export default {
       if (this.showImported) {
         for (const catalogue of item.importRootEntries) {
           const found = catalogue[key];
+          const system = catalogue.isGameSystem();
           if (found && Array.isArray(found)) {
             for (const child of found) {
               if (!this.filter_child(child as EditorBase)) continue;
+              if (!system && (child as EditorBase).import === false) continue;
               output.push({ item: child as ItemTypes & EditorBase, type, imported: true });
             }
           }
