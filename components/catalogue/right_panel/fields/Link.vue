@@ -59,6 +59,15 @@
           </UtilAutocomplete>
         </td>
       </tr>
+      <tr v-if="type === 'catalogue'">
+        <td></td>
+        <td
+          ><input @change="changed" id="importRoot" type="checkbox" v-model="item.importRootEntries" /><label
+            for="importRoot"
+            >Import Root Entries</label
+          ></td
+        >
+      </tr>
     </table>
   </fieldset>
 </template>
@@ -67,7 +76,7 @@
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
@@ -87,7 +96,7 @@ export default {
 
   props: {
     item: {
-      type: Object as PropType<Link & EditorBase>,
+      type: Object as PropType<Link & EditorBase & CatalogueLink>,
       required: true,
     },
     catalogue: {
