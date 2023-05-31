@@ -5,6 +5,10 @@
     </div>
     <div class="bottom border-1px border-gray-400 border-solid">
       <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
+      <span class="text-right">
+        <input v-model="showImported" type="checkbox" id="showimport" />
+        <label for="showimport">No Profiles/Rules</label>
+      </span>
       <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
     </div>
   </div>

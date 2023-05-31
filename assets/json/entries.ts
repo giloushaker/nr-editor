@@ -123,6 +123,9 @@ export const entries = {
   profile: {
     allowedChildrens: ["modifiers", "modifierGroups"],
   },
+  sharedRules: {
+    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+  },
   rules: {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
   },
