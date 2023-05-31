@@ -1,6 +1,6 @@
 <template>
   <button @click="popFileInput" class="bouton" :disabled="uploading" v-if="electron">
-    <template v-if="!uploading"> Import </template>
+    <template v-if="!uploading"> Load System </template>
     <template v-else> ... </template>
   </button>
   <span v-else>&lt;SelectFile&gt; is only available in electron app</span>

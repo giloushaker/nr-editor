@@ -59,6 +59,6 @@ export default defineNuxtConfig({
   },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   head: {
-    title: "NR-Editor",
+    title: "New Recruit - Editor",
   },
 });
