@@ -44,7 +44,7 @@ export class GameSystemFiles extends BSCatalogueManager {
     throw Error(`Couldn't import catalogue with ${errorPart}, perhaps it wasnt uploaded?`);
   }
   async loadData(data: BSIData, booksDate?: BooksDate): Promise<Catalogue> {
-    const loaded = await loadData(this, data, booksDate);
+    const loaded = await loadData(this, data, booksDate, { deleteBadLinks: false });
     loaded.processForEditor();
     return loaded;
   }
