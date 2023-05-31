@@ -117,16 +117,17 @@ export default {
 
   methods: {
     updateTargets() {
-      if (this.type === "catalogue" && this.catalogue.gameSystemId) {
-        const catalogues = Object.values(this.store.get_system(this.catalogue.gameSystemId).catalogueFiles).map(
-          (elt) => {
-            return { id: elt.bsid!, name: elt.name };
-          }
-        );
+      if (this.type === "catalogue") {
+        const id = this.catalogue.gameSystemId || this.catalogue.id;
+        const values = Object.values(this.store.get_system(id).catalogueFiles);
+        const catalogues = values.map((elt) => {
+          return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLinks" };
+        });
         this.availableTargets = catalogues;
+        return;
       }
 
-      let all = this.catalogue.findOptionsByText("").filter((o) => {
+      const all = this.catalogue.findOptionsByText("").filter((o) => {
         if (this.targetIsValid(o as ItemTypes) == false) {
           return false;
         }
