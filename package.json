@@ -28,6 +28,10 @@
       "icon": "dist/favicon.icns",
       "category": "public.app-category.utilities"
     },
+    "linux": {
+      "category": "Utility",
+      "icon": "dist/favicon.icns"
+    },
     "files": [
       {
         "from": "dist",
