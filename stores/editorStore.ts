@@ -111,6 +111,7 @@ export const useEditorStore = defineStore("editor", {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
       }
+      const cataloguesStore = useCataloguesStore();
       const files = await getFolderFiles(folder);
       const result = [] as string[];
       if (files) {
@@ -128,6 +129,9 @@ export const useEditorStore = defineStore("editor", {
             state.changed = false;
             state.unsaved = false;
           }
+          const id = getDataDbId(asJson);
+          cataloguesStore.updateCatalogue(asJson);
+          cataloguesStore.setEdited(id, false);
 
           obj.fullFilePath = file.path;
           if (systemId) {

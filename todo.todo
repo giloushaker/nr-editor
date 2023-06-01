@@ -82,7 +82,9 @@ Editor:
         ✔ move up/down @done(23-06-01 21:17)
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
-        ☐ move intuitive way to return to catalogue list
+        ☐ more intuitive way to return to catalogue list
+        ☐ oncollapse/collapse all button
+        ☐ filter by button
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
             No apparent way to do it using native stuff
         ☐ save all
