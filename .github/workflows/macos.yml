@@ -9,6 +9,12 @@ jobs:
     env: 
       GH_TOKEN: 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
     steps:
+      - name: Setup env
+        run: |
+          git config --global credential.helper store
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
       - name: Checkout repository
         uses: actions/checkout@v2
         with: 
