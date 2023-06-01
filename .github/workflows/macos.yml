@@ -7,13 +7,13 @@ jobs:
   build:
     runs-on: macos-latest
     env: 
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GH_TOKEN: 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
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with: 
           submodules: true
-          token: ${{ secrets.GH_TOKEN }}
+          token: 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
           fetch-depth: 1
       - name: Install Node.js
         uses: actions/setup-node@v2
