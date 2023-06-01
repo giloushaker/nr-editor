@@ -3,10 +3,10 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "main": "index.js",
   "scripts": {
-    "build": "nuxt build",
+    "build": "nuxt generate --electron",
     "dev": "nuxi dev",
     "start": "nuxi start",
     "generate": "nuxi generate",
