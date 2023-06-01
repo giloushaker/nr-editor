@@ -114,7 +114,7 @@
         type="catalogue"
       />
       <CatalogueRightPanelCataloguePanel
-        v-else-if="typeName == 'catalogue'"
+        v-else-if="typeName == 'catalogue' || typeName == 'gameSystem'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"

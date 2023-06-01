@@ -52,6 +52,7 @@ Editor:
         ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
             ☐ May still happen on items that do not have an id because id is used as key
         ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
+        ☐ Modifiers in force categories
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
