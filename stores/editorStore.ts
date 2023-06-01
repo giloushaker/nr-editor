@@ -672,5 +672,25 @@ export const useEditorStore = defineStore("editor", {
         await this.goto(obj.target as EditorBase);
       }
     },
+    async move_up(obj: EditorBase) {
+      if (obj.parent) {
+        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const index = arr.indexOf(obj);
+        if (index > 0) {
+          const temp = arr.splice(index, 1)[0];
+          arr.splice(index - 1, 0, temp);
+        }
+      }
+    },
+    async move_down(obj: EditorBase) {
+      if (obj.parent) {
+        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const index = arr.indexOf(obj);
+        if (index >= 0) {
+          const temp = arr.splice(index, 1)[0];
+          arr.splice(index + 1, 0, temp);
+        }
+      }
+    },
   },
 });

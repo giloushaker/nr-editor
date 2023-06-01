@@ -179,6 +179,12 @@
         <div @click="store.paste">Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
         <div @click="store.duplicate" v-if="!payload">Duplicate<span class="gray absolute right-5px">Ctrl+D</span></div>
 
+        <div v-if="!sortable(item.parent)" @click="store.move_up(item)">
+          <span> Move Up </span>
+        </div>
+        <div v-if="!sortable(item.parent)" @click="store.move_down(item)">
+          <span> Move Down </span>
+        </div>
         <template v-if="!payload && store.get_move_targets(item)?.length">
           <div @mouseover="nestedcontextmenu.show">
             <span> Move To </span>
@@ -289,7 +295,10 @@ export default {
     getTypeLabel,
     getName,
     getNameExtra,
-
+    sortable(entry?: EditorBase) {
+      if (!entry) return true;
+      return noSort.has(entry.editorTypeName) === false;
+    },
     get_group(key: string) {
       if (!(key in this.groups)) {
         this.groups[key] = [];
@@ -354,14 +363,14 @@ export default {
 
     menu(ref: string) {
       return {
-        show: (event: MouseEvent, o: any) => {
+        show: (event: MouseEvent, e: any) => {
           this.contextmenuopen = true;
           this.$nextTick(() => {
-            (this.$refs[ref] as any)?.show(event, o);
+            (this.$refs[ref] as any)?.show(event, e);
           });
         },
-        close: (event: MouseEvent, o: any) => {
-          (this.$refs[ref] as any)?.se(event, o);
+        close: (event: MouseEvent, e: any) => {
+          (this.$refs[ref] as any)?.se(event, e);
           this.contextmenuopen = false;
         },
       };
@@ -399,25 +408,24 @@ export default {
     },
 
     mixedChildren(): Array<CatalogueEntryItem> {
-      const res = [];
-      for (const cat of this.allowedChildren) {
-        const sub = this.get_field(cat);
-        if (!sub?.length) continue;
-        for (const elt of sub) {
+      const result = [];
+      for (const category of this.allowedChildren) {
+        const arr = this.get_field(category);
+        if (!arr?.length) continue;
+        for (const elt of arr) {
           if (!this.filter_child(elt)) continue;
-          res.push({ type: cat as ItemKeys, item: elt });
+          result.push({ type: category as ItemKeys, item: elt });
         }
       }
-
-      return noSort.has(this.item.editorTypeName) ? res : this.sorted(res);
+      return this.sortable(this.item) ? this.sorted(result) : result;
     },
     groupedCategories() {
-      return categories.map((o) => {
+      return categories.map((category) => {
         const items = [] as CatalogueEntryItem[];
-        if (o.type) this.getTypedArray(this.item as any, o.type, items);
-        if (o.links) this.getTypedArray(this.item as any, o.links, items);
+        if (category.type) this.getTypedArray(this.item as any, category.type, items);
+        if (category.links) this.getTypedArray(this.item as any, category.links, items);
         return {
-          ...o,
+          ...category,
           items,
         };
       });
