@@ -3,6 +3,9 @@ const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
 
+let mainWindow;
+let previousTitle = "";
+let styleElement;
 autoUpdater.on("update-available", (info) => {
   dialog
     .showMessageBox({
@@ -19,9 +22,23 @@ autoUpdater.on("update-available", (info) => {
     });
 });
 autoUpdater.on("download-progress", (progress) => {
-  console.log("download progress", progress.percent);
+  mainWindow.webContents.executeJavaScript(`
+    const styleElement = document.createElement('style');
+    styleElement.setAttribute('id', 'custom-style');
+    styleElement.textContent = 'body { cursor: progress !important; }';
+    document.head.appendChild(styleElement);
+    `);
+  let log_message = "Download speed: " + progress.bytesPerSecond;
+  log_message = log_message + " - Downloaded " + progress.percent + "%";
+  log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
+  mainWindow.setProgressBar(progress.percent / 100);
+  mainWindow.setTitle(progress.percent + "%");
 });
 autoUpdater.on("update-downloaded", () => {
+  mainWindow.webContents.executeJavaScript(`
+  if (styleElement) styleElement.remove();
+`);
+  mainWindow.setTitle(previousTitle);
   autoUpdater.quitAndInstall(false, true);
 });
 
@@ -41,9 +58,12 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+
+  mainWindow = win;
   win.loadFile("index.html", {
     hash: "/system",
   });
+  previousTitle = win.getTitle();
   ipcMain.handle("showOpenDialog", async (event, ...args) => {
     return await dialog.showOpenDialog(win, ...args);
   });

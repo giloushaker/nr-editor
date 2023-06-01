@@ -81,7 +81,6 @@ export default defineComponent({
           this.progress = cur;
           this.progress_max = max;
           this.progress_msg = msg ? msg.replaceAll("\\", "/").split("/").slice(-1)[0] : "";
-          console.log(this.progress, this.progress_max, this.progress_msg);
           const promise = new Promise((resolve) => setTimeout(resolve, 10));
           return promise;
         });

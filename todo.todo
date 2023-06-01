@@ -45,7 +45,7 @@ Editor:
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
         ☐ dexie on electron version doesnt work if process is opened more than once
-
+        ☐ fix bad zip compression
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
@@ -70,6 +70,9 @@ Editor:
             ✔ release/installed/auto updater @done(23-05-27 22:28)
                 https://github.com/giloushaker/nr-editor/releases
             
+
+
+        ☐ move down
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ move intuitive way to return to catalogue list
