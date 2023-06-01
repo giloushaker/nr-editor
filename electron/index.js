@@ -66,6 +66,38 @@ const createSecondaryWindow = () => {
 };
 const createMainWindow = () => {
   askForUpdate();
+
+  // Expose all node functions to invoke
+  const fs = require("fs");
+  for (const [key, val] of Object.entries(fs)) {
+    if (typeof val === "function") {
+      ipcMain.handle(key, (event, ...args) => {
+        return val(...args);
+      });
+    }
+  }
+  ipcMain.handle("isDirectory", async (event, ...args) => {
+    const stats = fs.statSync(...args);
+    return stats.isDirectory();
+  });
+  ipcMain.handle("isFile", async (event, ...args) => {
+    const stats = fs.statSync(...args);
+    return stats.isFile();
+  });
+
+  session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
+    delete details.requestHeaders["Origin"];
+    delete details.requestHeaders["Referer"];
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
+    if (details.responseHeaders) {
+      details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
+    }
+    callback({ responseHeaders: details.responseHeaders });
+  });
+
   const win = new BrowserWindow({
     width: 1200,
     height: 900,
@@ -100,42 +132,12 @@ const createMainWindow = () => {
   });
 };
 const filter = { urls: ["https://*/*"] };
+
 app.whenReady().then(() => {
-  session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
-    delete details.requestHeaders["Origin"];
-    delete details.requestHeaders["Referer"];
-    callback({ requestHeaders: details.requestHeaders });
-  });
-
-  session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
-    if (details.responseHeaders) {
-      details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
-    }
-    callback({ responseHeaders: details.responseHeaders });
-  });
-
   if (app.requestSingleInstanceLock()) {
     createMainWindow();
     app.on("second-instance", () => {
       createSecondaryWindow();
     });
   }
-});
-
-// Expose all node functions to invoke
-const fs = require("fs");
-for (const [key, val] of Object.entries(fs)) {
-  if (typeof val === "function") {
-    ipcMain.handle(key, (event, ...args) => {
-      return val(...args);
-    });
-  }
-}
-ipcMain.handle("isDirectory", async (event, ...args) => {
-  const stats = fs.statSync(...args);
-  return stats.isDirectory();
-});
-ipcMain.handle("isFile", async (event, ...args) => {
-  const stats = fs.statSync(...args);
-  return stats.isFile();
 });

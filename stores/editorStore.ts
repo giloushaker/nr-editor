@@ -14,11 +14,12 @@ import {
   forEachParent,
   getTypeLabel,
   replaceAtEntryPath,
+  fixKey,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { enumerate_zip, generateBattlescribeId, textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
-import { Base, Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link, entriesToJson, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
@@ -28,6 +29,7 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
+import { json } from "stream/consumers";
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -41,9 +43,10 @@ export interface IEditorStore {
 
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
-  clipboard: EditorBase[];
+  clipboard: Array<EditorBase | Record<string, any> | string>;
 
   mode: "edit" | "references";
+  clipboardmode: "json" | "none";
   unsavedChanges: Record<string, CatalogueState>;
   gameSystemsLoaded: boolean;
   gameSystems: Record<string, GameSystemFiles>;
@@ -52,7 +55,7 @@ export interface IEditorStore {
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
 }
-
+export type MaybeArray<T> = T | Array<T>;
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
   type: ItemKeys;
@@ -93,6 +96,7 @@ export const useEditorStore = defineStore("editor", {
     clipboard: [],
 
     mode: "edit",
+    clipboardmode: "json",
 
     gameSystems: {},
     gameSystemsLoaded: false,
@@ -285,6 +289,9 @@ export const useEditorStore = defineStore("editor", {
     get_selections(): EditorBase[] {
       return this.selections.map((o) => get_base_from_vue_el(o.obj));
     },
+    get_selections_with_payload(): Array<{ obj: EditorBase; payload: any }> {
+      return this.selections.map((o) => ({ obj: get_base_from_vue_el(o.obj), payload: o.payload }));
+    },
     get_selected(): EditorBase | undefined {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
@@ -298,38 +305,48 @@ export const useEditorStore = defineStore("editor", {
       }
       this.undoStackPos += 1;
     },
-    set_clipboard(data: EditorBase[]) {
-      this.clipboard = data;
+    async set_clipboard(data: EditorBase[]) {
+      if (this.clipboardmode === "json") {
+        const shallowCopies = data.map((o) => ({ ...o, parentKey: o.parentKey })) as EditorBase[];
+        const json = entriesToJson(shallowCopies, new Set(["parentKey"]));
+        await navigator.clipboard.writeText(json);
+      } else {
+        this.clipboard = data;
+      }
     },
-    get_clipboard() {
-      return this.clipboard as EditorBase[];
+    async get_clipboard() {
+      if (this.clipboardmode === "json") {
+        const text = await navigator.clipboard.readText();
+        return JSON.parse(text);
+      }
+      return this.clipboard;
     },
     clear_clipboard() {
       this.clipboard = [];
     },
-    undo() {
+    async undo() {
       const action = this.undoStack[this.undoStackPos];
       if (action) {
-        action.undo();
+        await action.undo();
         this.undoStackPos--;
       }
     },
-    redo() {
+    async redo() {
       const action = this.undoStack[this.undoStackPos + 1];
       if (action) {
-        action.redo();
+        await action.redo();
         this.undoStackPos++;
       }
     },
-    cut() {
-      this.set_clipboard(this.get_selections());
+    async cut() {
+      await this.set_clipboard(this.get_selections());
       this.remove();
     },
-    copy() {
-      this.set_clipboard(this.get_selections());
+    async copy() {
+      await this.set_clipboard(this.get_selections());
     },
-    paste() {
-      this.add(this.get_clipboard());
+    async paste() {
+      this.add(await this.get_clipboard());
     },
     duplicate() {
       const selections = this.get_selections();
@@ -399,37 +416,49 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
-    add(data: (EditorBase | Record<string, any>) | (EditorBase | Record<string, any>)[], childKey?: string) {
-      const selections = this.get_selections();
+    async add(data: MaybeArray<EditorBase | Record<string, any>>, childKey?: keyof Base) {
+      const selections = this.get_selections_with_payload();
       if (!selections.length) return;
-      if (!Array.isArray(data)) data = [data];
-      const first = selections[0];
+
+      const entries = (Array.isArray(data) ? data : [data]) as Array<EditorBase | Record<string, any> | string>;
+      if (!entries.length) return;
+
+      const first = selections[0].obj;
       const catalogue = first.isCatalogue() ? first : first.catalogue;
       let addeds = [] as EditorBase[];
-      const redo = () => {
+      const redo = async () => {
         addeds = [];
-        for (const item of selections) {
-          for (const entry of data as (EditorBase | Record<string, any>)[]) {
-            // Create array to put the childs in
-            const key = childKey || entry.parentKey;
-            if (!(item as any)[key]) (item as any)[key] = [];
+        for (const selection of selections) {
+          const item = selection.obj;
+          const selectedCatalogueKey = selection.payload;
+          await this.open(item, true);
+          for (const entry of entries as Record<string, any>[]) {
+            // Ensure there is array to put the childs in
+            const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
+            if (!key) continue;
+            if (!item[key as keyof Base]) (item as any)[key] = [];
             const arr = item[key as keyof Base];
+            if (!Array.isArray(arr)) continue;
 
             // Copy to not affect existing
-            if (!Array.isArray(arr)) continue;
-            const copy = JSON.parse(entryToJson(entry, editorFields));
+            const json = entry instanceof Base ? entryToJson(entry, editorFields) : JSON.stringify(entry);
+            const copy = JSON.parse(json);
+            delete copy.parentKey;
 
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
             onAddEntry(copy, catalogue, item);
+
+            // Show the newly added entries even if there is a search filter
             copy.showChildsInEditor = true;
-            let parent = copy;
-            while (parent) {
-              parent.showInEditor = true;
-              parent = parent.parent;
+            let cur = copy;
+            while (cur) {
+              cur.showInEditor = true;
+              cur = cur.parent;
             }
             this.filtered.push(copy);
+
             arr.push(copy);
             addeds.push(copy);
           }
@@ -448,7 +477,7 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    create(key: string, data?: any) {
+    create(key: string & keyof Base, data?: any) {
       switch (key) {
         case "constraints":
         case "conditions":
@@ -558,7 +587,9 @@ export const useEditorStore = defineStore("editor", {
           };
 
           setPrototypeRecursive({ ["entryLinks"]: link });
-          replaceAtEntryPath(from, getEntryPath(obj), link);
+          const path = getEntryPath(obj);
+          path[path.length - 1].key = "entryLinks";
+          replaceAtEntryPath(from, path, link);
           onAddEntry(link, from, from);
         } else {
           popAtEntryPath(from, getEntryPath(obj));
@@ -585,7 +616,7 @@ export const useEditorStore = defineStore("editor", {
       }
       return new Set(result);
     },
-    async open(obj: EditorBase, closeLast?: boolean) {
+    async open(obj: EditorBase, last?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
@@ -615,7 +646,7 @@ export const useEditorStore = defineStore("editor", {
       nodes.pop(); // pop catalogue
       nodes.reverse();
       nodes.push(obj);
-      const last = nodes[nodes.length - 1];
+      const lastNode = nodes[nodes.length - 1];
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
@@ -625,11 +656,13 @@ export const useEditorStore = defineStore("editor", {
           throw new Error("Invalid path");
         }
         current = child;
-        if (node !== last) {
+        if (node !== lastNode) {
           await open_el(current);
         }
-        if (node === last && closeLast) {
+        if (node === lastNode && last === false) {
           await close_el(current);
+        } else if (node === lastNode && last === true) {
+          await open_el(current);
         }
       }
 

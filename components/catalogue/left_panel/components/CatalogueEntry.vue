@@ -12,7 +12,7 @@
         <EditorCollapsibleBox
           :collapsible="category.items.length > 0"
           :group="get_group('entries')"
-          :payload="item"
+          :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
           :class="[category.type, category.links, `depth-${depth}`]"
           nobox
@@ -224,7 +224,7 @@ import {
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Link } from "~/assets/shared/battlescribe/bs_main";
+import { Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";

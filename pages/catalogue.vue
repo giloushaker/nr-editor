@@ -144,11 +144,19 @@ export default {
     get_scrollable_el() {
       return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
     },
-    set_scroll(scroll: number) {
+    async set_scroll(scroll: number) {
+      await this.$nextTick();
+      await nextTick();
       const el = this.get_scrollable_el();
       if (el) {
         el.scrollTop = scroll;
       }
+      setTimeout(() => {
+        const el = this.get_scrollable_el();
+        if (el) {
+          el.scrollTop = scroll;
+        }
+      });
     },
     save() {
       try {
@@ -173,7 +181,7 @@ export default {
         this.save_state();
       }
 
-      if (true || this.unsaved) {
+      if (this.unsaved) {
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
         if (electron) {
@@ -206,17 +214,16 @@ export default {
     },
     async load_state(data: Record<string, any>) {
       const { selection, scroll } = data;
-      this.set_scroll(scroll);
       if (!selection) return;
       const obj = getAtEntryPath(this.cat as Catalogue, selection);
-      if (!obj) return;
-      const el = await this.store.open(obj);
-      if (!el) return;
-      const ctx = get_ctx(el);
-      await ctx.do_select();
-      this.$nextTick(() => {
-        this.set_scroll(scroll);
-      });
+      if (obj) {
+        const el = await this.store.open(obj);
+        if (el) {
+          const ctx = get_ctx(el);
+          await ctx.do_select();
+        }
+      }
+      await this.set_scroll(scroll);
     },
     async load(systemId: string, catalogueId?: string) {
       if (!catalogueId && !systemId) {

@@ -29,9 +29,7 @@ import { useEditorStore } from "~/stores/editorStore";
 
 export default {
   props: {
-    payload: {
-      type: Object,
-    },
+    payload: {},
 
     collapsible: {
       type: Boolean,

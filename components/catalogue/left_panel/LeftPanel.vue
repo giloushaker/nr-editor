@@ -48,7 +48,7 @@ export default {
     },
   },
   methods: {
-    keydown(e: KeyboardEvent) {
+    async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
       if (!e.target) return;
       const tagName = (e.target as HTMLSelectElement)?.tagName?.toLowerCase();
@@ -65,32 +65,32 @@ export default {
       if (tagName === "body") {
         if (e.ctrlKey && key === "z") {
           e.preventDefault();
-          this.store.undo();
+          await this.store.undo();
         }
         if (e.ctrlKey && key === "y") {
           e.preventDefault();
-          this.store.redo();
+          await this.store.redo();
         }
         if (e.ctrlKey && key === "x") {
           e.preventDefault();
-          this.store.set_clipboard(this.store.get_selections());
+          await this.store.set_clipboard(this.store.get_selections());
           this.store.remove();
         }
         if (e.ctrlKey && key === "c") {
           e.preventDefault();
-          this.store.set_clipboard(this.store.get_selections());
+          await this.store.set_clipboard(this.store.get_selections());
         }
         if (e.ctrlKey && key === "v") {
           e.preventDefault();
-          this.store.add(this.store.get_clipboard());
+          await this.store.add(await this.store.get_clipboard());
         }
         if (e.ctrlKey && key === "d") {
           e.preventDefault();
-          this.store.duplicate();
+          await this.store.duplicate();
         }
         if (key === "delete") {
           e.preventDefault();
-          this.store.remove();
+          await this.store.remove();
         }
       }
     },
@@ -124,7 +124,7 @@ export default {
         for (const p of this.store.filtered) {
           if (!p.parent) continue;
           try {
-            await this.store.open(p as EditorBase, true);
+            await this.store.open(p as EditorBase, false);
           } catch (e) {
             continue;
           }
