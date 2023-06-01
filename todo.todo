@@ -39,14 +39,14 @@ Editor:
         ✔ selectionEntryGroups @done(23-05-22 11:36)
         ✔ catalogueLink @done(23-06-01 00:25)
         ✔ catalogue / gameSystem obj @done(23-06-01 00:24)
-        ☐ categoryLinks
+        ✔ categoryLinks @done(23-06-01 16:03)
 
     Problems: 
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
         ☐ dexie on electron version doesnt work if process is opened more than once
         ☐ fix bad zip compression
-
+        ✔ rules description not saving @done(23-06-01 16:04)
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByText(query) then filter 
