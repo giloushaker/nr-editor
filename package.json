@@ -20,16 +20,9 @@
     "directories": {
       "output": ".release"
     },
-    "extraResources": [
-      {
-        "from": "public/assets",
-        "to": "/assets"
-      }
-    ],
     "win": {
       "icon": "dist/favicon.ico",
-      "publisherName": "New Recruit",
-      "certificateFile": "New Recruit.pfx"
+      "publisherName": "New Recruit"
     },
     "mac": {
       "icon": "dist/favicon.icns",
