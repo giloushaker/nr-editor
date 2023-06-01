@@ -21,7 +21,10 @@ jobs:
 
         
       - name: Init shared_components Submodule
-        run: git submodule add https://github.com/vflam/nr-components shared_components
+        run: git submodule init
+        
+      - name: Update shared_components Submodule
+        run: git submodule update
         
       - name: Init assets/shared Submodule
         run: git submodule add https://github.com/giloushaker/nr-shared assets/shared
