@@ -44,9 +44,15 @@ Editor:
     Problems: 
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
-        ☐ dexie on electron version doesnt work if process is opened more than once
+        ✔ dexie on electron version doesnt work if process is opened more than once @done(23-06-01 21:17)
         ☐ fix bad zip compression
         ✔ rules description not saving @done(23-06-01 16:04)
+        ✔ Unable to create new links @done(23-05-21 16:28)
+        ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)
+        ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
+            ☐ May still happen on items that do not have an id because id is used as key
+        ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
+
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByText(query) then filter 
@@ -72,11 +78,12 @@ Editor:
             
 
 
-        ☐ move down
+        ✔ move up/down @done(23-06-01 21:17)
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ move intuitive way to return to catalogue list
-        ☐ progress bar on auto update
+        ✘ progress bar on auto update @cancelled(23-06-01 21:16)
+            No apparent way to do it using native stuff
         ☐ save all
         ✔ fix unsaved icon on load & editing not being remove @done(23-06-01 13:12)
 
@@ -98,77 +105,4 @@ Editor:
             ☐ preview profiles/rules (like in builder)
             
         
-    Bugs:
-        ✔ Unable to create new links @done(23-05-21 16:28)
-        ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)
-        ✔ Renaming an item causes it to be unselected if the first letter is changed because of sorting @done(23-05-22 09:40)
-            ☐ May still happen on items that do not have an id because id is used as key
-        ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
-
-
-        
-
-
-
-xml:
-  export const catalogueTagMap = {
-  publications: "publication",
-  costTypes: "costType",
-  profileTypes: "profileType",
-  categoryEntries: "categoryEntry",
-  forceEntries: "forceEntry",
-  selectionEntries: "selectionEntry",
-  entryLinks: "entryLink",
-  sharedSelectionEntries: "selectionEntry",
-  sharedSelectionEntryGroups: "selectionEntryGroup",
-  sharedProfiles: "profile",
-  characteristics: "characteristic",
-  modifiers: "modifier",
-  constraints: "constraint",
-  profiles: "profile",
-  categoryLinks: "categoryLink",
-  costs: "cost",
-  conditionGroups: "conditionGroup",
-  conditions: "condition",
-  repeats: "repeat",
-  selectionEntryGroups: "selectionEntryGroup",
-  infoLinks: "infoLink",
-  characteristicTypes: "characteristicType",
-  catalogueLinks: "catalogueLink",
-  modifierGroups: "modifierGroup",
-  rules: "rule",
-  sharedRules: "rule",
-  infoGroups: "infoGroup",
-};
-export const attributeNames = [
-  "id",
-  "name",
-  "hidden",
-  "field",
-  "scope",
-  "value",
-  "percentValue",
-  "shared",
-  "includeChildSelections",
-  "includeChildForces",
-  "childId",
-  "type",
-  "targetId",
-  "primary",
-  "typeId",
-  "collective",
-  "import",
-  "$text",
-  "page",
-  "typeName",
-  "defaultSelectionEntryId",
-  "revision",
-  "battleScribeVersion",
-  "authorName",
-  "authorContact",
-  "authorUrl",
-  "library",
-  "gameSystemId",
-  "gameSystemRevision",
-  "xmlns",
-];
+   
