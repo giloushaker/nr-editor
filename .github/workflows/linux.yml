@@ -33,4 +33,4 @@ jobs:
         run: npm run build
         
       - name: Create macOS release
-        run: npx electron-builder --win --publish=always
+        run: npx electron-builder --linux --publish=always
