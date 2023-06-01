@@ -18,14 +18,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application
-        run: npm run build
+
         
       - name: Init shared_components Submodule
         run: git submodule add https://github.com/vflam/nr-components shared_components
         
       - name: Init assets/shared Submodule
         run: git submodule add https://github.com/giloushaker/nr-shared assets/shared
+        
+      - name: Build application
+        run: npm run build
         
       - name: Create macOS release
         run: npx electron-builder --mac --publish=always
