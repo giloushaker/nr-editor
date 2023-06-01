@@ -18,6 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with: 
+          repository: vflam/nr-editor
           submodules: true
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 1
