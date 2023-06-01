@@ -5,48 +5,67 @@ const dialog = require("electron").dialog;
 
 let mainWindow;
 let previousTitle = "";
-let styleElement;
-autoUpdater.on("update-available", (info) => {
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Update Available",
-      message: "A new update is available. Do you want to install it?",
-      buttons: ["Install", "Cancel"],
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        // User clicked 'Install', start downloading and installing the update
-        autoUpdater.downloadUpdate();
-      }
-    });
-});
-autoUpdater.on("download-progress", (progress) => {
-  mainWindow.webContents.executeJavaScript(`
+function askForUpdate() {
+  autoUpdater.on("update-available", (info) => {
+    dialog
+      .showMessageBox({
+        type: "info",
+        title: "Update Available",
+        message: "A new update is available. Do you want to install it?",
+        buttons: ["Install", "Cancel"],
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          // User clicked 'Install', start downloading and installing the update
+          autoUpdater.downloadUpdate();
+        }
+      });
+  });
+  autoUpdater.on("download-progress", (progress) => {
+    mainWindow.webContents.executeJavaScript(`
     const styleElement = document.createElement('style');
     styleElement.setAttribute('id', 'custom-style');
     styleElement.textContent = 'body { cursor: progress !important; }';
     document.head.appendChild(styleElement);
     `);
-  let log_message = "Download speed: " + progress.bytesPerSecond;
-  log_message = log_message + " - Downloaded " + progress.percent + "%";
-  log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
-  mainWindow.setProgressBar(progress.percent / 100);
-  mainWindow.setTitle(progress.percent + "%");
-});
-autoUpdater.on("update-downloaded", () => {
-  mainWindow.webContents.executeJavaScript(`
-  if (styleElement) styleElement.remove();
-`);
-  mainWindow.setTitle(previousTitle);
-  autoUpdater.quitAndInstall(false, true);
-});
+    let log_message = "Download speed: " + progress.bytesPerSecond;
+    log_message = log_message + " - Downloaded " + progress.percent + "%";
+    log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
+    mainWindow.setProgressBar(progress.percent / 100);
+    mainWindow.setTitle(progress.percent + "%");
+  });
+  autoUpdater.on("update-downloaded", () => {
+    mainWindow.webContents.executeJavaScript(`
+    if (styleElement) styleElement.remove();
+    `);
+    mainWindow.setTitle(previousTitle);
+    autoUpdater.quitAndInstall(false, true);
+  });
 
-autoUpdater.autoDownload = false;
-autoUpdater.autoRunAppAfterInstall = true;
-autoUpdater.autoInstallOnAppQuit = false;
-autoUpdater.checkForUpdates();
-const createWindow = () => {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoRunAppAfterInstall = true;
+  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.checkForUpdates();
+}
+
+const createSecondaryWindow = () => {
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 900,
+    autoHideMenuBar: true,
+    contextIsolation: false,
+    nodeIntegration: true,
+    enableRemoteModule: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+    },
+  });
+  win.loadFile("index.html", {
+    hash: "/system",
+  });
+};
+const createMainWindow = () => {
+  askForUpdate();
   const win = new BrowserWindow({
     width: 1200,
     height: 900,
@@ -65,16 +84,19 @@ const createWindow = () => {
   });
   previousTitle = win.getTitle();
   ipcMain.handle("showOpenDialog", async (event, ...args) => {
-    return await dialog.showOpenDialog(win, ...args);
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await dialog.showOpenDialog(wnd, ...args);
   });
   ipcMain.handle("showMessageBoxSync", async (event, ...args) => {
-    return await dialog.showMessageBoxSync(win, ...args);
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await dialog.showMessageBoxSync(wnd, ...args);
   });
   ipcMain.handle("getPath", async (event, ...args) => {
     return await app.getPath(...args);
   });
   ipcMain.handle("closeWindow", async (event, ...args) => {
-    return await win.close(...args);
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await wnd.close(...args);
   });
 };
 const filter = { urls: ["https://*/*"] };
@@ -91,7 +113,13 @@ app.whenReady().then(() => {
     }
     callback({ responseHeaders: details.responseHeaders });
   });
-  createWindow();
+
+  if (app.requestSingleInstanceLock()) {
+    createMainWindow();
+    app.on("second-instance", () => {
+      createSecondaryWindow();
+    });
+  }
 });
 
 // Expose all node functions to invoke
