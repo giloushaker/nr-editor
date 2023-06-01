@@ -30,7 +30,8 @@
     },
     "linux": {
       "category": "Utility",
-      "icon": "dist/favicon.icns"
+      "icon": "dist/favicon.icns",
+      "target": "AppImage"
     },
     "files": [
       {
