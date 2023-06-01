@@ -18,9 +18,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with: 
+          repository: vflam/nr-editor
           submodules: true
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 1
+          
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
@@ -32,5 +34,5 @@ jobs:
       - name: Build application
         run: npm run build
         
-      - name: Create macOS release
+      - name: Create release
         run: npx electron-builder --mac --publish=always
