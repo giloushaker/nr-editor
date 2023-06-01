@@ -22,7 +22,8 @@
     },
     "win": {
       "icon": "dist/favicon.ico",
-      "publisherName": "New Recruit"
+      "publisherName": "New Recruit",
+      "certificateFile": "New Recruit.pfx"
     },
     "mac": {
       "icon": "dist/favicon.icns",
