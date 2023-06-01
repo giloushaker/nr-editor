@@ -16,7 +16,12 @@ import {
   replaceAtEntryPath,
   fixKey,
 } from "~/assets/shared/battlescribe/bs_editor";
-import { enumerate_zip, generateBattlescribeId, textSearchRegex } from "~/assets/shared/battlescribe/bs_helpers";
+import {
+  enumerate_zip,
+  generateBattlescribeId,
+  removeSuffix,
+  textSearchRegex,
+} from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
 import { Base, Link, entriesToJson, entryToJson } from "~/assets/shared/battlescribe/bs_main";
@@ -25,11 +30,12 @@ import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system"
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import { BSIData } from "~/assets/shared/battlescribe/bs_types";
+import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { json } from "stream/consumers";
+import { files } from "jszip";
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -104,6 +110,22 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
+    async create_system(name: string, path?: string) {
+      const id = `sys-${generateBattlescribeId()}`;
+      const files = this.get_system(id);
+      const filePath = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}.gst` : "";
+      const data = {
+        gameSystem: {
+          id: id,
+          name: name,
+          battleScribeVersion: 0,
+          revision: 1,
+          fullFilePath: filePath,
+        },
+      } as BSIDataSystem;
+      files.gameSystem = data;
+      return files;
+    },
     async load_systems_from_folder(
       folder: string,
       progress?: (current: number, max: number, msg?: string) => Promise<unknown>
@@ -258,14 +280,14 @@ export const useEditorStore = defineStore("editor", {
     },
     do_select(e: MouseEvent | null, el: VueElement, group: VueElement | VueElement[]) {
       const entries = Array.isArray(group) ? group : [group];
-      const last = toRaw(this.selectedElementGroup);
-      const last_element = toRaw(this.selectedElement);
-      this.selectedElement = toRaw(el);
-      this.selectedElementGroup = toRaw(group);
+      const last = this.selectedElementGroup;
+      const last_element = this.selectedElement;
+      this.selectedElement = el;
+      this.selectedElementGroup = group;
 
       if (e?.shiftKey && toRaw(group) === toRaw(last)) {
-        const a = entries.findIndex((o) => o === last_element);
-        const b = entries.findIndex((o) => o === this.selectedElement);
+        const a = entries.findIndex((o) => o === toRaw(last_element));
+        const b = entries.findIndex((o) => o === toRaw(this.selectedElement));
         const low = Math.min(a, b);
         const high = Math.max(a, b);
         for (let i = low; i <= high; i++) {
