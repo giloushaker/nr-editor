@@ -59,6 +59,7 @@ import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import { useEditorUIState } from "~/stores/editorUIState";
+import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 
 export default {
   components: { LeftPanel },
@@ -166,15 +167,32 @@ export default {
         });
       }
     },
-    beforeUnload(event: BeforeUnloadEvent) {
+    async beforeUnload(event: BeforeUnloadEvent) {
+      if (globalThis._closeWindow) return;
       if (!this.loading) {
         this.save_state();
       }
-      if (this.unsaved) {
+
+      if (true || this.unsaved) {
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
-        return false;
+        if (electron) {
+          setTimeout(async () => {
+            const result = await showMessageBox({
+              message: "You have unsaved changes that will be lost?",
+              buttons: ["Cancel", "Leave"],
+              defaultId: 0,
+              cancelId: 0,
+              type: "question",
+            });
+            if (result === 1) {
+              globalThis._closeWindow = true;
+              closeWindow();
+            }
+          });
+        }
       }
+      return false;
     },
     onKeydown(e: KeyboardEvent) {
       if (e.ctrlKey && e.key.toLowerCase() == "s") {

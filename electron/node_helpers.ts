@@ -90,6 +90,14 @@ export async function showOpenDialog(options: Electron.OpenDialogOptions) {
   if (!electron) return;
   return electron.invoke("showOpenDialog", options) as Electron.OpenDialogReturnValue;
 }
+export async function showMessageBox(options: Electron.MessageBoxSyncOptions) {
+  if (!electron) return;
+  return electron.invoke("showMessageBoxSync", options) as Electron.MessageBoxReturnValue;
+}
+export async function closeWindow() {
+  if (!electron) return;
+  return electron.invoke("closeWindow");
+}
 export async function getPath(
   name:
     | "home"

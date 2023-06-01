@@ -48,6 +48,10 @@ export class GameSystemFiles extends BSCatalogueManager {
     loaded.processForEditor();
     return loaded;
   }
+  async unloadAll(): Promise<void> {
+    super.unloadAll();
+    delete this.allLoaded;
+  }
   async loadAll() {
     if (this.gameSystem) {
       const loadedSys = await this.loadCatalogue({ targetId: this.gameSystem.gameSystem.id });

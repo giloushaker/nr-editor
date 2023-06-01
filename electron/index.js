@@ -47,8 +47,14 @@ const createWindow = () => {
   ipcMain.handle("showOpenDialog", async (event, ...args) => {
     return await dialog.showOpenDialog(win, ...args);
   });
+  ipcMain.handle("showMessageBoxSync", async (event, ...args) => {
+    return await dialog.showMessageBoxSync(win, ...args);
+  });
   ipcMain.handle("getPath", async (event, ...args) => {
     return await app.getPath(...args);
+  });
+  ipcMain.handle("closeWindow", async (event, ...args) => {
+    return await win.close(...args);
   });
 };
 const filter = { urls: ["https://*/*"] };
