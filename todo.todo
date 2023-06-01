@@ -3,7 +3,7 @@
 
 Interface:
     Main Menu:
-        ✔ Add System @done(23-05-31 01:13)
+        ☐ Add System
         ✔ System Page @done(23-05-31 01:13)
         ✔ System View @done(23-05-31 01:13)
             needed to not load every catalogue on startup in the app
@@ -39,7 +39,7 @@ Editor:
         ✔ selectionEntryGroups @done(23-05-22 11:36)
         ✔ catalogueLink @done(23-06-01 00:25)
         ✔ catalogue / gameSystem obj @done(23-06-01 00:24)
-
+        ☐ categoryLinks
 
     Problems: 
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
@@ -75,7 +75,8 @@ Editor:
         ☐ move intuitive way to return to catalogue list
         ☐ progress bar on auto update
         ☐ save all
-        
+        ✔ fix unsaved icon on load & editing not being remove @done(23-06-01 13:12)
+
         ✔ load multiple catalogues @done(23-05-22 14:36)
         ✔ references from @done(23-05-30 00:46)
         ✔ save collapsible box states @done(23-05-29 04:22)

@@ -118,7 +118,12 @@ export const useEditorStore = defineStore("editor", {
           const asJson = await convertToJson(file.data, getExtension(file.name));
           const systemId = asJson?.gameSystem?.id;
           const catalogueId = asJson?.catalogue?.id;
-          getDataObject(asJson).fullFilePath = file.path;
+          const obj = getDataObject(asJson);
+          const state = this.get_catalogue_state(asJson);
+          state.changed = false;
+          state.unsaved = false;
+
+          obj.fullFilePath = file.path;
           if (systemId) {
             result.push(systemId);
             const systemFiles = this.get_system(systemId);

@@ -107,7 +107,16 @@
           <Separator />
         </template>
         <template v-else>
-          <div @click="store.create('selectionEntries', { type: 'upgrade' })" v-if="allowed('selectionEntries')">
+          <div @click="store.create('forceEntries')" v-if="allowed('forceEntries')">
+            <img class="pr-4px" src="assets/bsicons/force.png" />
+            Force
+          </div>
+          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks')">
+            <img class="pr-4px" src="assets/bsicons/categoryLink.png" />
+            Category
+          </div>
+          <Separator v-if="allowed(['forces', 'categoryLinks'])" />
+          <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
             <img class="pr-4px" src="assets/bsicons/selectionEntry.png" />
             Entry
           </div>
@@ -229,6 +238,7 @@ const order: Record<string, number> = {
   categoryLink: 8,
   infoLink: 9,
 };
+const noSort = new Set(["force"]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -292,6 +302,7 @@ export default {
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
       console.log("component", this);
+      console.log(this.allowedChildren);
     },
     getTypedArray(item: Catalogue, type: ItemKeys, output: CatalogueEntryItem[]) {
       if (!type) return;
@@ -397,7 +408,8 @@ export default {
           res.push({ type: cat as ItemKeys, item: elt });
         }
       }
-      return this.sorted(res);
+
+      return noSort.has(this.item.editorTypeName) ? res : this.sorted(res);
     },
     groupedCategories() {
       return categories.map((o) => {
