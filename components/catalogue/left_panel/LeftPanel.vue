@@ -59,6 +59,8 @@ export default {
       }
       if (key === "escape") {
         (this.$refs["editor-searchbox"] as HTMLInputElement).blur();
+        this.store.filter = "";
+        this.update(this.filterData);
       }
       if (tagName === "body") {
         if (e.ctrlKey && key === "z") {

@@ -93,6 +93,7 @@ export default {
   },
   created() {
     this.store.init(this.$router);
+    globalThis.$store = this.store;
   },
   computed: {
     changed() {
