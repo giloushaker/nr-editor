@@ -110,25 +110,31 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
-    async create_system(name: string, path: string) {
+    async create_system(name: string, path?: string) {
       console.log("Creating system with name:", name);
       const id = `sys-${generateBattlescribeId()}`;
       const files = this.get_system(id);
-      const folder = `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}`;
+      const folder = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}` : "";
+
       if (electron) {
+        if (!folder) {
+          throw new Error("No folder specified");
+        }
         createFolder(folder);
       }
-      const filePath = path ? `${folder}/${name}.gst` : "";
       const data = {
         gameSystem: {
           id: id,
           name: name,
           battleScribeVersion: 0,
           revision: 1,
-          fullFilePath: filePath,
         },
       } as BSIDataSystem;
-      files.gameSystem = data;
+
+      if (folder) {
+        data.gameSystem.fullFilePath = `${folder}/${name}.gst`;
+      }
+      files.setSystem(data);
 
       saveCatalogue(data.gameSystem);
       return files;

@@ -1,5 +1,12 @@
 import { BSCatalogueManager, getDataObject, loadData } from "~/assets/shared/battlescribe/bs_system";
-import { BSIDataSystem, BSIDataCatalogue, BSICatalogueLink, BSIData } from "~/assets/shared/battlescribe/bs_types";
+import {
+  BSIDataSystem,
+  BSIDataCatalogue,
+  BSICatalogueLink,
+  BSIData,
+  BSICatalogue,
+  BSIGameSystem,
+} from "~/assets/shared/battlescribe/bs_types";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
 import { BookFetchFunction, BsGameSystem } from "~/assets/shared/systems/bs_game_system";
 import { GameSystemRow } from "~/assets/shared/types/db_types";
@@ -79,21 +86,23 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
 }
 
-export function saveCatalogueInDb(data: Catalogue) {
+export function saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
   const stringed = rootToJson(data);
-  if (data.isGameSystem()) {
+  const isCatalogue = Boolean(data.gameSystemId);
+  const isSystem = !isCatalogue;
+  if (isSystem) {
     db.systems.put({
       content: JSON.parse(stringed),
-      id: data.getId(),
+      id: data.id,
     });
   } else {
     db.catalogues.put({
       content: JSON.parse(stringed),
-      id: `${data.gameSystem.getId()}-${data.getId()}`,
+      id: `${data.gameSystemId}-${data.id}`,
     });
   }
 }
-export async function saveCatalogueInFiles(data: Catalogue) {
+export async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
   const path = data.fullFilePath;
   if (!path) {
     console.error(`No path included in the catalogue ${data.name} to save at`);
@@ -112,7 +121,7 @@ export async function saveCatalogueInFiles(data: Catalogue) {
     await writeFile(path, content);
   }
 }
-export function saveCatalogue(data: Catalogue) {
+export function saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
   if (globalThis.electron) {
     saveCatalogueInFiles(data);
   } else {

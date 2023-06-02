@@ -1,12 +1,14 @@
 <template>
   <span>
     <button class="bouton" @click="click"> Create System </button>
-    <PopupDialog class="create-system-popup" v-if="open" v-model="open" button="Create" @button="create">
+    <PopupDialog v-if="open" v-model="open" button="Create" @button="create">
       <h2 class="text-center">Create System</h2>
       <span>Name: </span>
       <input class="w-full" type="text" v-model="text" required />
-      <div> The system will be created at: </div>
-      <div class="gray">{{ folder }}/{{ text }}/</div>
+      <template v-if="electron">
+        <div> The system will be created at: </div>
+        <div class="gray">{{ folder }}/{{ text }}/</div>
+      </template>
     </PopupDialog>
   </span>
 </template>
@@ -24,6 +26,9 @@ export default {
     return { store: useEditorStore(), settings: useSettingsStore() };
   },
   computed: {
+    electron() {
+      return Boolean(globalThis.electron);
+    },
     folder() {
       if (!this.settings.systemsFolder) {
         return "";
@@ -39,8 +44,8 @@ export default {
     },
 
     async create() {
-      if (this.text && this.settings.systemsFolder) {
-        const created = await this.store.create_system(this.text, this.settings.systemsFolder);
+      if (this.text) {
+        const created = await this.store.create_system(this.text, this.folder);
         this.$emit("created", created);
       }
     },

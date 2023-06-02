@@ -6,6 +6,7 @@
         <SelectFile v-if="electron" @uploaded="filesUploaded" />
         <UploadJson @uploaded="filesUploaded" />
         <ImportFromGithub @uploaded="filesUploaded" />
+        <CreateSystem />
       </div>
       <div v-if="electron">
         Note: if you modify an already imported file in another program, you will need to import it again
