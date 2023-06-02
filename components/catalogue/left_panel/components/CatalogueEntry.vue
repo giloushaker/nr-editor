@@ -217,14 +217,13 @@ import {
   getName,
   getTypeLabel,
   getTypeName,
-  categories,
-  possibleChildren,
+  systemCategories,
+  catalogueCategories,
   getNameExtra,
-  CategoryEntry,
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Link, entryToJson } from "~/assets/shared/battlescribe/bs_main";
+import { Link } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
@@ -420,15 +419,18 @@ export default {
       return this.sortable(this.item) ? this.sorted(result) : result;
     },
     groupedCategories() {
-      return categories.map((category) => {
-        const items = [] as CatalogueEntryItem[];
-        if (category.type) this.getTypedArray(this.item as any, category.type, items);
-        if (category.links) this.getTypedArray(this.item as any, category.links, items);
-        return {
-          ...category,
-          items,
-        };
-      });
+      if (this.item.isCatalogue()) {
+        const categories = this.item.isGameSystem() ? systemCategories : catalogueCategories;
+        return categories.map((category) => {
+          const items = [] as CatalogueEntryItem[];
+          if (category.type) this.getTypedArray(this.item as any, category.type, items);
+          if (category.links) this.getTypedArray(this.item as any, category.links, items);
+          return {
+            ...category,
+            item: items,
+          };
+        });
+      }
     },
   },
 };
