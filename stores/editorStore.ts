@@ -22,7 +22,7 @@ import {
   removeSuffix,
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
 import { Base, Link, entriesToJson, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
@@ -31,7 +31,7 @@ import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
 import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { getFolderFiles } from "~/electron/node_helpers";
+import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { json } from "stream/consumers";
@@ -110,10 +110,15 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
-    async create_system(name: string, path?: string) {
+    async create_system(name: string, path: string) {
+      console.log("Creating system with name:", name);
       const id = `sys-${generateBattlescribeId()}`;
       const files = this.get_system(id);
-      const filePath = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}.gst` : "";
+      const folder = `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}`;
+      if (electron) {
+        createFolder(folder);
+      }
+      const filePath = path ? `${folder}/${name}.gst` : "";
       const data = {
         gameSystem: {
           id: id,
@@ -124,6 +129,8 @@ export const useEditorStore = defineStore("editor", {
         },
       } as BSIDataSystem;
       files.gameSystem = data;
+
+      saveCatalogue(data.gameSystem);
       return files;
     },
     async load_systems_from_folder(
@@ -321,8 +328,8 @@ export const useEditorStore = defineStore("editor", {
     get_selected(): EditorBase | undefined {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
-    do_action(type: string, undo: () => void, redo: () => void) {
-      redo();
+    async do_action(type: string, undo: () => void | Promise<void>, redo: () => void | Promise<void>) {
+      await redo();
 
       if (this.undoStackPos < this.undoStack.length) {
         this.undoStack.splice(this.undoStackPos + 1, 1, { type, undo, redo });
@@ -374,14 +381,15 @@ export const useEditorStore = defineStore("editor", {
     async paste() {
       this.add(await this.get_clipboard());
     },
-    duplicate() {
+    async duplicate() {
       const selections = this.get_selections();
       if (!selections.length) return;
-      const first = selections[0];
-      const catalogue = first instanceof Catalogue ? first : first.catalogue;
+      const catalogue = selections[0].getCatalogue();
+      const sysId = catalogue.getSystemId();
+
       let addeds = [] as EditorBase[];
 
-      function redo() {
+      const redo = async () => {
         addeds = [];
         for (const item of selections) {
           const copy = JSON.parse(entryToJson(item, editorFields));
@@ -392,24 +400,24 @@ export const useEditorStore = defineStore("editor", {
           }
           setPrototypeRecursive({ [item.parentKey]: copy });
           scrambleIds(catalogue, copy);
-          onAddEntry(copy, catalogue, item.parent);
+          await onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           arr.push(copy);
           addeds.push(copy);
         }
-      }
-      function undo() {
+      };
+      const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
         }
-      }
-      this.do_action("dupe", undo, redo);
+      };
+      await this.do_action("dupe", undo, redo);
       this.set_catalogue_changed(catalogue, true);
     },
-    remove() {
+    async remove() {
       const selections = this.get_selections();
       if (!selections.length) return;
-      const first = selections[0];
-      const catalogue = first instanceof Catalogue ? first : first.catalogue;
+      const catalogue = selections[0].getCatalogue();
+      const sysId = catalogue.getSystemId();
       let entries = [] as EditorBase[];
       for (const selected of selections) {
         if (selected.catalogue !== catalogue) continue;
@@ -418,8 +426,9 @@ export const useEditorStore = defineStore("editor", {
 
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
-      function redo() {
+      const redo = async () => {
         const temp = entries;
+        const manager = this.get_system(sysId);
         removeds = [];
         paths = [];
         for (const entry of temp) {
@@ -427,18 +436,18 @@ export const useEditorStore = defineStore("editor", {
           const removed = popAtEntryPath(catalogue, path);
           removeds.push(removed);
           paths.push(path);
-          onRemoveEntry(removed);
+          await onRemoveEntry(removed, manager);
         }
         removeds.reverse();
         paths.reverse();
-      }
-      function undo() {
+      };
+      const undo = async () => {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
           const parent = setAtEntryPath(catalogue, path, entry);
-          onAddEntry(entry, catalogue, parent);
+          await onAddEntry(entry, catalogue, parent, this.get_system(sysId));
         }
-      }
-      this.do_action("remove", undo, redo);
+      };
+      await this.do_action("remove", undo, redo);
       this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
@@ -449,8 +458,9 @@ export const useEditorStore = defineStore("editor", {
       const entries = (Array.isArray(data) ? data : [data]) as Array<EditorBase | Record<string, any> | string>;
       if (!entries.length) return;
 
-      const first = selections[0].obj;
-      const catalogue = first.isCatalogue() ? first : first.catalogue;
+      const catalogue = selections[0].obj.getCatalogue();
+      const sysId = catalogue.getSystemId();
+
       let addeds = [] as EditorBase[];
       const redo = async () => {
         addeds = [];
@@ -474,7 +484,7 @@ export const useEditorStore = defineStore("editor", {
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
-            onAddEntry(copy, catalogue, item);
+            await onAddEntry(copy, catalogue, item, this.get_system(sysId));
 
             // Show the newly added entries even if there is a search filter
             copy.showChildsInEditor = true;
@@ -490,12 +500,12 @@ export const useEditorStore = defineStore("editor", {
           }
         }
       };
-      function undo() {
+      const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
         }
-      }
-      this.do_action("add", undo, redo);
+      };
+      await this.do_action("add", undo, redo);
       this.set_catalogue_changed(catalogue, true);
     },
     open_selected() {
@@ -584,8 +594,8 @@ export const useEditorStore = defineStore("editor", {
           return "";
       }
     },
-    move(obj: EditorBase, from: Catalogue, to: Catalogue) {
-      const redo = () => {
+    async move(obj: EditorBase, from: Catalogue, to: Catalogue) {
+      const redo = async () => {
         // Get key the object will end up in
         const catalogueKey = this.move_to_key(obj);
         if (!catalogueKey) return;
@@ -593,8 +603,9 @@ export const useEditorStore = defineStore("editor", {
         // move obj to target
         from.removeFromIndex(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
+
         setPrototypeRecursive({ [catalogueKey]: copy });
-        onAddEntry(copy, to, to);
+        await onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
         if (!to[catalogueKey]) {
           to[catalogueKey] = [];
         }
@@ -616,7 +627,7 @@ export const useEditorStore = defineStore("editor", {
           const path = getEntryPath(obj);
           path[path.length - 1].key = "entryLinks";
           replaceAtEntryPath(from, path, link);
-          onAddEntry(link, from, from);
+          await onAddEntry(link, from, from, this.get_system(from.getSystemId()));
         } else {
           popAtEntryPath(from, getEntryPath(obj));
         }
@@ -627,7 +638,7 @@ export const useEditorStore = defineStore("editor", {
         // delete obj from target
         // update obj
       }
-      this.do_action("move", undo, redo);
+      await this.do_action("move", undo, redo);
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
     },
@@ -695,7 +706,7 @@ export const useEditorStore = defineStore("editor", {
       return current;
     },
     async goto(obj: EditorBase) {
-      const targetCatalogue = obj.isCatalogue() ? obj : obj.catalogue;
+      const targetCatalogue = obj.getCatalogue();
       if (!this.$router) {
         console.warn("Cannot follow link to another catalogue without $router set");
         return;

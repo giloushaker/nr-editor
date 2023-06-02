@@ -84,7 +84,7 @@ Editor:
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ more intuitive way to return to catalogue list
         ☐ oncollapse/collapse all button
-        ☐ filter by button
+        ☐ filter by
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
             No apparent way to do it using native stuff
         ☐ save all

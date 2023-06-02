@@ -394,7 +394,7 @@ export default {
       return this.menu("nestedcontextmenu");
     },
     catalogue() {
-      return this.item.isCatalogue() ? this.item : this.item.catalogue;
+      return this.item.getCatalogue();
     },
     catalogues() {
       return this.catalogue.imports;

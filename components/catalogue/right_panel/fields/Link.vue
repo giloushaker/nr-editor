@@ -160,15 +160,9 @@ export default {
 
     async updateLink() {
       if (this.type === "catalogue" && this.item.targetId) {
-        console.log(this.item.targetId);
-        const id = this.catalogue.gameSystemId || this.catalogue.id;
-        const sys = this.store.get_system(id);
-        delete this.catalogue.loaded;
-        delete this.catalogue.loaded_editor;
-        delete (this.catalogue as any).imports;
-        const loaded = await sys.loadData({ catalogue: this.catalogue } as any);
-        this.item.name = this.item.target.name;
-        console.log(this.catalogue.catalogueLinks?.map((o) => o.target.name));
+        const sysId = this.catalogue.gameSystemId || this.catalogue.id;
+        await this.catalogue.reload(this.store.get_system(sysId));
+        this.item.name = this.item.target.name || "Unknown";
       } else {
         this.catalogue.updateLink(this.item);
       }

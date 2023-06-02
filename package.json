@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "main": "index.js",
   "scripts": {
     "build": "nuxt generate --electron",
