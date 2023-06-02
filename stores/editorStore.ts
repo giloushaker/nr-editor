@@ -546,12 +546,13 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     async create(key: string & keyof Base, data?: any) {
-      await this.add({
+      const obj = {
         ...this.get_initial_object(key),
         id: generateBattlescribeId(),
         select: true,
         ...data,
-      });
+      };
+      await this.add(obj, key);
       this.open_selected();
     },
     can_move(obj: EditorBase) {
