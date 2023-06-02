@@ -168,25 +168,26 @@ export default defineComponent({
     },
     createCatalogue(data: BSIDataCatalogue) {
       const system = this.store.get_system(data.catalogue.gameSystemId);
-      system.setCatalogue(data);
-      this.cataloguesStore.setEdited(getDataDbId(data), true);
-      this.selectedItem = data;
       const copy = JSON.parse(JSON.stringify(data));
+
       if (electron) {
         if (!system.gameSystem) {
           throw new Error("Cannot create catalogue: no game system");
         }
-        const systemPath = getDataObject(system.gameSystem).fullFilePath;
+        const systemPath = getDataObject(system.gameSystem).fullFilePath || "test/folder/gst.gst";
         if (!systemPath) {
           throw new Error("Cannot create catalogue: game system has no path set");
         }
-        const name = data.name;
+        const name = copy.catalogue.name;
         if (!name) {
           throw new Error("Cannot create catalogue: no name provided");
         }
         const folder = dirname(systemPath);
-        (getDataObject(copy) as any).fullFilePath = `${folder}/${name}.cat`;
+        getDataObject(copy).fullFilePath = `${folder}/${name}.cat`;
       }
+      system.setCatalogue(copy);
+      this.cataloguesStore.setEdited(getDataDbId(copy), true);
+      this.selectedItem = copy;
       if (!electron) {
         db.catalogues.put({
           content: copy,

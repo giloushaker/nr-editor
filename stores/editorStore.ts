@@ -166,7 +166,7 @@ export const useEditorStore = defineStore("editor", {
           cataloguesStore.updateCatalogue(asJson);
           cataloguesStore.setEdited(id, false);
 
-          obj.fullFilePath = file.path;
+          obj.fullFilePath = file.path.replaceAll("\\", "/");
           if (systemId) {
             result.push(systemId);
             const systemFiles = this.get_system(systemId);

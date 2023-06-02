@@ -32,7 +32,7 @@ export default {
         if (!files?.length) return;
         for (const file of files.filter((o) => isAllowedExtension(o.name))) {
           const asJson = await convertToJson(file.data, getExtension(file.name));
-          (getDataObject(asJson) as any).fullFilePath = file.path;
+          getDataObject(asJson).fullFilePath = file.path.replaceAll("\\", "/");
           result_files.push(asJson);
         }
       }
