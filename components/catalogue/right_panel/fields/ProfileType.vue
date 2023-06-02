@@ -3,13 +3,13 @@
     <legend>Profil Type</legend>
     <h3>Characteristic Types</h3>
     <div>
-      <select size="2" v-model="selectedType">
-        <option :value="t" v-for="t of item.characteristicTypes">
+      <select size="2" v-model="selected">
+        <option :value="t.id" v-for="t of item.characteristicTypes">
           {{ t.name }}
         </option>
       </select>
       <div class="section add">
-        <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+        <!-- <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button> -->
         <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
       </div>
 
@@ -50,6 +50,16 @@ export default {
     return {
       selectedType: null as BSICharacteristicType | null,
     };
+  },
+  computed: {
+    selected: {
+      set(id: string | null) {
+        this.selectedType = this.item.characteristicTypes.find((o) => o.id === id) || null;
+      },
+      get(): string | null {
+        return this.selectedType?.id || null;
+      },
+    },
   },
   methods: {
     add() {
