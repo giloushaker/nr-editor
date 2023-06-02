@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Categories</legend>
+    <legend>Categories ({{ count }})</legend>
     <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
     <div class="section"
       ><input type="checkbox" id="onlyEnabled" v-model="onlyEnabled" /><label for="onlyEnabled"
@@ -153,6 +153,9 @@ export default {
   },
 
   computed: {
+    count() {
+      return this.item.categoryLinks?.length || 0;
+    },
     categories() {
       let res: Category[] = [];
 

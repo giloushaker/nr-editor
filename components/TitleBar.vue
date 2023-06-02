@@ -4,7 +4,9 @@
       <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
         <h1 class="flex titletext">
           <img class="w-30px h-30px" src="/assets/icons/icon.png" />
-          <span class="m-auto version"> New Recruit - Editor v{{ version }}</span>
+          <span class="m-auto version">
+            New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
+          </span>
         </h1>
       </NuxtLink>
       <slot />

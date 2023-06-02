@@ -28,7 +28,7 @@ Editor:
         ✔ Handle dead links @done(23-05-22 08:20)
         ✔ Show enabled categories of entries on top @done(23-06-02 14:22)
             Added a filter for enabled categories instead
-    
+        
     Right Panel:
         ✔ modifierGroups @done(23-05-22 08:42)
         ✔ infoGroups @done(23-05-22 10:56)
@@ -43,6 +43,7 @@ Editor:
         ✔ categoryLinks @done(23-06-01 16:03)
 
     Problems: 
+        ☐ Categories on root selection entry links 
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
         ✔ dexie on electron version doesnt work if process is opened more than once @done(23-06-01 21:17)
