@@ -9,7 +9,7 @@
         </option>
       </select>
       <div class="section add">
-        <!-- <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button> -->
+        <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
         <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
       </div>
 
