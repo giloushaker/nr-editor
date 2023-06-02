@@ -3,7 +3,7 @@
 
 Interface:
     Main Menu:
-        ☐ Add System
+        ✔ Add System @done(23-06-03 00:02)
         ✔ System Page @done(23-05-31 01:13)
         ✔ System View @done(23-05-31 01:13)
             needed to not load every catalogue on startup in the app
