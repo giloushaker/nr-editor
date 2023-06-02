@@ -1,22 +1,31 @@
 <template>
   <fieldset>
     <legend>Categories</legend>
-    <div></div>
     <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
+    <div class="section"
+      ><input type="checkbox" id="onlyEnabled" v-model="onlyEnabled" /><label for="onlyEnabled"
+        >Only show selected categories</label
+      ></div
+    >
     <div class="section categoryList">
       <div>
         <input name="primary" type="radio" :checked="noPrimary" @change="primaryChanged(null)" />
         No Primary
       </div>
 
-      <div v-for="cat of categories" class="category">
+      <div v-for="cat of categories" class="category" :key="cat.id">
         <div>
           <input name="primary" type="radio" :checked="hasCategory(cat) == 2" @change="primaryChanged(cat)" />
           Primary?
         </div>
         <div>
-          <input type="checkbox" :checked="hasCategory(cat) != 0" @change="secondaryChanged(cat)" />
-          {{ cat.name }}
+          <input
+            :id="`cat${cat.id}`"
+            type="checkbox"
+            :checked="hasCategory(cat) != 0"
+            @change="secondaryChanged(cat)"
+          />
+          <label :for="`cat${cat.id}`">{{ cat.name }}</label>
         </div>
       </div>
     </div>
@@ -24,8 +33,7 @@
 </template>
 
 <script lang="ts">
-import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Category, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 
@@ -34,6 +42,7 @@ export default {
   data() {
     return {
       filter: "",
+      onlyEnabled: false,
       primaries: new Set<string>(),
       secondaries: new Set<string>(),
     };
@@ -58,6 +67,7 @@ export default {
     secondaryChanged(cat: Category) {
       this.refreshCategories(this.item, cat, false);
     },
+
     refreshCategories(item: Link, cat: Category | null, primary: boolean) {
       if (!item.categoryLinks) item.categoryLinks = [];
       const links = item.categoryLinks;
@@ -147,6 +157,9 @@ export default {
       let res: Category[] = [];
 
       for (let cat of this.catalogue.iterateCategoryEntries()) {
+        if (this.onlyEnabled && this.hasCategory(cat) == 0) {
+          continue;
+        }
         if (cat.getName().toLowerCase().includes(this.filter.toLowerCase())) {
           res.push(cat);
         }
