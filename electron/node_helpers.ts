@@ -120,3 +120,7 @@ export async function getPath(
   if (!electron) return;
   return (await electron.invoke("getPath", name)) as string;
 }
+export async function createFolder(dirPath: string) {
+  if (!electron) return;
+  await electron.invoke("mkdirSync", dirPath, { recursive: true });
+}

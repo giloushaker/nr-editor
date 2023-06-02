@@ -7,7 +7,7 @@
 
       <SelectFile @uploaded="uploaded" />
       <SelectFolder class="ml-10px" @selected="selectedFolder" />
-
+      <CreateSystem class="ml-10px" @created="update" />
       <p
         >You can open a system by clicking any of the systems in your working folder, listed below, or click Load System
         to load a system outside this folder.</p
@@ -17,6 +17,7 @@
       <div
         v-for="system in systems"
         class="item p-2px mt-2px border-gray border-solid border-1px cursor-pointer"
+        :class="{ highlight: system.highlight }"
         @click="selected(system)"
       >
         {{ system.name }}
@@ -48,7 +49,10 @@ import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
+import CreateSystem from "~/components/CreateSystem.vue";
+import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 export default defineComponent({
+  components: { CreateSystem },
   head() {
     return {
       title: "NR-Editor",
@@ -57,7 +61,7 @@ export default defineComponent({
   data() {
     return {
       loading: true,
-      systems: [] as Array<{ name: string; path: string }>,
+      systems: [] as Array<{ name: string; path: string; highlight?: boolean }>,
       progress: 0,
       progress_max: 0,
       progress_msg: "",
@@ -116,7 +120,7 @@ export default defineComponent({
       }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
-    async update() {
+    async update(highlight?: GameSystemFiles) {
       try {
         const result = [] as Array<{ name: string; path: string }>;
         if (!electron) {
@@ -142,6 +146,9 @@ export default defineComponent({
           }
         }
         this.systems = sortByAscending(result, (o) => o.name);
+        this.systems.forEach((o) => {
+          o.highlight = o.name === highlight?.gameSystem?.gameSystem?.name;
+        });
       } finally {
         this.loading = false;
       }
@@ -161,6 +168,9 @@ export default defineComponent({
 <style scoped>
 .item:hover {
   background-color: rgba(0, 0, 0, 0.15);
+}
+.highlight {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .workdir {
