@@ -5,13 +5,16 @@ import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue"
 import { get_base_from_vue_el, get_ctx } from "./editorStore";
 
 export const useEditorUIState = defineStore("editor-ui", {
-  state: () => ({} as Record<string, any>),
+  state: () =>
+    ({
+      catalogues: {},
+    } as Record<string, any>),
 
   persist: {
     storage: globalThis.localStorage,
   },
   actions: {
-    collapse_deepest(id: string) {
+    collapse_deepest() {
       const cls = `collapsible-box opened`;
       const results = document.documentElement.getElementsByClassName(cls);
       let maxDepth = -1;
@@ -70,18 +73,18 @@ export const useEditorUIState = defineStore("editor-ui", {
       }
       const result = {};
       recurseFn(document.documentElement, result);
-      this.$state[id] = { ...data, open: result };
+      this.$state.catalogues[id] = { ...data, open: result };
       console.log("saved editor ui state for id", id);
       return result;
     },
 
     get_data(id: string): Record<string, any> {
-      const current = this.$state[id];
+      const current = this.$state.catalogues[id];
       if (!current) return {};
       return current;
     },
     get_root(id: string, key: string): boolean {
-      let current = this.$state[id];
+      let current = this.$state.catalogues[id];
       if (!current) return false;
       current = current.open[key];
       if (!current) return false;
@@ -89,7 +92,7 @@ export const useEditorUIState = defineStore("editor-ui", {
     },
     get(id: string, path: EntryPathEntry[]): boolean {
       if (!path.length) return false;
-      let current = this.$state[id];
+      let current = this.$state.catalogues[id];
       if (!current) return false;
       current = current.open[path[0].key];
       if (!current) return false;

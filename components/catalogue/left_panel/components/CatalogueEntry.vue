@@ -8,7 +8,7 @@
         </EditorCollapsibleBox>
       </div>
 
-      <template v-for="category of groupedCategories">
+      <template v-for="category of groupedCategories" :key="category.type">
         <EditorCollapsibleBox
           :collapsible="category.items.length > 0"
           :group="get_group('entries')"
@@ -284,7 +284,7 @@ export default {
       open_categories: undefined as Set<string> | undefined,
     };
   },
-  mounted() {
+  created() {
     if (this.catalogue) {
       if (!this.imported) {
         this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
