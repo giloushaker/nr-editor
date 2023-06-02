@@ -78,7 +78,7 @@ export default {
   },
 
   created() {
-    if (!this.collapsible || this.defcollapsed == false) {
+    if (this.defcollapsed == false) {
       this.collapseSwitch();
     }
   },

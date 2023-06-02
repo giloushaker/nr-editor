@@ -83,6 +83,7 @@ Editor:
 
 
         ✔ move up/down @done(23-06-01 21:17)
+        ☐ alert version of popupdialog
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ more intuitive way to return to catalogue list

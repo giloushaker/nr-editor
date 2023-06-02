@@ -281,11 +281,23 @@ export default {
       groups: {} as Record<string, any>,
       contextmenuopen: false,
       open: false,
+      open_categories: undefined as Set<string> | undefined,
     };
   },
   mounted() {
     if (this.catalogue) {
-      this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+      if (!this.imported) {
+        this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+        if (this.item.isCatalogue()) {
+          const openCategories = new Set<string>();
+          for (const category of this.categories) {
+            if (this.state.get_root(this.catalogue.id, category.type)) {
+              openCategories.add(category.type);
+            }
+          }
+          this.open_categories = openCategories;
+        }
+      }
     }
   },
   methods: {
@@ -302,6 +314,9 @@ export default {
         return entry.$id;
       }
     },
+    should_be_open(category: string) {
+      return this.open_categories?.has(category);
+    },
     sortable(entry?: EditorBase) {
       if (!entry) return true;
       return noSort.has(entry.editorTypeName) === false;
@@ -311,9 +326,6 @@ export default {
         this.groups[key] = [];
       }
       return this.groups[key];
-    },
-    should_be_open(category: string) {
-      return this.state.get_root(this.catalogue.id, category);
     },
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
@@ -426,19 +438,23 @@ export default {
       }
       return this.sortable(this.item) ? this.sorted(result) : result;
     },
-    groupedCategories() {
+    categories() {
       if (this.item.isCatalogue()) {
         const categories = this.item.isGameSystem() ? systemCategories : catalogueCategories;
-        return categories.map((category) => {
-          const items = [] as CatalogueEntryItem[];
-          if (category.type) this.getTypedArray(this.item as any, category.type, items);
-          if (category.links) this.getTypedArray(this.item as any, category.links, items);
-          return {
-            ...category,
-            items: items,
-          };
-        });
+        return categories;
       }
+      return [];
+    },
+    groupedCategories() {
+      return this.categories.map((category) => {
+        const items = [] as CatalogueEntryItem[];
+        if (category.type) this.getTypedArray(this.item as any, category.type, items);
+        if (category.links) this.getTypedArray(this.item as any, category.links, items);
+        return {
+          ...category,
+          items: items,
+        };
+      });
     },
   },
 };

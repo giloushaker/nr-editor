@@ -22,7 +22,7 @@ import {
   removeSuffix,
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
 import { Base, Link, entriesToJson, entryToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
@@ -34,8 +34,6 @@ import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import type { Router } from "vue-router";
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
-import { json } from "stream/consumers";
-import { files } from "jszip";
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -750,7 +748,7 @@ export const useEditorStore = defineStore("editor", {
       if (obj.parent) {
         const arr = obj.parent[obj.parentKey] as EditorBase[];
         const index = arr.indexOf(obj);
-        if (index >= 0) {
+        if (index >= 0 && index < arr.length - 1) {
           const temp = arr.splice(index, 1)[0];
           arr.splice(index + 1, 0, temp);
         }

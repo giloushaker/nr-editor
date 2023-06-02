@@ -14,7 +14,8 @@
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom static">
-      <input v-model="showImported" type="checkbox" id="showimport" /> <label for="showimport">Show Imported</label>
+      <input v-model="showImported" @change="showImportedChanged" type="checkbox" id="showimport" />
+      <label for="showimport">Show Imported</label>
       <span class="absolute right-5px">
         <input v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
         <label for="ignoreProfilesRules">Ignore Profiles/Rules</label>
@@ -139,6 +140,9 @@ export default {
       } else {
         this.store.filtered = [];
       }
+    },
+    showImportedChanged() {
+      this.catalogue.imports.map((o) => o.processForEditor());
     },
   },
   computed: {
