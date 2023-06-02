@@ -427,7 +427,7 @@ export default {
           if (category.links) this.getTypedArray(this.item as any, category.links, items);
           return {
             ...category,
-            item: items,
+            items: items,
           };
         });
       }
