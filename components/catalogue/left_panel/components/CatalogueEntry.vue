@@ -27,7 +27,7 @@
             </span>
           </template>
           <template #content>
-            <template :key="entry.item.id" v-for="entry of category.items">
+            <template :key="key(item)" v-for="entry of category.items">
               <CatalogueEntry
                 :item="entry.item"
                 :group="get_group(category.type)"
@@ -64,7 +64,7 @@
             v-for="child of mixedChildren"
             :item="child.item"
             :group="get_group('default')"
-            :key="child.item.id"
+            :key="key(item)"
             :forceShowRecursive="forceShow"
             :imported="imported"
             :depth="depth + 1"
@@ -224,7 +224,7 @@ import {
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
-import { sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
+import { generateBattlescribeId, sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
@@ -294,6 +294,14 @@ export default {
     getTypeLabel,
     getName,
     getNameExtra,
+    key(entry: EditorBase | any): string {
+      if (entry.id) {
+        return entry.id;
+      } else {
+        entry.$id = `temp-${generateBattlescribeId()}`;
+        return entry.$id;
+      }
+    },
     sortable(entry?: EditorBase) {
       if (!entry) return true;
       return noSort.has(entry.editorTypeName) === false;

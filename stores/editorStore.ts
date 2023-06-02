@@ -519,52 +519,39 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    create(key: string & keyof Base, data?: any) {
+    get_initial_object(key: string & keyof Base) {
       switch (key) {
         case "constraints":
         case "conditions":
-          this.add(
-            {
-              type: "min",
-              value: 1,
-              field: "selections",
-              scope: "parent",
-              id: generateBattlescribeId(),
-              select: true,
-              ...data,
-            },
-            key
-          );
-          break;
+          return {
+            type: "min",
+            value: 1,
+            field: "selections",
+            scope: "parent",
+            id: generateBattlescribeId(),
+          };
         case "modifiers":
-          this.add(
-            {
-              type: "set",
-              value: true,
-              field: "hidden",
-              id: generateBattlescribeId(),
-              select: true,
-              ...data,
-            },
-            key
-          );
-          break;
+          return {
+            type: "set",
+            value: true,
+            field: "hidden",
+          };
         case "modifierGroups":
         case "conditionGroups":
-          this.add({ id: generateBattlescribeId(), select: true }, key);
-          break;
+          return { type: "and" };
         default:
-          this.add(
-            {
-              id: generateBattlescribeId(),
-              select: true,
-              name: `New ${getTypeLabel(getTypeName(key))}`,
-              ...data,
-            },
-            key
-          );
-          break;
+          return {
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+          };
       }
+    },
+    async create(key: string & keyof Base, data?: any) {
+      await this.add({
+        ...this.get_initial_object(key),
+        id: generateBattlescribeId(),
+        select: true,
+        ...data,
+      });
       this.open_selected();
     },
     can_move(obj: EditorBase) {
