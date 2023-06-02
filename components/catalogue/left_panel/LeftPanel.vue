@@ -1,9 +1,15 @@
 <template>
   <div class="leftPanel">
-    <!-- <div class="header static sticky">
-      <span class="bold p-4px">&lt;</span>
-      <span class="bold p-4px">&gt;</span>
-    </div> -->
+    <div class="static sticky flex items-center h-28px">
+      <!-- <span class="bold p-4px">&lt;</span> -->
+      <!-- <span class="bold p-4px">&gt;</span> -->
+      <img
+        @click="uistate.collapse_deepest"
+        class="align-middle absolute right-0 p-2px hover-darken"
+        title="Collapse Deepest"
+        src="/assets/icons/collapse-all.svg"
+      />
+    </div>
     <div class="top rightborder scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
@@ -23,11 +29,12 @@ import { forEachParent } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
+import { useEditorUIState } from "~/stores/editorUIState";
 
 export default {
   emits: ["scrolltop"],
   setup() {
-    return { store: useEditorStore() };
+    return { store: useEditorStore(), uistate: useEditorUIState() };
   },
   data() {
     return {

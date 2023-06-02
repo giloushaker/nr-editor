@@ -6,7 +6,7 @@
   >
     <h3
       v-if="!notitle"
-      class="title"
+      class="title hover-darken"
       :class="{ selected, arrowTitle: collapsible, normalTitle: !collapsible, collapsed: collapsible && collapsed }"
       @click.stop="do_select"
       @dblclick="collapseSwitch"

@@ -29,31 +29,31 @@
       </SplitView>
     </template>
 
-    <Teleport to="#titlebar-content" v-if="cat">
-      <div class="ml-10px">
+    <Teleport to="#titlebar-content" v-if="cat && route_is_catalogue">
+      <span class="ml-10px">
         Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
-        <template v-if="changed">
-          <template v-if="unsaved">
-            <button class="bouton save ml-10px" @click="save">Save</button>
-          </template>
-          <template v-else-if="failed">
-            <span class="status mx-2 text-red">failed to save</span>
-          </template>
-          <template v-else>
-            <span class="status mx-2">saved</span>
-          </template>
+      </span>
+      <template v-if="changed">
+        <template v-if="unsaved">
+          <button class="bouton save ml-10px" @click="save">Save</button>
         </template>
-        <template v-if="systemFiles && !systemFiles.allLoaded">
-          <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
+        <template v-else-if="failed">
+          <span class="status mx-2 text-red">failed to save</span>
         </template>
-      </div>
+        <template v-else>
+          <span class="status mx-2">saved</span>
+        </template>
+      </template>
+      <template v-if="systemFiles && !systemFiles.allLoaded">
+        <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
+      </template>
     </Teleport>
   </div>
 </template>
 
 <script lang="ts">
 import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battlescribe/bs_editor";
@@ -111,11 +111,14 @@ export default {
         catalogueId: this.$route.query.id || this.$route.query.systemId,
       };
     },
+    route_is_catalogue() {
+      return this.$route.name === "catalogue";
+    },
   },
   watch: {
     query: {
       async handler(newVal) {
-        if (this.$route.name !== "catalogue") return;
+        if (!this.route_is_catalogue) return;
         const { gameSystemId, catalogueId } = newVal;
         this.id = catalogueId || gameSystemId;
         this.store.unselect();
@@ -167,15 +170,6 @@ export default {
         this.failed = true;
       }
     },
-    save_state() {
-      if (this.cat) {
-        const selected = this.store.get_selected();
-        this.uistate.save(this.cat.id, {
-          selection: selected ? getEntryPath(selected) : undefined,
-          scroll: this.get_scroll(),
-        });
-      }
-    },
     async beforeUnload(event: BeforeUnloadEvent) {
       if (globalThis._closeWindow) return;
       if (!this.loading) {
@@ -213,10 +207,25 @@ export default {
     onChanged() {
       this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
+    save_state() {
+      if (this.cat) {
+        const selected = this.store.get_selected();
+        this.uistate.save(this.cat.id, {
+          selection: selected ? getEntryPath(selected) : undefined,
+          scroll: this.get_scroll(),
+        });
+      }
+    },
     async load_state(data: Record<string, any>) {
       const { selection, scroll } = data;
+      await this.set_scroll(scroll);
+
       if (!selection) return;
-      const obj = getAtEntryPath(this.cat as Catalogue, selection);
+      let obj = getAtEntryPath(this.cat as Catalogue, selection);
+      if (!obj) {
+        const last = selection[selection.length - 1];
+        obj = (this.cat as Catalogue).findOptionById(last.id) as EditorBase | undefined;
+      }
       if (obj) {
         const el = await this.store.open(obj);
         if (el) {
@@ -224,7 +233,6 @@ export default {
           await ctx.do_select();
         }
       }
-      await this.set_scroll(scroll);
     },
     async load(systemId: string, catalogueId?: string) {
       if (!catalogueId && !systemId) {
