@@ -8,11 +8,14 @@
         </option>
       </select>
 
-      <select v-model="selectedField" @change="fieldChanged">
-        <option :value="field" v-for="field of fieldData">
-          {{ field.name }}
-        </option>
-      </select>
+      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged" class="modType">
+        <template #option="opt">
+          <div>
+            <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.modifierType}.png`" />
+            {{ opt.option.name }}
+          </div>
+        </template>
+      </UtilIconSelect>
 
       <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
       <UtilNumberInput @change="changed" v-if="selectedField && selectedField.type == 'number'" v-model="item.value" />
@@ -38,7 +41,7 @@
 
 <script lang="ts">
 import { ItemTypes, getName } from "~/assets/shared/battlescribe/bs_editor";
-import { Base, Category, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Category } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIConstraint, BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 
@@ -53,6 +56,7 @@ export default {
         id: string;
         name: string;
         type: FieldTypes;
+        modifierType: string;
       } | null,
       selectedOperation: null as {
         word: string;
@@ -68,6 +72,7 @@ export default {
         infoLink: ["name", "description", "page", "hidden"],
         force: ["name", "page", "hidden", "constraints"],
         category: ["name", "page", "hidden", "constraints"],
+        categoryLink: ["name", "page", "hidden", "constraints"],
       } as any,
 
       availableTypes: {
@@ -227,7 +232,12 @@ export default {
     fieldData() {
       let available: string[] = this.availableModifiers[this.parent.editorTypeName];
 
-      const additional: { id: string; name: string; type: FieldTypes }[] = [];
+      const additional: {
+        id: string;
+        name: string;
+        type: FieldTypes;
+        modifierType: string;
+      }[] = [];
 
       if (!available) {
         return [];
@@ -240,6 +250,7 @@ export default {
                 id: costType.id,
                 name: costType.name,
                 type: "number" as FieldTypes,
+                modifierType: "cost",
               };
             })
           );
@@ -255,6 +266,7 @@ export default {
               id: constraint.id,
               name: getName(constraint),
               type: "number" as FieldTypes,
+              modifierType: "constraint",
             };
           });
           additional.push(...mapped);
@@ -266,6 +278,7 @@ export default {
           id: "category",
           name: "Category",
           type: "category",
+          modifierType: "category",
         });
       }
 
@@ -278,6 +291,7 @@ export default {
             id: elt,
             name: elt,
             type: this.availableTypes[elt],
+            modifierType: "bullet",
           };
         })
         .concat(additional);
@@ -292,5 +306,9 @@ export default {
   grid-template-columns: auto auto auto 1fr;
   grid-gap: 5px;
   align-items: center;
+}
+
+.modType {
+  width: 100%;
 }
 </style>
