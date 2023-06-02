@@ -115,6 +115,7 @@ export default {
   watch: {
     query: {
       async handler(newVal) {
+        if (this.$route.name !== "catalogue") return;
         const { gameSystemId, catalogueId } = newVal;
         this.id = catalogueId || gameSystemId;
         this.store.unselect();
