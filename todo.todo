@@ -86,7 +86,7 @@ Editor:
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ more intuitive way to return to catalogue list
-        ☐ oncollapse/collapse all button
+        ✔ collapse all button @done(23-06-02 23:57)
         ☐ filter by
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
             No apparent way to do it using native stuff
