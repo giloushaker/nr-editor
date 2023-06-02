@@ -47,7 +47,7 @@ Editor:
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
         ✔ dexie on electron version doesnt work if process is opened more than once @done(23-06-01 21:17)
-        ☐ fix bad zip compression
+        ✔ fix bad zip compression @done(23-06-02 21:21)
         ✔ rules description not saving @done(23-06-01 16:04)
         ✔ Unable to create new links @done(23-05-21 16:28)
         ✔ Nothing in the context menu for top level shared selection entries and shared entry groups @done(23-05-21 16:28)

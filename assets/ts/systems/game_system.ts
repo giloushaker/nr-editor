@@ -16,6 +16,7 @@ import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 import { convertToXml, getExtension, isZipExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { zip } from "~/assets/shared/util";
 import { filename, writeFile } from "~/electron/node_helpers";
+import JSZip, { OutputType } from "jszip";
 
 export class GameSystem extends BsGameSystem {
   constructor(systemRow: GameSystemRow, lang: string, fetchStrategy: BookFetchFunction) {
@@ -102,6 +103,12 @@ export function saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem
     });
   }
 }
+export async function do_zip<T extends OutputType>(nameInZip: string, content: string, type: T) {
+  var zip = new JSZip();
+  zip.file(nameInZip, content);
+  const result = await zip.generateAsync({ type: type, compression: "DEFLATE" });
+  return result;
+}
 export async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
   const path = data.fullFilePath;
   if (!path) {
@@ -117,7 +124,7 @@ export async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIG
     const shouldZip = isZipExtension(extension);
     const name = filename(path);
     const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
-    const content = shouldZip ? await zip(nameInZip, xml, "uint8array") : xml;
+    const content = shouldZip ? await do_zip(nameInZip, xml, "uint8array") : xml;
     await writeFile(path, content);
   }
 }
