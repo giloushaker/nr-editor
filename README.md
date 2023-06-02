@@ -30,3 +30,5 @@ Open an existing data file or create a new one.
 Save your changes.
 
 Enjoy playing with your updated data file!
+
+## [Source Code](https://github.com/vflam/nr-editor)
