@@ -14,11 +14,13 @@
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom static">
-      <input v-model="showImported" @change="showImportedChanged" type="checkbox" id="showimport" />
-      <label for="showimport">Show Imported</label>
+      <span>
+        <input v-model="showImported" @change="showImportedChanged" type="checkbox" id="showimport" />
+        <label class="unselectable" for="showimport">Show Imported</label>
+      </span>
       <span class="absolute right-5px">
         <input v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
-        <label for="ignoreProfilesRules">Ignore Profiles/Rules</label>
+        <label class="unselectable" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
       </span>
       <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
     </div>
