@@ -185,7 +185,7 @@ export default defineComponent({
           throw new Error("Cannot create catalogue: no name provided");
         }
         const folder = dirname(systemPath);
-        (getDataObject(copy) as any).fullFilePath = `${folder}/${name}`;
+        (getDataObject(copy) as any).fullFilePath = `${folder}/${name}.cat`;
       }
       if (!electron) {
         db.catalogues.put({
