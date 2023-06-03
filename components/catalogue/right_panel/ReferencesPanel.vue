@@ -1,12 +1,7 @@
 <template>
   <div>
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
-    Note: this tab is currently missing:
-    <span class="gray">
-      <span> conditions/constraints/repeats,</span>
-      <span> categories granted by modifiers, refs to profileType, imports</span>
-    </span>
-    <div> Click Load All to have refs from all other catalogues appear. </div>
+    <p class="ml-10px info"> Click Load All to have refs from all other catalogues appear. </p>
     <table class="mb-20px">
       <tr>
         <th> Catalogue </th>
@@ -17,7 +12,12 @@
           {{ link.isCatalogue() ? link.getName() : link.catalogue?.getName() }}
         </td>
         <td>
-          {{ link.parent?.getName() || "No parent (likely a bug)" }}
+          <template v-if="show_link_name">
+            {{ link.getName() }}
+          </template>
+          <template v-else>
+            {{ link.parent?.getName() }}
+          </template>
         </td>
         <td>
           <button @click="store.goto(gotoTarget(link))">Goto</button>
@@ -32,6 +32,7 @@
           <th> Catalogue </th>
           <th> Name </th>
           <th> Type </th>
+          <th> Details </th>
         </tr>
         <tr v-for="link of other_links">
           <td class="gray">
@@ -43,6 +44,7 @@
           <td>
             {{ link.editorTypeName }}
           </td>
+          <td> {{ link.type }} {{ link.value }} </td>
           <td>
             <button @click="store.goto(link)">Goto</button>
           </td>
@@ -55,6 +57,7 @@
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { findParentWhere, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
@@ -80,6 +83,10 @@ export default {
     },
   },
   computed: {
+    show_link_name() {
+      if (this.item instanceof ProfileType) return true;
+      return false;
+    },
     links() {
       return this.item?.links || [];
     },
@@ -92,3 +99,9 @@ export default {
   },
 };
 </script>
+<style scope>
+td {
+  padding: 1px !important;
+  text-align: left !important;
+}
+</style>
