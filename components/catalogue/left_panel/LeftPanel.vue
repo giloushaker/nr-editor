@@ -10,7 +10,7 @@
         src="/assets/icons/collapse-all.svg"
       />
     </div>
-    <div class="top rightborder scrollable" @scroll="$emit('scrolltop', $event)" @keydown.capture="keydown">
+    <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom static">
@@ -34,6 +34,13 @@ import { useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 
+export const LeftPanelDefaults = {
+  showImported: false,
+  ignoreProfilesRules: false,
+  filter: "",
+  scroll: 0,
+};
+
 export default {
   emits: ["scrolltop"],
   setup() {
@@ -41,12 +48,18 @@ export default {
   },
   data() {
     return {
-      showImported: false,
-      ignoreProfilesRules: false,
+      ...LeftPanelDefaults,
+      ...this.defaults,
     };
   },
   mounted() {
     addEventListener("keydown", this.keydown);
+    this.$nextTick(() => {
+      const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
+      if (scrollable_el) {
+        scrollable_el.scrollTop = this.scroll;
+      }
+    });
   },
   unmounted() {
     removeEventListener("keydown", this.keydown);
@@ -56,8 +69,15 @@ export default {
       type: Object as PropType<Catalogue>,
       required: true,
     },
+    defaults: {
+      type: Object as PropType<{ showImported?: boolean }>,
+      default: {},
+    },
   },
   methods: {
+    onscroll(event: Event) {
+      this.scroll = (event.target as HTMLDivElement).scrollTop;
+    },
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
       if (!e.target) return;

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-full">
     <Head>
       <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
     </Head>
@@ -9,7 +9,7 @@
       </span>
     </template>
     <template v-else-if="loading">
-      <div class="h-7/8 flex items-center justify-center"><span> Loading... </span> </div>
+      <Loading />
     </template>
     <template v-else-if="cat">
       <SplitView
@@ -21,7 +21,7 @@
         id="catalogueView"
       >
         <template #left>
-          <LeftPanel @scrolltop="onscrolltop" class="h-full" :catalogue="cat" />
+          <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" />
         </template>
         <template #right>
           <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts">
-import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
+import LeftPanel, { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
@@ -72,7 +72,7 @@ export default {
       id: "",
       cat: null as Catalogue | null,
       failed: false,
-      scroll: 0,
+      defaults: {} as Partial<typeof LeftPanelDefaults>,
     };
   },
   setup() {
@@ -87,14 +87,17 @@ export default {
     document.removeEventListener("keydown", this.onKeydown);
   },
   beforeRouteUpdate() {
-    console.log("beforeRouteUpdate");
+    if (this.id) {
+      this.save_state();
+    }
+  },
+  beforeRouteLeave() {
     if (this.id) {
       this.save_state();
     }
   },
   created() {
     this.store.init(this.$router);
-    globalThis.$store = this.store;
   },
   computed: {
     changed() {
@@ -139,29 +142,6 @@ export default {
     },
   },
   methods: {
-    onscrolltop(event: Event) {
-      this.scroll = (event.target as HTMLDivElement).scrollTop;
-    },
-    get_scroll() {
-      return this.scroll;
-    },
-    get_scrollable_el() {
-      return (this.$el as HTMLDivElement).getElementsByClassName("top scrollable")[0];
-    },
-    async set_scroll(scroll: number) {
-      await this.$nextTick();
-      await nextTick();
-      const el = this.get_scrollable_el();
-      if (el) {
-        el.scrollTop = scroll;
-      }
-      setTimeout(() => {
-        const el = this.get_scrollable_el();
-        if (el) {
-          el.scrollTop = scroll;
-        }
-      });
-    },
     save() {
       try {
         this.store.save_catalogue(this.cat as Catalogue);
@@ -210,15 +190,20 @@ export default {
     save_state() {
       if (this.cat) {
         const selected = this.store.get_selected();
+        const leftpanel = this.$refs.leftpanel as typeof LeftPanelDefaults;
+        const leftpanelstate = {} as Record<string, any>;
+        for (const key of Object.keys(LeftPanelDefaults) as (keyof typeof LeftPanelDefaults)[]) {
+          leftpanelstate[key] = leftpanel[key];
+        }
         this.uistate.save(this.cat.id, {
           selection: selected ? getEntryPath(selected) : undefined,
-          scroll: this.get_scroll(),
+          ...leftpanelstate,
         });
       }
     },
     async load_state(data: Record<string, any>) {
-      const { selection, scroll } = data;
-      await this.set_scroll(scroll);
+      const { selection } = data;
+      this.defaults = data;
 
       if (!selection) return;
       let obj = getAtEntryPath(this.cat as Catalogue, selection);
@@ -240,7 +225,7 @@ export default {
       }
       try {
         this.loading = true;
-        this.scroll = 0;
+        await new Promise((resolve) => setTimeout(resolve));
         const system = await this.store.get_or_load_system(systemId);
         let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
         if (!loaded) {
@@ -250,12 +235,10 @@ export default {
         }
         this.systemFiles = system;
         this.cat = loaded;
-        this.$nextTick(async () => {
-          if (loaded) {
-            const data = this.uistate.get_data(loaded.id);
-            this.load_state(data);
-          }
-        });
+        if (loaded) {
+          const data = this.uistate.get_data(loaded.id);
+          await this.load_state(data);
+        }
       } finally {
         this.loading = false;
       }

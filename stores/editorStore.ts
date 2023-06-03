@@ -253,10 +253,8 @@ export const useEditorStore = defineStore("editor", {
       this.filterRegex = textSearchRegex(filter);
     },
     init(vueRouter: Router) {
-      (globalThis as any).undo = () => this.undo();
-      (globalThis as any).redo = () => this.redo();
-      (globalThis as any).remove = () => this.remove();
       this.$router = vueRouter as any;
+      (globalThis as any).$store = this;
     },
     unselect(obj?: any) {
       const next_selected = [];

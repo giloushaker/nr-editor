@@ -24,20 +24,7 @@
       </div>
     </div>
   </div>
-  <div v-else class="h-full">
-    <div class="flex items-center h-full">
-      <div class="m-auto items-center flex flex-col">
-        <div class="items-center flex">
-          <img class="w-20px h-20px" src="/assets/icons/spin.gif" />
-          <span class="ml-5px"> Loading... </span>
-        </div>
-        <div>
-          <div class="text-center" v-if="progress_max">{{ progress }}/{{ progress_max }}</div>
-          <div v-if="progress_msg">{{ progress_msg }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <Loading v-else :progress_msg="progress_msg" :progress_max="progress_max" :progress="progress" />
 </template>
 
 <script lang="ts">
@@ -51,8 +38,9 @@ import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 import CreateSystem from "~/components/CreateSystem.vue";
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
+import Loading from "~/components/Loading.vue";
 export default defineComponent({
-  components: { CreateSystem },
+  components: { CreateSystem, Loading },
   head() {
     return {
       title: "NR-Editor",
@@ -85,7 +73,7 @@ export default defineComponent({
           this.progress = cur;
           this.progress_max = max;
           this.progress_msg = msg ? msg.replaceAll("\\", "/").split("/").slice(-1)[0] : "";
-          const promise = new Promise((resolve) => setTimeout(resolve, 10));
+          const promise = new Promise((resolve) => setTimeout(resolve, 1));
           return promise;
         });
         this.loading = false;
