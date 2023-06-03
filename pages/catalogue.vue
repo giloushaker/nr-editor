@@ -212,11 +212,13 @@ export default {
         obj = (this.cat as Catalogue).findOptionById(last.id) as EditorBase | undefined;
       }
       if (obj) {
-        const el = await this.store.open(obj);
-        if (el) {
-          const ctx = get_ctx(el);
-          await ctx.do_select();
-        }
+        try {
+          const el = await this.store.open(obj);
+          if (el) {
+            const ctx = get_ctx(el);
+            await ctx.do_select();
+          }
+        } catch (e) {}
       }
     },
     async load(systemId: string, catalogueId?: string) {

@@ -27,7 +27,7 @@
             </span>
           </template>
           <template #content>
-            <template :key="key(item)" v-for="entry of category.items">
+            <template v-for="entry of category.items" :key="key(entry.item)">
               <CatalogueEntry
                 :item="entry.item"
                 :group="get_group(category.type)"
@@ -60,15 +60,15 @@
           </span>
         </template>
         <template #content>
-          <CatalogueEntry
-            v-for="child of mixedChildren"
-            :item="child.item"
-            :group="get_group('default')"
-            :key="key(item)"
-            :forceShowRecursive="forceShow"
-            :imported="imported"
-            :depth="depth + 1"
-          />
+          <template v-for="child of mixedChildren" :key="key(child)">
+            <CatalogueEntry
+              :item="child.item"
+              :group="get_group('default')"
+              :forceShowRecursive="forceShow"
+              :imported="imported"
+              :depth="depth + 1"
+            />
+          </template>
         </template>
       </EditorCollapsibleBox>
     </template>
@@ -86,7 +86,7 @@
             Goto
             <span class="gray"> &nbsp;({{ item.catalogue?.getName() }}) </span>
           </div>
-          <div v-if="item.links" @click="store.mode = 'references'">
+          <div v-if="item.links?.length || item.other_links?.length" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
           </div>
           <Separator v-if="item.isLink() || item.links || imported" />
@@ -229,6 +229,7 @@ import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
+import { debug } from "util";
 
 const order: Record<string, number> = {
   selectionEntry: 1,
@@ -309,6 +310,8 @@ export default {
     key(entry: EditorBase | any): string {
       if (entry.id) {
         return entry.id;
+      } else if (entry.$id) {
+        return entry.$id;
       } else {
         entry.$id = `temp-${generateBattlescribeId()}`;
         return entry.$id;
@@ -326,6 +329,13 @@ export default {
         this.groups[key] = [];
       }
       return this.groups[key];
+    },
+    ref_count(item: EditorBase) {
+      switch (item.editorTypeName) {
+        case "category":
+        default:
+          return item.links?.length;
+      }
     },
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
@@ -427,16 +437,24 @@ export default {
     },
 
     mixedChildren(): Array<CatalogueEntryItem> {
-      const result = [];
+      const allowed = [];
       for (const category of this.allowedChildren) {
         const arr = this.get_field(category);
         if (!arr?.length) continue;
         for (const elt of arr) {
           if (!this.filter_child(elt)) continue;
-          result.push({ type: category as ItemKeys, item: elt });
+          allowed.push({ type: category as ItemKeys, item: elt });
         }
       }
-      return this.sortable(this.item) ? this.sorted(result) : result;
+      const set = new Set();
+      const result = this.sortable(this.item) ? this.sorted(allowed) : allowed;
+      for (const item of result) {
+        if (set.has(this.key(item))) {
+          debugger;
+        }
+        set.add(this.key(item));
+      }
+      return result;
     },
     categories() {
       if (this.item.isCatalogue()) {

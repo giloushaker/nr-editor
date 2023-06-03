@@ -28,6 +28,7 @@ import { PropType } from "nuxt/dist/app/compat/capi";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
+  name: "EditorCollapsibleBox",
   props: {
     payload: {},
 
@@ -93,9 +94,9 @@ export default {
   updated() {
     this.$el.vnode = this;
   },
-  destroyed() {
+  unmounted() {
     if (this.group && Array.isArray(this.group)) {
-      const idx = this.group.findIndex(this as any);
+      const idx = this.group.indexOf(this as any);
       if (idx !== -1) {
         this.group?.splice(idx, 1);
       }

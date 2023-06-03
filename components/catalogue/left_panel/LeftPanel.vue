@@ -5,7 +5,7 @@
       <!-- <span class="bold p-4px">&gt;</span> -->
       <img
         @click="uistate.collapse_deepest"
-        class="align-middle absolute right-0 p-2px hover-darken"
+        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
         title="Collapse Deepest"
         src="/assets/icons/collapse-all.svg"
       />
@@ -15,14 +15,20 @@
     </div>
     <div class="bottom static">
       <span>
-        <input v-model="showImported" @change="showImportedChanged" type="checkbox" id="showimport" />
-        <label class="unselectable" for="showimport">Show Imported</label>
+        <input
+          class="cursor-pointer"
+          v-model="showImported"
+          @change="showImportedChanged"
+          type="checkbox"
+          id="showimport"
+        />
+        <label class="unselectable cursor-pointer" for="showimport">Show Imported</label>
       </span>
       <span class="absolute right-5px">
-        <input v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
-        <label class="unselectable" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
+        <input class="cursor-pointer" v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
+        <label class="unselectable cursor-pointer" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
       </span>
-      <input v-model="storeFilter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
+      <input v-model="filter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
     </div>
   </div>
 </template>
@@ -136,12 +142,14 @@ export default {
           delete p.showChildsInEditor;
         });
       }
-      this.store.set_filter(filter);
-      if (filter.length > 0) {
+      if (filter.length > 1) {
+        this.store.set_filter(filter);
+        let t1 = Date.now();
         this.store.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
         if (ignoreProfilesRules) {
           this.store.filtered = this.store.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
         }
+        let t2 = Date.now();
         for (const p of this.store.filtered) {
           p.showInEditor = true;
           p.showChildsInEditor = true;
@@ -150,16 +158,32 @@ export default {
             parent.showInEditor = true;
           });
         }
+        let t3 = Date.now();
         await nextTick();
-        for (const p of this.store.filtered) {
-          if (!p.parent) continue;
-          try {
-            await this.store.open(p as EditorBase, false);
-          } catch (e) {
-            continue;
+        let t4 = Date.now();
+
+        console.log(this.store.filtered.length, this.store.filter);
+        if (this.store.filtered.length < 300) {
+          for (const p of this.store.filtered) {
+            if (!p.parent) continue;
+            try {
+              await this.store.open(p as EditorBase, false);
+            } catch (e) {
+              continue;
+            }
           }
         }
+        let t5 = Date.now();
+        this.$nextTick(() => {
+          let t6 = Date.now();
+          console.log("search", t2 - t1);
+          console.log("set display status", t3 - t2);
+          console.log("render1", t4 - t3);
+          console.log("open", t5 - t4);
+          console.log("render2", t6 - t5);
+        });
       } else {
+        this.store.set_filter("");
         this.store.filtered = [];
       }
     },
@@ -170,17 +194,9 @@ export default {
   computed: {
     filterData() {
       return {
-        filter: this.store.filter,
+        filter: this.filter.trim(),
         ignoreProfilesRules: this.ignoreProfilesRules,
       };
-    },
-    storeFilter: {
-      get(): string {
-        return this.store.filter;
-      },
-      async set(v: string) {
-        this.store.filter = v.trim();
-      },
     },
   },
   watch: {

@@ -1,14 +1,12 @@
 <template>
   <div>
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
-    note: this tab is currently missing:
+    Note: this tab is currently missing:
     <span class="gray">
-      <div> conditions/constraints/repeats</div>
-      <div> categories given by modifiers </div>
-      <div> refs to profileType</div>
-      <div> imports from importRootEntries</div>
+      <span> conditions/constraints/repeats,</span>
+      <span> categories granted by modifiers, refs to profileType, imports</span>
     </span>
-
+    <div> Click Load All to have refs from all other catalogues appear. </div>
     <table class="mb-20px">
       <tr>
         <th> Catalogue </th>

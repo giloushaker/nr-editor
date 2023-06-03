@@ -4,13 +4,16 @@
     <div class="booleans">
       <div v-for="field of fields.filter((f) => f.status != -1)">
         <input
+          :class="{ 'cursor-pointer': field.status !== 0 }"
           :id="field.field"
           type="checkbox"
           v-model="item[field.field]"
           @change="changed"
           :disabled="field.status == 0"
         />
-        <label :class="{ gray: field.status == 0 }" :for="field.field">{{ field.name }}</label>
+        <label :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0 }" :for="field.field">
+          {{ field.name }}
+        </label>
       </div>
     </div>
   </fieldset>
