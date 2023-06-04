@@ -25,7 +25,7 @@ function askForUpdate() {
     mainWindow.webContents.executeJavaScript(`
     const styleElement = document.createElement('style');
     styleElement.setAttribute('id', 'custom-style');
-    styleElement.textContent = 'body { cursor: progress !important; }';
+    styleElement.textContent = '* { cursor: progress !important; }';
     document.head.appendChild(styleElement);
     `);
     let log_message = "Download speed: " + progress.bytesPerSecond;
