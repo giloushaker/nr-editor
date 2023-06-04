@@ -17,8 +17,9 @@
     :type="type"
   />
 
+  {{ item.editorTypeName == null ? "null" : item.editorTypeName }}
   <CatalogueRightPanelFieldsCosts
-    v-if="item.editorTypeName == 'entryLink' || item.editorTypeName == 'entryGroupLink'"
+    v-if="item.editorTypeName == 'selectionEntryLink'"
     :item="item"
     :catalogue="catalogue"
     @catalogueChanged="changed"
@@ -34,6 +35,14 @@
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
+  <CatalogueRightPanelFieldsCategories
+    v-if="item.editorTypeName == 'selectionEntryLink' || item.editorTypeName == 'selectionEntryGroupLink'"
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    class="section"
+  />
+
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
     @catalogueChanged="changed"
@@ -46,14 +55,14 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Base } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Base & EditorBase>,
+      type: Object as PropType<Link & EditorBase>,
       required: true,
     },
 
