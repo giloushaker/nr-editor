@@ -88,6 +88,9 @@ Editor:
         ☐ move back/forward (like browser navigation)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ more intuitive way to return to catalogue list
+
+        ☐ modifierGroups and conditionGroups nodes themselves provide no info, maybe opening them should automatically open their childs
+        
         ✔ collapse all button @done(23-06-02 23:57)
         ☐ filter by
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
@@ -105,6 +108,8 @@ Editor:
         ✔ search entries @done(23-05-09 01:14)
             ✔ search nested @done(23-05-17 17:53)
             ✔ show childs of found @done(23-05-21 01:08)
+
+
 
 
         Low Prio:

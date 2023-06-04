@@ -6,7 +6,7 @@
       <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
-        title="Collapse Deepest"
+        title="Collapse Last Open Level"
         src="/assets/icons/collapse-all.svg"
       />
     </div>
