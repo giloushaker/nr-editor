@@ -25,6 +25,8 @@ export default defineNuxtConfig({
     "@pinia-plugin-persistedstate/nuxt",
     ...(electron ? ["nuxt-electron"] : []),
   ],
+
+  // @ts-ignore
   plugins: [
     ...(electron
       ? [

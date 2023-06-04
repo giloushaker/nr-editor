@@ -29,11 +29,11 @@
 
       <div class="checks">
         <div v-if="childSelections">
-          <input type="checkbox" label="childForces" v-model="item.includeChildSelections" />
-          <label for="childForces">And all child Selections</label>
+          <input @change="changed" id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
+          <label for="childSelections">And all child Selections</label>
         </div>
         <div v-if="childForces">
-          <input type="checkbox" label="childForces" v-model="item.includeChildForces" />
+          <input @change="changed" id="childForces" type="checkbox" v-model="item.includeChildForces" />
           <label for="childForces">And all child Forces</label>
         </div>
       </div>

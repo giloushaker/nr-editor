@@ -40,14 +40,15 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Base, Category } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Base>,
+      type: Object as PropType<ItemTypes & EditorBase & (Base | Link<Group>)>,
       required: true,
     },
 

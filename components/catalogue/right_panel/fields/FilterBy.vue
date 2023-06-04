@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Basics</legend>
+    <legend>Filter By</legend>
     <table class="editorTable">
       <tr>
         <td>Of:</td>

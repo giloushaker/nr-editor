@@ -142,7 +142,7 @@ export default {
         }
 
         if (o.isLink()) return false;
-        if (!(o as any).parent?.isCatalogue()) return false;
+        // if (!(o as any).parent?.isCatalogue()) return false;
         return true;
       });
       this.availableTargets = sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
