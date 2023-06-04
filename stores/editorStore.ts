@@ -51,9 +51,11 @@ export interface IEditorStore {
 
   mode: "edit" | "references";
   clipboardmode: "json" | "none";
-  unsavedChanges: Record<string, CatalogueState>;
   gameSystemsLoaded: boolean;
   gameSystems: Record<string, GameSystemFiles>;
+
+  unsavedCount: number;
+  unsavedChanges: Record<string, CatalogueState>;
 
   $router?: Router;
   $nextTick?: Promise<any>;
@@ -105,6 +107,8 @@ export const useEditorStore = defineStore("editor", {
     gameSystems: {},
     gameSystemsLoaded: false,
     unsavedChanges: {} as Record<string, CatalogueState>,
+
+    unsavedCount: 0,
   }),
 
   actions: {
@@ -124,7 +128,7 @@ export const useEditorStore = defineStore("editor", {
         gameSystem: {
           id: id,
           name: name,
-          battleScribeVersion: 0,
+          battleScribeVersion: "2.03",
           revision: 1,
         },
       } as BSIDataSystem;
@@ -234,9 +238,14 @@ export const useEditorStore = defineStore("editor", {
           unsaved: false,
         };
       }
-      this.unsavedChanges[id].unsaved = state;
       if (state) {
         this.unsavedChanges[id].changed = true;
+        if (!this.unsavedChanges[id].unsaved) {
+          this.unsavedCount += 1;
+          this.unsavedChanges[id].unsaved = state;
+        }
+      } else {
+        this.unsavedChanges[id].unsaved = state;
       }
     },
     save_catalogue(catalogue: Catalogue) {
@@ -246,7 +255,10 @@ export const useEditorStore = defineStore("editor", {
       cataloguesStore.updateCatalogue(catalogue);
       cataloguesStore.setEdited(id, true);
       const state = this.get_catalogue_state(catalogue);
-      state.unsaved = false;
+      if (state.unsaved) {
+        this.unsavedCount--;
+        state.unsaved = false;
+      }
     },
     set_filter(filter: string) {
       this.$state.filter = filter;

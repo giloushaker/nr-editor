@@ -3,7 +3,7 @@
     <legend>Categories ({{ count }})</legend>
     <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
     <div class="section"
-      ><input type="checkbox" id="onlyEnabled" v-model="onlyEnabled" /><label for="onlyEnabled"
+      ><input type="checkbox" id="onlyEnabled" v-model="settings.showOnlyEnabledCategories" /><label for="onlyEnabled"
         >Only show selected categories</label
       ></div
     >
@@ -36,18 +36,20 @@
 import { Category, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
+import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
   emits: ["catalogueChanged"],
   data() {
     return {
       filter: "",
-      onlyEnabled: false,
       primaries: new Set<string>(),
       secondaries: new Set<string>(),
     };
   },
-
+  setup() {
+    return { settings: useSettingsStore() };
+  },
   props: {
     item: {
       type: Object as PropType<Link>,
@@ -160,7 +162,7 @@ export default {
       let res: Category[] = [];
 
       for (let cat of this.catalogue.iterateCategoryEntries()) {
-        if (this.onlyEnabled && this.hasCategory(cat) == 0) {
+        if (this.settings.showOnlyEnabledCategories && this.hasCategory(cat) == 0) {
           continue;
         }
         if (cat.getName().toLowerCase().includes(this.filter.toLowerCase())) {

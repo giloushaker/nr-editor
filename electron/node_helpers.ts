@@ -92,7 +92,7 @@ export async function showOpenDialog(options: Electron.OpenDialogOptions) {
 }
 export async function showMessageBox(options: Electron.MessageBoxSyncOptions) {
   if (!electron) return;
-  return electron.invoke("showMessageBoxSync", options) as Electron.MessageBoxReturnValue;
+  return electron.invoke("showMessageBoxSync", options) as number;
 }
 export async function closeWindow() {
   if (!electron) return;

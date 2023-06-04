@@ -65,7 +65,7 @@ import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 import ImportFromGithub from "~/components/ImportFromGithub.vue";
 import SelectFile from "~/components/SelectFile.vue";
-import { dirname } from "~/electron/node_helpers";
+import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
 
@@ -101,6 +101,12 @@ export default defineComponent({
       this.store.load_systems_from_db();
     }
   },
+  mounted() {
+    window.addEventListener("beforeunload", this.beforeUnload);
+  },
+  unmounted() {
+    window.removeEventListener("beforeunload", this.beforeUnload);
+  },
   computed: {
     electron() {
       return Boolean(globalThis.electron);
@@ -127,6 +133,29 @@ export default defineComponent({
     },
   },
   methods: {
+    async beforeUnload(event: BeforeUnloadEvent) {
+      if (globalThis._closeWindow) return;
+      if (this.store.unsavedCount) {
+        const message = "You have unsaved changes that will be lost";
+        event.returnValue = message;
+        if (electron) {
+          setTimeout(async () => {
+            const result = await showMessageBox({
+              message: "You have unsaved changes that will be lost?",
+              buttons: ["Cancel", "Leave"],
+              defaultId: 0,
+              cancelId: 0,
+              type: "question",
+            });
+            if (result === 1) {
+              globalThis._closeWindow = true;
+              closeWindow();
+            }
+          });
+        }
+      }
+      return false;
+    },
     systemAndCatalogues(gst: GameSystemFiles) {
       let res = [];
       if (gst.gameSystem) {
@@ -168,8 +197,8 @@ export default defineComponent({
     },
     createCatalogue(data: BSIDataCatalogue) {
       const system = this.store.get_system(data.catalogue.gameSystemId);
-      const copy = JSON.parse(JSON.stringify(data));
-
+      const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
+      copy.catalogue.battleScribeVersion = "2.03";
       if (electron) {
         if (!system.gameSystem) {
           throw new Error("Cannot create catalogue: no game system");

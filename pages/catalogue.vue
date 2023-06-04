@@ -158,7 +158,7 @@ export default {
         this.save_state();
       }
 
-      if (this.unsaved) {
+      if (this.unsaved || this.store.unsavedCount) {
         const message = "You have unsaved changes that will be lost";
         event.returnValue = message;
         if (electron) {
