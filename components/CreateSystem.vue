@@ -1,16 +1,14 @@
 <template>
-  <span>
-    <button class="bouton" @click="click"> Create System </button>
-    <PopupDialog v-if="open" v-model="open" button="Create" @button="create">
-      <h2 class="text-center">Create System</h2>
-      <span>Name: </span>
-      <input class="w-full" type="text" v-model="text" required />
-      <template v-if="electron">
-        <div> The system will be created at: </div>
-        <div class="gray">{{ folder }}/{{ text }}/</div>
-      </template>
-    </PopupDialog>
-  </span>
+  <button class="bouton" @click="click"> Create System </button>
+  <PopupDialog v-if="open" v-model="open" button="Create" @button="create">
+    <h2 class="text-center">Create System</h2>
+    <span>Name </span>
+    <input class="w-full" type="text" v-model="text" required />
+    <template v-if="electron">
+      <div> The system will be created at: </div>
+      <div class="gray">{{ folder }}/{{ text }}/</div>
+    </template>
+  </PopupDialog>
 </template>
 <script lang="ts">
 import { removeSuffix } from "~/assets/shared/battlescribe/bs_helpers";
