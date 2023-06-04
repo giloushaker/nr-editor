@@ -782,5 +782,13 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
+    async back() {
+      // go back in router
+      // load state
+    },
+    async forward() {
+      // go back in router
+      // load state
+    },
   },
 });

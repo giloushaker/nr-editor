@@ -37,7 +37,7 @@ export const useEditorUIState = defineStore("editor-ui", {
         }
       }
     },
-    save(id: string, data: Record<string, any>) {
+    set_state(id: string, data: Record<string, any>) {
       // Get all open collapsible boxes and save their state
       function recurseFn(elt: Element, obj: any, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;

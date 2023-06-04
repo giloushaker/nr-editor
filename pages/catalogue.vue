@@ -203,7 +203,7 @@ export default {
         for (const key of Object.keys(LeftPanelDefaults) as (keyof typeof LeftPanelDefaults)[]) {
           leftpanelstate[key] = leftpanel[key];
         }
-        this.uistate.save(this.cat.id, {
+        this.uistate.set_state(this.cat.id, {
           selection: selected ? getEntryPath(selected) : undefined,
           ...leftpanelstate,
         });

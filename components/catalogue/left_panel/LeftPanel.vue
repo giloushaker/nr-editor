@@ -1,8 +1,8 @@
 <template>
   <div class="leftPanel">
     <div class="static sticky flex items-center h-28px">
-      <span class="bold p-4px">🡰</span>
-      <span class="bold ml-4px p-4px">🡲</span>
+      <span class="bold p-4px unselectable cursor-pointer hover-darken" @click="store.back">🡰</span>
+      <span class="bold p-4px unselectable cursor-pointer hover-darken ml-4px" @click="store.forward">🡲</span>
       <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"

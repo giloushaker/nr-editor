@@ -47,6 +47,7 @@ Editor:
         ✔ Categories on root selection entry links @done(23-06-04 10:19)
         ☐ https://github.com/BattleScribe/Release/issues/63 (profile types name change doesnt update profiles .typeName)
         ☐ changing catalogues in another program will not reflect in the nr editor
+        
         ✔ dexie on electron version doesnt work if process is opened more than once @done(23-06-01 21:17)
         ✔ fix bad zip compression @done(23-06-02 21:21)
         ✔ rules description not saving @done(23-06-01 16:04)
@@ -61,7 +62,7 @@ Editor:
     Ideas:
         Cache stuff after first load then subsequent openings can be lazy loaded
         Setting to display the categories of entries in tree view
-        
+
 
     Features:
         ✔ text Search @done(23-05-08 21:18)
