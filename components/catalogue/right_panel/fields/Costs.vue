@@ -2,8 +2,7 @@
   <fieldset>
     <legend>Costs</legend>
     <div class="costs">
-      <div v-for="cost of catalogue.costTypes">
-        <label>{{ cost.name }}: </label>
+      <div v-for="cost of costTypes">
         <UtilNumberInput
           v-if="selectedCosts[cost.id]"
           v-model="selectedCosts[cost.id].value"
@@ -17,7 +16,7 @@
 
 <script lang="ts">
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICost } from "~/assets/shared/battlescribe/bs_types";
+import { BSICost, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -40,6 +39,16 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
+    },
+  },
+
+  computed: {
+    costTypes() {
+      let res: BSICostType[] = [];
+      for (let elt of this.catalogue.iterateCostTypes()) {
+        res.push(elt);
+      }
+      return res;
     },
   },
 
