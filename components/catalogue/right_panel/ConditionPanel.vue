@@ -1,15 +1,7 @@
 <template>
   <div>
-    <CatalogueRightPanelFieldsComment
-      :item="item"
-      @catalogueChanged="changed"
-    />
-    <Condition
-      class="section"
-      :item="item"
-      @catalogueChanged="changed"
-      :catalogue="catalogue"
-    />
+    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
+    <Condition class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
 
     <CatalogueRightPanelFieldsQuery
       class="section"
@@ -20,12 +12,7 @@
       childSelections
     />
 
-    <FilterBy
-      class="section"
-      :item="item"
-      @catalogueChanged="changed"
-      :catalogue="catalogue"
-    />
+    <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
   </div>
 </template>
 

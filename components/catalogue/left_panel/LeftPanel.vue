@@ -14,7 +14,7 @@
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
     </div>
     <div class="bottom static">
-      <span>
+      <span v-if="!catalogue.isGameSystem()">
         <input
           class="cursor-pointer"
           v-model="showImported"
@@ -24,6 +24,7 @@
         />
         <label class="unselectable cursor-pointer" for="showimport">Show Imported</label>
       </span>
+      <span> &nbsp;</span>
       <span class="absolute right-5px">
         <input class="cursor-pointer" v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
         <label class="unselectable cursor-pointer" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
@@ -144,12 +145,12 @@ export default {
       }
       if (filter.length > 1) {
         this.store.set_filter(filter);
-        let t1 = Date.now();
+        // let t1 = Date.now();
         this.store.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
         if (ignoreProfilesRules) {
           this.store.filtered = this.store.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
         }
-        let t2 = Date.now();
+        // let t2 = Date.now();
         for (const p of this.store.filtered) {
           p.showInEditor = true;
           p.showChildsInEditor = true;
@@ -158,9 +159,9 @@ export default {
             parent.showInEditor = true;
           });
         }
-        let t3 = Date.now();
+        // let t3 = Date.now();
         await nextTick();
-        let t4 = Date.now();
+        // let t4 = Date.now();
 
         console.log(this.store.filtered.length, this.store.filter);
         if (this.store.filtered.length < 300) {
@@ -173,15 +174,15 @@ export default {
             }
           }
         }
-        let t5 = Date.now();
-        this.$nextTick(() => {
-          let t6 = Date.now();
-          console.log("search", t2 - t1);
-          console.log("set display status", t3 - t2);
-          console.log("render1", t4 - t3);
-          console.log("open", t5 - t4);
-          console.log("render2", t6 - t5);
-        });
+        // let t5 = Date.now();
+        // this.$nextTick(() => {
+        //   let t6 = Date.now();
+        //   console.log("search", t2 - t1);
+        //   console.log("set display status", t3 - t2);
+        //   console.log("render1", t4 - t3);
+        //   console.log("open", t5 - t4);
+        //   console.log("render2", t6 - t5);
+        // });
       } else {
         this.store.set_filter("");
         this.store.filtered = [];

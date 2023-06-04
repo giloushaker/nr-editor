@@ -1,7 +1,7 @@
 <template>
   <fieldset>
     <legend>Comment</legend>
-    <UtilEditableDiv v-model="item.comment" @change="changed"></UtilEditableDiv>
+    <UtilEditableDiv v-model="comment" @change="changed"></UtilEditableDiv>
   </fieldset>
 </template>
 
@@ -16,7 +16,16 @@ export default {
       required: true,
     },
   },
-
+  computed: {
+    comment: {
+      get(): string {
+        return (Array.isArray(this.item.comment) ? this.item.comment[0] : this.item.comment) || "";
+      },
+      set(str: string) {
+        this.item.comment = [str];
+      },
+    },
+  },
   methods: {
     changed() {
       this.$emit("catalogueChanged");

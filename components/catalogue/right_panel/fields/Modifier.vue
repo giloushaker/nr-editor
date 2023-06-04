@@ -40,12 +40,32 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemTypes, getModifierOrConditionParent, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { Category } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIConstraint, BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 
 type FieldTypes = "string" | "number" | "category" | "boolean";
+const availableModifiers = {
+  selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
+  selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
+  profile: ["name", "description", "page", "hidden"],
+  rule: ["name", "description", "page", "hidden"],
+  infoLink: ["name", "description", "page", "hidden"],
+  force: ["name", "page", "hidden", "constraints"],
+  category: ["name", "page", "hidden", "constraints"],
+  categoryLink: ["name", "page", "hidden", "constraints"],
+} as any;
+
+const availableTypes = {
+  costs: "number",
+  name: "string",
+  page: "string",
+  hidden: "boolean",
+  description: "string",
+  category: "category",
+  constraints: "number",
+} as Record<string, FieldTypes>;
 
 export default {
   emits: ["catalogueChanged"],
@@ -64,26 +84,6 @@ export default {
         name: string;
       } | null,
       selectedValue: null as any,
-      availableModifiers: {
-        selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
-        selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
-        profile: ["name", "description", "page", "hidden"],
-        rule: ["name", "description", "page", "hidden"],
-        infoLink: ["name", "description", "page", "hidden"],
-        force: ["name", "page", "hidden", "constraints"],
-        category: ["name", "page", "hidden", "constraints"],
-        categoryLink: ["name", "page", "hidden", "constraints"],
-      } as any,
-
-      availableTypes: {
-        costs: "number",
-        name: "string",
-        page: "string",
-        hidden: "boolean",
-        description: "string",
-        category: "category",
-        constraints: "number",
-      } as Record<string, FieldTypes>,
     };
   },
 
@@ -149,7 +149,7 @@ export default {
 
   computed: {
     parent() {
-      return (this.item as any as EditorBase).parent as ItemTypes;
+      return getModifierOrConditionParent(this.item as any as EditorBase);
     },
 
     allCategories(): Category[] {
@@ -230,7 +230,7 @@ export default {
     },
 
     fieldData() {
-      let available: string[] = this.availableModifiers[this.parent.editorTypeName];
+      let available: string[] = availableModifiers[this.parent.editorTypeName];
 
       const additional: {
         id: string;
@@ -290,7 +290,7 @@ export default {
           return {
             id: elt,
             name: elt,
-            type: this.availableTypes[elt],
+            type: availableTypes[elt],
             modifierType: "bullet",
           };
         })

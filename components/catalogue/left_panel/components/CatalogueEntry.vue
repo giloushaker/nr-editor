@@ -3,7 +3,11 @@
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
       <div class="head">
         <EditorCollapsibleBox :payload="catalogue" nobox :group="[]" :collapsible="false">
-          <template #title><img src="/assets/bsicons/catalogue.png" /> {{ catalogue.name }}</template>
+          <template #title
+            ><img src="/assets/bsicons/catalogue.png" />
+            {{ catalogue.name }}
+            <span v-if="getNameExtra(catalogue)" class="gray">&nbsp;{{ getNameExtra(catalogue) }} </span>
+          </template>
           <template #content></template>
         </EditorCollapsibleBox>
       </div>
@@ -423,7 +427,7 @@ export default {
       return this.menu("nestedcontextmenu");
     },
     catalogue() {
-      return this.item.getCatalogue();
+      return this.item.getCatalogue() as Catalogue & EditorBase;
     },
     catalogues() {
       return this.catalogue.imports;

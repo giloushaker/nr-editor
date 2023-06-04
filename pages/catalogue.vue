@@ -45,7 +45,7 @@
         </template>
       </template>
       <template v-if="systemFiles && !systemFiles.allLoaded">
-        <button class="bouton save ml-10px" @click="systemFiles.loadAll">Load all</button>
+        <button class="bouton load ml-10px" @click="systemFiles.loadAll">Load all refs</button>
       </template>
     </Teleport>
   </div>
@@ -98,6 +98,8 @@ export default {
   },
   created() {
     this.store.init(this.$router);
+    (globalThis as any).$catalogue = this.cat;
+    (globalThis as any).$system = this.cat?.getGameSystem();
   },
   computed: {
     changed() {
@@ -252,6 +254,9 @@ export default {
 <style scoped>
 .save {
   width: 100px;
+}
+.load {
+  width: 150px;
 }
 
 .status {

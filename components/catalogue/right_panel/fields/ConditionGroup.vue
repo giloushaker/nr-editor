@@ -1,4 +1,5 @@
 <template>
+  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
   <fieldset>
     <legend>Condition Group</legend>
     <table class="editorTable">

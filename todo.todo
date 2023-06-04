@@ -41,6 +41,7 @@ Editor:
         ✔ catalogueLink @done(23-06-01 00:25)
         ✔ catalogue / gameSystem obj @done(23-06-01 00:24)
         ✔ categoryLinks @done(23-06-01 16:03)
+        ✔ moifiers inside modifierGroups seem bugged @done(23-06-04 02:17)
 
     Problems: 
         ☐ Categories on root selection entry links 

@@ -72,7 +72,8 @@ export default {
 
     collective() {
       if (this.item.parent?.isCatalogue()) {
-        return 0;
+        const parentkey = this.item.parentKey;
+        if (parentkey === "selectionEntries" || parentkey === "entryLinks") return 0;
       }
 
       switch (this.item.editorTypeName) {
