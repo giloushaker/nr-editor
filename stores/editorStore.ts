@@ -124,7 +124,7 @@ export const useEditorStore = defineStore("editor", {
         gameSystem: {
           id: id,
           name: name,
-          battleScribeVersion: 0,
+          battleScribeVersion: "2.03",
           revision: 1,
         },
       } as BSIDataSystem;
