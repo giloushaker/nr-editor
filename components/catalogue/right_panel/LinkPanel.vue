@@ -17,7 +17,6 @@
     :type="type"
   />
 
-  {{ item.editorTypeName == null ? "null" : item.editorTypeName }}
   <CatalogueRightPanelFieldsCosts
     v-if="item.editorTypeName == 'selectionEntryLink'"
     :item="item"
