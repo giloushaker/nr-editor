@@ -3,8 +3,9 @@
     <legend>Costs</legend>
     <div class="costs">
       <div v-for="cost of costTypes">
+        <label>{{ cost.name }}: </label>
         <UtilNumberInput
-          v-if="selectedCosts[cost.id]"
+          v-if="selectedCosts[cost.id] != null"
           v-model="selectedCosts[cost.id].value"
           class="input"
           @change="changed"
@@ -60,14 +61,13 @@ export default {
 
     update() {
       this.selectedCosts = {};
-      if (this.catalogue.costIndex) {
-        for (let cost of Object.values(this.catalogue.costIndex)) {
-          this.selectedCosts[cost.id] = {
-            name: cost.name,
-            typeId: cost.id,
-            value: 0,
-          };
-        }
+
+      for (let cost of Object.values(this.costTypes)) {
+        this.selectedCosts[cost.id] = {
+          name: cost.name,
+          typeId: cost.id,
+          value: 0,
+        };
       }
 
       if (this.item.costs) {
