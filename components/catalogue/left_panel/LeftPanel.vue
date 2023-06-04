@@ -1,8 +1,8 @@
 <template>
   <div class="leftPanel">
     <div class="static sticky flex items-center h-28px">
-      <!-- <span class="bold p-4px">&lt;</span> -->
-      <!-- <span class="bold p-4px">&gt;</span> -->
+      <span class="bold p-4px">🡰</span>
+      <span class="bold ml-4px p-4px">🡲</span>
       <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
@@ -163,7 +163,6 @@ export default {
         await nextTick();
         // let t4 = Date.now();
 
-        console.log(this.store.filtered.length, this.store.filter);
         if (this.store.filtered.length < 300) {
           for (const p of this.store.filtered) {
             if (!p.parent) continue;

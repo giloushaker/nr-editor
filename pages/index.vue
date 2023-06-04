@@ -101,10 +101,10 @@ export default defineComponent({
       this.store.load_systems_from_db();
     }
   },
-  mounted() {
+  activated() {
     window.addEventListener("beforeunload", this.beforeUnload);
   },
-  unmounted() {
+  deactivated() {
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   computed: {

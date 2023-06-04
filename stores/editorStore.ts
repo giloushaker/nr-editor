@@ -354,8 +354,9 @@ export const useEditorStore = defineStore("editor", {
     },
     async set_clipboard(data: EditorBase[]) {
       if (this.clipboardmode === "json") {
-        const shallowCopies = data.map((o) => ({ ...o, parentKey: o.parentKey })) as EditorBase[];
-        const json = entriesToJson(shallowCopies, new Set(["parentKey"]));
+        //@ts-ignore
+        const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o })) as EditorBase[];
+        const json = entriesToJson(shallowCopies, new Set(["parentKey"]), true);
         await navigator.clipboard.writeText(json);
       } else {
         this.clipboard = data;
@@ -529,13 +530,30 @@ export const useEditorStore = defineStore("editor", {
     },
     get_initial_object(key: string & keyof Base) {
       switch (key) {
+        case "repeats":
+          return {
+            value: 1,
+            repeats: 1,
+            field: "selections",
+            scope: "parent",
+            id: generateBattlescribeId(),
+            childId: "any",
+          };
         case "constraints":
+          return {
+            type: "min",
+            value: 1,
+            field: "selections",
+            scope: "parent",
+            id: generateBattlescribeId(),
+          };
         case "conditions":
           return {
             type: "min",
             value: 1,
             field: "selections",
             scope: "parent",
+            childId: "any",
             id: generateBattlescribeId(),
           };
         case "modifiers":

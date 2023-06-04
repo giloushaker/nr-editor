@@ -1,12 +1,5 @@
 <template>
-  <input
-    v-model="stringValue"
-    type="number"
-    @change="update"
-    :required="required"
-    :min="min"
-    :max="max"
-  />
+  <input v-model="stringValue" type="number" @change="update" :required="required" :min="min" :max="max" />
 </template>
 
 <script lang="ts">
@@ -53,7 +46,7 @@ export default {
 
     update() {
       if (this.stringValue != null) {
-        this.intValue = parseInt(this.stringValue);
+        this.intValue = parseFloat(this.stringValue);
         this.$emit("update:modelValue", this.intValue);
         this.$emit("change");
       }

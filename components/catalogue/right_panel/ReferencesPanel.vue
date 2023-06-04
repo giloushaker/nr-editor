@@ -101,7 +101,7 @@ export default {
 </script>
 <style scope>
 td {
-  padding: 1px !important;
+  padding: 1px 4px 1px 4px !important;
   text-align: left !important;
 }
 </style>

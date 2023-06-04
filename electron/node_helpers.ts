@@ -50,7 +50,6 @@ export async function getFolderFolders(folderPath: string) {
   try {
     const fileObjects = [];
     const pathIsDir = (await electron.invoke("isDirectory", folderPath)) as boolean;
-    console.log("pathiddir", pathIsDir);
     if (!pathIsDir) return [];
 
     const entries = (await electron.invoke("readdirSync", folderPath)) as string[];

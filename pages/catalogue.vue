@@ -86,6 +86,12 @@ export default {
     window.removeEventListener("beforeunload", this.beforeUnload);
     document.removeEventListener("keydown", this.onKeydown);
   },
+  activated() {
+    window.addEventListener("beforeunload", this.beforeUnload);
+  },
+  deactivated() {
+    window.removeEventListener("beforeunload", this.beforeUnload);
+  },
   beforeRouteUpdate() {
     if (this.id) {
       this.save_state();

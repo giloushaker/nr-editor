@@ -58,6 +58,11 @@ Editor:
         ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
         ✔ Modifiers in force categories @done(23-06-02 14:23)
 
+    Ideas:
+        Cache stuff after first load then subsequent openings can be lazy loaded
+        Setting to display the categories of entries in tree view
+        
+
     Features:
         ✔ text Search @done(23-05-08 21:18)
             Catalogue.findOptionsByText(query) then filter 
