@@ -23,7 +23,7 @@ export default defineComponent({
   },
   watch: {
     async progress_msg() {
-      return new Promise((resolve) => setTimeout(resolve, 10));
+      return await new Promise((resolve) => setTimeout(resolve, 10));
     },
   },
 });
