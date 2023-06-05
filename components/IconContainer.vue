@@ -104,7 +104,7 @@ export default {
   }
   font-size: 12px;
   border: 1px $gray solid;
-  padding: 2px;
+  padding: 3px;
   border-radius: 5px;
   box-shadow: $box_shadow;
   color: $fontColor;
@@ -132,6 +132,7 @@ export default {
 }
 .selected {
   border: solid black 2px;
+  padding: 2px;
 }
 
 .edited {
