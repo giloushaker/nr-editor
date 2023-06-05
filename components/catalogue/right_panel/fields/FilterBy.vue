@@ -124,7 +124,7 @@ export default {
     },
 
     allEntries(): EditorSearchItem[] {
-      return getSearchElements(this.catalogue, "entriesIterator");
+      return getSearchElements(this.catalogue, "iterateSelectionEntries");
     },
 
     allCategories(): EditorSearchItem[] {
