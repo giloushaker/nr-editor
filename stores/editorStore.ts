@@ -201,9 +201,10 @@ export const useEditorStore = defineStore("editor", {
         }
         progress && (await progress(result_files.length, allowed.length));
       }
-      for (const system of systems) {
-        // await system.loadAll();
-      }
+      // Process all catalogues
+      // for (const system of systems) {
+      // await system.loadAll();
+      // }
       return result;
     },
     async load_system_from_db(id: string) {

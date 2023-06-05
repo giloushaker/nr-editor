@@ -5,6 +5,7 @@
         :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
         class="bold p-4px unselectable"
         @click="store.back"
+        title="Back"
       >
         🡰
       </span>
@@ -16,6 +17,7 @@
         }"
         class="bold p-4px unselectable ml-4px"
         @click="store.forward"
+        title="Forward"
       >
         🡲
       </span>
