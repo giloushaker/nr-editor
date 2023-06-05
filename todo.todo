@@ -21,11 +21,12 @@ Interface:
 
     ✔ Bug report form @done(23-05-17 17:54)
     ☐ Copy/Paste not working on Firefox because clipboard access is not allowed. Perhaps use an alternate way of storing the copied data if clipboard unavailable
-    ☐ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups>
+    
+    ✔ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups> @done(23-06-05 15:44)
             The empty selection entry group with no ID should not exist in the XML it makes BS crash
             Seems to work now, not sure why it did not before
-    ☐ BUG: In WEB, When making a change, then saving, if I go back to the index page and Download, my changes are not in the downloaded file. I need to refressh the page before downloading
-    ✔ Empty 
+    ✔ BUG: In WEB, When making a change, then saving, if I go back to the index page and Download, my changes are not in the downloaded file. I need to refressh the page before downloading @done(23-06-05 15:43)
+    ✔ Fix Empty arrays in export
         Create a Game System
         Add a Root Selection Entry
         Save
