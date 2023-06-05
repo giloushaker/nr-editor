@@ -31,7 +31,21 @@ Interface:
     ☐ Add a Reload button somewhere or possibly detect file changes / changes in INDEXDB to propose auto reload
     ☐ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups>
             The empty selection entry group with no ID should not exist in the XML it makes BS crash
-    ☐ BUG: It seems that Collective does not export to XML
+    ✘ BUG: It seems that Collective does not export to XML @cancelled(23-06-05 11:03)
+            Seems to work now, not sure why it did not before
+    ☐ BUG: In WEB, When making a change, then saving, if I go back to the index page and Download, my changes are not in the downloaded file. I need to refressh the page before downloading
+    ☐ BUG: IN ELECTRON: 
+        Create a Game System
+        Add a Root Selection Entry
+        Save
+        Delete the new entry
+        Save
+        Quit
+        => this puts an empty root selectrie entries node in the XML <selectionEntries></selectionEntries>
+        Start the program again
+        A dropdown arrow is visible in Root Selection Entries
+        If I try to open the dropdown, the whole Root Selection Entries node disappears
+        
 
 Editor:
     UI:
