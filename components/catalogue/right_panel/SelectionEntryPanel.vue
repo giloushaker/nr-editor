@@ -1,41 +1,14 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-  />
-  <CatalogueRightPanelFieldsReference
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
-  <CatalogueRightPanelFieldsEntryType
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsEntryType :item="item" @catalogueChanged="changed" class="section">
     Selection Entry
   </CatalogueRightPanelFieldsEntryType>
 
-  <CatalogueRightPanelFieldsCosts
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
 
-  <CatalogueRightPanelFieldsBooleans
-    :item="item"
-    @catalogueChanged="changed"
-    :fields="[
-      { field: 'hidden', enabled: true, name: 'Hidden' },
-      { field: 'collective', enabled: false, name: 'Collective' },
-      { field: 'import', enabled: true, name: 'Import' },
-    ]"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed" class="section">
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
@@ -57,17 +30,13 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
-import { Base, Category } from "~/assets/shared/battlescribe/bs_main";
-import {
-  Catalogue,
-  Publication,
-} from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Base>,
+      type: Object as PropType<any>,
       required: true,
     },
 
