@@ -24,6 +24,7 @@
             :options="availableTargets"
             valueField="id"
             filterField="name"
+            @change="changed"
           >
             <template #option="opt">
               <div>
@@ -39,7 +40,7 @@
         </td>
       </tr>
     </table>
-    <input type="checkbox" v-model="item.shared" id="shared" />
+    <input type="checkbox" v-model="item.shared" id="shared" @change="chaged" />
     <label for="shared">Shared?</label>
   </fieldset>
 </template>
