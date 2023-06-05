@@ -5,9 +5,12 @@
         >Working Folder: <span class="workdir">{{ settings.systemsFolder }}</span></div
       >
 
-      <SelectFile @uploaded="uploaded" />
-      <SelectFolder class="ml-10px" @selected="selectedFolder" />
-      <CreateSystem class="ml-10px" @created="update" />
+      <div class="boutons">
+        <SelectFile @uploaded="uploaded" />
+        <SelectFolder @selected="selectedFolder" />
+        <CreateSystem @created="update" />
+      </div>
+
       <p
         >You can open a system by clicking any of the systems in your working folder, listed below, or click Load System
         to load a system outside this folder.</p
