@@ -20,7 +20,19 @@ Interface:
 
 
     ✔ Bug report form @done(23-05-17 17:54)
-    
+    ☐ Copy/Paste not working on Firefox because clipboard access is not allowed. Perhaps use an alternate way of storing the copied data if clipboard unavailable
+    ☐ When creating a new item, fields should be initialized to a default value
+        ☐ Selection Entry
+            ☐ Entry Type
+            ☐ Import should probably be true by default. It seems BS considers import = true if import is undefined
+        ☐ Condition
+            ☐ Condition Type
+            ☐ Number should probably be initiated to 0 instead of 1 to make it 1+ by default and not 2+
+    ☐ Add a Reload button somewhere or possibly detect file changes / changes in INDEXDB to propose auto reload
+    ☐ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups>
+            The empty selection entry group with no ID should not exist in the XML it makes BS crash
+    ☐ BUG: It seems that Collective does not export to XML
+
 Editor:
     UI:
         ✔ show imported entries @done(23-05-21 16:17)
