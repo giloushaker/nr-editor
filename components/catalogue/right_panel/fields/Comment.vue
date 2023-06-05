@@ -22,7 +22,7 @@ export default {
         return (Array.isArray(this.item.comment) ? this.item.comment[0] : this.item.comment) || "";
       },
       set(str: string) {
-        this.item.comment = [str];
+        this.item.comment = str ? [str] : undefined;
       },
     },
   },

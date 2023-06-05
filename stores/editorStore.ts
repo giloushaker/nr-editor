@@ -1,4 +1,3 @@
-import { VueElement } from "nuxt/dist/app/compat/capi";
 import { defineStore } from "pinia";
 import {
   ItemKeys,
@@ -24,26 +23,36 @@ import {
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { entries } from "assets/json/entries";
-import { Base, Link, entriesToJson, entryToJson } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { createFolder, getFolderFiles } from "~/electron/node_helpers";
+import type { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
+import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
+import CatalogueVue from "~/pages/catalogue.vue";
+import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
+import { EditorUIState, useEditorUIState } from "./editorUIState";
+import { useUIState } from "./uiState";
+
+type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
+
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
-  selectedElementGroup: any | null;
-  selectedElement: any | null;
+  selectedElementGroup: VueComponent[] | null;
+  selectedElement: VueComponent | null;
   selectedItem: any | null;
 
   filter: string;
   filterRegex: RegExp;
   filtered: EditorBase[];
+
+  historyStack: Array<EditorUIState | null>;
+  historyStackPos: number;
 
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
@@ -57,6 +66,7 @@ export interface IEditorStore {
   unsavedCount: number;
   unsavedChanges: Record<string, CatalogueState>;
 
+  catalogueComponent?: CatalogueComponentT;
   $router?: Router;
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
@@ -98,6 +108,9 @@ export const useEditorStore = defineStore("editor", {
 
     undoStack: [],
     undoStackPos: -1,
+
+    historyStack: [],
+    historyStackPos: -1,
 
     clipboard: [],
 
@@ -151,39 +164,45 @@ export const useEditorStore = defineStore("editor", {
       const cataloguesStore = useCataloguesStore();
       const files = await getFolderFiles(folder);
       const result = [] as string[];
+      const systems = [] as GameSystemFiles[];
       if (files) {
         const result_files = [];
         console.log("Loading", files.length, "files", files);
         const allowed = files.filter((o) => isAllowedExtension(o.name));
         for (const file of allowed) {
-          progress && (await progress(result_files.length, allowed.length, file.path));
-          const asJson = await convertToJson(file.data, getExtension(file.name));
-          const systemId = asJson?.gameSystem?.id;
-          const catalogueId = asJson?.catalogue?.id;
-          const obj = getDataObject(asJson);
-          const state = this.get_catalogue_state(asJson);
+          const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
+
+          const systemId = json?.gameSystem?.id;
+          const catalogueId = json?.catalogue?.id;
+          const obj = getDataObject(json);
+          const state = this.get_catalogue_state(json);
           if (state) {
             state.changed = false;
             state.unsaved = false;
           }
-          const id = getDataDbId(asJson);
-          cataloguesStore.updateCatalogue(asJson);
+          const id = getDataDbId(json);
+          cataloguesStore.updateCatalogue(json);
           cataloguesStore.setEdited(id, false);
 
           obj.fullFilePath = file.path.replaceAll("\\", "/");
           if (systemId) {
             result.push(systemId);
             const systemFiles = this.get_system(systemId);
-            systemFiles.setSystem(asJson);
+            systems.push(systemFiles);
+            systemFiles.setSystem(json);
             systemFiles.unloadAll();
           }
           if (catalogueId) {
-            const systemFiles = this.get_system(asJson.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = asJson;
+            const systemFiles = this.get_system(json.catalogue.gameSystemId);
+            systemFiles.catalogueFiles[catalogueId] = json;
           }
-          result_files.push(asJson);
+          result_files.push(json);
+          progress && (await progress(result_files.length, allowed.length, file.path));
         }
         progress && (await progress(result_files.length, allowed.length));
+      }
+      for (const system of systems) {
+        // await system.loadAll();
       }
       return result;
     },
@@ -264,9 +283,18 @@ export const useEditorStore = defineStore("editor", {
       this.$state.filter = filter;
       this.filterRegex = textSearchRegex(filter);
     },
-    init(vueRouter: Router) {
-      this.$router = vueRouter as any;
+    init(component: any) {
+      const casted = component as CatalogueComponentT;
+      if (casted.$router) {
+        this.$router = casted.$router as any;
+      }
+      this.catalogueComponent = casted;
       (globalThis as any).$store = this;
+    },
+    rerender_catalogue() {
+      if (this.catalogueComponent) {
+        this.catalogueComponent.key += 1;
+      }
     },
     unselect(obj?: any) {
       const next_selected = [];
@@ -299,7 +327,7 @@ export const useEditorStore = defineStore("editor", {
     is_selected(obj: VueComponent) {
       return this.selections.findIndex((o) => o.obj === obj) !== -1;
     },
-    do_select(e: MouseEvent | null, el: VueElement, group: VueElement | VueElement[]) {
+    do_select(e: MouseEvent | null, el: VueComponent, group: VueComponent | VueComponent[]) {
       const entries = Array.isArray(group) ? group : [group];
       const last = this.selectedElementGroup;
       const last_element = this.selectedElement;
@@ -328,7 +356,7 @@ export const useEditorStore = defineStore("editor", {
         this.mode = "edit";
       }
     },
-    do_rightclick_select(e: MouseEvent, el: VueElement, group: VueElement | VueElement[]) {
+    do_rightclick_select(e: MouseEvent, el: VueComponent, group: VueComponent | VueComponent[]) {
       if (this.is_selected(el)) return;
       this.do_select(e, el, group);
     },
@@ -346,7 +374,8 @@ export const useEditorStore = defineStore("editor", {
       await redo();
 
       if (this.undoStackPos < this.undoStack.length) {
-        this.undoStack.splice(this.undoStackPos + 1, 1, { type, undo, redo });
+        const n_to_remove = this.undoStack.length - this.undoStackPos - 1;
+        this.undoStack.splice(this.undoStackPos + 1, n_to_remove, { type, undo, redo });
       } else {
         this.undoStack.push({ type, undo, redo });
       }
@@ -549,7 +578,7 @@ export const useEditorStore = defineStore("editor", {
           };
         case "conditions":
           return {
-            type: "min",
+            type: "atLeast",
             value: 1,
             field: "selections",
             scope: "parent",
@@ -565,6 +594,18 @@ export const useEditorStore = defineStore("editor", {
         case "modifierGroups":
         case "conditionGroups":
           return { type: "and" };
+        case "sharedSelectionEntries":
+        case "selectionEntries":
+          return {
+            type: "upgrade",
+            import: true,
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+          };
+        case "entryLinks":
+          return {
+            import: true,
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+          };
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
@@ -662,16 +703,16 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
     },
-    allowed_children(obj: EditorBase, key: string): Set<string> {
+    allowed_children(obj: EditorBase, key: string): Array<string> {
       let result = (entries as any)[key]?.allowedChildrens;
       while (typeof result === "string") {
         const new_key = (obj as any)[result];
         if (typeof new_key !== "string" || new_key === result) {
-          return new Set();
+          return [];
         }
         result = (entries as any)[new_key].allowedChildrens;
       }
-      return new Set(result);
+      return result;
     },
     async open(obj: EditorBase, last?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
@@ -725,26 +766,35 @@ export const useEditorStore = defineStore("editor", {
 
       return current;
     },
-    async goto(obj: EditorBase) {
-      const targetCatalogue = obj.getCatalogue();
+    /**
+     *  Changes the current route to be the catalogue provided
+     *  Returns true if the route changed
+     */
+    async goto_catalogue(id: string, systemId?: string) {
       if (!this.$router) {
-        console.warn("Cannot follow link to another catalogue without $router set");
-        return;
+        throw new Error("Cannot follow link to another catalogue without $router set");
       }
       const curId = this.$router.currentRoute.query?.id || this.$router.currentRoute.query?.systemId;
-      if (targetCatalogue.id !== curId) {
-        const id = targetCatalogue.id;
-        const systemId = targetCatalogue.gameSystemId || id;
+      if (id !== curId) {
         this.$router.push({
           name: "catalogue",
-          query: { systemId, id },
+          query: { systemId: systemId || id, id: id },
         });
 
         this.$nextTick = new Promise((resolve, reject) => {
           this.$nextTickResolve = resolve;
         });
         await this.$nextTick;
+        return true;
       }
+      return false;
+    },
+    async goto(obj: EditorBase) {
+      const targetCatalogue = obj.getCatalogue();
+      this.put_current_state_in_history();
+      const uistate = useEditorUIState();
+      uistate.get_data(targetCatalogue.id).selection = getEntryPath(obj);
+      await this.goto_catalogue(targetCatalogue.id, targetCatalogue.gameSystemId);
 
       const el = await this.open(obj as EditorBase);
       if (el) {
@@ -755,6 +805,19 @@ export const useEditorStore = defineStore("editor", {
           block: "center",
           inline: "center",
         });
+      } else {
+        setTimeout(async () => {
+          const el = await this.open(obj as EditorBase);
+          if (el) {
+            const context = get_ctx(el);
+            this.do_select(null, context, context);
+            el.scrollIntoView({
+              behavior: "instant",
+              block: "center",
+              inline: "center",
+            });
+          }
+        }, 50);
       }
     },
     async follow(obj?: EditorBase & Link) {
@@ -782,13 +845,109 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
+    get_leftpanel_open_collapsible_boxes() {
+      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
+        const cls = `depth-${depth} collapsible-box opened`;
+        const results = elt.getElementsByClassName(cls);
+        if (!results?.length) return;
+        for (const cur of results) {
+          const item = get_base_from_vue_el(get_ctx(cur));
+          const key = item.parentKey;
+          const parent = item.parent;
+
+          if (parent) {
+            if (!parent[key]) continue;
+            const index = parent[key].indexOf(item);
+            if (!(key in obj)) obj[key] = {};
+            if (!(index in obj[key])) obj[key][index] = {};
+            find_open_recursive(cur, obj[key][index], depth + 1);
+          } else {
+            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o));
+            for (const key of keys) {
+              obj[key] = {};
+              obj[key][0] = {};
+            }
+            find_open_recursive(cur, obj[keys[0]][0], depth + 1);
+          }
+        }
+      }
+      const result = {};
+      find_open_recursive(document.documentElement, result);
+      return result;
+    },
+    get_leftpanel_state() {
+      if (!this.catalogueComponent) return {};
+      const leftpanelstate = {} as Record<string, any>;
+      const leftpanel = this.catalogueComponent.$refs.leftpanel as typeof LeftPanelDefaults;
+      for (const key of Object.keys(LeftPanelDefaults) as (keyof typeof LeftPanelDefaults)[]) {
+        leftpanelstate[key] = leftpanel[key];
+      }
+      return leftpanelstate as typeof LeftPanelDefaults;
+    },
+    get_current_state(): EditorUIState {
+      const selected = this.get_selected();
+      const catalogue = this.catalogueComponent?.cat;
+      return {
+        ...this.get_leftpanel_state(),
+        open: this.get_leftpanel_open_collapsible_boxes(),
+        selection: selected ? getEntryPath(selected) : undefined,
+        catalogueId: catalogue?.id,
+        systemId: catalogue?.gameSystemId,
+      };
+    },
+    save_state() {
+      if (this.catalogueComponent && this.catalogueComponent.cat) {
+        const id = this.catalogueComponent.cat.id;
+        const uistate = useEditorUIState();
+        const state = this.get_current_state();
+        uistate.set_state(id, state);
+      }
+    },
+    async load_state(state: EditorUIState) {
+      if (this.catalogueComponent) {
+        useEditorUIState().set_state(state.catalogueId!, state);
+        if (await this.goto_catalogue(state.catalogueId!, state.systemId)) {
+        } else {
+          this.catalogueComponent.load_state(state);
+          this.rerender_catalogue();
+        }
+      }
+    },
+    put_state_in_history(state: EditorUIState) {
+      if (this.historyStackPos < this.historyStack.length) {
+        const n_to_remove = this.historyStack.length - this.historyStackPos - 1;
+        this.historyStack.splice(this.historyStackPos + 1, n_to_remove, state, null);
+      } else {
+        this.historyStack.push(state);
+      }
+      this.historyStackPos = this.historyStack.length - 1;
+    },
+    put_current_state_in_history() {
+      if (this.catalogueComponent && this.catalogueComponent.cat) {
+        this.put_state_in_history(this.get_current_state());
+      }
+    },
+    can_back() {
+      return this.historyStackPos > 0;
+    },
     async back() {
-      // go back in router
-      // load state
+      if (this.can_back()) {
+        this.historyStack[this.historyStackPos] = this.get_current_state();
+        this.historyStackPos -= 1;
+        this.load_state(this.historyStack[this.historyStackPos]!);
+      }
+    },
+    can_forward() {
+      if (this.historyStack[this.historyStack.length - 1]) {
+        return this.historyStackPos < this.historyStack.length - 1;
+      }
+      return this.historyStackPos < this.historyStack.length - 2;
     },
     async forward() {
-      // go back in router
-      // load state
+      if (this.can_forward()) {
+        this.historyStackPos += 1;
+        this.load_state(this.historyStack[this.historyStackPos]!);
+      }
     },
   },
 });

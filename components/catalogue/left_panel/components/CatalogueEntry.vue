@@ -55,11 +55,11 @@
         nobox
       >
         <template #title>
-          <span :class="{ imported: imported }">
+          <span>
             <span class="typeIcon-wrapper">
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
-            <span :class="{ filtered: item.highlight }">{{ getName(item) }}</span>
+            <span :class="{ imported: imported, filtered: item.highlight }">{{ getName(item) }}</span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
           </span>
         </template>
@@ -390,6 +390,7 @@ export default {
     },
 
     sorted(items: CatalogueEntryItem[]) {
+      if (!this.sortable) return items;
       const a = sortByAscending(items, (o) => o.item.getName() || "");
       return sortByDescending(a, (o) => order[o.item.editorTypeName] || 1000);
     },
@@ -434,7 +435,7 @@ export default {
     },
 
     allowedChildren() {
-      return this.store.allowed_children(this.item, this.item.parentKey) || new Set();
+      return new Set(this.store.allowed_children(this.item, this.item.parentKey));
     },
     forceShow() {
       return this.item.showChildsInEditor || this.forceShowRecursive;
@@ -450,15 +451,7 @@ export default {
           allowed.push({ type: category as ItemKeys, item: elt });
         }
       }
-      const set = new Set();
-      const result = this.sortable(this.item) ? this.sorted(allowed) : allowed;
-      for (const item of result) {
-        if (set.has(this.key(item))) {
-          debugger;
-        }
-        set.add(this.key(item));
-      }
-      return result;
+      return this.sorted(allowed);
     },
     categories() {
       if (this.item.isCatalogue()) {
@@ -474,7 +467,7 @@ export default {
         if (category.links) this.getTypedArray(this.item as any, category.links, items);
         return {
           ...category,
-          items: items,
+          items: this.sorted(items),
         };
       });
     },
@@ -485,8 +478,8 @@ export default {
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
 .imported {
-  color: gray;
-  font-style: italic;
+  color: rgb(128, 145, 183);
+  // font-style: italic;
 }
 .filtered {
   background-color: rgba(10, 80, 255, 0.15);

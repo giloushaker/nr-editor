@@ -1,8 +1,25 @@
 <template>
   <div class="leftPanel">
     <div class="static sticky flex items-center h-28px">
-      <span class="bold p-4px unselectable cursor-pointer hover-darken" @click="store.back">🡰</span>
-      <span class="bold p-4px unselectable cursor-pointer hover-darken ml-4px" @click="store.forward">🡲</span>
+      <span
+        :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
+        class="bold p-4px unselectable"
+        @click="store.back"
+      >
+        🡰
+      </span>
+      <span
+        :class="{
+          grey: !store.can_forward(),
+          'cursor-pointer': store.can_forward(),
+          'hover-darken': store.can_forward(),
+        }"
+        class="bold p-4px unselectable ml-4px"
+        @click="store.forward"
+      >
+        🡲
+      </span>
+
       <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
@@ -15,13 +32,7 @@
     </div>
     <div class="bottom static">
       <span v-if="!catalogue.isGameSystem()">
-        <input
-          class="cursor-pointer"
-          v-model="showImported"
-          @change="showImportedChanged"
-          type="checkbox"
-          id="showimport"
-        />
+        <input class="cursor-pointer" v-model="showImported" type="checkbox" id="showimport" />
         <label class="unselectable cursor-pointer" for="showimport">Show Imported</label>
       </span>
       <span> &nbsp;</span>
@@ -35,9 +46,9 @@
 </template>
 
 <script lang="ts">
-import { forEachParent } from "~/assets/shared/battlescribe/bs_editor";
+import { EntryPathEntry, forEachParent, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { useEditorStore } from "~/stores/editorStore";
+import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 
@@ -46,9 +57,11 @@ export const LeftPanelDefaults = {
   ignoreProfilesRules: false,
   filter: "",
   scroll: 0,
+  selection: undefined as EntryPathEntry[] | undefined,
 };
 
-export default {
+export default defineComponent({
+  components: { CatalogueEntry },
   emits: ["scrolltop"],
   setup() {
     return { store: useEditorStore(), uistate: useEditorUIState() };
@@ -59,12 +72,27 @@ export default {
       ...this.defaults,
     };
   },
-  mounted() {
+  async mounted() {
     addEventListener("keydown", this.keydown);
-    this.$nextTick(() => {
-      const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
-      if (scrollable_el) {
-        scrollable_el.scrollTop = this.scroll;
+    this.$nextTick(async () => {
+      this.set_scroll(this.scroll);
+      if (this.selection) {
+        let obj = getAtEntryPath(this.catalogue, this.selection);
+        const last = this.selection[this.selection.length - 1];
+        if (!obj && last.id) {
+          obj = this.catalogue.findOptionById(last.id) as EditorBase | undefined;
+        }
+        if (obj) {
+          try {
+            const el = await this.store.open(obj);
+            if (el) {
+              const ctx = get_ctx(el);
+              await ctx.do_select();
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
       }
     });
   },
@@ -84,6 +112,18 @@ export default {
   methods: {
     onscroll(event: Event) {
       this.scroll = (event.target as HTMLDivElement).scrollTop;
+    },
+    async set_scroll(scroll: number) {
+      const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
+      if (scrollable_el) scrollable_el.scrollTop = scroll;
+      this.$nextTick(async () => {
+        const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
+        if (scrollable_el) scrollable_el.scrollTop = scroll;
+      });
+      setTimeout(() => {
+        const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
+        if (scrollable_el) scrollable_el.scrollTop = scroll;
+      }, 50);
     },
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
@@ -187,9 +227,6 @@ export default {
         this.store.filtered = [];
       }
     },
-    showImportedChanged() {
-      this.catalogue.imports.map((o) => o.processForEditor());
-    },
   },
   computed: {
     filterData() {
@@ -203,9 +240,16 @@ export default {
     filterData(data) {
       this.update(data);
     },
+    showImported: {
+      immediate: true,
+      handler(v) {
+        if (v) {
+          this.catalogue.imports.map((o) => o.processForEditor());
+        }
+      },
+    },
   },
-  components: { CatalogueEntry },
-};
+});
 </script>
 
 <style scoped lang="scss">
@@ -234,5 +278,9 @@ input:focus::placeholder {
 }
 .rightborder {
   border-right: 1px solid rgb(177, 177, 177);
+}
+
+.enabled {
+  cursor: pointer;
 }
 </style>

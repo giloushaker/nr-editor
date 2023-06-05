@@ -3,6 +3,60 @@ const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
 
+const { readFile, readdir, stat } = require("fs/promises");
+
+const zipExtensions = ["gstz", "zip", "catz"];
+function getExtension(extension_or_file) {
+  const extension = extension_or_file.split(".").pop().toLowerCase();
+  return extension;
+}
+function isZipExtension(extension_or_file) {
+  const extension = getExtension(extension_or_file);
+  return zipExtensions.includes(extension);
+}
+
+function dirname(path) {
+  return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
+}
+async function isFile(f) {
+  const stats = await stat(f);
+  return stats.isFile();
+}
+
+var AdmZip = require("adm-zip");
+async function readAndUnzipFile(path) {
+  try {
+    if (!(await isFile(path))) return undefined;
+    const isZip = isZipExtension(path);
+    if (isZip) {
+      var zip = new AdmZip(path);
+      var zipEntries = zip.getEntries();
+      const entry = zipEntries[0];
+      return entry.getData().toString("utf-8");
+    } else {
+      return await readFile(path, "utf-8");
+    }
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+}
+
+async function getFolderFiles(folderPath) {
+  const fileObjects = [];
+  const isPathFile = await isFile(folderPath);
+  if (isPathFile) {
+    folderPath = dirname(folderPath);
+  }
+  const entries = await readdir(folderPath);
+  for (const entry of entries) {
+    const filePath = `${folderPath}/${entry}`;
+    fileObjects.push(readAndUnzipFile(filePath).then((data) => ({ data, name: entry, path: filePath })));
+  }
+
+  return (await Promise.all(fileObjects)).filter((o) => o.data);
+}
+
 let mainWindow;
 let previousTitle = "";
 function askForUpdate() {
@@ -69,10 +123,19 @@ const createMainWindow = () => {
 
   // Expose all node functions to invoke
   const fs = require("fs");
+  const promiseFunctions = new Set(Object.keys(fs.promises));
   for (const [key, val] of Object.entries(fs)) {
+    if (promiseFunctions.has(key)) continue;
     if (typeof val === "function") {
       ipcMain.handle(key, (event, ...args) => {
         return val(...args);
+      });
+    }
+  }
+  for (const [key, val] of Object.entries(fs.promises)) {
+    if (typeof val === "function") {
+      ipcMain.handle(key, async (event, ...args) => {
+        return await val(...args);
       });
     }
   }
@@ -129,6 +192,9 @@ const createMainWindow = () => {
   ipcMain.handle("closeWindow", async (event, ...args) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     return await wnd.close(...args);
+  });
+  ipcMain.handle("getFolderFiles", async (event, ...args) => {
+    return await getFolderFiles(...args);
   });
 };
 const filter = { urls: ["https://*/*"] };

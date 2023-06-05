@@ -57,6 +57,7 @@ import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_syst
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
 import { useCataloguesStore } from "~/stores/cataloguesState";
+import { useEditorStore } from "~/stores/editorStore";
 export default {
   emits: ["edit", "delete"],
   props: {
@@ -66,7 +67,7 @@ export default {
     },
   },
   setup() {
-    return { catalogueStore: useCataloguesStore() };
+    return { catalogueStore: useCataloguesStore(), store: useEditorStore() };
   },
   data() {
     return {
@@ -76,7 +77,8 @@ export default {
   methods: {
     download_file() {
       const data = getDataObject(this.catalogue);
-      const xml = convertToXml(data);
+      const loaded = this.store.get_system(data.gameSystemId || data.id).getLoadedCatalogue({ targetId: data.id });
+      const xml = convertToXml(loaded || data);
       download((data as any).gameSystemId ? `${data.name}.cat` : `${data.name}.gst`, "application/xml", xml);
     },
   },

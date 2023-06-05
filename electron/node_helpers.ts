@@ -1,6 +1,3 @@
-import type { Stats, writeFileSync } from "fs";
-import { isZipExtension } from "~/assets/shared/battlescribe/bs_convert";
-
 export function dirname(path: string) {
   return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
 }
@@ -9,47 +6,56 @@ export function filename(path: string) {
   return split[split.length - 1];
 }
 export async function getFolderFiles(folderPath: string) {
-  if (!electron) return;
-  try {
-    const fileObjects = [];
-    const isPathFile = (await electron.invoke("isFile", folderPath)) as boolean;
-    if (isPathFile) {
-      folderPath = dirname(folderPath);
-    }
-
-    const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
-
-    for (const entry of entries) {
-      const filePath = `${folderPath}/${entry}`;
-
-      try {
-        const isFile = (await electron.invoke("isFile", filePath)) as boolean;
-        if (isFile) {
-          const data = await electron.invoke("readFileSync", filePath, isZipExtension(entry) ? undefined : "utf-8");
-          const fileObject = {
-            name: entry,
-            data: data,
-            path: filePath,
-          };
-          fileObjects.push(fileObject);
-        }
-      } catch (error) {
-        console.error("Error reading file:", filePath, error);
-        continue;
-      }
-    }
-
-    return fileObjects;
-  } catch (error) {
-    console.error("Error:", error);
-    throw error;
-  }
+  if (!electron) return [];
+  return (await electron.invoke("getFolderFiles", folderPath)) as Array<{
+    name: string;
+    path: string;
+    data: string;
+  }>;
 }
+// export async function getFolderFiles(folderPath: string) {
+//   if (!electron) return;
+//   try {
+//     const fileObjects = [];
+//     const isPathFile = (await electron.invoke("isFile", folderPath)) as boolean;
+//     if (isPathFile) {
+//       folderPath = dirname(folderPath);
+//     }
+
+//     const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
+
+//     for (const entry of entries) {
+//       const filePath = `${folderPath}/${entry}`;
+
+//       try {
+//         const isFile = (await electron.invoke("isFile", filePath)) as boolean;
+//         if (isFile) {
+//           const data = await electron.invoke("readFileSync", filePath, isZipExtension(entry) ? undefined : "utf-8");
+//           const fileObject = {
+//             name: entry,
+//             data: data,
+//             path: filePath,
+//           };
+//           fileObjects.push(fileObject);
+//         }
+//       } catch (error) {
+//         console.error("Error reading file:", filePath, error);
+//         continue;
+//       }
+//     }
+
+//     return fileObjects;
+//   } catch (error) {
+//     console.error("Error:", error);
+//     throw error;
+//   }
+// }
 export async function getFolderFolders(folderPath: string) {
   if (!electron) return;
   try {
     const fileObjects = [];
     const pathIsDir = (await electron.invoke("isDirectory", folderPath)) as boolean;
+    console.log("pathiddir", pathIsDir);
     if (!pathIsDir) return [];
 
     const entries = (await electron.invoke("readdirSync", folderPath)) as string[];

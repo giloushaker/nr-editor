@@ -19,6 +19,7 @@
         :double="true"
         :showRight="store.selectedItem != null"
         id="catalogueView"
+        :key="key"
       >
         <template #left>
           <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" />
@@ -61,7 +62,7 @@ import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 
-export default {
+export default defineComponent({
   components: { LeftPanel },
   data() {
     return {
@@ -73,14 +74,19 @@ export default {
       cat: null as Catalogue | null,
       failed: false,
       defaults: {} as Partial<typeof LeftPanelDefaults>,
+      key: 1,
     };
   },
   setup() {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), uistate: useEditorUIState() };
   },
   mounted() {
+    this.store.init(this);
     window.addEventListener("beforeunload", this.beforeUnload);
     document.addEventListener("keydown", this.onKeydown, true);
+  },
+  updated() {
+    this.store.init(this);
   },
   unmounted() {
     window.removeEventListener("beforeunload", this.beforeUnload);
@@ -94,19 +100,15 @@ export default {
   },
   beforeRouteUpdate() {
     if (this.id) {
-      this.save_state();
+      this.store.save_state();
     }
   },
   beforeRouteLeave() {
     if (this.id) {
-      this.save_state();
+      this.store.save_state();
     }
   },
-  created() {
-    this.store.init(this.$router);
-    (globalThis as any).$catalogue = this.cat;
-    (globalThis as any).$system = this.cat?.getGameSystem();
-  },
+
   computed: {
     changed() {
       if (!this.cat) return false;
@@ -161,7 +163,7 @@ export default {
     async beforeUnload(event: BeforeUnloadEvent) {
       if (globalThis._closeWindow) return;
       if (!this.loading) {
-        this.save_state();
+        this.store.save_state();
       }
 
       if (this.unsaved || this.store.unsavedCount) {
@@ -182,8 +184,8 @@ export default {
             }
           });
         }
+        return false;
       }
-      return false;
     },
     onKeydown(e: KeyboardEvent) {
       if (e.ctrlKey && e.key.toLowerCase() == "s") {
@@ -195,39 +197,8 @@ export default {
     onChanged() {
       this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
-    save_state() {
-      if (this.cat) {
-        const selected = this.store.get_selected();
-        const leftpanel = this.$refs.leftpanel as typeof LeftPanelDefaults;
-        const leftpanelstate = {} as Record<string, any>;
-        for (const key of Object.keys(LeftPanelDefaults) as (keyof typeof LeftPanelDefaults)[]) {
-          leftpanelstate[key] = leftpanel[key];
-        }
-        this.uistate.set_state(this.cat.id, {
-          selection: selected ? getEntryPath(selected) : undefined,
-          ...leftpanelstate,
-        });
-      }
-    },
-    async load_state(data: Record<string, any>) {
-      const { selection } = data;
+    load_state(data: Record<string, any>) {
       this.defaults = data;
-
-      if (!selection) return;
-      let obj = getAtEntryPath(this.cat as Catalogue, selection);
-      if (!obj) {
-        const last = selection[selection.length - 1];
-        obj = (this.cat as Catalogue).findOptionById(last.id) as EditorBase | undefined;
-      }
-      if (obj) {
-        try {
-          const el = await this.store.open(obj);
-          if (el) {
-            const ctx = get_ctx(el);
-            await ctx.do_select();
-          }
-        } catch (e) {}
-      }
     },
     async load(systemId: string, catalogueId?: string) {
       if (!catalogueId && !systemId) {
@@ -235,7 +206,6 @@ export default {
       }
       try {
         this.loading = true;
-        await new Promise((resolve) => setTimeout(resolve));
         const system = await this.store.get_or_load_system(systemId);
         let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
         if (!loaded) {
@@ -247,14 +217,14 @@ export default {
         this.cat = loaded;
         if (loaded) {
           const data = this.uistate.get_data(loaded.id);
-          await this.load_state(data);
+          this.load_state(data);
         }
       } finally {
         this.loading = false;
       }
     },
   },
-};
+});
 </script>
 
 <style scoped>

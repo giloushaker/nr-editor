@@ -4,11 +4,18 @@ import { goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_base_from_vue_el, get_ctx } from "./editorStore";
 
+export interface EditorUIState {
+  selection?: EntryPathEntry[];
+  scroll?: number;
+  open: Record<string, any>;
+  catalogueId?: string;
+  systemId?: string;
+}
+
 export const useEditorUIState = defineStore("editor-ui", {
-  state: () =>
-    ({
-      catalogues: {},
-    } as Record<string, any>),
+  state: () => ({
+    catalogues: {} as Record<string, EditorUIState>,
+  }),
 
   persist: {
     storage: globalThis.localStorage,
@@ -37,9 +44,9 @@ export const useEditorUIState = defineStore("editor-ui", {
         }
       }
     },
-    set_state(id: string, data: Record<string, any>) {
+    set_state(id: string, data: Partial<EditorUIState>) {
       // Get all open collapsible boxes and save their state
-      function recurseFn(elt: Element, obj: any, depth = 0) {
+      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (results?.length) {
@@ -66,15 +73,16 @@ export const useEditorUIState = defineStore("editor-ui", {
               }
             }
 
-            recurseFn(cur, next, depth + 1);
+            find_open_recursive(cur, next, depth + 1);
           }
         }
       }
-      const result = {};
-      recurseFn(document.documentElement, result);
-      this.$state.catalogues[id] = { ...data, open: result };
+      const open = {};
+      find_open_recursive(document.documentElement, open);
+      const result = { ...data, open: open };
+      this.$state.catalogues[id] = result;
       console.log("saved editor ui state for id", id);
-      return result;
+      return open;
     },
 
     get_data(id: string): Record<string, any> {
@@ -93,16 +101,16 @@ export const useEditorUIState = defineStore("editor-ui", {
       if (!path.length) return false;
       let current = this.$state.catalogues[id];
       if (!current) return false;
-      current = current.open[path[0].key];
-      if (!current) return false;
-      current = current[0];
-      if (!current) return false;
+      let current_node = current.open[path[0].key];
+      if (!current_node) return false;
+      current_node = current_node[0];
+      if (!current_node) return false;
       for (const node of path) {
-        const arr = current[node.key];
+        const arr = current_node[node.key];
         if (!arr) return false;
         const entry = arr[node.index];
         if (!entry) return false;
-        current = entry;
+        current_node = entry;
       }
       return true;
     },
