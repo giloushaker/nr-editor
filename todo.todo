@@ -20,7 +20,7 @@ Interface:
 
 
     ✔ Bug report form @done(23-05-17 17:54)
-    ☐ Copy/Paste not working on Firefox because clipboard access is not allowed. Perhaps use an alternate way of storing the copied data if clipboard unavailable
+    ✔ Copy/Paste not working on Firefox because clipboard access is not allowed. Perhaps use an alternate way of storing the copied data if clipboard unavailable @done(23-06-05 16:57)
 
     ✔ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups> @done(23-06-05 15:44)
             The empty selection entry group with no ID should not exist in the XML it makes BS crash
@@ -119,7 +119,7 @@ Editor:
         ☐ filter by
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
             No apparent way to do it using native stuff
-        ☐ save all
+        ✔ save all @done(23-06-05 16:56)
         ✔ fix unsaved icon on load & editing not being remove @done(23-06-01 13:12)
 
         ✔ load multiple catalogues @done(23-05-22 14:36)
