@@ -12,6 +12,7 @@
             :options="children"
             valueField="id"
             filterField="name"
+            @change="changed"
           >
             <template #option="opt">
               <div>
@@ -52,10 +53,17 @@ export default {
 
   computed: {
     children() {
-      let res: Base[] = [];
+      let res: { name: string; id: undefined | null; editorTypeName: string }[] = [
+        {
+          name: "None",
+          id: undefined,
+          editorTypeName: "bullet",
+        },
+      ];
+
       for (let entry of this.item.entriesIterator()) {
         if (!entry.isGroup()) {
-          res.push(entry);
+          res.push(entry as any);
         }
       }
       return res;
