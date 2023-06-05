@@ -5,13 +5,16 @@
       <div v-for="field of fields.filter((f) => f.status != -1)">
         <input
           :class="{ 'cursor-pointer': field.status !== 0 }"
-          :id="field.field"
+          :id="(field.field as string)"
           type="checkbox"
           v-model="item[field.field]"
           @change="changed"
           :disabled="field.status == 0"
         />
-        <label :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0 }" :for="field.field">
+        <label
+          :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0 }"
+          :for="(field.field as string)"
+        >
           {{ field.name }}
         </label>
       </div>
@@ -23,8 +26,6 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-
-type PossibleFields = "hidden" | "collective" | "import";
 
 export default {
   emits: ["catalogueChanged"],
@@ -108,13 +109,13 @@ export default {
 
       switch (this.item.editorTypeName) {
         case "selectionEntryLink":
-          return 1;
+          return 0;
         case "selectionEntryGroupLink":
-          return 1;
+          return 0;
         case "selectionEntry":
-          return 1;
+          return 0;
         case "selectionEntryGroup":
-          return 1;
+          return 0;
 
         case "categoryLink":
           return -1;
