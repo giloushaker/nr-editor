@@ -81,7 +81,6 @@ export const useEditorUIState = defineStore("editor-ui", {
       find_open_recursive(document.documentElement, open);
       const result = { ...data, open: open };
       this.$state.catalogues[id] = result;
-      console.log("saved editor ui state for id", id);
       return open;
     },
 

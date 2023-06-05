@@ -110,7 +110,7 @@ export const useEditorStore = defineStore("editor", {
     undoStackPos: -1,
 
     historyStack: [],
-    historyStackPos: -1,
+    historyStackPos: 0,
 
     clipboard: [],
 
@@ -191,6 +191,7 @@ export const useEditorStore = defineStore("editor", {
             systems.push(systemFiles);
             systemFiles.setSystem(json);
             systemFiles.unloadAll();
+            //
           }
           if (catalogueId) {
             const systemFiles = this.get_system(json.catalogue.gameSystemId);
@@ -926,12 +927,16 @@ export const useEditorStore = defineStore("editor", {
     },
     put_state_in_history(state: EditorUIState) {
       if (this.historyStackPos < this.historyStack.length) {
-        const n_to_remove = this.historyStack.length - this.historyStackPos - 1;
-        this.historyStack.splice(this.historyStackPos + 1, n_to_remove, state, null);
+        const n_to_remove = this.historyStack.length - this.historyStackPos;
+        this.historyStack.splice(this.historyStackPos, n_to_remove, state);
       } else {
         this.historyStack.push(state);
       }
-      this.historyStackPos = this.historyStack.length - 1;
+      console.log(
+        `Put state(${state.scroll}) at the end of history`,
+        this.historyStack.map((o) => o?.scroll)
+      );
+      this.historyStackPos = this.historyStack.length;
     },
     put_current_state_in_history() {
       if (this.catalogueComponent && this.catalogueComponent.cat) {
@@ -944,20 +949,32 @@ export const useEditorStore = defineStore("editor", {
     async back() {
       if (this.can_back()) {
         this.historyStack[this.historyStackPos] = this.get_current_state();
+        console.log(
+          `Set state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
+          this.historyStack.map((o) => o?.scroll)
+        );
+
         this.historyStackPos -= 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
+        console.log(
+          `Load state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
+          this.historyStack.map((o) => o?.scroll)
+        );
       }
     },
     can_forward() {
       if (this.historyStack[this.historyStack.length - 1]) {
         return this.historyStackPos < this.historyStack.length - 1;
       }
-      return this.historyStackPos < this.historyStack.length - 2;
     },
     async forward() {
       if (this.can_forward()) {
         this.historyStackPos += 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
+        console.log(
+          `Load state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
+          this.historyStack.map((o) => o?.scroll)
+        );
       }
     },
   },
