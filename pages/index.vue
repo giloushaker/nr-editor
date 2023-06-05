@@ -49,6 +49,17 @@
         </div>
       </template>
     </SplitView>
+    <Teleport to="#titlebar-content" v-if="store.unsavedCount">
+      <template v-if="store.unsavedCount">
+        <button class="bouton save ml-10px" @click="saveAll">Save All</button>
+      </template>
+      <template v-else-if="failed">
+        <span class="status mx-2 text-red">failed to save</span>
+      </template>
+      <template v-else>
+        <span class="status mx-2">saved</span>
+      </template>
+    </Teleport>
   </div>
 </template>
 
@@ -90,6 +101,7 @@ export default defineComponent({
       selectedItem: null as BSIDataCatalogue | BSIDataSystem | null,
       mode: "edit",
       editingItem: null as BSIData | null,
+      failed: false,
     };
   },
   setup() {
@@ -133,6 +145,21 @@ export default defineComponent({
     },
   },
   methods: {
+    saveAll() {
+      let failed = false;
+      try {
+        for (const sys of Object.values(this.systems)) {
+          for (const cat of sys.getAllLoadedCatalogues()) {
+            if (this.store.get_catalogue_state(cat)?.unsaved) {
+              this.store.save_catalogue(cat);
+            }
+          }
+        }
+      } catch (e) {
+        failed = true;
+      }
+      this.failed = failed;
+    },
     async beforeUnload(event: BeforeUnloadEvent) {
       if (globalThis._closeWindow) return;
       if (this.store.unsavedCount) {

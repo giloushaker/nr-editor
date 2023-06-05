@@ -71,6 +71,13 @@ export class GameSystemFiles extends BSCatalogueManager {
     }
     this.allLoaded = true;
   }
+  getAllLoadedCatalogues() {
+    const id = this.gameSystem?.gameSystem.id;
+    if (id) {
+      return Object.values(this.catalogues[id]);
+    }
+    return [];
+  }
   setSystem(system: BSIDataSystem) {
     this.gameSystem = system;
   }

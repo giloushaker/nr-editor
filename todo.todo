@@ -21,7 +21,7 @@ Interface:
 
     ✔ Bug report form @done(23-05-17 17:54)
     ☐ Copy/Paste not working on Firefox because clipboard access is not allowed. Perhaps use an alternate way of storing the copied data if clipboard unavailable
-    
+
     ✔ BUG: I added a selection entry group and deleted it. This generated as json : "selectionEntryGroups":[], but when translated to XML this made <selectionEntryGroups><selectionEntryGroup></selectionEntryGroup></selectionEntryGroups> @done(23-06-05 15:44)
             The empty selection entry group with no ID should not exist in the XML it makes BS crash
             Seems to work now, not sure why it did not before
@@ -80,7 +80,6 @@ Editor:
     Ideas:
         Cache stuff after first load then subsequent openings can be lazy loaded
         Setting to display the categories of entries in tree view
-        ☐ Add a Reload button somewhere or possibly detect file changes / changes in INDEXDB to propose auto reload
 
 
     Features:
@@ -110,7 +109,7 @@ Editor:
 
         ✔ move up/down @done(23-06-01 21:17)
         ☐ alert version of popupdialog
-        ☐ move back/forward (like browser navigation)
+        ✔ move back/forward (like browser navigation) @done(23-06-05 15:55)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
         ☐ more intuitive way to return to catalogue list
 

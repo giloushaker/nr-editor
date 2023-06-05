@@ -381,20 +381,30 @@ export const useEditorStore = defineStore("editor", {
       }
       this.undoStackPos += 1;
     },
-    async set_clipboard(data: EditorBase[]) {
+    async set_clipboard(data: EditorBase[], event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
         //@ts-ignore
         const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o })) as EditorBase[];
-        const json = entriesToJson(shallowCopies, new Set(["parentKey"]), true);
-        await navigator.clipboard.writeText(json);
+        const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false });
+        if (event) {
+          event.clipboardData?.setData("text/plain", json);
+        } else {
+          await navigator.clipboard.writeText(json);
+        }
       } else {
         this.clipboard = data;
       }
     },
-    async get_clipboard() {
+    async get_clipboard(event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
-        const text = await navigator.clipboard.readText();
-        return JSON.parse(text);
+        if (event) {
+          const text = event.clipboardData?.getData("text/plain");
+          if (!text) return [];
+          return JSON.parse(text);
+        } else {
+          const text = await navigator.clipboard.readText();
+          return JSON.parse(text);
+        }
       }
       return this.clipboard;
     },
@@ -415,15 +425,15 @@ export const useEditorStore = defineStore("editor", {
         this.undoStackPos++;
       }
     },
-    async cut() {
-      await this.set_clipboard(this.get_selections());
+    async cut(event: ClipboardEvent) {
+      await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy() {
-      await this.set_clipboard(this.get_selections());
+    async copy(event: ClipboardEvent) {
+      await this.set_clipboard(this.get_selections(), event);
     },
-    async paste() {
-      this.add(await this.get_clipboard());
+    async paste(event: ClipboardEvent) {
+      this.add(await this.get_clipboard(event));
     },
     async duplicate() {
       const selections = this.get_selections();

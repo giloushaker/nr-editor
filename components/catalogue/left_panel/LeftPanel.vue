@@ -74,30 +74,16 @@ export default defineComponent({
   },
   async mounted() {
     addEventListener("keydown", this.keydown);
-    this.$nextTick(async () => {
-      this.set_scroll(this.scroll);
-      if (this.selection) {
-        let obj = getAtEntryPath(this.catalogue, this.selection);
-        const last = this.selection[this.selection.length - 1];
-        if (!obj && last.id) {
-          obj = this.catalogue.findOptionById(last.id) as EditorBase | undefined;
-        }
-        if (obj) {
-          try {
-            const el = await this.store.open(obj);
-            if (el) {
-              const ctx = get_ctx(el);
-              await ctx.do_select();
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      }
-    });
+    addEventListener("copy", this.copy);
+    addEventListener("paste", this.paste);
+    addEventListener("cut", this.cut);
+    this.load();
   },
   unmounted() {
     removeEventListener("keydown", this.keydown);
+    removeEventListener("copy", this.copy);
+    removeEventListener("paste", this.paste);
+    removeEventListener("cut", this.cut);
   },
   props: {
     catalogue: {
@@ -113,6 +99,29 @@ export default defineComponent({
     onscroll(event: Event) {
       this.scroll = (event.target as HTMLDivElement).scrollTop;
     },
+    load() {
+      this.$nextTick(async () => {
+        this.set_scroll(this.scroll);
+        if (this.selection) {
+          let obj = getAtEntryPath(this.catalogue, this.selection);
+          const last = this.selection[this.selection.length - 1];
+          if (!obj && last.id) {
+            obj = this.catalogue.findOptionById(last.id) as EditorBase | undefined;
+          }
+          if (obj) {
+            try {
+              const el = await this.store.open(obj);
+              if (el) {
+                const ctx = get_ctx(el);
+                await ctx.do_select();
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+      });
+    },
     async set_scroll(scroll: number) {
       const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
       if (scrollable_el) scrollable_el.scrollTop = scroll;
@@ -124,6 +133,18 @@ export default defineComponent({
         const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
         if (scrollable_el) scrollable_el.scrollTop = scroll;
       }, 50);
+    },
+    async cut(e: ClipboardEvent) {
+      e.preventDefault();
+      await this.store.cut(e);
+    },
+    async copy(e: ClipboardEvent) {
+      e.preventDefault();
+      await this.store.copy(e);
+    },
+    async paste(e: ClipboardEvent) {
+      e.preventDefault();
+      await this.store.paste(e);
     },
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
@@ -148,19 +169,18 @@ export default defineComponent({
           e.preventDefault();
           await this.store.redo();
         }
-        if (e.ctrlKey && key === "x") {
-          e.preventDefault();
-          await this.store.set_clipboard(this.store.get_selections());
-          this.store.remove();
-        }
-        if (e.ctrlKey && key === "c") {
-          e.preventDefault();
-          await this.store.set_clipboard(this.store.get_selections());
-        }
-        if (e.ctrlKey && key === "v") {
-          e.preventDefault();
-          await this.store.add(await this.store.get_clipboard());
-        }
+        // if (e.ctrlKey && key === "x") {
+        //   e.preventDefault();
+        //   await this.store.cut(e as any as ClipboardEvent);
+        // }
+        // if (e.ctrlKey && key === "c") {
+        //   e.preventDefault();
+        //   await this.store.copy(e as any as ClipboardEvent);
+        // }
+        // if (e.ctrlKey && key === "v") {
+        //   e.preventDefault();
+        //   await this.store.paste(e as any as ClipboardEvent);
+        // }
         if (e.ctrlKey && key === "d") {
           e.preventDefault();
           await this.store.duplicate();
