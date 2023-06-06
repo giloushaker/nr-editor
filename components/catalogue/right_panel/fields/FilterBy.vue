@@ -25,6 +25,8 @@
             valueField="id"
             filterField="name"
             @change="changed"
+            :default="child"
+            lazy
           >
             <template #option="opt">
               <div>
@@ -40,7 +42,7 @@
         </td>
       </tr>
     </table>
-    <input type="checkbox" v-model="item.shared" id="shared" @change="chaged" />
+    <input type="checkbox" v-model="item.shared" id="shared" @change="changed" />
     <label for="shared">Shared?</label>
   </fieldset>
 </template>
@@ -124,7 +126,21 @@ export default {
     },
 
     allEntries(): EditorSearchItem[] {
-      return getSearchElements(this.catalogue, "iterateSelectionEntries");
+      const res = getSearchElements(this.catalogue, "iterateSelectionEntries");
+      /*      
+      TODO: Add root entries from the scope
+       let parent: EditorBase | null = this.item;
+      while (parent != null && parent.parent && !parent.parent.isCatalogue()) {
+        parent = parent.parent || null;
+      }
+      if (parent != null && parent != this.item) {
+        const parentElements = getSearchElements(parent, "iterateSelectionEntries");
+        parentElements.forEach((elt) => {
+          elt.indent++;
+        });
+        res.push(...parentElements);
+      } */
+      return res;
     },
 
     allCategories(): EditorSearchItem[] {

@@ -6,7 +6,6 @@
       ref="edit"
       @input="suggest"
       @click="maySuggest"
-      @change="changed"
       v-model="searchPattern"
       :placeholder="placeholder"
       v-click-outside="onClickOutside"
@@ -25,6 +24,8 @@
 </template>
 
 <script lang="ts">
+import { PropType } from "nuxt/dist/app/compat/capi";
+
 export default {
   props: {
     modelValue: String,
@@ -53,10 +54,23 @@ export default {
       type: String,
       default: "",
     },
+
+    lazy: {
+      type: Boolean,
+      default: false,
+    },
+
+    default: {
+      type: Object as PropType<any>,
+    },
   },
 
   created() {
-    this.reset();
+    if (!this.lazy) {
+      this.reset();
+    } else {
+      this.selectedOption = { option: this.default, selected: true };
+    }
   },
 
   data() {
