@@ -1,8 +1,5 @@
-import {
-  flattenRecursive,
-  recurseThis,
-} from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { flattenRecursive, recurseThis } from "~/assets/shared/battlescribe/bs_helpers";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export interface EditorSearchItem {
   id: string;
@@ -12,11 +9,11 @@ export interface EditorSearchItem {
 }
 
 export function getSearchElements(
-  catalogue: Catalogue,
-  type: keyof Catalogue
+  catalogue: Catalogue | EditorBase,
+  type: keyof Catalogue | EditorBase
 ): EditorSearchItem[] {
   let res: EditorSearchItem[] = [];
-  let rec = recurseThis(catalogue, type, 1000) as any;
+  let rec = recurseThis(catalogue, type as any, 1000) as any;
   let flat = flattenRecursive(rec, 0, []);
 
   for (let elt of flat) {
