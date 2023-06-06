@@ -252,13 +252,25 @@ export default defineComponent({
       }
       this.mode = "edit";
     },
-    deleteCatalogue(data: BSIDataCatalogue) {
+    deleteCatalogue(data: BSIDataCatalogue | BSIDataSystem) {
       console.log("Deleted catalogue", data);
-      this.store.get_system(data.catalogue.gameSystemId).removeCatalogue(data);
-      if (!electron) {
-        db.catalogues.delete(getDataDbId(data));
+      const obj = getDataObject(data);
+      const systemId = obj.gameSystemId || obj.id;
+      if ((data as BSIDataCatalogue).catalogue) {
+        this.store.get_system(systemId).removeCatalogue(data as BSIDataCatalogue);
+        if (!electron) {
+          db.catalogues.delete(getDataDbId(data));
+        }
+      } else if ((data as BSIDataSystem).gameSystem) {
+        const sys = this.store.get_system(systemId);
+        for (const catalogue of Object.values(sys.catalogueFiles)) {
+          const id = getDataDbId(catalogue);
+          db.catalogues.delete(id);
+        }
+        db.catalogues.delete(getDataDbId(sys.gameSystem!));
+        db.systems.delete(getDataDbId(sys.gameSystem!));
+        this.store.delete_system(systemId);
       }
-
       this.selectedItem = null;
     },
 

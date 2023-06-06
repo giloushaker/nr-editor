@@ -247,6 +247,9 @@ export const useEditorStore = defineStore("editor", {
       }
       return this.gameSystems[id];
     },
+    delete_system(id: string) {
+      delete this.gameSystems[id];
+    },
     get_catalogue_state(catalogue: BSIData | Catalogue) {
       const id = getDataDbId(catalogue);
       return this.unsavedChanges[id];
@@ -685,16 +688,18 @@ export const useEditorStore = defineStore("editor", {
         to[catalogueKey]!.push(copy);
 
         // replace previous obj with link to moved obj
-        if (obj.parentKey === "selectionEntries" || obj.parentKey == "selectionEntryGroups") {
+        if (!obj.parentKey.startsWith("shared")) {
           const link: any = {
             targetId: copy.id,
             id: from.generateNonConflictingId(),
             type: obj.editorTypeName,
             name: obj.getName(),
             hidden: obj.hidden,
-            collective: obj.collective,
             select: true,
           };
+          if (obj.isEntry()) {
+            link.collective = obj.collective;
+          }
 
           setPrototypeRecursive({ ["entryLinks"]: link });
           const path = getEntryPath(obj);
