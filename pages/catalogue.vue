@@ -90,7 +90,7 @@ export default defineComponent({
   },
   unmounted() {
     window.removeEventListener("beforeunload", this.beforeUnload);
-    document.removeEventListener("keydown", this.onKeydown);
+    document.removeEventListener("keydown", this.onKeydown, true);
   },
   activated() {
     window.addEventListener("beforeunload", this.beforeUnload);

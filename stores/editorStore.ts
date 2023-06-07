@@ -33,7 +33,7 @@ import { db } from "~/assets/ts/dexie";
 import type { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
-import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
+import { convertToJson, getExtension, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
@@ -622,6 +622,17 @@ export const useEditorStore = defineStore("editor", {
             import: true,
             name: `New ${getTypeLabel(getTypeName(key))}`,
           };
+        case "associations":
+          return {
+            min: 1,
+            max: 1,
+            scope: "force",
+            includeChildSelections: false,
+            of: "any",
+            ids: [],
+            label: "Association",
+            labelMembers: "Unit",
+          };
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
@@ -725,13 +736,14 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(to, true);
     },
     allowed_children(obj: EditorBase, key: string): Array<string> {
-      let result = (entries as any)[key]?.allowedChildrens;
+      const lookup = entries as Record<string, any>;
+      let result = lookup[key]?.allowedChildrens;
       while (typeof result === "string") {
-        const new_key = (obj as any)[result];
+        const new_key = toPlural(obj[result as keyof EditorBase] as string);
         if (typeof new_key !== "string" || new_key === result) {
           return [];
         }
-        result = (entries as any)[new_key].allowedChildrens;
+        result = lookup[new_key].allowedChildrens;
       }
       return result;
     },
