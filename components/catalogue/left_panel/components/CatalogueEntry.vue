@@ -167,7 +167,7 @@
             Repeat
           </div>
           <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
-          <div @click="store.create('constraints')" v-if="allowed('constraints')">
+          <div @click="store.create_child('constraints', item)" v-if="allowed('constraints')">
             <img class="pr-4px" src="assets/bsicons/constraint.png" />
             Constraint
           </div>

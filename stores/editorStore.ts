@@ -30,7 +30,7 @@ import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system"
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import type { BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICondition, BSIConstraint, BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, getExtension, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
@@ -573,7 +573,7 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    get_initial_object(key: string & keyof Base) {
+    get_initial_object(key: string & keyof Base, parent?: EditorBase) {
       switch (key) {
         case "repeats":
           return {
@@ -584,14 +584,20 @@ export const useEditorStore = defineStore("editor", {
             id: generateBattlescribeId(),
             childId: "any",
           };
-        case "constraints":
-          return {
+        case "constraints": {
+          const isAssociation = parent?.parentKey === "associations";
+          const result = {
             type: "min",
             value: 1,
-            field: "selections",
+            field: parent?.isForce() ? "forces" : "selections",
             scope: "parent",
             id: generateBattlescribeId(),
-          };
+          } as BSIConstraint;
+          if (isAssociation) {
+            result.childId = "any";
+          }
+          return result;
+        }
         case "conditions":
           return {
             type: "atLeast",
@@ -626,7 +632,7 @@ export const useEditorStore = defineStore("editor", {
           return {
             min: 1,
             max: 1,
-            scope: "force",
+            scope: "roster",
             includeChildSelections: false,
             of: "any",
             ids: [],
@@ -642,6 +648,16 @@ export const useEditorStore = defineStore("editor", {
     async create(key: string & keyof Base, data?: any) {
       const obj = {
         ...this.get_initial_object(key),
+        id: generateBattlescribeId(),
+        select: true,
+        ...data,
+      };
+      await this.add(obj, key);
+      this.open_selected();
+    },
+    async create_child(key: string & keyof Base, parent: EditorBase, data?: any) {
+      const obj = {
+        ...this.get_initial_object(key, parent),
         id: generateBattlescribeId(),
         select: true,
         ...data,

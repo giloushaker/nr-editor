@@ -61,7 +61,7 @@ export default {
       this.$emit("catalogueChanged");
     },
     add(type: string, scope: string) {
-      this.store.create("constraints", {
+      this.store.create_child("constraints", this.item as EditorBase, {
         type: type,
         scope: scope,
         value: 1,

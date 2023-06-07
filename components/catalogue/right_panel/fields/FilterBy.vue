@@ -200,9 +200,10 @@ export default {
     },
 
     availableTargets() {
-      let res: EditorSearchItem[] = this.baseItems;
+      const res: EditorSearchItem[] = this.baseItems;
 
-      return res.concat(this.allCategories).concat(this.allEntries).concat(this.allForces);
+      const result = res.concat(this.allCategories).concat(this.allEntries).concat(this.allForces);
+      return result;
     },
   },
 };
