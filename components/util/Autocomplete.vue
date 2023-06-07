@@ -92,7 +92,7 @@ export default {
           if (this.filterField) {
             val = val[this.filterField];
           }
-          if (val.match && val.match(regex)) {
+          if (val && val.match && val.match(regex)) {
             return true;
           }
           return false;
