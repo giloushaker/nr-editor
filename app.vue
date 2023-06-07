@@ -365,4 +365,8 @@ h6,
   font-family: $fontHeader !important;
   text-transform: $fontHeaderTransform;
 }
+
+.info {
+  margin-left: 5px;
+}
 </style>

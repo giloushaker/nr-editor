@@ -632,7 +632,7 @@ export const useEditorStore = defineStore("editor", {
           return {
             min: 1,
             max: 1,
-            scope: "force",
+            scope: "roster",
             includeChildSelections: false,
             of: "any",
             ids: [],
