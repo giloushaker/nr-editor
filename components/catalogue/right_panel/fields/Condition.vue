@@ -3,23 +3,18 @@
     <legend>Condition</legend>
     <div class="condition">
       <select v-model="item.type" @change="changed">
-        <option value="lessThan">Less Than</option>
-        <option value="greaterThan">Greater Than</option>
-        <option value="equalTo">Equal To</option>
-        <option value="notEqualTo">Not Equal To</option>
-        <option value="atLeast">At Least</option>
-        <option value="atMost">At Most</option>
+        <option v-if="allowNonInstanceOf" value="lessThan">Less Than</option>
+        <option v-if="allowNonInstanceOf" value="greaterThan">Greater Than</option>
+        <option v-if="allowNonInstanceOf" value="equalTo">Equal To</option>
+        <option v-if="allowNonInstanceOf" value="notEqualTo">Not Equal To</option>
+        <option v-if="allowNonInstanceOf" value="atLeast">At Least</option>
+        <option v-if="allowNonInstanceOf" value="atMost">At Most</option>
         <option value="instanceOf">Instance Of</option>
         <option value="notInstanceOf">Not Instance Of</option>
       </select>
       <UtilNumberInput v-model="item.value" @change="changed" />
       <div>
-        <input
-          id="percent"
-          type="checkbox"
-          v-model="item.percentValue"
-          @change="changed"
-        />
+        <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
         <label for="percent">Percentage?</label>
       </div>
     </div>
@@ -48,7 +43,20 @@ export default {
       this.$emit("catalogueChanged");
     },
   },
+  computed: {
+    allowNonInstanceOf() {
+      return ["primary-category", "ancestor"].includes(this.item.scope) == false;
+    },
+  },
   components: { NumberInput },
+  watch: {
+    "item.scope"() {
+      const allowed = ["instanceOf", "notInstanceOf"];
+      if (!this.allowNonInstanceOf && !allowed.includes(this.item.type)) {
+        this.item.type = allowed[0] as any;
+      }
+    },
+  },
 };
 </script>
 

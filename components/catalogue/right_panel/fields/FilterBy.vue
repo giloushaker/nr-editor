@@ -30,12 +30,16 @@
           >
             <template #option="opt">
               <div>
-                <template v-if="opt.option.indent >= 2 && !opt.selected"
-                  ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
-                >
+                <template v-if="opt.option.indent >= 2 && !opt.selected">
+                  <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
+                </template>
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
 
                 {{ opt.option.name }}
+                <span class="shared" v-if="opt.option.parentKey && opt.option.parentKey.includes('shared')">
+                  (shared)
+                </span>
+                <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
           </UtilAutocomplete>
@@ -52,7 +56,13 @@ import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
-import { EditorSearchItem, getSearchElements, getSearchCategories } from "@/assets/ts/catalogue/catalogue_helpers";
+import {
+  EditorSearchItem,
+  getSearchElements,
+  getSearchCategories,
+  getFilterSelections,
+  scopeIsId,
+} from "@/assets/ts/catalogue/catalogue_helpers";
 
 export default {
   emits: ["catalogueChanged"],
@@ -76,24 +86,32 @@ export default {
           name: "Anything",
           editorTypeName: "bullet",
           indent: 1,
+          catalogue: null,
+          parentKey: null,
         },
         {
           id: "unit",
           name: "Unit",
           editorTypeName: "bullet",
           indent: 1,
+          catalogue: null,
+          parentKey: null,
         },
         {
           id: "model",
           name: "Model",
           editorTypeName: "bullet",
           indent: 1,
+          catalogue: null,
+          parentKey: null,
         },
         {
           id: "upgrade",
           name: "Upgrade",
           editorTypeName: "bullet",
           indent: 1,
+          catalogue: null,
+          parentKey: null,
         },
       ],
     };
@@ -102,6 +120,16 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+
+    showCatalogue(opt: EditorSearchItem): boolean {
+      if (!opt.catalogue) {
+        return false;
+      }
+      if (opt.catalogue === this.item.catalogue.getName()) {
+        return false;
+      }
+      return true;
     },
   },
 
@@ -126,29 +154,49 @@ export default {
     },
 
     allEntries(): EditorSearchItem[] {
-      const res = getSearchElements(this.catalogue, "iterateSelectionEntries");
-      /*      
-      TODO: Add root entries from the scope
-       let parent: EditorBase | null = this.item;
-      while (parent != null && parent.parent && !parent.parent.isCatalogue()) {
-        parent = parent.parent || null;
-      }
-      if (parent != null && parent != this.item) {
-        const parentElements = getSearchElements(parent, "iterateSelectionEntries");
-        parentElements.forEach((elt) => {
-          elt.indent++;
-        });
-        res.push(...parentElements);
-      } */
-      return res;
+      return getFilterSelections(this.item, this.catalogue);
     },
 
     allCategories(): EditorSearchItem[] {
+      if (!this.includeCategories) {
+        return [];
+      }
       return getSearchCategories(this.catalogue);
     },
 
     allForces(): EditorSearchItem[] {
+      if (!this.includeForces) {
+        return [];
+      }
       return getSearchElements(this.catalogue, "forcesIterator");
+    },
+
+    includeCategories() {
+      if (this.item.field === "forces") {
+        return false;
+      }
+      return true;
+    },
+
+    includeForces() {
+      if (this.item.scope == "self") {
+        return false;
+      }
+      if (this.item.scope == "parent") {
+        return false;
+      }
+      if (this.item.scope == "ancestor") {
+        return false;
+      }
+      if (scopeIsId(this.item)) {
+        return false;
+      }
+
+      return true;
+    },
+
+    includeSelections() {
+      return true;
     },
 
     availableTargets() {
@@ -159,3 +207,16 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="scss">
+@import "@/shared_components/css/vars.scss";
+.catalogueName {
+  color: rgb(144, 152, 197);
+  font-style: italic;
+}
+
+.shared {
+  color: $gray;
+  font-style: italic;
+}
+</style>

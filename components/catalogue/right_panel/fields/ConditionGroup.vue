@@ -17,13 +17,14 @@
 </template>
 
 <script lang="ts">
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIConditionGroup>,
+      type: Object as PropType<BSIConditionGroup & EditorBase>,
       required: true,
     },
   },

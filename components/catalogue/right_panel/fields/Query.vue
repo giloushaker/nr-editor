@@ -2,10 +2,11 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <select v-model="item.field" @change="changed">
-        <option value="selections">Selections</option>
-        <option value="forces">Forces</option>
-        <option v-for="costType of costTypes" :value="costType.id">
+      <select v-model="item.field" @change="changed" :disabled="instanceOf">
+        <option :value="undefined" v-if="instanceOf" />
+        <option v-if="!instanceOf" value="selections">Selections</option>
+        <option v-if="!instanceOf" value="forces">Forces</option>
+        <option v-if="!instanceOf" v-for="costType of costTypes" :value="costType.id">
           {{ costType.name }}
         </option>
       </select>
@@ -21,8 +22,12 @@
       >
         <template #option="opt">
           <div>
+            <template v-if="opt.option.indent >= 2 && !opt.selected"
+              ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
+            >
             <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
-            {{ opt.option.name }}
+            {{ opt.option.name
+            }}<span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
           </div>
         </template>
       </UtilAutocomplete>
@@ -42,15 +47,20 @@
 </template>
 
 <script lang="ts">
-import { Category, Force } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
+import {
+  EditorSearchItem,
+  getSearchCategories,
+  getSearchElements,
+  getParentUnitHierarchy,
+} from "~/assets/ts/catalogue/catalogue_helpers";
 
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIConstraint | BSICondition>,
+      type: Object as PropType<EditorBase & (BSIConstraint | BSICondition)>,
       required: true,
     },
     catalogue: {
@@ -71,9 +81,38 @@ export default {
     changed() {
       this.$emit("catalogueChanged");
     },
+
+    showCatalogue(opt: EditorSearchItem): boolean {
+      if (!opt.catalogue) {
+        return false;
+      }
+      if (opt.catalogue === this.item.catalogue.getName()) {
+        return false;
+      }
+      return true;
+    },
   },
 
   computed: {
+    instanceOf() {
+      return this.item.type.includes("instance");
+    },
+
+    includeCategories() {
+      if (this.item.field === "forces") {
+        return false;
+      }
+      return true;
+    },
+
+    includeForces() {
+      return true;
+    },
+
+    includeSelections() {
+      return true;
+    },
+
     parent() {
       return (this.item as any as EditorBase).parent;
     },
@@ -85,21 +124,25 @@ export default {
       return [];
     },
 
-    allCategories(): (Category & EditorBase)[] {
-      let res: (Category & EditorBase)[] = [];
-      for (let elt of this.catalogue.iterateCategoryEntries()) {
-        res.push(elt as Category & EditorBase);
+    allSelections(): EditorSearchItem[] {
+      if (!this.includeSelections) {
+        return [];
       }
-      return res;
+      return getParentUnitHierarchy(this.item);
     },
 
-    allForces(): (Force & EditorBase)[] {
-      // TODO: add child forces
-      let res: (Force & EditorBase)[] = [];
-      for (let elt of this.catalogue.forcesIterator()) {
-        res.push(elt as Force & EditorBase);
+    allCategories(): EditorSearchItem[] {
+      if (!this.includeCategories) {
+        return [];
       }
-      return res;
+      return getSearchCategories(this.catalogue);
+    },
+
+    allForces(): EditorSearchItem[] {
+      if (!this.includeForces) {
+        return [];
+      }
+      return getSearchElements(this.catalogue, "forcesIteratorRecursive");
     },
 
     allScopes(): {
@@ -108,11 +151,6 @@ export default {
       editorTypeName: string;
     }[] {
       let res = [
-        {
-          id: "parent",
-          name: "Parent",
-          editorTypeName: "bullet",
-        },
         {
           id: "force",
           name: "Force",
@@ -123,14 +161,52 @@ export default {
           name: "Roster",
           editorTypeName: "bullet",
         },
-        {
-          id: "primary-catalogue",
-          name: "Primary Catalogue",
-          editorTypeName: "bullet",
-        },
       ];
 
-      return res.concat(this.allCategories as any).concat(this.allForces as any);
+      if (this.item.field === "selections") {
+        res = [
+          {
+            id: "self",
+            name: "Self",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "parent",
+            name: "Parent",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "ancestor",
+            name: "Ancestor",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "primary-category",
+            name: "Primary Category",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "force",
+            name: "Force",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "roster",
+            name: "Roster",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "primary-catalogue",
+            name: "Primary Catalogue",
+            editorTypeName: "bullet",
+          },
+        ];
+      }
+
+      return res
+        .concat(this.allSelections)
+        .concat(this.allCategories as any)
+        .concat(this.allForces as any);
     },
   },
 };
@@ -153,5 +229,16 @@ export default {
   grid-gap: 5px;
   grid-template-columns: auto max-content 1fr;
   align-items: center;
+}
+
+@import "@/shared_components/css/vars.scss";
+.catalogueName {
+  color: rgb(144, 152, 197);
+  font-style: italic;
+}
+
+.shared {
+  color: $gray;
+  font-style: italic;
 }
 </style>
