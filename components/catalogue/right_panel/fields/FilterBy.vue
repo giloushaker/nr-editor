@@ -29,7 +29,7 @@
             lazy
           >
             <template #option="opt">
-              <div>
+              <div v-if="opt.option">
                 <template v-if="opt.option.indent >= 2 && !opt.selected">
                   <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
                 </template>
