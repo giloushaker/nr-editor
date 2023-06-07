@@ -7,13 +7,14 @@ import {
   onAddEntry,
   onRemoveEntry,
   popAtEntryPath,
-  setAtEntryPath,
+  addAtEntryPath,
   scrambleIds,
   getTypeName,
   forEachParent,
   getTypeLabel,
   replaceAtEntryPath,
   fixKey,
+  removeEntry,
 } from "~/assets/shared/battlescribe/bs_editor";
 import {
   enumerate_zip,
@@ -502,7 +503,7 @@ export const useEditorStore = defineStore("editor", {
       };
       const undo = async () => {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
-          const parent = setAtEntryPath(catalogue, path, entry);
+          const parent = addAtEntryPath(catalogue, path, entry);
           await onAddEntry(entry, catalogue, parent, this.get_system(sysId));
         }
       };
@@ -677,7 +678,11 @@ export const useEditorStore = defineStore("editor", {
         if (!catalogueKey) return;
 
         // move obj to target
-        from.removeFromIndex(obj);
+        const parent = obj.parent!;
+        const path = getEntryPath(obj);
+
+        removeEntry(obj);
+        onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
         setPrototypeRecursive({ [catalogueKey]: copy });
@@ -700,12 +705,11 @@ export const useEditorStore = defineStore("editor", {
           if (obj.isEntry()) {
             link.collective = obj.collective;
           }
-
-          setPrototypeRecursive({ ["entryLinks"]: link });
-          const path = getEntryPath(obj);
-          path[path.length - 1].key = "entryLinks";
-          replaceAtEntryPath(from, path, link);
-          await onAddEntry(link, from, from, this.get_system(from.getSystemId()));
+          const linkKey = obj.isEntry() || obj.isGroup() ? "entryLinks" : "infoLinks";
+          setPrototypeRecursive({ [linkKey]: link });
+          path[path.length - 1].key = linkKey;
+          await onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
+          addAtEntryPath(from, path, link);
         } else {
           popAtEntryPath(from, getEntryPath(obj));
         }
