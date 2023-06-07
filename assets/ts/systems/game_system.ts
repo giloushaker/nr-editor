@@ -1,4 +1,4 @@
-import { BSCatalogueManager, getDataObject, loadData } from "~/assets/shared/battlescribe/bs_system";
+import { BSCatalogueManager, loadData } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataSystem,
   BSIDataCatalogue,
@@ -14,7 +14,6 @@ import { db } from "../dexie";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 import { convertToXml, getExtension, isZipExtension } from "~/assets/shared/battlescribe/bs_convert";
-import { zip } from "~/assets/shared/util";
 import { filename, writeFile } from "~/electron/node_helpers";
 import JSZip, { OutputType } from "jszip";
 
