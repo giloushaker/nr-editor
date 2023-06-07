@@ -14,7 +14,7 @@
       </tr>
     </table>
     <table class="editorTable">
-      <tr v-for="char of item.characteristics">
+      <tr v-for="char of charactacteristics">
         <td>{{ char.name }}: </td>
         <td><UtilEditableDiv v-model="char.$text" @change="changed" /></td>
       </tr>
@@ -24,8 +24,9 @@
 
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
+import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICharacteristic, BSIProfile } from "~/assets/shared/battlescribe/bs_types";
+import { BSIProfile } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -39,33 +40,26 @@ export default {
       required: true,
     },
   },
-
   methods: {
     changed() {
       this.$emit("catalogueChanged");
     },
   },
-
   computed: {
-    selectedCharacteristics() {
-      let type = this.catalogue.profileTypes?.find((type) => type.id === this.item.typeId);
-      if (type) {
-        return type.characteristicTypes;
+    charactacteristics() {
+      const existing = {} as Record<string, any>;
+      for (const c of this.item.characteristics || []) {
+        existing[c.name] = c.$text;
       }
-      return [];
-    },
-  },
+      const type = this.catalogue.findOptionById(this.item.typeId) as ProfileType;
 
-  watch: {
-    "item.typeId"() {
-      this.item.characteristics = this.selectedCharacteristics.map((elt) => {
-        let res: BSICharacteristic = {
-          name: elt.name,
-          typeId: elt.id,
-          $text: "",
-        };
-        return res;
-      });
+      const result = type?.characteristicTypes?.map((elt) => ({
+        name: elt.name,
+        typeId: elt.id,
+        $text: existing[elt.name] || "",
+      }));
+      this.item.characteristics = result;
+      return result;
     },
   },
 };

@@ -45,7 +45,10 @@
       v-model="deletePopup"
       v-if="deletePopup"
     >
-      <div>Are you sure you want to delete this catalogue?</div>
+      <div
+        >Are you sure you want to delete this
+        {{ (catalogue as BSIDataCatalogue).catalogue ? "catalogue" : "Game System" }}?</div
+      >
     </PopupDialog>
   </fieldset>
 </template>
