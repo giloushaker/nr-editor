@@ -573,7 +573,7 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    get_initial_object(key: string & keyof Base) {
+    get_initial_object(key: string & keyof Base, parent?: Base) {
       switch (key) {
         case "repeats":
           return {
@@ -588,7 +588,7 @@ export const useEditorStore = defineStore("editor", {
           return {
             type: "min",
             value: 1,
-            field: "selections",
+            field: parent?.isForce() ? "forces" : "selections",
             scope: "parent",
             id: generateBattlescribeId(),
           };
@@ -640,6 +640,16 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     async create(key: string & keyof Base, data?: any) {
+      const obj = {
+        ...this.get_initial_object(key),
+        id: generateBattlescribeId(),
+        select: true,
+        ...data,
+      };
+      await this.add(obj, key);
+      this.open_selected();
+    },
+    async create_child(key: string & keyof Base, parent: Base, data?: any) {
       const obj = {
         ...this.get_initial_object(key),
         id: generateBattlescribeId(),

@@ -49,9 +49,9 @@
         </div>
       </template>
     </SplitView>
-    <Teleport to="#titlebar-content" v-if="store.unsavedCount">
+    <Teleport to="#titlebar-content" v-if="store.unsavedCount && $route.name == 'index'">
       <template v-if="store.unsavedCount">
-        <button class="bouton save ml-10px" @click="saveAll">Save All</button>
+        <button class="bouton save ml-10px !w-100px" @click="saveAll">Save All</button>
       </template>
       <template v-else-if="failed">
         <span class="status mx-2 text-red">failed to save</span>

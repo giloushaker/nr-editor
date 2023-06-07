@@ -91,6 +91,9 @@ export const entries = {
       "modifierGroups",
     ],
   },
+  associations: {
+    allowedChildrens: ["constraints", "modifiers", "modifierGroups"],
+  },
   sharedRules: {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
   },
@@ -138,6 +141,7 @@ export const entries = {
       "rules",
     ],
   },
+
   gameSystem: {
     allowedChildrens: [
       "publications",
