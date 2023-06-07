@@ -33,20 +33,6 @@ export const entries = {
   entryLinks: {
     allowedChildrens: "type",
   },
-  selectionEntryGroup: {
-    allowedChildrens: [
-      "selectionEntries",
-      "selectionEntryGroups",
-      "entryLinks",
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "constraints",
-      "modifiers",
-      "modifierGroups",
-    ],
-  },
   selectionEntryGroups: {
     allowedChildrens: [
       "selectionEntries",
@@ -75,20 +61,6 @@ export const entries = {
       "modifierGroups",
     ],
   },
-  selectionEntry: {
-    allowedChildrens: [
-      "selectionEntries",
-      "selectionEntryGroups",
-      "entryLinks",
-      "profiles",
-      "rules",
-      "infoGroups",
-      "infoLinks",
-      "constraints",
-      "modifiers",
-      "modifierGroups",
-    ],
-  },
   selectionEntries: {
     allowedChildrens: [
       "selectionEntries",
@@ -98,6 +70,7 @@ export const entries = {
       "rules",
       "infoGroups",
       "infoLinks",
+      "associations",
       "constraints",
       "modifiers",
       "modifierGroups",
@@ -112,16 +85,11 @@ export const entries = {
       "rules",
       "infoGroups",
       "infoLinks",
+      "associations",
       "constraints",
       "modifiers",
       "modifierGroups",
     ],
-  },
-  rule: {
-    allowedChildrens: ["modifiers", "modifierGroups"],
-  },
-  profile: {
-    allowedChildrens: ["modifiers", "modifierGroups"],
   },
   sharedRules: {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
@@ -134,9 +102,6 @@ export const entries = {
   },
   sharedProfiles: {
     allowedChildrens: ["modifiers", "modifierGroups"],
-  },
-  infoGroup: {
-    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
   },
   infoGroups: {
     allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
@@ -156,7 +121,6 @@ export const entries = {
   conditionGroups: {
     allowedChildrens: ["conditions", "conditionGroups"],
   },
-
   catalogue: {
     allowedChildrens: [
       "categoryLinks",
