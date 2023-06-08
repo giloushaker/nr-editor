@@ -583,6 +583,7 @@ export const useEditorStore = defineStore("editor", {
             scope: "parent",
             id: generateBattlescribeId(),
             childId: "any",
+            shared: true,
           };
         case "constraints": {
           const isAssociation = parent?.parentKey === "associations";
@@ -591,6 +592,8 @@ export const useEditorStore = defineStore("editor", {
             value: 1,
             field: parent?.isForce() ? "forces" : "selections",
             scope: "parent",
+            shared: true,
+
             id: generateBattlescribeId(),
           } as BSIConstraint;
           if (isAssociation) {
@@ -604,8 +607,9 @@ export const useEditorStore = defineStore("editor", {
             value: 1,
             field: "selections",
             scope: "parent",
-            childId: "any",
             id: generateBattlescribeId(),
+            childId: "any",
+            shared: true,
           };
         case "modifiers":
           return {
