@@ -531,7 +531,9 @@ export const useEditorStore = defineStore("editor", {
           for (const entry of entries as Record<string, any>[]) {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
-            if (!key) continue;
+            if (!key) {
+              console.warn("Couldn't create", childKey || entry.parentKey, "in", selectedCatalogueKey);
+            }
             if (!item[key as keyof Base]) (item as any)[key] = [];
             const arr = item[key as keyof Base];
             if (!Array.isArray(arr)) continue;
