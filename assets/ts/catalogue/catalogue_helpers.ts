@@ -1,6 +1,5 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
 import { flattenRecursive, recurseThis } from "~/assets/shared/battlescribe/bs_helpers";
-import { CategoryLink } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 

@@ -14,6 +14,8 @@
 
       <template v-for="category of groupedCategories" :key="category.type">
         <EditorCollapsibleBox
+          :altclickable="store.can_follow(item) || imported"
+          @altclick="onctrlclick"
           :collapsible="category.items.length > 0"
           :group="get_group('entries')"
           :payload="category.type"
@@ -46,6 +48,8 @@
     </template>
     <template v-else>
       <EditorCollapsibleBox
+        :altclickable="store.can_follow(item) || imported"
+        @altclick="onctrlclick"
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
         :group="group || []"
@@ -80,7 +84,7 @@
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
       <template #default="{ payload }">
         <template v-if="!payload && item">
-          <div v-if="link.target" @click="store.follow(link)">
+          <div v-if="store.can_follow(item)" @click="store.follow(link)">
             Follow
             <span class="gray" v-if="link.target.catalogue !== item.catalogue">
               &nbsp;({{ link.target.catalogue?.getName() || link.target.getName() }})
@@ -343,6 +347,15 @@ export default {
         case "category":
         default:
           return item.links?.length;
+      }
+    },
+    async onctrlclick() {
+      if (this.store.can_follow(this.item)) {
+        await this.store.follow(this.item as EditorBase & Link);
+      } else if (this.imported) {
+        await this.store.goto(this.item);
+      } else if (this.item.links || this.item.other_links) {
+        this.store.mode = "references";
       }
     },
     debug() {
