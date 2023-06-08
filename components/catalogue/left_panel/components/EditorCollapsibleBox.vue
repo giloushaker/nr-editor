@@ -7,8 +7,16 @@
     <h3
       v-if="!notitle"
       class="title hover-darken"
-      :class="{ selected, arrowTitle: collapsible, normalTitle: !collapsible, collapsed: collapsible && collapsed }"
+      :class="{
+        selected,
+        arrowTitle: collapsible,
+        normalTitle: !collapsible,
+        collapsed: collapsible && collapsed,
+        alt: alt && altclickable,
+      }"
       @click.stop="do_select"
+      @click.ctrl.stop="$emit('ctrlclick')"
+      @click.alt.stop="$emit('altclick')"
       @dblclick="collapseSwitch"
     >
       <div class="arrow-wrap" @click.stop="collapseSwitch">
@@ -68,6 +76,9 @@ export default {
     modelValue: {
       default: true,
     },
+    altclickable: {
+      default: false,
+    },
   },
 
   data() {
@@ -75,6 +86,7 @@ export default {
       collapsed: true,
       initiated: false,
       selected: false,
+      alt: false,
     };
   },
 
@@ -87,14 +99,19 @@ export default {
     return { store: useEditorStore() };
   },
   mounted() {
+    document.body.addEventListener("keydown", this.handleKeyDown);
+    document.body.addEventListener("keyup", this.handleKeyUp);
     this.$el.vnode = this;
     this.group?.push(this);
     this.init(this.payload);
   },
+
   updated() {
     this.$el.vnode = this;
   },
   unmounted() {
+    document.body.removeEventListener("keydown", this.handleKeyDown);
+    document.body.removeEventListener("keyup", this.handleKeyUp);
     if (this.group && Array.isArray(this.group)) {
       const idx = this.group.indexOf(this as any);
       if (idx !== -1) {
@@ -179,6 +196,16 @@ export default {
         this.$emit("close");
       }
     },
+    handleKeyDown(event: KeyboardEvent) {
+      if (event.altKey) {
+        this.alt = true;
+      }
+    },
+    handleKeyUp(event: KeyboardEvent) {
+      if (event.altKey) {
+        this.alt = false;
+      }
+    },
   },
 };
 </script>
@@ -228,5 +255,9 @@ h3 {
 
 .hide {
   display: none;
+}
+
+.alt:hover {
+  text-decoration: underline;
 }
 </style>

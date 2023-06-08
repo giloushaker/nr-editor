@@ -875,6 +875,9 @@ export const useEditorStore = defineStore("editor", {
         }, 50);
       }
     },
+    can_follow(obj?: EditorBase): boolean {
+      return Boolean(obj?.target);
+    },
     async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
         await this.goto(obj.target as EditorBase);
