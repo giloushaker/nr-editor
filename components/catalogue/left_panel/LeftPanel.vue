@@ -137,19 +137,19 @@ export default defineComponent({
       }, 50);
     },
     async cut(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
         e.preventDefault();
-        await this.store.paste(e);
+        await this.store.cut(e);
       }
     },
     async copy(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
         e.preventDefault();
-        await this.store.paste(e);
+        await this.store.copy(e);
       }
     },
     async paste(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
         e.preventDefault();
         await this.store.paste(e);
       }
