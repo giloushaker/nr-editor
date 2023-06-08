@@ -107,6 +107,10 @@ Editor:
                 https://github.com/giloushaker/nr-editor/releases
             
 
+            ☐ Show target sub-entries underneath links
+            ☐ Global sorting disable to change xml order
+            ☐ refs panel, show if categories are primary
+            ☐ move to doesnt allow choosing if to shared or root, from shared to root?
 
         ✔ move up/down @done(23-06-01 21:17)
         ☐ alert version of popupdialog
@@ -143,4 +147,6 @@ Editor:
             ☐ preview profiles/rules (like in builder)
             
         
-   
+
+            
+        

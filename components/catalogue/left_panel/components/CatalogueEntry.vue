@@ -242,6 +242,7 @@ import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
+import { useSettingsStore } from "~/stores/settingsState";
 
 const order: Record<string, number> = {
   selectionEntry: 1,
@@ -264,7 +265,7 @@ export default {
     EditorCollapsibleBox,
   },
   setup() {
-    return { store: useEditorStore(), state: useEditorUIState() };
+    return { store: useEditorStore(), state: useEditorUIState(), settings: useSettingsStore() };
   },
   props: {
     item: {
@@ -333,6 +334,7 @@ export default {
       return this.open_categories?.has(category);
     },
     sortable(entry?: EditorBase) {
+      if (this.settings.sort === "none") return false;
       if (!entry) return true;
       return noSort.has(entry.editorTypeName) === false;
     },
@@ -406,9 +408,11 @@ export default {
     },
 
     sorted(items: CatalogueEntryItem[]) {
-      if (!this.sortable) return items;
+      if (!this.sortable(this.item)) return items;
       const a = sortByAscending(items, (o) => o.item.getName() || "");
-      return sortByDescending(a, (o) => order[o.item.editorTypeName] || 1000);
+      const result = sortByDescending(a, (o) => order[o.item.editorTypeName] || 1000);
+      if (this.settings.sort === "desc") result.reverse();
+      return result;
     },
 
     menu(ref: string) {

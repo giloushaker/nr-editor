@@ -21,7 +21,14 @@
       >
         🡲
       </span>
-
+      <div class="absolute right-30px">
+        Sort
+        <select class="h-24px h-center" v-model="settings.sort">
+          <option value="none">No Sorting </option>
+          <option value="asc">Ascending </option>
+          <option value="desc">Descending </option>
+        </select>
+      </div>
       <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
@@ -53,6 +60,7 @@ import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_cata
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
+import { useSettingsStore } from "~/stores/settingsState";
 
 export const LeftPanelDefaults = {
   showImported: false,
@@ -66,7 +74,7 @@ export default defineComponent({
   components: { CatalogueEntry },
   emits: ["scrolltop"],
   setup() {
-    return { store: useEditorStore(), uistate: useEditorUIState() };
+    return { store: useEditorStore(), uistate: useEditorUIState(), settings: useSettingsStore() };
   },
   data() {
     return {
