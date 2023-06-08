@@ -137,16 +137,22 @@ export default defineComponent({
       }, 50);
     },
     async cut(e: ClipboardEvent) {
-      e.preventDefault();
-      await this.store.cut(e);
+      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+        e.preventDefault();
+        await this.store.paste(e);
+      }
     },
     async copy(e: ClipboardEvent) {
-      e.preventDefault();
-      await this.store.copy(e);
+      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+        e.preventDefault();
+        await this.store.paste(e);
+      }
     },
     async paste(e: ClipboardEvent) {
-      e.preventDefault();
-      await this.store.paste(e);
+      if ((e.target as HTMLDivElement)?.tagName === "BODY") {
+        e.preventDefault();
+        await this.store.paste(e);
+      }
     },
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
