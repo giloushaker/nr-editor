@@ -38,7 +38,8 @@ Interface:
         A dropdown arrow is visible in Root Selection Entries
         If I try to open the dropdown, the whole Root Selection Entries node disappears
     ☐ Check why Shared? is sometimes active and sometimes inactive and its default value
-
+    ☐ Only allow primary categories for top level elements
+    
 Editor:
     UI:
         ✔ show imported entries @done(23-05-21 16:17)

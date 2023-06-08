@@ -10,6 +10,16 @@
           {{ costType.name }}
         </option>
       </select>
+
+      <!--       <UtilIconSelect v-model="item.field" :fetch="() => fieldTypes" @change="changed" class="modType">
+        <template #option="opt">
+          <div>
+            <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.type}.png`" />
+            {{ opt.option.name }}
+          </div>
+        </template>
+      </UtilIconSelect> -->
+
       <span> in </span>
 
       <UtilAutocomplete
@@ -98,6 +108,48 @@ export default {
       return this.item.type.includes("instance");
     },
 
+    fieldTypes() {
+      /*       <option :value="undefined" v-if="instanceOf" />
+        <option v-if="!instanceOf" value="selections">Selections</option>
+        <option v-if="!instanceOf" value="forces">Forces</option>
+        <option v-if="!instanceOf" v-for="costType of costTypes" :value="costType.id">
+          {{ costType.name }}
+        </option> */
+
+      const res: {
+        name: string;
+        type: string | null;
+        value: string | undefined;
+      }[] = [];
+      if (this.instanceOf) {
+        res.push({
+          name: "",
+          value: undefined,
+          type: null,
+        });
+      }
+      res.push({
+        name: "Selections",
+        value: "selections",
+        type: "bullet",
+      });
+      res.push({
+        name: "Forces",
+        value: "forces",
+        type: "bullet",
+      });
+      res.push(
+        ...this.costTypes.map((elt) => {
+          return {
+            name: elt.name,
+            value: elt.id,
+            type: "cost",
+          };
+        })
+      );
+      return res;
+    },
+
     includeCategories() {
       if (this.item.field === "forces") {
         return false;
@@ -120,11 +172,12 @@ export default {
       return (this.item as any as EditorBase).parent;
     },
 
-    costTypes(): BSICostType[] {
-      if (this.catalogue.costTypes) {
-        return this.catalogue.costTypes;
+    costTypes() {
+      let res: BSICostType[] = [];
+      for (let elt of this.catalogue.iterateCostTypes()) {
+        res.push(elt);
       }
-      return [];
+      return res;
     },
 
     allSelections(): EditorSearchItem[] {
@@ -166,7 +219,7 @@ export default {
         },
       ];
 
-      if (this.item.field === "selections" && this.item.editorTypeName === "condition") {
+      if (this.item.field != "forces" && this.item.editorTypeName === "condition") {
         res = [
           {
             id: "self",
@@ -206,7 +259,7 @@ export default {
         ];
       }
 
-      if (this.item.field === "selections" && this.item.editorTypeName === "constraint") {
+      if (this.item.field !== "forces" && this.item.editorTypeName === "constraint") {
         res = [
           {
             id: "parent",
