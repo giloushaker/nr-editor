@@ -36,9 +36,7 @@
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
 
                 {{ opt.option.name }}
-                <span class="shared" v-if="opt.option.parentKey && opt.option.parentKey.includes('shared')">
-                  (shared)
-                </span>
+                <span class="shared" v-if="opt.option.shared"> (shared) </span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
@@ -87,7 +85,7 @@ export default {
           editorTypeName: "bullet",
           indent: 1,
           catalogue: null,
-          parentKey: null,
+          shared: false,
         },
         {
           id: "unit",
@@ -95,7 +93,7 @@ export default {
           editorTypeName: "bullet",
           indent: 1,
           catalogue: null,
-          parentKey: null,
+          shared: false,
         },
         {
           id: "model",
@@ -103,7 +101,7 @@ export default {
           editorTypeName: "bullet",
           indent: 1,
           catalogue: null,
-          parentKey: null,
+          shared: false,
         },
         {
           id: "upgrade",
@@ -111,7 +109,7 @@ export default {
           editorTypeName: "bullet",
           indent: 1,
           catalogue: null,
-          parentKey: null,
+          shared: false,
         },
       ],
     };

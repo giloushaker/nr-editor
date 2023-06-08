@@ -110,6 +110,9 @@ export default {
     },
 
     includeSelections() {
+      if (this.item.field == "forces") {
+        return false;
+      }
       return true;
     },
 
@@ -142,7 +145,7 @@ export default {
       if (!this.includeForces) {
         return [];
       }
-      return getSearchElements(this.catalogue, "forcesIteratorRecursive");
+      return getSearchElements(this.catalogue, "forcesIterator");
     },
 
     allScopes(): {
@@ -163,7 +166,7 @@ export default {
         },
       ];
 
-      if (this.item.field === "selections") {
+      if (this.item.field === "selections" && this.item.editorTypeName === "condition") {
         res = [
           {
             id: "self",
@@ -203,10 +206,43 @@ export default {
         ];
       }
 
+      if (this.item.field === "selections" && this.item.editorTypeName === "constraint") {
+        res = [
+          {
+            id: "parent",
+            name: "Parent",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "force",
+            name: "Force",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "roster",
+            name: "Roster",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "primary-catalogue",
+            name: "Primary Catalogue",
+            editorTypeName: "bullet",
+          },
+        ];
+      }
+
       return res
         .concat(this.allSelections)
         .concat(this.allCategories as any)
         .concat(this.allForces as any);
+    },
+  },
+
+  watch: {
+    "item.field"() {
+      if (this.item.field == "forces") {
+        this.item.scope = "roster";
+      }
     },
   },
 };
