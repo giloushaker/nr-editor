@@ -354,7 +354,7 @@ export default {
         await this.store.follow(this.item as EditorBase & Link);
       } else if (this.imported) {
         await this.store.goto(this.item);
-      } else if (this.item.links || this.item.links) {
+      } else if (this.item.links || this.item.other_links) {
         this.store.mode = "references";
       }
     },
