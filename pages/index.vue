@@ -79,6 +79,7 @@ import SelectFile from "~/components/SelectFile.vue";
 import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
+import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 
 export default defineComponent({
   components: {
@@ -222,6 +223,17 @@ export default defineComponent({
         },
       } as any;
     },
+    getCatExtension(gstPath: string): string {
+      switch (getExtension(gstPath)) {
+        case "json":
+          return "json";
+        case "gstz":
+          return "catz";
+        default:
+        case "gst":
+          return "cat";
+      }
+    },
     createCatalogue(data: BSIDataCatalogue) {
       const system = this.store.get_system(data.catalogue.gameSystemId);
       const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
@@ -230,7 +242,7 @@ export default defineComponent({
         if (!system.gameSystem) {
           throw new Error("Cannot create catalogue: no game system");
         }
-        const systemPath = getDataObject(system.gameSystem).fullFilePath || "test/folder/gst.gst";
+        const systemPath = getDataObject(system.gameSystem).fullFilePath;
         if (!systemPath) {
           throw new Error("Cannot create catalogue: game system has no path set");
         }
@@ -239,7 +251,8 @@ export default defineComponent({
           throw new Error("Cannot create catalogue: no name provided");
         }
         const folder = dirname(systemPath);
-        getDataObject(copy).fullFilePath = `${folder}/${name}.cat`;
+
+        getDataObject(copy).fullFilePath = `${folder}/${name}.${this.getCatExtension(systemPath)}`;
       }
       system.setCatalogue(copy);
       this.cataloguesStore.setEdited(getDataDbId(copy), true);
