@@ -50,6 +50,7 @@ const availableModifiers = {
   selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryGroup: ["name", "page", "hidden", "category", "constraints"],
+  selectionEntryGroupLink: ["name", "page", "hidden", "category", "constraints"],
   profile: ["name", "description", "page", "hidden"],
   rule: ["name", "description", "page", "hidden"],
   infoLink: ["name", "description", "page", "hidden"],
