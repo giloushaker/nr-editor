@@ -6,9 +6,9 @@
     <input class="w-full" type="text" v-model="text" required />
     <span>Format </span>
     <select v-model="format">
-      <option value=".gstz">.gstz (Zipped Xml)</option>
-      <option value=".gst">.gst (Xml)</option>
-      <option value=".json">.json (JSON)</option>
+      <option value="gstz">.gstz (Zipped Xml)</option>
+      <option value="gst">.gst (Xml)</option>
+      <option value="json">.json (JSON)</option>
     </select>
     <template v-if="electron">
       <div> The system will be created at: </div>
@@ -24,7 +24,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 export default {
   emits: ["created"],
   data() {
-    return { open: false, text: "", format: ".gst" };
+    return { open: false, text: "", format: "gst" };
   },
   setup() {
     return { store: useEditorStore(), settings: useSettingsStore() };
