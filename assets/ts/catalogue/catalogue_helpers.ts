@@ -92,7 +92,6 @@ export function getSearchSelectionsWithCategory(
       });
     }
   }
-  console.log(res);
   return res;
 }
 
