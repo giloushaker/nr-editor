@@ -197,14 +197,10 @@ export default {
       }
     },
     handleKeyDown(event: KeyboardEvent) {
-      if (event.altKey) {
-        this.alt = true;
-      }
+      this.alt = event.altKey;
     },
     handleKeyUp(event: KeyboardEvent) {
-      if (event.altKey) {
-        this.alt = false;
-      }
+      this.alt = event.altKey;
     },
   },
 };
