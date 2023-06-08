@@ -4,6 +4,12 @@
     <h2 class="text-center">Create System</h2>
     <span>Name </span>
     <input class="w-full" type="text" v-model="text" required />
+    <span>Format </span>
+    <select v-model="format">
+      <option value=".gstz">.gstz (Zipped Xml)</option>
+      <option value=".gst">.gst (Xml)</option>
+      <option value=".json">.json (JSON)</option>
+    </select>
     <template v-if="electron">
       <div> The system will be created at: </div>
       <div class="gray">{{ folder }}/{{ text }}/</div>
@@ -18,7 +24,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 export default {
   emits: ["created"],
   data() {
-    return { open: false, text: "" };
+    return { open: false, text: "", format: ".gst" };
   },
   setup() {
     return { store: useEditorStore(), settings: useSettingsStore() };
@@ -43,7 +49,7 @@ export default {
 
     async create() {
       if (this.text) {
-        const created = await this.store.create_system(this.text, this.folder);
+        const created = await this.store.create_system(this.text, this.folder, this.format);
         this.$emit("created", created);
       }
     },

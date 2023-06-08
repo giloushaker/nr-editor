@@ -126,7 +126,7 @@ export const useEditorStore = defineStore("editor", {
   }),
 
   actions: {
-    async create_system(name: string, path?: string) {
+    async create_system(name: string, path?: string, extension?: string) {
       console.log("Creating system with name:", name);
       const id = `sys-${generateBattlescribeId()}`;
       const files = this.get_system(id);
@@ -148,7 +148,7 @@ export const useEditorStore = defineStore("editor", {
       } as BSIDataSystem;
 
       if (folder) {
-        data.gameSystem.fullFilePath = `${folder}/${name}.gst`;
+        data.gameSystem.fullFilePath = `${folder}/${name}.${extension || "gst"}`;
       }
       files.setSystem(data);
 
