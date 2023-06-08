@@ -149,10 +149,10 @@
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Info Link
           </div>
-          <div @click="store.create('associations')" v-if="allowed('associations')">
+          <!-- <div @click="store.create('associations')" v-if="allowed('associations')">
             <img class="pr-4px" src="assets/bsicons/association.png" />
             Association
-          </div>
+          </div> -->
           <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
             <img class="pr-4px" src="assets/bsicons/condition.png" />
