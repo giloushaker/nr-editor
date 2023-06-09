@@ -23,10 +23,11 @@
       </span>
       <div class="absolute right-30px">
         Sort
-        <select class="h-24px h-center" v-model="settings.sort">
+        <select class="h-24px p-2px !text-sm" v-model="settings.sort">
           <option value="none">No Sorting </option>
           <option value="asc">Ascending </option>
           <option value="desc">Descending </option>
+          <option value="type">Type</option>
         </select>
       </div>
       <img
@@ -82,14 +83,16 @@ export default defineComponent({
       ...this.defaults,
     };
   },
-  async mounted() {
+  enabled() {
     addEventListener("keydown", this.keydown);
     addEventListener("copy", this.copy);
     addEventListener("paste", this.paste);
     addEventListener("cut", this.cut);
+  },
+  async mounted() {
     this.load();
   },
-  unmounted() {
+  disabled() {
     removeEventListener("keydown", this.keydown);
     removeEventListener("copy", this.copy);
     removeEventListener("paste", this.paste);
