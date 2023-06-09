@@ -207,8 +207,12 @@
             <span class="absolute right-5px">❯</span>
           </div>
           <ContextMenu ref="nestedcontextmenu">
-            <div v-for="target of store.get_move_targets(item)" @click="store.move(item, catalogue, target)">
-              {{ target.name }}
+            <div
+              v-for="target of store.get_move_targets(item)"
+              @click="store.move(item, catalogue, target.target, target.type)"
+            >
+              {{ target.target.name }} -
+              {{ target.type }}
             </div>
           </ContextMenu>
         </template>
@@ -453,6 +457,9 @@ export default {
     get_field(field: string) {
       return (this.item as any)[field];
     },
+    get_target_field(field: string) {
+      if (this.item.target) {
+        return (this.item.target as any)[field];
       }
     },
   },
