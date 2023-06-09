@@ -77,6 +77,7 @@ Editor:
                 added a key on `$id` wich doesnt get exported if there is no id
         ✔ When editing a Profile Type, if the user selected a characteristic and presses DELETE it will delete the whole profile type when the user expects it to delete a characteristic type @done(23-05-25 19:45)
         ✔ Modifiers in force categories @done(23-06-02 14:23)
+        ✔ Modifying an imported entry doesnt mark its parent catalogue as changed @done(23-06-09 12:23)
 
     Ideas:
         Cache stuff after first load then subsequent openings can be lazy loaded
@@ -107,10 +108,12 @@ Editor:
                 https://github.com/giloushaker/nr-editor/releases
             
 
-            ☐ Show target sub-entries underneath links
-            ☐ Global sorting disable to change xml order
+            ✔ Show target sub-entries underneath links @done(23-06-09 13:08)
+            ✔ Global sorting disable to change xml order @done(23-06-09 00:13)
             ☐ refs panel, show if categories are primary
-            ☐ move to doesnt allow choosing if to shared or root, from shared to root?
+            ✔ move to doesnt allow choosing if to shared or root, from shared to root? @done(23-06-09 15:49)
+                option to move to non-imported?
+            ☐ github check if revision is incremented
 
         ✔ move up/down @done(23-06-01 21:17)
         ☐ alert version of popupdialog
