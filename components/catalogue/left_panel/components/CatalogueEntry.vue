@@ -309,6 +309,7 @@ export default {
   },
   created() {
     if (this.catalogue) {
+      this.catalogue.processForEditor();
       if (!this.imported) {
         this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
         if (this.item.isCatalogue()) {
