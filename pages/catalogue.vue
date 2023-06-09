@@ -25,7 +25,7 @@
           <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" />
         </template>
         <template #right>
-          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
+          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" />
         </template>
       </SplitView>
     </template>
@@ -193,9 +193,6 @@ export default defineComponent({
         e.stopPropagation();
         this.store.save_catalogue(this.cat as Catalogue);
       }
-    },
-    onChanged() {
-      this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
     load_state(data: Record<string, any>) {
       this.defaults = data;
