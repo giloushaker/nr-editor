@@ -7,7 +7,7 @@
   "main": "index.js",
   "scripts": {
     "build": "nuxt generate --electron",
-    "dev": "nuxi dev",
+    "dev": "nuxi dev --port 3005",
     "start": "nuxi start",
     "generate": "nuxi generate",
     "preview": "nuxt preview",
