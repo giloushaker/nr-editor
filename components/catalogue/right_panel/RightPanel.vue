@@ -166,7 +166,7 @@ export default {
 
   methods: {
     changed() {
-      this.$emit("catalogueChanged");
+      this.store.set_catalogue_changed(this.item?.catalogue || this.catalogue);
     },
   },
 
