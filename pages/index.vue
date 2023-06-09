@@ -16,7 +16,7 @@
   <p class="info">
     To return to this page, simply click on the 'New Recruit' icon located in the top-left corner of the screen.
     <br />
-    Returning to this view will not cause you to lose your changes.
+    Returning to this page will not cause you to lose your changes.
   </p>
   <div class="mx-10px box h-full pb-200px">
     <SplitView
