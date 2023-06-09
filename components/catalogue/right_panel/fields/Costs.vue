@@ -62,7 +62,7 @@ export default {
 
     update() {
       this.selectedCosts = {};
-      const defaultValue = (this.item as EditorBase).isLink() ? undefined : 0;
+      const defaultValue = ((this.item as EditorBase).isLink() ? undefined : 0) as number;
       for (let cost of Object.values(this.costTypes)) {
         this.selectedCosts[cost.id] = {
           name: cost.name,
