@@ -23,10 +23,11 @@
       </span>
       <div class="absolute right-30px">
         Sort
-        <select class="h-24px h-center" v-model="settings.sort">
+        <select class="h-24px p-2px !text-sm" v-model="settings.sort">
           <option value="none">No Sorting </option>
           <option value="asc">Ascending </option>
           <option value="desc">Descending </option>
+          <option value="type">Type</option>
         </select>
       </div>
       <img
@@ -83,11 +84,11 @@ export default defineComponent({
     };
   },
   async mounted() {
+    this.load();
     addEventListener("keydown", this.keydown);
     addEventListener("copy", this.copy);
     addEventListener("paste", this.paste);
     addEventListener("cut", this.cut);
-    this.load();
   },
   unmounted() {
     removeEventListener("keydown", this.keydown);
@@ -144,20 +145,25 @@ export default defineComponent({
         if (scrollable_el) scrollable_el.scrollTop = scroll;
       }, 50);
     },
+    should_capture(e: Event) {
+      if ((e.target as HTMLDivElement)?.tagName === "INPUT") return false;
+      if (this.$route.name !== "catalogue") return false;
+      return true;
+    },
     async cut(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.cut(e);
       }
     },
     async copy(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.copy(e);
       }
     },
     async paste(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.paste(e);
       }

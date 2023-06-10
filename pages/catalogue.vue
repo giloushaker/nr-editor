@@ -19,13 +19,12 @@
         :double="true"
         :showRight="store.selectedItem != null"
         id="catalogueView"
-        :key="key"
       >
         <template #left>
-          <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" />
+          <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" :key="key" keepalive />
         </template>
         <template #right>
-          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" @catalogueChanged="onChanged" />
+          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" />
         </template>
       </SplitView>
     </template>
@@ -34,16 +33,14 @@
       <span class="ml-10px">
         Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
-      <template v-if="changed">
-        <template v-if="unsaved">
-          <button class="bouton save ml-10px" @click="save">Save</button>
-        </template>
-        <template v-else-if="failed">
-          <span class="status mx-2 text-red">failed to save</span>
-        </template>
-        <template v-else>
-          <span class="status mx-2">saved</span>
-        </template>
+      <template v-if="store.unsavedCount">
+        <button class="bouton save ml-10px" @click="failed = store.save_all()">Save All</button>
+      </template>
+      <template v-else-if="failed">
+        <span class="status mx-2 text-red">failed to save</span>
+      </template>
+      <template v-else>
+        <span class="status mx-2">saved</span>
       </template>
       <template v-if="systemFiles && !systemFiles.allLoaded">
         <button class="bouton load ml-10px" @click="systemFiles.loadAll">Load all refs</button>
@@ -193,9 +190,6 @@ export default defineComponent({
         e.stopPropagation();
         this.store.save_catalogue(this.cat as Catalogue);
       }
-    },
-    onChanged() {
-      this.store.set_catalogue_changed(this.cat as Catalogue, true);
     },
     load_state(data: Record<string, any>) {
       this.defaults = data;

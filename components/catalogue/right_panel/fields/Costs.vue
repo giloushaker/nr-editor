@@ -9,6 +9,7 @@
           v-model="selectedCosts[cost.id].value"
           class="input"
           @change="changed"
+          placeholder="unset"
         />
       </div>
     </div>
@@ -16,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICost, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
@@ -55,18 +56,18 @@ export default {
 
   methods: {
     changed() {
-      this.item.costs = Object.values(this.selectedCosts);
+      this.item.costs = Object.values(this.selectedCosts).filter((o) => isFinite(o.value));
       this.$emit("catalogueChanged");
     },
 
     update() {
       this.selectedCosts = {};
-
+      const defaultValue = ((this.item as EditorBase).isLink() ? undefined : 0) as number;
       for (let cost of Object.values(this.costTypes)) {
         this.selectedCosts[cost.id] = {
           name: cost.name,
           typeId: cost.id,
-          value: 0,
+          value: defaultValue,
         };
       }
 

@@ -63,8 +63,12 @@
             <span class="typeIcon-wrapper">
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
-            <span :class="{ imported: imported, filtered: item.highlight }">{{ getName(item) }}</span>
+            <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
+            <span :class="{ imported: imported, filtered: item.highlight }">
+              {{ getName(item) }}
+            </span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
+            <span class="ml-10px" v-if="costs" v-html="costs" />
           </span>
         </template>
         <template #content>
@@ -73,7 +77,7 @@
               :item="child.item"
               :group="get_group('default')"
               :forceShowRecursive="forceShow"
-              :imported="imported"
+              :imported="imported || child.imported"
               :depth="depth + 1"
             />
           </template>
@@ -203,8 +207,12 @@
             <span class="absolute right-5px">❯</span>
           </div>
           <ContextMenu ref="nestedcontextmenu">
-            <div v-for="target of store.get_move_targets(item)" @click="store.move(item, catalogue, target)">
-              {{ target.name }}
+            <div
+              v-for="target of store.get_move_targets(item)"
+              @click="store.move(item, catalogue, target.target, target.type)"
+            >
+              {{ target.target.name }} -
+              {{ target.type }}
             </div>
           </ContextMenu>
         </template>
@@ -243,6 +251,7 @@ import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/E
 import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
+import { ICost, formatCosts } from "~/assets/shared/systems/army_interfaces";
 
 const order: Record<string, number> = {
   selectionEntry: 1,
@@ -300,6 +309,7 @@ export default {
   },
   created() {
     if (this.catalogue) {
+      this.catalogue.processForEditor();
       if (!this.imported) {
         this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
         if (this.item.isCatalogue()) {
@@ -330,6 +340,7 @@ export default {
         return entry.$id;
       }
     },
+
     should_be_open(category: string) {
       return this.open_categories?.has(category);
     },
@@ -408,11 +419,26 @@ export default {
     },
 
     sorted(items: CatalogueEntryItem[]) {
-      if (!this.sortable(this.item)) return items;
-      const a = sortByAscending(items, (o) => o.item.getName() || "");
-      const result = sortByDescending(a, (o) => order[o.item.editorTypeName] || 1000);
-      if (this.settings.sort === "desc") result.reverse();
-      return result;
+      if (!this.sortable(this.item)) {
+        return sortByDescending(items, (o) => order[o.item.editorTypeName] || 1000);
+      }
+      switch (this.settings.sort) {
+        default:
+        case "asc":
+          const asc = sortByAscending(items, (o) => o.item.getName() || "");
+          return sortByDescending(asc, (o) => order[o.item.editorTypeName] || 1000);
+        case "desc":
+          const desc = sortByDescending(items, (o) => o.item.getName() || "");
+          return sortByDescending(desc, (o) => order[o.item.editorTypeName] || 1000);
+        case "type":
+          const type = sortByAscending(items, (o) => {
+            if (o.item.isProfile()) return o.item.getTypeName();
+
+            // return o.item.getPrimaryCategoryLink()?.target?.name || o.item.getType() || "";
+            return o.item.getType() || "";
+          });
+          return sortByDescending(type, (o) => order[o.item.editorTypeName] || 1000);
+      }
     },
 
     menu(ref: string) {
@@ -432,9 +458,36 @@ export default {
     get_field(field: string) {
       return (this.item as any)[field];
     },
+    get_target_field(field: string) {
+      if (this.item.target) {
+        return (this.item.target as any)[field];
+      }
+    },
   },
 
   computed: {
+    // primary() {
+    //   let result = "";
+    //   for (const cl of this.item.categoryLinksIterator()) {
+    //     if (cl.primary) {
+    //       result = cl.target.name;
+    //     }
+    //   }
+    //   return result ? result + " " : result;
+    // },
+    costs() {
+      const result = [] as ICost[];
+      const index = this.item.getCatalogue().index;
+      const costs = this.item.getCosts();
+      for (const cost of costs) {
+        result.push({
+          name: index[cost.typeId].name,
+          value: cost.value,
+          typeId: cost.typeId,
+        });
+      }
+      return formatCosts(result);
+    },
     link(): Link & EditorBase {
       return this.item as Link & EditorBase;
     },
@@ -462,16 +515,31 @@ export default {
     },
 
     mixedChildren(): Array<CatalogueEntryItem> {
-      const allowed = [];
+      const childs = [];
       for (const category of this.allowedChildren) {
         const arr = this.get_field(category);
-        if (!arr?.length) continue;
-        for (const elt of arr) {
-          if (!this.filter_child(elt)) continue;
-          allowed.push({ type: category as ItemKeys, item: elt });
+        if (arr?.length) {
+          for (const elt of arr) {
+            if (!this.filter_child(elt)) continue;
+            childs.push({ type: category as ItemKeys, item: elt });
+          }
         }
       }
-      return this.sorted(allowed);
+
+      if (this.item.isLink() && this.item.target) {
+        const targetChilds = [];
+        for (const category of this.allowedChildren) {
+          const target_arr = this.get_target_field(category);
+          if (target_arr?.length) {
+            for (const elt of target_arr) {
+              if (!this.filter_child(elt)) continue;
+              targetChilds.push({ type: category as ItemKeys, item: elt, imported: true });
+            }
+          }
+        }
+        return [...this.sorted(targetChilds), ...this.sorted(childs)];
+      }
+      return this.sorted(childs);
     },
     categories() {
       if (this.item.isCatalogue()) {
@@ -515,5 +583,9 @@ export default {
 
 .head {
   margin-left: -20px;
+}
+
+.text-orange {
+  color: rgb(153 31 31);
 }
 </style>

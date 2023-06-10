@@ -37,6 +37,7 @@
       <button class="bouton" @click="$emit('edit', catalogue)">Edit</button>
       <button class="bouton" @click="deletePopup = true">Delete</button>
       <button class="bouton" @click="download_file">Download</button>
+      <p class="info"> To quickly edit a catalogue, you can double-click on it. </p>
     </div>
     <PopupDialog
       button="Confirm"

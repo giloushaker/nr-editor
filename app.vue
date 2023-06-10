@@ -339,6 +339,7 @@ button.bouton[disabled] {
 
     ::-webkit-scrollbar {
       width: 6px;
+      height: 6px;
     }
   }
 }
@@ -367,6 +368,6 @@ h6,
 }
 
 .info {
-  margin-left: 5px;
+  margin-left: 10px;
 }
 </style>

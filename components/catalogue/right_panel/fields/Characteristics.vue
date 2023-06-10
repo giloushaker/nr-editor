@@ -52,6 +52,7 @@ export default {
         existing[c.name] = c.$text;
       }
       const type = this.catalogue.findOptionById(this.item.typeId) as ProfileType;
+      this.item.typeName = type?.name;
 
       const result = type?.characteristicTypes?.map((elt) => ({
         name: elt.name,

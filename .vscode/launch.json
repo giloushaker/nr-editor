@@ -9,14 +9,14 @@
       "request": "launch",
       "reAttach": true,
       "name": "Launch Firefox against localhost",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:3005",
       "webRoot": "${workspaceFolder}"
     },
     {
       "type": "pwa-chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:3005",
       "webRoot": "${workspaceFolder}"
     }
   ]

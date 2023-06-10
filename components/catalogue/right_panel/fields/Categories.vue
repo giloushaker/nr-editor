@@ -2,11 +2,10 @@
   <fieldset>
     <legend>Categories ({{ count }})</legend>
     <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
-    <div class="section"
-      ><input type="checkbox" id="onlyEnabled" v-model="settings.showOnlyEnabledCategories" /><label for="onlyEnabled"
-        >Only show selected categories</label
-      ></div
-    >
+    <div class="section inline">
+      <input type="checkbox" id="onlyEnabled" v-model="settings.showOnlyEnabledCategories" />
+      <label for="onlyEnabled">Only show selected categories</label>
+    </div>
     <div class="section categoryList">
       <div>
         <input name="primary" type="radio" :checked="noPrimary" @change="primaryChanged(null)" />
@@ -131,7 +130,7 @@ export default {
     },
 
     hasCategory(cat: Category) {
-      let link = this.item.categoryLinks?.find((elt) => elt.target.id === cat.id);
+      let link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
       if (!link) {
         return 0;
       }

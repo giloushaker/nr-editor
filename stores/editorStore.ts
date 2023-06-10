@@ -30,7 +30,13 @@ import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system"
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import type { BSICondition, BSIConstraint, BSIData, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import type {
+  BSICondition,
+  BSIConstraint,
+  BSIData,
+  BSIDataSystem,
+  BSILink,
+} from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, getExtension, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
@@ -255,7 +261,7 @@ export const useEditorStore = defineStore("editor", {
       const id = getDataDbId(catalogue);
       return this.unsavedChanges[id];
     },
-    set_catalogue_changed(catalogue: Catalogue, state: boolean) {
+    set_catalogue_changed(catalogue: Catalogue, state: boolean = true) {
       const id = getDataDbId(catalogue);
       if (!(id in this.unsavedChanges)) {
         this.unsavedChanges[id] = {
@@ -673,42 +679,71 @@ export const useEditorStore = defineStore("editor", {
     },
     can_move(obj: EditorBase) {
       if (obj.isLink()) return false;
-      if (!this.move_to_key(obj)) return false;
       return true;
     },
-    get_move_targets(obj: EditorBase) {
+    get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
       if (!catalogue) return;
       if (obj.isLink()) return;
-      if (!this.move_to_key(obj)) return;
-      const result = [];
-      if (!obj.parentKey.startsWith("shared")) {
-        result.push(catalogue);
+      const result = [] as Array<{ target: Catalogue; type: "root" | "shared" }>;
+      if (!obj.parentKey.startsWith("shared") && this.move_to_key(obj, "shared")) {
+        result.push({ target: catalogue, type: "shared" });
+      } else if (obj.parentKey.startsWith("shared") && this.move_to_key(obj, "root")) {
+        result.push({ target: catalogue, type: "root" });
       }
-      result.push(...catalogue.imports);
+      if (this.move_to_key(obj, "shared")) {
+        for (const imported of catalogue.imports) {
+          result.push({ target: imported, type: "root" });
+          result.push({ target: imported, type: "shared" });
+        }
+      } else {
+        for (const imported of catalogue.imports) {
+          result.push({ target: imported, type: "root" });
+        }
+      }
       return result;
     },
-    move_to_key(obj: EditorBase) {
+    move_to_key(obj: EditorBase, type: string) {
+      if (type === "shared") {
+        switch (obj.editorTypeName) {
+          case "infoGroup":
+            return "sharedInfoGroups";
+          case "rule":
+            return "sharedRules";
+          case "profile":
+            return "sharedProfiles";
+          case "selectionEntry":
+            return "sharedSelectionEntries";
+          case "selectionEntryGroup":
+            return "sharedSelectionEntryGroups";
+          default:
+            return "";
+        }
+      }
       switch (obj.editorTypeName) {
         case "infoGroup":
-          return "sharedInfoGroups";
+          return "infoGroups";
         case "rule":
-          return "sharedRules";
+          return "rules";
         case "profile":
-          return "sharedProfiles";
+          return "profiles";
         case "selectionEntry":
-          return "sharedSelectionEntries";
+          return "selectionEntries";
         case "selectionEntryGroup":
-          return "sharedSelectionEntryGroups";
+          return "selectionEntryGroups";
         default:
-          return "";
+          return obj.parentKey;
       }
     },
-    async move(obj: EditorBase, from: Catalogue, to: Catalogue) {
+    async move(obj: EditorBase, from: Catalogue, to: Catalogue, type: "root" | "shared") {
       const redo = async () => {
         // Get key the object will end up in
-        const catalogueKey = this.move_to_key(obj);
-        if (!catalogueKey) return;
+        const catalogueKey = this.move_to_key(obj, type) as ItemKeys;
+        if (!catalogueKey) {
+          console.error("Could not find key for move", obj.editorTypeName, type);
+
+          return;
+        }
 
         // move obj to target
         const parent = obj.parent!;
@@ -725,16 +760,20 @@ export const useEditorStore = defineStore("editor", {
         }
         to[catalogueKey]!.push(copy);
 
+        const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
+        const canBeLinked = linkableTypes.includes(obj.editorTypeName);
+        const shouldMakeLink = canBeLinked && !obj.parentKey.startsWith("shared");
+
         // replace previous obj with link to moved obj
-        if (!obj.parentKey.startsWith("shared")) {
-          const link: any = {
+        if (canBeLinked && shouldMakeLink) {
+          const link = {
             targetId: copy.id,
             id: from.generateNonConflictingId(),
             type: obj.editorTypeName,
             name: obj.getName(),
             hidden: obj.hidden,
             select: true,
-          };
+          } as any;
           if (obj.isEntry()) {
             link.collective = obj.collective;
           }
