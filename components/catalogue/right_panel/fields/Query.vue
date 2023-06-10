@@ -36,8 +36,9 @@
               ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
             >
             <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
-            {{ opt.option.name
-            }}<span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
+            {{ opt.option.name }}
+            <span class="shared" v-if="opt.option.shared"> (shared)</span>
+            <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
           </div>
         </template>
       </UtilAutocomplete>

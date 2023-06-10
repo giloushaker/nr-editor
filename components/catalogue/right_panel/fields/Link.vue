@@ -54,6 +54,8 @@
               <div>
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
+                <span class="shared" v-if="opt.option.shared"> (shared)</span>
+                <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
           </UtilAutocomplete>
@@ -79,6 +81,7 @@ import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
@@ -197,6 +200,16 @@ export default {
       }
       return target.editorTypeName == this.item.type;
     },
+
+    showCatalogue(opt: EditorSearchItem): boolean {
+      if (!opt.catalogue) {
+        return false;
+      }
+      if (opt.catalogue === this.item.catalogue.getName()) {
+        return false;
+      }
+      return true;
+    },
   },
 
   watch: {
@@ -211,12 +224,24 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import "@/shared_components/css/vars.scss";
+
 .linkIcon {
   vertical-align: middle;
 }
 
 .errIcon {
   vertical-align: -2px;
+}
+
+.catalogueName {
+  color: rgb(144, 152, 197);
+  font-style: italic;
+}
+
+.shared {
+  color: $gray;
+  font-style: italic;
 }
 </style>
