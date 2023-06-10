@@ -4,7 +4,7 @@
     <table class="editorTable">
       <tr>
         <td>Revision Number:</td>
-        <td><input type="text" v-model="item.revision" @change="changed" /></td>
+        <td><input type="number" v-model="item.revision" @change="changed" /></td>
       </tr>
     </table>
   </fieldset>
