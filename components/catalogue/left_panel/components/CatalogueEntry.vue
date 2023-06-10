@@ -432,10 +432,7 @@ export default {
           return sortByDescending(desc, (o) => order[o.item.editorTypeName] || 1000);
         case "type":
           const type = sortByAscending(items, (o) => {
-            if (o.item.isProfile()) return o.item.getTypeName();
-
-            // return o.item.getPrimaryCategoryLink()?.target?.name || o.item.getType() || "";
-            return o.item.getType() || "";
+            return (o.item.isProfile() ? o.item.getTypeName() : o.item.getType()) || "";
           });
           return sortByDescending(type, (o) => order[o.item.editorTypeName] || 1000);
       }
