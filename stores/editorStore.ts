@@ -291,10 +291,13 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = false;
       }
     },
-    save_all() {
+    save_all(system?: string) {
       let failed = false;
       try {
         for (const sys of Object.values(this.gameSystems)) {
+          if (system && sys.gameSystem?.gameSystem?.id !== system) {
+            continue;
+          }
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.get_catalogue_state(cat)?.unsaved) {
               this.save_catalogue(cat);

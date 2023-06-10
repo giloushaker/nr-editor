@@ -34,7 +34,7 @@
         Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
       <template v-if="store.unsavedCount">
-        <button class="bouton save ml-10px" @click="failed = store.save_all()">Save All</button>
+        <button class="bouton save ml-10px" @click="failed = store.save_all(cat.getSystemId())">Save All</button>
       </template>
       <template v-else-if="failed">
         <span class="status mx-2 text-red">failed to save</span>
