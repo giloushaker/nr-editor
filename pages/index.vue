@@ -260,6 +260,7 @@ export default defineComponent({
       }
       system.setCatalogue(copy);
       this.cataloguesStore.setEdited(getDataDbId(copy), true);
+      this.store.set_catalogue_changed(copy, true);
       this.selectedItem = copy;
       if (!electron) {
         db.catalogues.put({

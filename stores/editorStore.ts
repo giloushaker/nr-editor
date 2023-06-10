@@ -34,6 +34,7 @@ import type {
   BSICondition,
   BSIConstraint,
   BSIData,
+  BSIDataCatalogue,
   BSIDataSystem,
   BSILink,
 } from "~/assets/shared/battlescribe/bs_types";
@@ -261,7 +262,7 @@ export const useEditorStore = defineStore("editor", {
       const id = getDataDbId(catalogue);
       return this.unsavedChanges[id];
     },
-    set_catalogue_changed(catalogue: Catalogue, state: boolean = true) {
+    set_catalogue_changed(catalogue: Catalogue | BSIDataCatalogue | BSIDataSystem, state: boolean = true) {
       const id = getDataDbId(catalogue);
       if (!(id in this.unsavedChanges)) {
         this.unsavedChanges[id] = {

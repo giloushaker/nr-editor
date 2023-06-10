@@ -27,6 +27,7 @@ export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;
   catalogueFiles: Record<string, BSIDataCatalogue> = {};
   allLoaded?: boolean;
+  loadedCatalogues: Record<string, Catalogue> = {};
   async getData(catalogueLink: BSICatalogueLink, booksDate?: BooksDate): Promise<BSIData> {
     if (catalogueLink.targetId == this.gameSystem?.gameSystem.id) {
       return this.gameSystem;
@@ -57,6 +58,7 @@ export class GameSystemFiles extends BSCatalogueManager {
   }
   async unloadAll(): Promise<void> {
     super.unloadAll();
+    this.loadedCatalogues = {};
     delete this.allLoaded;
   }
   async loadAll() {
@@ -70,10 +72,17 @@ export class GameSystemFiles extends BSCatalogueManager {
     }
     this.allLoaded = true;
   }
+  getLoadedCatalogue(catalogueLink: BSICatalogueLink, booksDate?: BooksDate): Catalogue | undefined {
+    const key = catalogueLink.targetId || catalogueLink.name!;
+    return this.loadedCatalogues[key] as Catalogue | undefined;
+  }
+  addLoadedCatalogue(catalogue: Catalogue, booksDate?: BooksDate): void {
+    this.loadedCatalogues[catalogue.id] = catalogue;
+  }
   getAllLoadedCatalogues() {
     const id = this.gameSystem?.gameSystem.id;
     if (id) {
-      return Object.values(this.catalogues[id]);
+      return Object.values(this.loadedCatalogues);
     }
     return [];
   }
