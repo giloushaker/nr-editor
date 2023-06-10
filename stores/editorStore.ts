@@ -339,7 +339,7 @@ export const useEditorStore = defineStore("editor", {
         failed = true;
       }
       if (incremented) {
-        notify(`Incremented ${incremented} revision${incremented === 1 ? "" : "s"}`);
+        notify(`Incremented ${incremented} catalogue's revision"}`);
       }
       return failed;
     },
