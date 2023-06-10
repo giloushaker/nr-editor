@@ -31,6 +31,13 @@
           <fieldset v-for="gst in systems">
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+              <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
+                <img
+                  class="w-24px h-24px align-bottom"
+                  src="/assets/icons/github-light.png"
+                  :title="`using repo at ${gst.github.githubUrl}`"
+                />
+              </a>
             </legend>
             <IconContainer
               :items="systemAndCatalogues(gst)"
@@ -156,7 +163,7 @@ export default defineComponent({
         for (const sys of Object.values(this.systems)) {
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.store.get_catalogue_state(cat)?.unsaved) {
-              this.store.save_catalogue(cat);
+              this.store.save_catalogue(sys, cat);
             }
           }
         }

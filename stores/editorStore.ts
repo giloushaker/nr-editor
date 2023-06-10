@@ -40,11 +40,12 @@ import type {
 } from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
-import { convertToJson, getExtension, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
+import { convertToJson, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { useUIState } from "./uiState";
+import { getRepoData, getNextRevision } from "~/assets/ts/systems/github";
+import { fetch_bs_repos_datas } from "~/assets/shared/battlescribe/bs_import_data";
 
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
@@ -169,52 +170,43 @@ export const useEditorStore = defineStore("editor", {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
       }
-      const cataloguesStore = useCataloguesStore();
       const files = await getFolderFiles(folder);
-      const result = [] as string[];
+      if (!files?.length) return;
+
+      console.log("Loading", files.length, "files", files);
+      const result_system_ids = [] as string[];
+      const result_files = [];
       const systems = [] as GameSystemFiles[];
-      if (files) {
-        const result_files = [];
-        console.log("Loading", files.length, "files", files);
-        const allowed = files.filter((o) => isAllowedExtension(o.name));
-        for (const file of allowed) {
-          const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
 
-          const systemId = json?.gameSystem?.id;
-          const catalogueId = json?.catalogue?.id;
-          const obj = getDataObject(json);
-          const state = this.get_catalogue_state(json);
-          if (state) {
-            state.changed = false;
-            state.unsaved = false;
-          }
-          const id = getDataDbId(json);
-          cataloguesStore.updateCatalogue(json);
-          cataloguesStore.setEdited(id, false);
+      const allowed = files.filter((o) => isAllowedExtension(o.name));
+      for (const file of allowed) {
+        const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
 
-          obj.fullFilePath = file.path.replaceAll("\\", "/");
-          if (systemId) {
-            result.push(systemId);
-            const systemFiles = this.get_system(systemId);
-            systems.push(systemFiles);
-            systemFiles.setSystem(json);
-            systemFiles.unloadAll();
-            //
-          }
-          if (catalogueId) {
-            const systemFiles = this.get_system(json.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = json;
-          }
-          result_files.push(json);
-          progress && (await progress(result_files.length, allowed.length, file.path));
+        const systemId = json?.gameSystem?.id;
+        const catalogueId = json?.catalogue?.id;
+
+        getDataObject(json).fullFilePath = file.path.replaceAll("\\", "/");
+        if (systemId) {
+          const systemFiles = this.get_system(systemId);
+          systemFiles.setSystem(json);
+          systems.push(systemFiles);
+          result_system_ids.push(systemId);
         }
-        progress && (await progress(result_files.length, allowed.length));
+        if (catalogueId) {
+          const systemFiles = this.get_system(json.catalogue.gameSystemId);
+          systemFiles.catalogueFiles[catalogueId] = json;
+        }
+        result_files.push(json);
+        progress && (await progress(result_files.length, allowed.length, file.path));
       }
-      // Process all catalogues
-      // for (const system of systems) {
-      // await system.loadAll();
-      // }
-      return result;
+      progress && (await progress(result_files.length, allowed.length));
+
+      for (const system of systems) {
+        progress && (await progress(0, 0, "Checking for github integration"));
+        this.load_system(system);
+      }
+
+      return result_system_ids;
     },
     async load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);
@@ -222,15 +214,43 @@ export const useEditorStore = defineStore("editor", {
       if (!system) {
         throw new Error("System not found " + id);
       }
-      const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
-      const dbcataloguesarr = await dbcatalogues.toArray();
-      const catalogues = dbcataloguesarr.map((o) => o.content);
+      system.gameSystem.fullFilePath = dbsystem.path;
 
+      const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
       const systemFiles = this.get_system(system.gameSystem.id);
       systemFiles.setSystem(system);
-      for (let catalogue of catalogues) {
-        const catalogueId = catalogue.catalogue.id;
-        systemFiles.catalogueFiles[catalogueId] = catalogue;
+      for (let { content, path } of await dbcatalogues.toArray()) {
+        const catalogueId = content.catalogue.id;
+        content.catalogue.fullFilePath = path;
+        systemFiles.catalogueFiles[catalogueId] = content;
+      }
+      this.load_system(systemFiles, true);
+    },
+    async load_system(system: GameSystemFiles, keepState = false) {
+      if (system.gameSystem) {
+        const cataloguesStore = useCataloguesStore();
+        system.unloadAll();
+        if (!keepState) {
+          for (const catalogue of system.getAllCataloguesFiles()) {
+            const state = this.get_catalogue_state(catalogue);
+            if (state) {
+              state.changed = false;
+              state.unsaved = false;
+            }
+            cataloguesStore.updateCatalogue(getDataObject(catalogue));
+            cataloguesStore.setEdited(getDataObject(catalogue).id, false);
+          }
+        }
+        const publications = system.gameSystem.gameSystem.publications;
+        const github = publications?.find((o) => o.name.trim().toLowerCase() === "github");
+        if (github && github.shortName?.includes("/") && github.publisherUrl) {
+          system.github = {
+            githubUrl: github.publisherUrl,
+            githubRepo: github.shortName,
+            githubOwner: github.shortName?.split("/")[0],
+            githubName: github.shortName?.split("/")[1],
+          };
+        }
       }
     },
     async load_systems_from_db(force = false) {
@@ -280,7 +300,12 @@ export const useEditorStore = defineStore("editor", {
         this.unsavedChanges[id].unsaved = state;
       }
     },
-    save_catalogue(catalogue: Catalogue) {
+    // Returns true if the revision was incremented
+    async save_catalogue(system: GameSystemFiles, catalogue: Catalogue): Promise<boolean> {
+      const revision = catalogue.revision;
+      if (system.github) {
+        catalogue.revision = await getNextRevision(system.github, catalogue);
+      }
       saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
@@ -291,9 +316,12 @@ export const useEditorStore = defineStore("editor", {
         this.unsavedCount--;
         state.unsaved = false;
       }
+      return catalogue.revision !== revision;
     },
-    save_all(system?: string) {
+
+    async save_all(system?: string) {
       let failed = false;
+      let incremented = 0;
       try {
         for (const sys of Object.values(this.gameSystems)) {
           if (system && sys.gameSystem?.gameSystem?.id !== system) {
@@ -301,13 +329,16 @@ export const useEditorStore = defineStore("editor", {
           }
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.get_catalogue_state(cat)?.unsaved) {
-              this.save_catalogue(cat);
+              if (await this.save_catalogue(sys, cat)) {
+                incremented += 1;
+              }
             }
           }
         }
       } catch (e) {
         failed = true;
       }
+      alert(`Incremented ${incremented} revision${incremented === 1 ? "" : "s"}`);
       return failed;
     },
     set_filter(filter: string) {

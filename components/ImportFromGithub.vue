@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { convertToJson, getExtension, isAllowedExtension, unzipFolder } from "~/assets/shared/battlescribe/bs_convert";
-
+import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { normalizeGithubRepoUrl } from "~/assets/ts/systems/github";
 const inputUrl = ref("");
 const busy = ref(false);
 const emit = defineEmits<{
@@ -29,7 +30,9 @@ async function submit(url: string | null) {
     for (const [name, content] of Object.entries(folder)) {
       const extension = getExtension(name);
       if (isAllowedExtension(extension)) {
-        result_files.push(await convertToJson(content, extension));
+        const json = await convertToJson(content, extension);
+        result_files.push(json);
+        getDataObject(json).fullFilePath = name;
       }
     }
     if (result_files.length) {
@@ -41,22 +44,6 @@ async function submit(url: string | null) {
   } finally {
     busy.value = false;
   }
-}
-function normalizeGithubRepoUrl(input: string): string | null {
-  const githubUrlRegex = /^(?:(http(s?)?:\/\/)?github.com\/)?([^\/]+)\/([^\/]+)$/;
-  const match = input.match(githubUrlRegex);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, protocol = "https://", _, user, repo] = match;
-
-  if (!user || !repo) {
-    return null;
-  }
-
-  return `${protocol}github.com/${user}/${repo}`;
 }
 </script>
 <template>

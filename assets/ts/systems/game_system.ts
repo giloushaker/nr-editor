@@ -1,4 +1,4 @@
-import { BSCatalogueManager, loadData } from "~/assets/shared/battlescribe/bs_system";
+import { BSCatalogueManager, getDataObject, loadData } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataSystem,
   BSIDataCatalogue,
@@ -16,6 +16,7 @@ import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 import { convertToXml, getExtension, isZipExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { filename, writeFile } from "~/electron/node_helpers";
 import JSZip, { OutputType } from "jszip";
+import { GithubIntegration } from "./github";
 
 export class GameSystem extends BsGameSystem {
   constructor(systemRow: GameSystemRow, lang: string, fetchStrategy: BookFetchFunction) {
@@ -28,6 +29,8 @@ export class GameSystemFiles extends BSCatalogueManager {
   catalogueFiles: Record<string, BSIDataCatalogue> = {};
   allLoaded?: boolean;
   loadedCatalogues: Record<string, Catalogue> = {};
+  github?: GithubIntegration;
+
   async getData(catalogueLink: BSICatalogueLink, booksDate?: BooksDate): Promise<BSIData> {
     if (catalogueLink.targetId == this.gameSystem?.gameSystem.id) {
       return this.gameSystem;
@@ -86,6 +89,9 @@ export class GameSystemFiles extends BSCatalogueManager {
     }
     return [];
   }
+  getAllCataloguesFiles() {
+    return [...(this.gameSystem ? [this.gameSystem] : []), ...Object.values(this.catalogueFiles)];
+  }
   setSystem(system: BSIDataSystem) {
     this.gameSystem = system;
   }
@@ -109,11 +115,13 @@ export function saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem
   if (isSystem) {
     db.systems.put({
       content: JSON.parse(stringed),
+      path: data.fullFilePath,
       id: data.id,
     });
   } else {
     db.catalogues.put({
       content: JSON.parse(stringed),
+      path: data.fullFilePath,
       id: `${data.gameSystemId}-${data.id}`,
     });
   }

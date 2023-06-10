@@ -34,7 +34,7 @@
         Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
       <template v-if="store.unsavedCount">
-        <button class="bouton save ml-10px" @click="failed = store.save_all(cat.getSystemId())">Save All</button>
+        <button class="bouton save ml-10px" @click="save_all"> Save All </button>
       </template>
       <template v-else-if="failed">
         <span class="status mx-2 text-red">failed to save</span>
@@ -58,6 +58,7 @@ import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battles
 import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
+import { getNextRevision } from "~/assets/ts/systems/github";
 
 export default defineComponent({
   components: { LeftPanel },
@@ -67,9 +68,10 @@ export default defineComponent({
       item: null as ItemTypes | null,
       systemFiles: null as GameSystemFiles | null,
       loading: false,
+      saving: false,
+      failed: false,
       id: "",
       cat: null as Catalogue | null,
-      failed: false,
       defaults: {} as Partial<typeof LeftPanelDefaults>,
       key: 1,
     };
@@ -79,11 +81,14 @@ export default defineComponent({
   },
   mounted() {
     this.store.init(this);
+    (globalThis as any).$catalogue = this.cat;
+
     window.addEventListener("beforeunload", this.beforeUnload);
     document.addEventListener("keydown", this.onKeydown, true);
   },
   updated() {
     this.store.init(this);
+    (globalThis as any).$catalogue = this.cat;
   },
   unmounted() {
     window.removeEventListener("beforeunload", this.beforeUnload);
@@ -149,13 +154,27 @@ export default defineComponent({
     },
   },
   methods: {
+    async save_all() {
+      try {
+        this.failed = await this.store.save_all(this.cat?.getSystemId());
+      } finally {
+        this.saving = false;
+      }
+    },
     save() {
       try {
-        this.store.save_catalogue(this.cat as Catalogue);
+        this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
         this.failed = false;
       } catch (e) {
         this.failed = true;
       }
+    },
+    async test() {
+      if (!this.systemFiles?.github) {
+        console.error("no github set");
+        return;
+      }
+      console.log("revision", await getNextRevision(this.systemFiles.github, this.cat as Catalogue));
     },
     async beforeUnload(event: BeforeUnloadEvent) {
       if (globalThis._closeWindow) return;
@@ -188,7 +207,7 @@ export default defineComponent({
       if (e.ctrlKey && e.key.toLowerCase() == "s") {
         e.preventDefault();
         e.stopPropagation();
-        this.store.save_catalogue(this.cat as Catalogue);
+        this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
       }
     },
     load_state(data: Record<string, any>) {

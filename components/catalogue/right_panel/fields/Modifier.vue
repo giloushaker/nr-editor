@@ -8,11 +8,17 @@
         </option>
       </select>
 
-      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged" class="modType">
+      <UtilIconSelect
+        v-model="selectedField"
+        :fetch="() => fieldData"
+        @change="fieldChanged"
+        class="modType min-w-200px"
+      >
         <template #option="opt">
-          <div>
-            <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.modifierType}.png`" />
-            {{ opt.option.name }}
+          <div class="flex align-items flex-row">
+            <img class="mr-1 my-auto" :src="`./assets/bsicons/${opt.option.modifierType}.png`" /><span class="inline">{{
+              opt.option.name
+            }}</span>
           </div>
         </template>
       </UtilIconSelect>
@@ -41,7 +47,7 @@
 
 <script lang="ts">
 import { ItemTypes, getModifierOrConditionParent, getName } from "~/assets/shared/battlescribe/bs_editor";
-import { Category } from "~/assets/shared/battlescribe/bs_main";
+import { Category, Profile } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIConstraint, BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 
@@ -51,9 +57,13 @@ const availableModifiers = {
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryGroup: ["name", "page", "hidden", "category", "constraints"],
   selectionEntryGroupLink: ["name", "page", "hidden", "category", "constraints"],
-  profile: ["name", "description", "page", "hidden"],
+  profile: ["characteristics", "name", "description", "page", "hidden"],
+  profileLink: ["characteristics", "name", "description", "page", "hidden"],
   rule: ["name", "description", "page", "hidden"],
-  infoLink: ["name", "description", "page", "hidden"],
+  ruleLink: ["name", "description", "page", "hidden"],
+  infoLink: ["name", "page", "hidden"],
+  infoGroup: ["name", , "page", "hidden"],
+  infoGroupLink: ["name", "page", "hidden"],
   force: ["name", "page", "hidden", "constraints"],
   category: ["name", "page", "hidden", "constraints"],
   categoryLink: ["name", "page", "hidden", "constraints"],
@@ -274,6 +284,19 @@ export default {
           additional.push(...mapped);
         }
       }
+      if (available.includes("characteristics")) {
+        const target = (this.parent.isLink() ? this.parent.target : this.parent) as Profile & EditorBase;
+        if (target?.characteristics) {
+          additional.push(
+            ...target.characteristics.map((o) => ({
+              id: o.typeId,
+              name: o.name,
+              type: "string" as FieldTypes,
+              modifierType: "characteristic",
+            }))
+          );
+        }
+      }
 
       if (available.includes("category")) {
         additional.push({
@@ -285,7 +308,9 @@ export default {
       }
 
       // Filter out special fields
-      available = available.filter((elt) => ["costs", "constraints", "category"].includes(elt) == false);
+      available = available.filter(
+        (elt) => ["costs", "constraints", "category", "characteristics"].includes(elt) == false
+      );
 
       return available
         .map((elt) => {

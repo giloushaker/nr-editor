@@ -110,6 +110,7 @@ const createSecondaryWindow = () => {
     contextIsolation: false,
     nodeIntegration: true,
     enableRemoteModule: true,
+    nativeWindowOpen: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -165,19 +166,24 @@ const createMainWindow = () => {
     width: 1200,
     height: 900,
     autoHideMenuBar: true,
-    contextIsolation: false,
-    nodeIntegration: true,
-    enableRemoteModule: true,
     webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
   mainWindow = win;
-  win.loadFile("index.html", {
-    hash: "/system",
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    // config.fileProtocol is my custom file protocol
+    console.log("opening url", url);
+    if (!url.startsWith("http")) {
+      return { action: "allow" };
+    }
+    // open url in a browser and prevent default
+    shell.openExternal(url);
+    return { action: "deny" };
   });
-  previousTitle = win.getTitle();
   ipcMain.handle("showOpenDialog", async (event, ...args) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     return await dialog.showOpenDialog(wnd, ...args);
@@ -196,6 +202,10 @@ const createMainWindow = () => {
   ipcMain.handle("getFolderFiles", async (event, ...args) => {
     return await getFolderFiles(...args);
   });
+  win.loadFile("index.html", {
+    hash: "/system",
+  });
+  previousTitle = win.getTitle();
 };
 const filter = { urls: ["https://*/*"] };
 

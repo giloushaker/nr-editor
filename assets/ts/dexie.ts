@@ -3,8 +3,8 @@ import Dexie, { Table } from "dexie";
 import { BSIDataCatalogue, BSIDataSystem } from "../shared/battlescribe/bs_types";
 
 export class MySubClassedDexie extends Dexie {
-  catalogues!: Table<{ id: string; content: BSIDataCatalogue }>;
-  systems!: Table<{ id: string; content: BSIDataSystem }>;
+  catalogues!: Table<{ id: string; content: BSIDataCatalogue; path?: string }>;
+  systems!: Table<{ id: string; content: BSIDataSystem; path?: string }>;
 
   constructor() {
     super("nr-editor");
