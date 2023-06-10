@@ -300,7 +300,9 @@ export const useEditorStore = defineStore("editor", {
         this.unsavedChanges[id].unsaved = state;
       }
     },
-    // Returns true if the revision was incremented
+    /**
+     * Returns true if the revision was incremented
+     */
     async save_catalogue(system: GameSystemFiles, catalogue: Catalogue): Promise<boolean> {
       const revision = catalogue.revision;
       if (system.github) {

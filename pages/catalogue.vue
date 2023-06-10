@@ -161,9 +161,12 @@ export default defineComponent({
         this.saving = false;
       }
     },
-    save() {
+    async save() {
       try {
-        this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
+        const incremented = await this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
+        if (incremented) {
+          notify("Incremented 1 catalogue's revision");
+        }
         this.failed = false;
       } catch (e) {
         this.failed = true;
