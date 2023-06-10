@@ -2,11 +2,12 @@
   <fieldset>
     <legend>Characteristics</legend>
     <table class="editorTable">
-      <tr v-if="catalogue.profileTypes">
+      <tr v-if="profileTypes">
         <td>Profile Type: </td>
         <td>
           <select v-model="item.typeId" @change="changed">
-            <option :value="ptype.id" v-for="ptype of catalogue.profileTypes">
+            <option disabled>-- Select Profile Type --</option>
+            <option :value="ptype.id" v-for="ptype of profileTypes">
               {{ ptype.name }}
             </option>
           </select>
@@ -46,6 +47,10 @@ export default {
     },
   },
   computed: {
+    profileTypes() {
+      return [...this.catalogue.iterateProfileTypes()];
+    },
+
     charactacteristics() {
       const existing = {} as Record<string, any>;
       for (const c of this.item.characteristics || []) {
