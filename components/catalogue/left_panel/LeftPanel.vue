@@ -83,16 +83,14 @@ export default defineComponent({
       ...this.defaults,
     };
   },
-  enabled() {
+  async mounted() {
+    this.load();
     addEventListener("keydown", this.keydown);
     addEventListener("copy", this.copy);
     addEventListener("paste", this.paste);
     addEventListener("cut", this.cut);
   },
-  async mounted() {
-    this.load();
-  },
-  disabled() {
+  unmounted() {
     removeEventListener("keydown", this.keydown);
     removeEventListener("copy", this.copy);
     removeEventListener("paste", this.paste);
@@ -147,20 +145,25 @@ export default defineComponent({
         if (scrollable_el) scrollable_el.scrollTop = scroll;
       }, 50);
     },
+    should_capture(e: Event) {
+      if ((e.target as HTMLDivElement)?.tagName === "INPUT") return false;
+      if (this.$route.name !== "catalogue") return false;
+      return true;
+    },
     async cut(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.cut(e);
       }
     },
     async copy(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.copy(e);
       }
     },
     async paste(e: ClipboardEvent) {
-      if ((e.target as HTMLDivElement)?.tagName !== "INPUT") {
+      if (this.should_capture(e)) {
         e.preventDefault();
         await this.store.paste(e);
       }
