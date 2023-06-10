@@ -6,7 +6,15 @@
     @catalogueChanged="changed"
     class="section"
   />
-  <CatalogueRightPanelFieldsQuery :catalogue="catalogue" :item="item" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsQuery
+    :catalogue="catalogue"
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+    childForces
+    childSelections
+    shared
+  />
   <FilterBy v-if="showFilterBy" class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
 </template>
 
