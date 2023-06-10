@@ -210,7 +210,7 @@ export default defineComponent({
       if (e.ctrlKey && e.key.toLowerCase() == "s") {
         e.preventDefault();
         e.stopPropagation();
-        this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
+        this.save();
       }
     },
     load_state(data: Record<string, any>) {

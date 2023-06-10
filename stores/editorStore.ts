@@ -12,7 +12,6 @@ import {
   getTypeName,
   forEachParent,
   getTypeLabel,
-  replaceAtEntryPath,
   fixKey,
   removeEntry,
 } from "~/assets/shared/battlescribe/bs_editor";
@@ -30,22 +29,14 @@ import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system"
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import type {
-  BSICondition,
-  BSIConstraint,
-  BSIData,
-  BSIDataCatalogue,
-  BSIDataSystem,
-  BSILink,
-} from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint, BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { getRepoData, getNextRevision } from "~/assets/ts/systems/github";
-import { fetch_bs_repos_datas } from "~/assets/shared/battlescribe/bs_import_data";
+import { getNextRevision } from "~/assets/ts/systems/github";
 
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
@@ -341,7 +332,7 @@ export const useEditorStore = defineStore("editor", {
         failed = true;
       }
       if (incremented) {
-        notify(`Incremented ${incremented} catalogue's revision"}`);
+        notify(`Incremented ${incremented} catalogue's revision"`);
       }
       return failed;
     },
