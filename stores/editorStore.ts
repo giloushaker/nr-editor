@@ -203,7 +203,7 @@ export const useEditorStore = defineStore("editor", {
 
       for (const system of systems) {
         progress && (await progress(0, 0, "Checking for github integration"));
-        this.load_system(system);
+        await this.load_system(system);
       }
 
       return result_system_ids;
