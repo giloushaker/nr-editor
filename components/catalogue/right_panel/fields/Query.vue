@@ -43,6 +43,10 @@
       </UtilAutocomplete>
 
       <div class="checks">
+        <div v-if="shared">
+          <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
+          <label for="shared">Shared</label>
+        </div>
         <div v-if="childSelections">
           <input @change="changed" id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
           <label for="childSelections">And all child Selections</label>
@@ -82,6 +86,10 @@ export default {
       default: false,
     },
     childSelections: {
+      type: Boolean,
+      default: false,
+    },
+    shared: {
       type: Boolean,
       default: false,
     },
