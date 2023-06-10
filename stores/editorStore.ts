@@ -423,12 +423,18 @@ export const useEditorStore = defineStore("editor", {
     clear_clipboard() {
       this.clipboard = [];
     },
+    can_undo() {
+      return Boolean(this.undoStack[this.undoStackPos]);
+    },
     async undo() {
       const action = this.undoStack[this.undoStackPos];
       if (action) {
         await action.undo();
         this.undoStackPos--;
       }
+    },
+    can_redo() {
+      return Boolean(this.undoStack[this.undoStackPos + 1]);
     },
     async redo() {
       const action = this.undoStack[this.undoStackPos + 1];
@@ -792,7 +798,11 @@ export const useEditorStore = defineStore("editor", {
         // delete obj from target
         // update obj
       }
-      await this.do_action("move", undo, redo);
+
+      // Undo is not done at this feature stills needs some iteration
+      // await this.do_action("move", undo, redo);
+      await redo();
+
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
     },
