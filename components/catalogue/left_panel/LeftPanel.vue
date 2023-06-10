@@ -21,6 +21,21 @@
       >
         🡲
       </span>
+      <img
+        :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
+        class="bold p-4px unselectable ml-5px w-24px h-24px"
+        @click="store.undo"
+        title="Undo"
+        src="/assets/icons/undo.svg"
+      />
+      <img
+        :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
+        class="bold p-4px unselectable ml-4px w-24px h-24px"
+        @click="store.redo"
+        title="Redo"
+        src="/assets/icons/redo.svg"
+      />
+
       <div class="absolute right-30px">
         Sort
         <select class="h-24px p-2px !text-sm" v-model="settings.sort">
@@ -324,5 +339,9 @@ input:focus::placeholder {
 
 .enabled {
   cursor: pointer;
+}
+
+.grey {
+  filter: invert(50%) hue-rotate(90deg);
 }
 </style>
