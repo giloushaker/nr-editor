@@ -338,7 +338,9 @@ export const useEditorStore = defineStore("editor", {
       } catch (e) {
         failed = true;
       }
-      alert(`Incremented ${incremented} revision${incremented === 1 ? "" : "s"}`);
+      if (incremented) {
+        alert(`Incremented ${incremented} revision${incremented === 1 ? "" : "s"}`);
+      }
       return failed;
     },
     set_filter(filter: string) {
