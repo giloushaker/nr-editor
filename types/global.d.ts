@@ -1,8 +1,10 @@
-import { VueElement } from "nuxt/dist/app/compat/capi";
+import type { VueElement } from "nuxt/dist/app/compat/capi";
+import { NotificationsOptions } from "@kyvg/vue3-notification";
 
 declare global {
   var isEditor: boolean | undefined;
   var _closeWindow: boolean | undefined;
+  var notify: (arg: NotificationsOptions | string) => unknown;
   var $set: (o, k, v) => unknown;
   var $delete: (o, k) => unknown;
   var electron:

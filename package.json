@@ -63,6 +63,7 @@
     "vite-plugin-electron-renderer": "^0.14.5"
   },
   "dependencies": {
+    "@kyvg/vue3-notification": "^2.9.1",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.1",
     "@pinia/nuxt": "^0.4.10",
     "adm-zip": "^0.5.10",

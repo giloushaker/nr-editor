@@ -2,6 +2,8 @@
   <div id="popups" />
   <div id="dialogs" />
   <div id="app">
+    <Notifications :style="{ 'margin-top': `${titleSize + 5}px` }" position="top center" />
+
     <ClientOnly>
       <div class="title" ref="title" @resize="update">
         <TitleBar />
@@ -17,6 +19,7 @@
 import { AppearanceTheme } from "./assets/shared/types/stateOptions";
 import { updateCssVars } from "./assets/shared/js/util";
 import TitleBar from "./components/TitleBar.vue";
+import { notify } from "@kyvg/vue3-notification";
 export const defaultAppearence: AppearanceTheme = {
   background: "#f0f5ff",
   backgroundTexture: "url(assets/images/no.jpg)",
@@ -78,6 +81,7 @@ export default defineComponent({
   async created() {
     updateCssVars(defaultAppearence, {});
     globalThis.isEditor = true;
+    globalThis.notify = notify;
     if (!globalThis.electron) {
       (globalThis as any).electron = null;
     }
