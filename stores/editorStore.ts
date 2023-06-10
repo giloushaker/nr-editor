@@ -568,20 +568,35 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
-    async add(data: MaybeArray<EditorBase | Record<string, any>>, childKey?: keyof Base) {
-      const selections = this.get_selections_with_payload();
-      if (!selections.length) return;
-
+    async add(
+      data: MaybeArray<EditorBase | Record<string, any>>,
+      childKey?: keyof Base,
+      parents?: EditorBase | EditorBase[]
+    ) {
+      let parentsWithPayload = [] as Array<{ obj: EditorBase; payload?: string }>;
+      if (!parents) {
+        parentsWithPayload = this.get_selections_with_payload();
+      } else {
+        parents = Array.isArray(parents) ? parents : [parents];
+        parentsWithPayload = parents.map((o) => ({ obj: o }));
+      }
+      if (!parentsWithPayload.length) {
+        console.error("Couldn't add: no selection or parent(s) provided");
+        return;
+      }
       const entries = (Array.isArray(data) ? data : [data]) as Array<EditorBase | Record<string, any> | string>;
-      if (!entries.length) return;
+      if (!entries.length) {
+        console.error("Couldn't add: no data provided");
+        return;
+      }
 
-      const catalogue = selections[0].obj.getCatalogue();
+      const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const sysId = catalogue.getSystemId();
 
       let addeds = [] as EditorBase[];
       const redo = async () => {
         addeds = [];
-        for (const selection of selections) {
+        for (const selection of parentsWithPayload) {
           const item = selection.obj;
           const selectedCatalogueKey = selection.payload;
           await this.open(item, true);
@@ -725,7 +740,7 @@ export const useEditorStore = defineStore("editor", {
         select: true,
         ...data,
       };
-      await this.add(obj, key);
+      await this.add(obj, key, parent);
       this.open_selected();
     },
     can_move(obj: EditorBase) {

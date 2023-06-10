@@ -134,6 +134,8 @@
         @catalogueChanged="changed"
         type="catalogue"
       />
+
+      <div class="min-h-100px"> </div>
     </template>
     <template v-else-if="store.mode === 'references'">
       <CatalogueRightPanelReferencesPanel :item="item" :catalogue="catalogue" />

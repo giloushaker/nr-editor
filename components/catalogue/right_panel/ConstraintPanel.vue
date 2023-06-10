@@ -16,6 +16,12 @@
     shared
   />
   <FilterBy v-if="showFilterBy" class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsQuickModifiers
+    :item="item"
+    @catalogueChanged="changed"
+    :withCategory="false"
+    class="section"
+  />
 </template>
 
 <script lang="ts">
@@ -24,6 +30,7 @@ import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_ed
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
+import QuickModifiers from "./fields/QuickModifiers.vue";
 
 export default {
   emits: ["catalogueChanged"],
@@ -48,6 +55,6 @@ export default {
       this.$emit("catalogueChanged");
     },
   },
-  components: { FilterBy },
+  components: { FilterBy, QuickModifiers },
 };
 </script>
