@@ -153,3 +153,18 @@ Editor:
 
             
         
+Clean up shared and nuxt-nr to make standalone builder and make a fully open source & pull-able version
+Shared only needs these:
+        assets\shared\battlescribe\bs_convert.ts
+        assets\shared\battlescribe\bs_editor.ts
+        assets\shared\battlescribe\bs_helpers.ts
+        assets\shared\battlescribe\bs_import_data.ts
+        assets\shared\battlescribe\bs_main_catalogue.ts
+        assets\shared\battlescribe\bs_main_types.ts
+        assets\shared\battlescribe\bs_main.ts
+        assets\shared\battlescribe\bs_modifiers.ts
+        assets\shared\battlescribe\bs_system.ts
+        assets\shared\battlescribe\bs_types.ts
+        assets\shared\battlescribe\bs_versioning.ts
+        assets\shared\battlescribe\bs_xml.ts
+        assets\shared\js\util.js
