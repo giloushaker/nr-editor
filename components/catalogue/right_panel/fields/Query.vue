@@ -2,23 +2,14 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <select v-model="item.field" @change="changed" :disabled="instanceOf">
-        <option :value="undefined" v-if="instanceOf" />
-        <option v-if="!instanceOf" value="selections">Selections</option>
-        <option v-if="!instanceOf" value="forces">Forces</option>
-        <option v-if="!instanceOf" v-for="costType of costTypes" :value="costType.id">
-          {{ costType.name }}
-        </option>
-      </select>
-
-      <!--       <UtilIconSelect v-model="item.field" :fetch="() => fieldTypes" @change="changed" class="modType">
+      <UtilIconSelect v-model="itemField" :fetch="() => fieldTypes" @change="fieldChanged" class="modType">
         <template #option="opt">
           <div>
             <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.type}.png`" />
             {{ opt.option.name }}
           </div>
         </template>
-      </UtilIconSelect> -->
+      </UtilIconSelect>
 
       <span> in </span>
 
@@ -73,6 +64,11 @@ import {
 
 export default {
   emits: ["catalogueChanged"],
+  data() {
+    return {
+      itemField: null as any,
+    };
+  },
   props: {
     item: {
       type: Object as PropType<EditorBase & (BSIConstraint | BSICondition)>,
@@ -99,6 +95,11 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+
+    fieldChanged() {
+      this.item.field = this.itemField.value;
+      this.changed();
     },
 
     showCatalogue(opt: EditorSearchItem): boolean {
@@ -301,10 +302,16 @@ export default {
   },
 
   watch: {
-    "item.field"() {
-      if (this.item.field == "forces") {
-        this.item.scope = "roster";
-      }
+    "item.field": {
+      handler() {
+        if (this.item.field == "forces") {
+          this.item.scope = "roster";
+        }
+        this.itemField = this.fieldTypes.find((elt) => {
+          return elt.value == this.item.field;
+        });
+      },
+      immediate: true,
     },
   },
 };
