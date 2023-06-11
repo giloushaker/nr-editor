@@ -129,6 +129,9 @@ export default {
       }
       return true;
     },
+    availableTargets() {
+      return [...this.baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces];
+    },
   },
 
   watch: {
@@ -195,13 +198,6 @@ export default {
 
     includeSelections() {
       return true;
-    },
-
-    availableTargets() {
-      const res: EditorSearchItem[] = this.baseItems;
-
-      const result = res.concat(this.allCategories).concat(this.allEntries).concat(this.allForces);
-      return result;
     },
   },
 };

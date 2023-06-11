@@ -38,11 +38,14 @@ export default {
       type: Number,
       default: 0,
     },
+    max: {
+      type: Number,
+      default: 1000,
+    },
 
     options: {
-      type: Array,
+      type: [Array, Function],
       required: true,
-      default: [],
     },
 
     valueField: {
@@ -79,28 +82,30 @@ export default {
       lastSearch: null as string | null,
       editing: false,
       selectedOption: null as { option: any; selected?: boolean } | null,
+      sleeping: this.lazy,
     };
   },
 
   computed: {
+    computedOptions(): any[] {
+      if (Array.isArray(this.options)) return this.options;
+      return this.sleeping ? [] : this.options();
+    },
     foundOptions(): { option: any }[] {
       const regex = this.textSearchRegex(this.searchPattern);
 
-      const res = this.options
-        .filter((opt) => {
-          let val: any = opt;
-          if (this.filterField) {
-            val = val[this.filterField];
-          }
-          if (val && val.match && val.match(regex)) {
-            return true;
-          }
-          return false;
-        })
-        .map((elt: any) => {
-          return { option: elt };
-        });
-      return res;
+      const result = [];
+      const data = this.computedOptions;
+      const end = this.max || data.length;
+      for (let i = 0; i < data.length; i++) {
+        const cur = data[i];
+        let val = this.filterField ? cur[this.filterField] : cur;
+        if (val && val.match && val.match(regex)) {
+          result.push({ option: cur });
+          if (result.length >= end - 1) break;
+        }
+      }
+      return result;
     },
   },
 
@@ -133,7 +138,7 @@ export default {
       this.searchPattern = "";
       this.selectedOption = null;
       if (this.modelValue) {
-        let found = this.options.find((opt: any) => {
+        let found = this.computedOptions.find((opt: any) => {
           let item = opt;
           if (this.valueField) {
             item = opt[this.valueField];
@@ -158,7 +163,7 @@ export default {
       this.editing = false;
     },
 
-    async suggest() {
+    suggest() {
       if (this.searchPattern.length < this.min) {
         this.editing = false;
       } else {
@@ -167,6 +172,7 @@ export default {
     },
 
     maySuggest() {
+      this.sleeping = false;
       this.searchPattern = "";
       if (this.min == 0) {
         this.suggest();
@@ -177,8 +183,9 @@ export default {
       this.editing = false;
     },
 
-    async startEditing() {
+    startEditing() {
       if (!this.editing) {
+        this.sleeping = false;
         this.editing = true;
         this.searchPattern = "";
       }

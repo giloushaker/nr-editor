@@ -94,7 +94,6 @@ export default {
     return {
       filter: "",
       val: null as any,
-      availableTargets: [] as Array<{ name: string; id: string }>,
     };
   },
 
@@ -113,10 +112,6 @@ export default {
     },
   },
 
-  created() {
-    this.updateTargets();
-  },
-
   computed: {
     allowEntries() {
       return true;
@@ -126,38 +121,31 @@ export default {
       return true;
     },
   },
-
   methods: {
-    updateTargets() {
+    availableTargets() {
       if (this.type === "catalogue") {
         const id = this.catalogue.gameSystemId || this.catalogue.id;
         const values = Object.values(this.store.get_system(id).catalogueFiles);
         const catalogues = values.map((elt) => {
           return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLink" };
         });
-        this.availableTargets = catalogues;
-        return;
+        return catalogues;
       }
-
       const all = this.catalogue.findOptionsByText("").filter((o) => {
         if (this.targetIsValid(o as ItemTypes) == false) {
           return false;
         }
 
         if (o.isLink()) return false;
-        // if (!(o as any).parent?.isCatalogue()) return false;
         return true;
       });
-      this.availableTargets = sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
+      return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-
     typeChanged() {
-      this.updateTargets();
       this.changed();
     },
 
     targetIdChanged() {
-      this.updateLink();
       this.changed();
     },
 
@@ -172,7 +160,6 @@ export default {
       }
     },
     changedImportRootEntries() {
-      this.updateLink();
       this.changed();
     },
     changed() {
@@ -210,16 +197,6 @@ export default {
         return false;
       }
       return true;
-    },
-  },
-
-  watch: {
-    item() {
-      this.updateTargets();
-    },
-
-    "item.type"() {
-      this.updateTargets();
     },
   },
 };
