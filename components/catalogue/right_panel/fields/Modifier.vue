@@ -260,16 +260,14 @@ export default {
       }
 
       if (available.includes("costs")) {
-        additional.push(
-          ...[...this.catalogue.iterateCostTypes()].map((costType) => {
-            return {
-              id: costType.id,
-              name: costType.name,
-              type: "number" as FieldTypes,
-              modifierType: "cost",
-            };
-          })
-        );
+        for (const costType of this.catalogue.iterateCostTypes()) {
+          additional.push({
+            id: costType.id,
+            name: costType.name,
+            type: "number" as FieldTypes,
+            modifierType: "cost",
+          });
+        }
       }
 
       if (available.includes("constraints")) {

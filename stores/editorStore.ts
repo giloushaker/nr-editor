@@ -29,7 +29,13 @@ import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system"
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
 import { db } from "~/assets/ts/dexie";
-import type { BSIConstraint, BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import type {
+  BSIConstraint,
+  BSIData,
+  BSIDataCatalogue,
+  BSIDataSystem,
+  BSIProfile,
+} from "~/assets/shared/battlescribe/bs_types";
 import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
@@ -717,6 +723,15 @@ export const useEditorStore = defineStore("editor", {
             label: "Association",
             labelMembers: "Unit",
           };
+        case "sharedProfiles":
+        case "profiles":
+          const profileType = parent?.catalogue.iterateProfileTypes().next().value;
+          return {
+            name: "New Profile",
+            hidden: false,
+            typeId: profileType?.id,
+            typeName: profileType?.name,
+          } as BSIProfile;
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
