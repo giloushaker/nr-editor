@@ -141,7 +141,7 @@
             Link
           </div>
           <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
-          <div @click="store.create('profiles')" v-if="allowed('profiles')">
+          <div @click="store.create_child('profiles', item)" v-if="allowed('profiles')">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile
           </div>
