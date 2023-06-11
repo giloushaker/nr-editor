@@ -57,7 +57,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 
 export default {

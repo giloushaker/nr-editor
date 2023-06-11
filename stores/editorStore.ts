@@ -27,7 +27,8 @@ import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/s
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { db } from "~/assets/ts/dexie";
 import type {
   BSIConstraint,
@@ -228,7 +229,7 @@ export const useEditorStore = defineStore("editor", {
         const cataloguesStore = useCataloguesStore();
         system.unloadAll();
         if (!keepState) {
-          for (const catalogue of system.getAllCataloguesFiles()) {
+          for (const catalogue of system.getAllCatalogueFiles()) {
             const state = this.get_catalogue_state(catalogue);
             if (state) {
               state.changed = false;

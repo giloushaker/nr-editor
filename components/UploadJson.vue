@@ -20,7 +20,7 @@ import {
   isAllowedExtension,
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 const fileinput = ref(null);
 const uploading = ref(false);
 const emit = defineEmits<{

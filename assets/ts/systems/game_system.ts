@@ -1,4 +1,4 @@
-import { BSCatalogueManager, getDataObject, loadData } from "~/assets/shared/battlescribe/bs_system";
+import { BSCatalogueManager, loadData } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataSystem,
   BSIDataCatalogue,
@@ -89,7 +89,18 @@ export class GameSystemFiles extends BSCatalogueManager {
     }
     return [];
   }
-  getAllCataloguesFiles() {
+  getCatalogueInfo(catalogueLink: BSICatalogueLink): { name: string } | undefined {
+    if (this.gameSystem?.gameSystem.id === catalogueLink.targetId) {
+      return { name: this.gameSystem?.gameSystem.name };
+    }
+    for (const catalogue of Object.values(this.catalogueFiles)) {
+      if (catalogue.catalogue.id === catalogueLink.targetId) {
+        return { name: catalogue.catalogue.name };
+      }
+    }
+  }
+
+  getAllCatalogueFiles() {
     return [...(this.gameSystem ? [this.gameSystem] : []), ...Object.values(this.catalogueFiles)];
   }
   setSystem(system: BSIDataSystem) {

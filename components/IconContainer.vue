@@ -23,7 +23,8 @@ import { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "./ErrorIcon.vue";
-import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 

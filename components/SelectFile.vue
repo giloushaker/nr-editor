@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import { convertToJson, getExtension, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { getFolderFiles, showOpenDialog } from "~/electron/node_helpers";
 export default {
   emits: ["uploaded"],
