@@ -113,6 +113,7 @@ export default {
           id: this.catalogue.generateNonConflictingId(),
           primary: primary,
           catalogue: this.catalogue,
+          name: cat.name,
         },
         "categoryLinks"
       );

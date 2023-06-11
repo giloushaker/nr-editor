@@ -165,9 +165,10 @@ export default {
       if (this.type === "catalogue" && this.item.targetId) {
         const sysId = this.catalogue.gameSystemId || this.catalogue.id;
         await this.catalogue.reload(this.store.get_system(sysId));
-        this.item.name = this.item.target.name || "Unknown";
+        this.item.name = this.item.target?.name || "Unknown";
       } else {
         this.catalogue.updateLink(this.item);
+        this.item.name = this.item.target?.name || "Unknown";
       }
     },
     changedImportRootEntries() {
@@ -205,7 +206,7 @@ export default {
       if (!opt.catalogue) {
         return false;
       }
-      if (opt.catalogue === this.item.catalogue.getName()) {
+      if (opt.catalogue === this.item.catalogue?.getName()) {
         return false;
       }
       return true;

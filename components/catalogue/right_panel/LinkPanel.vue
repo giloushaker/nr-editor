@@ -47,9 +47,8 @@
     @catalogueChanged="changed"
     :withCategory="false"
     class="section"
-    v-if="type == 'entry'"
-  >
-  </CatalogueRightPanelFieldsQuickConstraints>
+    v-if="type == 'entry' || type == 'category'"
+  />
 </template>
 
 <script lang="ts">

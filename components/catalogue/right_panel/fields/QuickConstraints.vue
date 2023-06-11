@@ -4,30 +4,30 @@
     <div class="columns">
       <div class="buttonList">
         <button class="bouton" @click="add('min', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MIN IN PARENT
+          <img src="/assets/icons/iconeplus.png" />MIN 1 IN PARENT
         </button>
         <button class="bouton" v-if="withCategory" @click="add('min', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MIN IN CATEGORY
+          <img src="/assets/icons/iconeplus.png" />MIN 1 IN CATEGORY
         </button>
         <button class="bouton" @click="add('min', 'force')">
-          <img src="/assets/icons/iconeplus.png" />MIN IN FORCE
+          <img src="/assets/icons/iconeplus.png" />MIN 1 IN FORCE
         </button>
         <button class="bouton" @click="add('min', 'roster')">
-          <img src="/assets/icons/iconeplus.png" />MIN IN ROSTER
+          <img src="/assets/icons/iconeplus.png" />MIN 1 IN ROSTER
         </button>
       </div>
       <div class="buttonList">
         <button class="bouton" @click="add('max', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MAX IN PARENT
+          <img src="/assets/icons/iconeplus.png" />MAX 1 IN PARENT
         </button>
         <button class="bouton" v-if="withCategory" @click="add('max', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MAX IN CATEGORY
+          <img src="/assets/icons/iconeplus.png" />MAX 1 IN CATEGORY
         </button>
         <button class="bouton" @click="add('max', 'force')">
-          <img src="/assets/icons/iconeplus.png" />MAX IN FORCE
+          <img src="/assets/icons/iconeplus.png" />MAX 1 IN FORCE
         </button>
         <button class="bouton" @click="add('max', 'roster')">
-          <img src="/assets/icons/iconeplus.png" />MAX IN ROSTER
+          <img src="/assets/icons/iconeplus.png" />MAX 1 IN ROSTER
         </button>
       </div>
     </div>

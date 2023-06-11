@@ -106,7 +106,7 @@ export default {
       if (!opt.catalogue) {
         return false;
       }
-      if (opt.catalogue === this.item.catalogue.getName()) {
+      if (opt.catalogue === this.item.catalogue?.getName()) {
         return false;
       }
       return true;

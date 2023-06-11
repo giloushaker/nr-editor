@@ -1,5 +1,11 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
+  <CatalogueRightPanelFieldsQuickConditions
+    :item="item"
+    @catalogueChanged="changed"
+    :withCategory="false"
+    class="section"
+  />
 </template>
 
 <script lang="ts">

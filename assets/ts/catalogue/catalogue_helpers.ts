@@ -212,7 +212,10 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
   }
 
   const parent = catalogue.findOptionById(item.scope) as EditorBase;
-  return res.concat(getParentSelections(parent));
+  if (parent) {
+    return res.concat(getParentSelections(parent));
+  }
+  return res;
 }
 
 export function getFilterForces(item: EditorBase, catalogue: Catalogue, scope: string): EditorSearchItem[] {

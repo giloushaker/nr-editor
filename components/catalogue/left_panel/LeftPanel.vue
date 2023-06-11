@@ -129,21 +129,21 @@ export default defineComponent({
       this.$nextTick(async () => {
         this.set_scroll(this.scroll);
         if (this.selection) {
-          let obj = getAtEntryPath(this.catalogue, this.selection);
-          const last = this.selection[this.selection.length - 1];
-          if (!obj && last.id) {
-            obj = this.catalogue.findOptionById(last.id) as EditorBase | undefined;
-          }
-          if (obj) {
-            try {
+          try {
+            let obj = getAtEntryPath(this.catalogue, this.selection);
+            const last = this.selection[this.selection.length - 1];
+            if (!obj && last.id) {
+              obj = this.catalogue.findOptionById(last.id) as EditorBase | undefined;
+            }
+            if (obj) {
               const el = await this.store.open(obj);
               if (el) {
                 const ctx = get_ctx(el);
                 await ctx.do_select();
               }
-            } catch (e) {
-              console.error(e);
             }
+          } catch (e) {
+            console.error(e);
           }
         }
       });
