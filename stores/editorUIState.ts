@@ -21,6 +21,21 @@ export const useEditorUIState = defineStore("editor-ui", {
     storage: globalThis.localStorage,
   },
   actions: {
+    collapse_level(depth: number) {
+      if (depth >= 0) {
+        const deepestCls = `depth-${depth} collapsible-box opened`;
+        const results = document.documentElement.getElementsByClassName(deepestCls);
+        if (results?.length) {
+          for (const cur of results) {
+            get_ctx(cur)?.close();
+          }
+        }
+      }
+    },
+    collapse_all() {
+      this.collapse_level(1);
+      this.collapse_level(0);
+    },
     collapse_deepest() {
       const cls = `collapsible-box opened`;
       const results = document.documentElement.getElementsByClassName(cls);
@@ -34,15 +49,7 @@ export const useEditorUIState = defineStore("editor-ui", {
           });
         }
       }
-      if (maxDepth >= 0) {
-        const deepestCls = `depth-${maxDepth} collapsible-box opened`;
-        const results = document.documentElement.getElementsByClassName(deepestCls);
-        if (results?.length) {
-          for (const cur of results) {
-            get_ctx(cur)?.close();
-          }
-        }
-      }
+      this.collapse_level(maxDepth);
     },
     set_state(id: string, data: Partial<EditorUIState>) {
       // Get all open collapsible boxes and save their state

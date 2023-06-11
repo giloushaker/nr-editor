@@ -46,11 +46,17 @@
         </select>
       </div>
       <img
+        @click="uistate.collapse_all"
+        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
+        title="Collapse All"
+        src="/assets/icons/collapse-all.svg"
+      />
+      <!-- <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
         title="Collapse Last Open Level"
         src="/assets/icons/collapse-all.svg"
-      />
+      /> -->
     </div>
     <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
       <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
