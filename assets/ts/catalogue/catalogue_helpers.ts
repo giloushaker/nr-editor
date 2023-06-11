@@ -1,5 +1,4 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
-import { flattenRecursive, recurseThis } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 
@@ -12,28 +11,46 @@ export interface EditorSearchItem {
   shared: boolean;
 }
 
+function recursive(current: Catalogue | EditorBase, iterator: string, result: EditorSearchItem[], indent = 0) {
+  for (const child of (current as any)[iterator]()) {
+    result.push({
+      name: child.name,
+      editorTypeName: child.editorTypeName,
+      id: child.id,
+      indent: indent,
+      catalogue: child.catalogue.getName(),
+      shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
+    });
+    recursive(child, iterator, result, indent + 1);
+  }
+}
+
+function recursiveWithFilter(
+  current: Catalogue | EditorBase,
+  iterator: string,
+  cb: (current: EditorBase) => unknown,
+  result: EditorSearchItem[],
+  indent = 0
+) {
+  for (const child of (current as any)[iterator]()) {
+    result.push({
+      name: child.name,
+      editorTypeName: child.editorTypeName,
+      id: child.id,
+      indent: indent,
+      catalogue: child.catalogue.getName(),
+      shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
+    });
+    recursive(child, iterator, result, indent + 1);
+  }
+}
+
 export function getSearchElements(
   catalogue: Catalogue | EditorBase,
   type: keyof Catalogue | EditorBase
 ): EditorSearchItem[] {
   let res: EditorSearchItem[] = [];
-  let rec = recurseThis(catalogue, type as any, 1000) as any;
-  let flat = flattenRecursive(rec, 0, []);
-
-  for (let elt of flat) {
-    const current = elt.current as any;
-    if (current.isCatalogue()) {
-      continue;
-    }
-    res.push({
-      name: current.name,
-      editorTypeName: current.editorTypeName,
-      id: current.id,
-      indent: elt.depth,
-      catalogue: current.catalogue.getName(),
-      shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
-    });
-  }
+  recursive(catalogue, type as string, res);
   return res;
 }
 
@@ -41,27 +58,9 @@ export function getSearchSelections(
   catalogue: Catalogue | EditorBase,
   includeRootSelectionEntries: boolean
 ): EditorSearchItem[] {
-  let res: EditorSearchItem[] = [];
-  let rec = includeRootSelectionEntries
-    ? recurseThis(catalogue, "iterateSelectionEntriesWithRoot" as any, 1000)
-    : (recurseThis(catalogue, "iterateSelectionEntries" as any, 1000) as any);
-  let flat = flattenRecursive(rec, 0, []);
-
-  for (let elt of flat) {
-    const current = elt.current as any;
-    if (current.isCatalogue()) {
-      continue;
-    }
-
-    res.push({
-      name: current.name,
-      editorTypeName: current.editorTypeName,
-      id: current.id,
-      indent: elt.depth,
-      catalogue: current.catalogue.getName(),
-      shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
-    });
-  }
+  const res: EditorSearchItem[] = [];
+  const iterator = includeRootSelectionEntries ? "iterateSelectionEntriesWithRoot" : "iterateSelectionEntries";
+  recursive(catalogue, iterator, res);
   return res;
 }
 
@@ -69,35 +68,19 @@ export function getSearchSelectionsWithCategory(
   item: EditorBase,
   catalogue: Catalogue | EditorBase
 ): EditorSearchItem[] {
-  let res: EditorSearchItem[] = [];
-  let rec = recurseThis(catalogue, "iterateAllRootEntries" as any, 1000);
-  let flat = flattenRecursive(rec, 0, []);
-  let cat = item.getPrimaryCategory();
-
-  for (let elt of flat) {
-    const current = elt.current as any;
-    if (current.isCatalogue()) {
-      continue;
-    }
-
-    const itemCat = getFirstAncestor(elt.current).getPrimaryCategory();
-    if (itemCat == cat) {
-      res.push({
-        name: current.name,
-        editorTypeName: current.editorTypeName,
-        id: current.id,
-        indent: elt.depth,
-        catalogue: current.catalogue.getName(),
-        shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
-      });
-    }
-  }
+  const res: EditorSearchItem[] = [];
+  const primary = item.getPrimaryCategory();
+  recursiveWithFilter(
+    catalogue,
+    "iterateAllRootEntries",
+    (o) => getFirstAncestor(o).getPrimaryCategory() === primary,
+    res
+  );
   return res;
 }
 
 export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
-  let res: EditorSearchItem[] = [];
-
+  const res: EditorSearchItem[] = [];
   for (let elt of catalogue.iterateCategoryEntries()) {
     const current = elt as any;
     if (current.isCatalogue()) {
@@ -221,7 +204,3 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
 export function getFilterForces(item: EditorBase, catalogue: Catalogue, scope: string): EditorSearchItem[] {
   return [];
 }
-
-/*
- TODO: check what happens with conditions in Force Entries
-*/
