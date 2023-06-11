@@ -24,7 +24,11 @@
       </UtilIconSelect>
 
       <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
-      <UtilNumberInput @change="changed" v-if="selectedField && selectedField.type == 'number'" v-model="item.value" />
+      <UtilNumberInput
+        @change="changed"
+        v-if="selectedField && selectedField.type == 'number'"
+        v-model="(item.value as number)"
+      />
       <select @change="changed" v-if="selectedField && selectedField.type == 'boolean'" v-model="item.value">
         <option :value="true">True</option>
         <option :value="false">False</option>
@@ -254,19 +258,18 @@ export default {
       if (!available) {
         return [];
       }
+
       if (available.includes("costs")) {
-        if (this.catalogue.costTypes) {
-          additional.push(
-            ...this.catalogue.costTypes.map((costType) => {
-              return {
-                id: costType.id,
-                name: costType.name,
-                type: "number" as FieldTypes,
-                modifierType: "cost",
-              };
-            })
-          );
-        }
+        additional.push(
+          ...[...this.catalogue.iterateCostTypes()].map((costType) => {
+            return {
+              id: costType.id,
+              name: costType.name,
+              type: "number" as FieldTypes,
+              modifierType: "cost",
+            };
+          })
+        );
       }
 
       if (available.includes("constraints")) {
