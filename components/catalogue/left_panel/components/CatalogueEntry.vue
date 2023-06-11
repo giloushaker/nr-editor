@@ -267,6 +267,7 @@ const order: Record<string, number> = {
   infoLink: 9,
 };
 const noSort = new Set(["force"]);
+const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -311,7 +312,8 @@ export default {
     if (this.catalogue) {
       this.catalogue.processForEditor();
       if (!this.imported) {
-        this.open = this.state.get(this.catalogue.id, getEntryPath(this.item));
+        this.open = preferOpen.has(this.item.parentKey) || this.state.get(this.catalogue.id, getEntryPath(this.item));
+
         if (this.item.isCatalogue()) {
           const openCategories = new Set<string>();
           for (const category of this.categories) {
