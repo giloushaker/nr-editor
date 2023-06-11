@@ -662,7 +662,6 @@ export const useEditorStore = defineStore("editor", {
             repeats: 1,
             field: "selections",
             scope: "parent",
-            id: generateBattlescribeId(),
             childId: "any",
             shared: true,
           };
@@ -674,8 +673,6 @@ export const useEditorStore = defineStore("editor", {
             field: parent?.isForce() ? "forces" : "selections",
             scope: "parent",
             shared: true,
-
-            id: generateBattlescribeId(),
           } as BSIConstraint;
           if (isAssociation) {
             result.childId = "any";
@@ -688,7 +685,6 @@ export const useEditorStore = defineStore("editor", {
             value: 1,
             field: "selections",
             scope: "parent",
-            id: generateBattlescribeId(),
             childId: "any",
             shared: true,
           };
@@ -754,10 +750,12 @@ export const useEditorStore = defineStore("editor", {
     async create(key: string & keyof Base, data?: any) {
       const obj = {
         ...this.get_initial_object(key),
-        id: generateBattlescribeId(),
         select: true,
         ...data,
       };
+      if (!["modifiers", "conditions", "modifierGroups", "conditionGroups"].includes(key)) {
+        obj.id = generateBattlescribeId();
+      }
       await this.add(obj, key);
       this.open_selected();
     },

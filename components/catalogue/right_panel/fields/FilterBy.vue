@@ -61,7 +61,40 @@ import {
   getFilterSelections,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
-
+const baseItems = [
+  {
+    id: "any",
+    name: "Anything",
+    editorTypeName: "bullet",
+    indent: 1,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "unit",
+    name: "Unit",
+    editorTypeName: "bullet",
+    indent: 1,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "model",
+    name: "Model",
+    editorTypeName: "bullet",
+    indent: 1,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "upgrade",
+    name: "Upgrade",
+    editorTypeName: "bullet",
+    indent: 1,
+    catalogue: null,
+    shared: false,
+  },
+];
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -74,45 +107,6 @@ export default {
       type: Object as PropType<Catalogue>,
       required: true,
     },
-  },
-
-  data() {
-    return {
-      baseItems: [
-        {
-          id: "any",
-          name: "Anything",
-          editorTypeName: "bullet",
-          indent: 1,
-          catalogue: null,
-          shared: false,
-        },
-        {
-          id: "unit",
-          name: "Unit",
-          editorTypeName: "bullet",
-          indent: 1,
-          catalogue: null,
-          shared: false,
-        },
-        {
-          id: "model",
-          name: "Model",
-          editorTypeName: "bullet",
-          indent: 1,
-          catalogue: null,
-          shared: false,
-        },
-        {
-          id: "upgrade",
-          name: "Upgrade",
-          editorTypeName: "bullet",
-          indent: 1,
-          catalogue: null,
-          shared: false,
-        },
-      ],
-    };
   },
 
   methods: {
@@ -130,7 +124,7 @@ export default {
       return true;
     },
     availableTargets() {
-      return [...this.baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces];
+      return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces];
     },
   },
 
@@ -146,7 +140,7 @@ export default {
         return null;
       }
 
-      const base = this.baseItems.find((elt) => elt.id === this.item.childId);
+      const base = baseItems.find((elt) => elt.id === this.item.childId);
       if (base) {
         return base;
       }

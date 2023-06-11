@@ -76,7 +76,8 @@
 
 <script lang="ts">
 import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_system";
+import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 import { db } from "~/assets/ts/dexie";

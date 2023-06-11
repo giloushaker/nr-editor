@@ -3,12 +3,14 @@
     <legend>Condition</legend>
     <div class="condition">
       <select v-model="item.type" @change="changed">
-        <option v-if="allowNonInstanceOf" value="lessThan">Less Than</option>
-        <option v-if="allowNonInstanceOf" value="greaterThan">Greater Than</option>
-        <option v-if="allowNonInstanceOf" value="equalTo">Equal To</option>
-        <option v-if="allowNonInstanceOf" value="notEqualTo">Not Equal To</option>
-        <option v-if="allowNonInstanceOf" value="atLeast">At Least</option>
-        <option v-if="allowNonInstanceOf" value="atMost">At Most</option>
+        <template v-if="allowNonInstanceOf">
+          <option value="lessThan">Less Than</option>
+          <option value="greaterThan">Greater Than</option>
+          <option value="equalTo">Equal To</option>
+          <option value="notEqualTo">Not Equal To</option>
+          <option value="atLeast">At Least</option>
+          <option value="atMost">At Most</option>
+        </template>
         <option value="instanceOf">Instance Of</option>
         <option value="notInstanceOf">Not Instance Of</option>
       </select>

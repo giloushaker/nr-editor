@@ -261,6 +261,6 @@ h3 {
 
 .alt:hover {
   text-decoration: underline;
-  cursor: pointer !important;
+  cursor: pointer;
 }
 </style>
