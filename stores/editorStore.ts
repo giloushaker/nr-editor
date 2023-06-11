@@ -653,7 +653,7 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    get_initial_object(key: string & keyof Base, parent?: EditorBase) {
+    get_initial_object(key: string, parent?: EditorBase) {
       switch (key) {
         case "repeats":
           return {
@@ -732,6 +732,18 @@ export const useEditorStore = defineStore("editor", {
             typeId: profileType?.id,
             typeName: profileType?.name,
           } as BSIProfile;
+        case "catalogueLinks":
+          return {
+            type: "catalogue",
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+          };
+
+        case "categoryLinks":
+          return {
+            type: "category",
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+          };
+
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,

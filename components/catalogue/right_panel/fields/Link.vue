@@ -5,7 +5,7 @@
       <tr v-if="type == 'entry'">
         <td>Link Type:</td>
         <td>
-          <select @change="changed" v-model="item.type">
+          <select @change="typeChanged" v-model="item.type">
             <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
             <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
           </select>
@@ -14,7 +14,7 @@
       <tr v-if="type == 'info'">
         <td>Link Type:</td>
         <td>
-          <select @change="changed" v-model="item.type">
+          <select @change="typeChanged" v-model="item.type">
             <option :value="'profile'">Profile</option>
             <option :value="'rule'"> Rule </option>
             <option :value="'infoGroup'"> Info Group </option>
@@ -80,7 +80,7 @@
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 
@@ -99,7 +99,7 @@ export default {
 
   props: {
     item: {
-      type: Object as PropType<Link & EditorBase & CatalogueLink>,
+      type: Object as PropType<EditorBase & Link>,
       required: true,
     },
     catalogue: {
@@ -141,11 +141,10 @@ export default {
       });
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-    typeChanged() {
-      this.changed();
-    },
+    typeChanged() {},
 
     targetIdChanged() {
+      this.updateLink();
       this.changed();
     },
 
@@ -153,10 +152,14 @@ export default {
       if (this.type === "catalogue" && this.item.targetId) {
         const sysId = this.catalogue.gameSystemId || this.catalogue.id;
         await this.catalogue.reload(this.store.get_system(sysId));
+        const target = this.item.target as (Catalogue & EditorBase) | undefined;
         this.item.name = this.item.target?.name || "Unknown";
+        this.item.type = (target?.editorTypeName || this.type) as any;
       } else {
         this.catalogue.updateLink(this.item);
-        this.item.name = this.item.target?.name || "Unknown";
+        const target = this.item.target as EditorBase | undefined;
+        this.item.name = target?.name || "Unknown";
+        this.item.type = (target?.editorTypeName || this.type) as any;
       }
     },
     changedImportRootEntries() {
