@@ -29,11 +29,6 @@ export default {
       default: "Search...",
     },
 
-    min: {
-      type: Number,
-      default: 0,
-    },
-
     fetch: {
       type: Function,
       required: true,
@@ -56,22 +51,10 @@ export default {
 
   methods: {
     async foundOptions(): Promise<OptionArray> {
-      const regex = this.textSearchRegex(this.searchPattern);
-      const res = await this.fetch(this.searchPattern);
+      const res = await this.fetch();
       return res.map((elt: any) => {
         return { option: elt };
       });
-    },
-
-    escapeRegex(str: string) {
-      return str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
-    },
-
-    textSearchRegex(query: string) {
-      const words = this.escapeRegex(query).split(" ");
-      const regexStr = `^(?=.*\\b${words.join(".*)(?=.*\\b")}).*$`;
-      const regx = new RegExp(regexStr, "i");
-      return regx;
     },
 
     targetSelected(opt: any) {
@@ -100,44 +83,13 @@ export default {
       this.editing = false;
     },
 
-    async suggest() {
-      if (this.searchPattern.length < this.min) {
-        this.editing = false;
-      } else {
-        this.startEditing();
-      }
-    },
-
-    maySuggest() {
-      this.searchPattern = "";
-      if (this.min == 0) {
-        this.suggest();
-      }
+    async startEditing() {
+      this.editing = true;
+      this.availableOptions = (await this.foundOptions()) as Array<{ option: any; selected?: boolean }>;
     },
 
     clicked() {
       this.editing = false;
-    },
-
-    async startEditing() {
-      if (!this.editing) {
-        this.editing = true;
-        this.searchPattern = "";
-      } else {
-        this.suggest();
-      }
-      this.availableOptions = (await this.foundOptions()) as Array<{ option: any; selected?: boolean }>;
-    },
-  },
-
-  watch: {
-    async editing() {
-      if (this.editing) {
-        await this.$nextTick();
-        if (this.$refs.edit) {
-          (this.$refs.edit as any).focus();
-        }
-      }
     },
   },
 };
