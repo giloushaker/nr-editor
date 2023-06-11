@@ -99,8 +99,8 @@ export default {
     return { store: useEditorStore() };
   },
   mounted() {
-    document.body.addEventListener("keydown", this.handleKeyDown);
-    document.body.addEventListener("keyup", this.handleKeyUp);
+    addEventListener("keydown", this.handleKeyDown);
+    addEventListener("keyup", this.handleKeyUp);
     this.$el.vnode = this;
     this.group?.push(this);
     this.init(this.payload);
@@ -110,8 +110,8 @@ export default {
     this.$el.vnode = this;
   },
   unmounted() {
-    document.body.removeEventListener("keydown", this.handleKeyDown);
-    document.body.removeEventListener("keyup", this.handleKeyUp);
+    removeEventListener("keydown", this.handleKeyDown);
+    removeEventListener("keyup", this.handleKeyUp);
     if (this.group && Array.isArray(this.group)) {
       const idx = this.group.indexOf(this as any);
       if (idx !== -1) {
@@ -197,10 +197,16 @@ export default {
       }
     },
     handleKeyDown(event: KeyboardEvent) {
-      this.alt = event.altKey;
+      if (event.key === "Alt") {
+        this.alt = true;
+        event.preventDefault();
+      }
     },
     handleKeyUp(event: KeyboardEvent) {
-      this.alt = event.altKey;
+      if (event.key === "Alt") {
+        this.alt = false;
+        event.preventDefault();
+      }
     },
   },
 };
@@ -255,5 +261,6 @@ h3 {
 
 .alt:hover {
   text-decoration: underline;
+  cursor: pointer !important;
 }
 </style>
