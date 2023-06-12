@@ -74,7 +74,6 @@ export interface IEditorStore {
   unsavedChanges: Record<string, CatalogueState>;
 
   catalogueComponent?: CatalogueComponentT;
-  $router?: Router;
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
 }
@@ -150,6 +149,7 @@ export const useEditorStore = defineStore("editor", {
           name: name,
           battleScribeVersion: "2.03",
           revision: 1,
+          xmlns: "http://www.battlescribe.net/schema/gameSystemSchema",
         },
       } as BSIDataSystem;
 
@@ -348,11 +348,7 @@ export const useEditorStore = defineStore("editor", {
       this.filterRegex = textSearchRegex(filter);
     },
     init(component: any) {
-      const casted = component as CatalogueComponentT;
-      if (casted.$router) {
-        this.$router = casted.$router as any;
-      }
-      this.catalogueComponent = casted;
+      this.catalogueComponent = component as CatalogueComponentT;
       (globalThis as any).$store = this;
     },
     rerender_catalogue() {
