@@ -95,7 +95,7 @@ export const entries = {
     allowedChildrens: ["constraints", "modifiers", "modifierGroups"],
   },
   sharedRules: {
-    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+    allowedChildrens: ["modifiers", "modifierGroups"],
   },
   rule: {
     allowedChildrens: ["modifiers", "modifierGroups"],
