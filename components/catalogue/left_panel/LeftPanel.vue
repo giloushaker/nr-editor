@@ -102,6 +102,8 @@ export default defineComponent({
     return {
       ...LeftPanelDefaults,
       ...this.defaults,
+      shouldScrollTo: undefined as number | undefined,
+      shouldScrollToElement: undefined as Element | undefined,
     };
   },
   async mounted() {
@@ -133,7 +135,7 @@ export default defineComponent({
     },
     load() {
       this.$nextTick(async () => {
-        await this.set_scroll(this.scroll);
+        this.shouldScrollTo = this.scroll;
         if (this.selection) {
           try {
             let obj = getAtEntryPath(this.catalogue, this.selection);
@@ -146,7 +148,7 @@ export default defineComponent({
               if (el) {
                 const ctx = get_ctx(el);
                 await ctx.do_select();
-                await this.scroll_to(el);
+                this.shouldScrollToElement = el;
               }
             }
           } catch (e) {
@@ -162,10 +164,10 @@ export default defineComponent({
         const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
         if (scrollable_el) scrollable_el.scrollTop = scroll;
       });
-      setTimeout(() => {
-        const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
-        if (scrollable_el) scrollable_el.scrollTop = scroll;
-      }, 50);
+      // setTimeout(() => {
+      //   const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
+      //   if (scrollable_el) scrollable_el.scrollTop = scroll;
+      // }, 50);
     },
     async scroll_to(elt: Element) {
       elt.scrollIntoView({ block: "nearest", inline: "center" });
@@ -173,9 +175,9 @@ export default defineComponent({
       this.$nextTick(async () => {
         elt.scrollIntoView({ block: "nearest", inline: "center" });
       });
-      setTimeout(() => {
-        elt.scrollIntoView({ block: "nearest", inline: "center" });
-      }, 50);
+      // setTimeout(() => {
+      //   elt.scrollIntoView({ block: "nearest", inline: "center" });
+      // }, 50);
     },
     should_capture(e: Event) {
       if ((e.target as HTMLDivElement)?.tagName === "INPUT") return false;
@@ -321,6 +323,22 @@ export default defineComponent({
           this.catalogue.imports.map((o) => o.processForEditor());
         }
       },
+    },
+    shouldScrollTo(val) {
+      if (val !== undefined) {
+        this.$nextTick(() => {
+          delete this.shouldScrollTo;
+          this.set_scroll(val);
+        });
+      }
+    },
+    shouldScrollToElement(val) {
+      if (val !== undefined) {
+        this.$nextTick(() => {
+          delete this.shouldScrollTo;
+          this.scroll_to(val);
+        });
+      }
     },
   },
 });
