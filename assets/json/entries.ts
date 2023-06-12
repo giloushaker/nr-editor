@@ -98,10 +98,10 @@ export const entries = {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
   },
   rule: {
-    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+    allowedChildrens: ["modifiers", "modifierGroups"],
   },
   rules: {
-    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+    allowedChildrens: ["modifiers", "modifierGroups"],
   },
   profile: {
     allowedChildrens: ["modifiers", "modifierGroups"],
