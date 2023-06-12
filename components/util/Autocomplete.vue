@@ -194,12 +194,20 @@ export default {
 
   watch: {
     options() {
-      this.reset();
+      if (!this.lazy) {
+        this.reset();
+      } else {
+        this.selectedOption = { option: this.default, selected: true };
+      }
     },
 
     modelValue() {
       if (!this.editing) {
-        this.reset();
+        if (!this.lazy) {
+          this.reset();
+        } else {
+          this.selectedOption = { option: this.default, selected: true };
+        }
       }
     },
 

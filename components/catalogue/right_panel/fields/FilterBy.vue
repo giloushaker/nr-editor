@@ -59,6 +59,7 @@ import {
   getSearchElements,
   getSearchCategories,
   getFilterSelections,
+  getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
 const baseItems = [
@@ -124,13 +125,21 @@ export default {
       return true;
     },
     availableTargets() {
-      return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces];
+      return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
     },
   },
 
   watch: {
     child() {
       this.catalogue.updateCondition(this.item);
+    },
+
+    "item.scope"() {
+      console.log("scope changed");
+      const targets = this.availableTargets();
+      if (!this.child) {
+        this.item.childId = this.availableTargets()[0]?.id || undefined;
+      }
     },
   },
 
@@ -140,15 +149,17 @@ export default {
         return null;
       }
 
-      const base = baseItems.find((elt) => elt.id === this.item.childId);
+      const base = this.availableTargets().find((elt) => elt.id === this.item.childId);
       if (base) {
         return base;
       }
-
       return this.catalogue.findOptionById(this.item.childId) as any as EditorSearchItem;
     },
 
     allEntries(): EditorSearchItem[] {
+      if (!this.includeSelections) {
+        return [];
+      }
       return getFilterSelections(this.item, this.catalogue);
     },
 
@@ -166,7 +177,29 @@ export default {
       return getSearchElements(this.catalogue, "forcesIterator");
     },
 
+    allCatalogues(): EditorSearchItem[] {
+      if (!this.includeCatalogues) {
+        return [];
+      }
+      return getSearchCatalogues(this.catalogue);
+    },
+
+    includeSelections() {
+      if (this.item.scope === "primary-catalogue") {
+        return false;
+      }
+      if (this.item.scope === "primary-category") {
+        return false;
+      }
+
+      return true;
+    },
+
     includeCategories() {
+      if (this.item.scope === "primary-catalogue") {
+        return false;
+      }
+
       if (this.item.field === "forces") {
         return false;
       }
@@ -183,6 +216,13 @@ export default {
       if (this.item.scope == "ancestor") {
         return false;
       }
+      if (this.item.scope === "primary-catalogue") {
+        return false;
+      }
+      if (this.item.scope === "primary-category") {
+        return false;
+      }
+
       if (scopeIsId(this.item)) {
         return false;
       }
@@ -190,8 +230,8 @@ export default {
       return true;
     },
 
-    includeSelections() {
-      return true;
+    includeCatalogues() {
+      return this.item.scope === "primary-catalogue";
     },
   },
 };

@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{ disabled: disabled }">
     <div @click="startEditing" class="iconselect-input" v-click-outside="onClickOutside">
       <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
       <slot v-else v-bind="selectedOption" name="option"></slot>
@@ -32,6 +32,11 @@ export default {
     fetch: {
       type: Function,
       required: true,
+    },
+
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
 
@@ -84,6 +89,9 @@ export default {
     },
 
     async startEditing() {
+      if (this.disabled) {
+        return;
+      }
       this.editing = true;
       this.availableOptions = (await this.foundOptions()) as Array<{ option: any; selected?: boolean }>;
     },
@@ -96,6 +104,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import "@/shared_components/css/vars.scss";
+
 .suggestions {
   position: absolute;
   top: 100%;
@@ -162,5 +172,13 @@ export default {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 5px solid #000;
+}
+
+.disabled {
+  color: $gray;
+
+  .iconselect-input::before {
+    border-top: 5px solid $gray;
+  }
 }
 </style>

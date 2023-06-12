@@ -2,7 +2,13 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <UtilIconSelect v-model="itemField" :fetch="() => fieldTypes" @change="fieldChanged" class="modType">
+      <UtilIconSelect
+        v-model="itemField"
+        :fetch="() => fieldTypes"
+        @change="fieldChanged"
+        class="modType"
+        :disabled="instanceOf"
+      >
         <template #option="opt">
           <div>
             <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.type}.png`" />
@@ -115,17 +121,10 @@ export default {
 
   computed: {
     instanceOf() {
-      return this.item.type.includes("instance");
+      return this.item.type.includes("nstance");
     },
 
     fieldTypes() {
-      /*       <option :value="undefined" v-if="instanceOf" />
-        <option v-if="!instanceOf" value="selections">Selections</option>
-        <option v-if="!instanceOf" value="forces">Forces</option>
-        <option v-if="!instanceOf" v-for="costType of costTypes" :value="costType.id">
-          {{ costType.name }}
-        </option> */
-
       const res: {
         name: string;
         type: string | null;
@@ -294,10 +293,7 @@ export default {
         ];
       }
 
-      return res
-        .concat(this.allSelections)
-        .concat(this.allCategories as any)
-        .concat(this.allForces as any);
+      return res.concat(this.allSelections).concat(this.allCategories).concat(this.allForces);
     },
   },
 
