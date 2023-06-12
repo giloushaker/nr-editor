@@ -133,7 +133,7 @@ export default defineComponent({
     },
     load() {
       this.$nextTick(async () => {
-        this.set_scroll(this.scroll);
+        await this.set_scroll(this.scroll);
         if (this.selection) {
           try {
             let obj = getAtEntryPath(this.catalogue, this.selection);
@@ -146,6 +146,7 @@ export default defineComponent({
               if (el) {
                 const ctx = get_ctx(el);
                 await ctx.do_select();
+                await this.scroll_to(el);
               }
             }
           } catch (e) {
@@ -164,6 +165,16 @@ export default defineComponent({
       setTimeout(() => {
         const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
         if (scrollable_el) scrollable_el.scrollTop = scroll;
+      }, 50);
+    },
+    async scroll_to(elt: Element) {
+      elt.scrollIntoView({ block: "nearest", inline: "center" });
+
+      this.$nextTick(async () => {
+        elt.scrollIntoView({ block: "nearest", inline: "center" });
+      });
+      setTimeout(() => {
+        elt.scrollIntoView({ block: "nearest", inline: "center" });
       }, 50);
     },
     should_capture(e: Event) {
