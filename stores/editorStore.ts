@@ -900,7 +900,11 @@ export const useEditorStore = defineStore("editor", {
         if (typeof new_key !== "string" || new_key === result) {
           return [];
         }
-        result = lookup[new_key].allowedChildrens;
+        result = lookup[new_key]?.allowedChildrens;
+      }
+      if (!result) {
+        console.warn(`Couldn't find allowed children for ${key}`);
+        return [];
       }
       return result;
     },
