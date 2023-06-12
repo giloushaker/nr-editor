@@ -895,7 +895,7 @@ export const useEditorStore = defineStore("editor", {
     allowed_children(obj: EditorBase, key: string): Array<string> {
       const lookup = entries as Record<string, any>;
       let result = lookup[key]?.allowedChildrens;
-      while (typeof result === "string") {
+      if (typeof result === "string") {
         const new_key = toPlural(obj[result as keyof EditorBase] as string);
         if (typeof new_key !== "string" || new_key === result) {
           return [];

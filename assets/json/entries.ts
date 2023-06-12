@@ -97,14 +97,23 @@ export const entries = {
   sharedRules: {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
   },
+  rule: {
+    allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+  },
   rules: {
     allowedChildrens: ["modifiers", "modifierGroups", "infoLinks"],
+  },
+  profile: {
+    allowedChildrens: ["modifiers", "modifierGroups"],
   },
   profiles: {
     allowedChildrens: ["modifiers", "modifierGroups"],
   },
   sharedProfiles: {
     allowedChildrens: ["modifiers", "modifierGroups"],
+  },
+  infoGroup: {
+    allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
   },
   infoGroups: {
     allowedChildrens: ["profiles", "rules", "infoGroups", "infoLinks", "modifiers", "modifierGroups"],
