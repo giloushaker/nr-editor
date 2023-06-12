@@ -8,6 +8,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.use(Notifications);
   console.log(nuxtApp);
   (nuxtApp.$pinia as Pinia).use(({ store }) => {
-    store.$router = markRaw(nuxtApp.$router as Router);
+    store.$router = nuxtApp.$router as Router;
   });
 });
