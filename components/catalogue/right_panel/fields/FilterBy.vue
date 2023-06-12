@@ -156,6 +156,10 @@ export default {
       return this.catalogue.findOptionById(this.item.childId) as any as EditorSearchItem;
     },
 
+    instanceOf() {
+      return this.item.type.includes("nstance");
+    },
+
     allEntries(): EditorSearchItem[] {
       if (!this.includeSelections) {
         return [];
@@ -185,10 +189,10 @@ export default {
     },
 
     includeSelections() {
-      if (this.item.scope === "primary-catalogue") {
+      if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;
       }
-      if (this.item.scope === "primary-category") {
+      if (this.instanceOf && this.item.scope === "primary-category") {
         return false;
       }
 
@@ -196,7 +200,7 @@ export default {
     },
 
     includeCategories() {
-      if (this.item.scope === "primary-catalogue") {
+      if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;
       }
 
@@ -216,10 +220,10 @@ export default {
       if (this.item.scope == "ancestor") {
         return false;
       }
-      if (this.item.scope === "primary-catalogue") {
+      if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;
       }
-      if (this.item.scope === "primary-category") {
+      if (this.instanceOf && this.item.scope === "primary-category") {
         return false;
       }
 
@@ -231,7 +235,7 @@ export default {
     },
 
     includeCatalogues() {
-      return this.item.scope === "primary-catalogue";
+      return this.instanceOf && this.item.scope === "primary-catalogue";
     },
   },
 };
