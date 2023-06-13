@@ -12,3 +12,4 @@ dist
 .release
 nr-win32-x64
 dist-electron
+*.pfx
