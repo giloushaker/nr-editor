@@ -1,4 +1,4 @@
-import { BSCatalogueManager, loadData } from "~/assets/shared/battlescribe/bs_system";
+import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
 import {
   BSIDataSystem,
   BSIDataCatalogue,
@@ -8,8 +8,6 @@ import {
   BSIGameSystem,
 } from "~/assets/shared/battlescribe/bs_types";
 import { BooksDate } from "~/assets/shared/battlescribe/bs_versioning";
-import { BookFetchFunction, BsGameSystem } from "~/assets/shared/systems/bs_game_system";
-import { GameSystemRow } from "~/assets/shared/types/db_types";
 import { db } from "../dexie";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
@@ -17,12 +15,7 @@ import { convertToXml, getExtension, isZipExtension } from "~/assets/shared/batt
 import { filename, writeFile } from "~/electron/node_helpers";
 import JSZip, { OutputType } from "jszip";
 import { GithubIntegration } from "./github";
-
-export class GameSystem extends BsGameSystem {
-  constructor(systemRow: GameSystemRow, lang: string, fetchStrategy: BookFetchFunction) {
-    super(systemRow, lang, fetchStrategy);
-  }
-}
+import { loadData } from "~/assets/shared/battlescribe/bs_load_data";
 
 export class GameSystemFiles extends BSCatalogueManager {
   gameSystem: BSIDataSystem | null = null;

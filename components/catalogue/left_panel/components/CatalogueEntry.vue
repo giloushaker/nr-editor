@@ -244,15 +244,42 @@ import {
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Link } from "~/assets/shared/battlescribe/bs_main";
-import { generateBattlescribeId, sortByAscending, sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
-import { escapeXml } from "~/assets/shared/battlescribe/bs_export_xml";
+import {
+  generateBattlescribeId,
+  sortByAscending,
+  sortByDescending,
+  escapeXml,
+} from "~/assets/shared/battlescribe/bs_helpers";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
-import { ICost, formatCosts } from "~/assets/shared/systems/army_interfaces";
-
+export interface ICost {
+  name: string;
+  value: number;
+  typeId: string;
+}
+function round(num: number): number {
+  return Math.round(num * 100) / 100;
+}
+export function formatCosts(costs: ICost[]): string {
+  let res = "";
+  costs = sortByDescending(costs, (c) => c.name);
+  for (const cost of costs) {
+    if (cost.value != 0) {
+      let name = "";
+      if (cost.name.length != 0) {
+        name = " " + cost.name;
+      }
+      res = `${res}<span class='cost'>${round(cost.value)}${name}</span>`;
+    }
+  }
+  if (res.length == 0) {
+    return res;
+  }
+  return `<span class="costList">${res}</span>`;
+}
 const order: Record<string, number> = {
   selectionEntry: 1,
   entryLink: 1,

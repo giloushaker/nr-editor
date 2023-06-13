@@ -5,14 +5,17 @@
   </span>
 </template>
 <script lang="ts">
-import Vue, { PropType } from "vue";
+import { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { ErrorMessage } from "~/assets/shared/error_manager";
 import { stripHtml } from "~/assets/shared/util";
+export interface IErrorMessage {
+  msg: string;
+  severity?: "error" | "warning" | "info" | "debug";
+}
 export default {
   name: "ErrorIcon",
   props: {
-    errors: Array as PropType<ErrorMessage[]>,
+    errors: Array as PropType<IErrorMessage[]>,
     showNumber: Boolean,
   },
   computed: {

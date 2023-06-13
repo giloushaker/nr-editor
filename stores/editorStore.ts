@@ -27,8 +27,7 @@ import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/s
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
+import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { db } from "~/assets/ts/dexie";
 import type {
   BSIConstraint,

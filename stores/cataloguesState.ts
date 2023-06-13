@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { getDataDbId } from "~/assets/shared/battlescribe/bs_system";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICatalogue, BSIDataCatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 export interface ICatalogueState {
