@@ -719,8 +719,9 @@ export const useEditorStore = defineStore("editor", {
         case "sharedProfiles":
         case "profiles":
           const profileType = parent?.catalogue.iterateProfileTypes().next().value;
+          const name = !parent || parent?.isCatalogue() ? undefined : parent?.name;
           return {
-            name: "New Profile",
+            name: name || "New Profile",
             hidden: false,
             typeId: profileType?.id,
             typeName: profileType?.name,
