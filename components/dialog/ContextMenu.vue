@@ -108,11 +108,11 @@ export default {
   position: absolute;
   box-sizing: border-box;
   justify-content: center;
-  background-color: white;
-  color: black;
+  background-color: $background_color;
+  color: $fontColor;
   text-decoration: none;
   font-size: 14px;
-  border: 1px solid $gray;
+  border: 1px solid $box_border;
 
   min-width: 200px;
   width: fit-content;
@@ -130,7 +130,7 @@ export default {
 
   > :hover,
   > :focus {
-    background: lightskyblue;
+    background: $blue;
   }
 }
 </style>

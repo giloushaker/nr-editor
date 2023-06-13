@@ -16,49 +16,9 @@
 </template>
 
 <script lang="ts">
-import { AppearanceTheme } from "./assets/shared/types/stateOptions";
-import { updateCssVars } from "./assets/shared/js/util";
 import TitleBar from "./components/TitleBar.vue";
 import { notify } from "@kyvg/vue3-notification";
-export const defaultAppearence: AppearanceTheme = {
-  background: "#f0f5ff",
-  backgroundTexture: "url(assets/images/no.jpg)",
-  backgroundSize: "auto",
-  bga: 70,
-  hue: 0,
-
-  title: "#8ecff0",
-  forcesBackground: "#dcd189",
-  highlight: "#fffef1",
-
-  dropdownStyle: 2,
-  inputRadius: 0,
-  inputBackground: "#ffffff",
-  inputHighlights: "#009cbd",
-
-  categoryIcons: true,
-  costsLeft: false,
-  invertColors: false,
-  invertImages: false,
-  invertImagesBrightness: "0",
-
-  font: "sans-serif",
-  fontSize: 16,
-  fontHeader: "sans-serif",
-  fontHeaderSize: 16,
-  headerTransform: "none",
-  fontButton: "sans-serif",
-  fontButtonSize: 16,
-
-  fontColor: "black",
-  borderColor: "#aaaaaa",
-  colorGray: "gray",
-  colorBlue: "#0f59ba",
-  colorRed: "#e64e4e",
-  colorGreen: "#439943",
-  colorLightblue: "#009cbd",
-  costColor: "#284781",
-};
+import { useSettingsStore } from "./stores/settingsState";
 
 export default defineComponent({
   data() {
@@ -72,6 +32,11 @@ export default defineComponent({
       this.titleSize = (this.$refs.title as HTMLDivElement).clientHeight;
     },
   },
+  setup() {
+    return {
+      settings: useSettingsStore(),
+    };
+  },
   mounted() {
     addEventListener("resize", this.update);
   },
@@ -79,12 +44,17 @@ export default defineComponent({
     removeEventListener("resize", this.update);
   },
   async created() {
-    updateCssVars(defaultAppearence, {});
+    this.settings.refreshAppearance();
     globalThis.isEditor = true;
     globalThis.notify = notify;
     if (!globalThis.electron) {
       (globalThis as any).electron = null;
     }
+  },
+  watch: {
+    "settings.theme"() {
+      this.settings.refreshAppearance();
+    },
   },
   components: { TitleBar },
 });
@@ -145,7 +115,8 @@ input[type="password"],
 input[type="email"],
 input[role="combobox"],
 button,
-a.bouton {
+a.bouton,
+textarea {
   border-radius: var(--input-radius);
   background-color: var(--input-background);
   color: var(--font-color);

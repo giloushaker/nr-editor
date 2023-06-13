@@ -8,7 +8,7 @@
       @dblclick="elementDoubleClicked(item)"
     >
       <ErrorIcon class="error" :errors="errors(item)" />
-      <img :src="getType(item).icon" />
+      <img class="icon" :src="getType(item).icon" />
       <div>{{ name(item) }}</div>
     </div>
     <div class="relative item add unselectable" @click="add">
@@ -100,7 +100,7 @@ export default {
     margin-right: 0;
   }
   font-size: 12px;
-  border: 1px $gray solid;
+  border: 1px $box_border solid;
   padding: 3px;
   border-radius: 5px;
   box-shadow: $box_shadow;

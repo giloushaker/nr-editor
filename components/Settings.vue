@@ -1,19 +1,18 @@
-<template> 
-<div>
-    <div>
-
-    </div>
-</div>
+<template>
+  <div>
+    <label for="theme">Theme: </label>
+    <select id="theme" v-model="settings.theme">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
 </template>
 <script>
-const settings = [
-  {
-    label: "Display refs from conditions/modifiers",
-    type: "boolean",
-    field: "displayNonLinkRefs",
-    info: ""
-  },
-];
+import { useSettingsStore } from "~/stores/settingsState";
 
-export default {};
+export default {
+  setup() {
+    return { settings: useSettingsStore() };
+  },
+};
 </script>

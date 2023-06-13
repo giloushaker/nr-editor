@@ -224,6 +224,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import "@/shared_components/css/vars.scss";
+
 .suggestions {
   position: absolute;
   top: 100%;
@@ -235,23 +237,23 @@ export default {
   width: 100%;
   display: grid;
   box-shadow: rgba(22, 1, 1, 0.74) 0px 3px 8px;
-  border-top: 1px gray solid;
-  border-bottom: 1px gray solid;
+  border-top: 1px $box_border;
+  border-bottom: 1px $box_border;
   > * {
-    background-color: white;
-    border-left: 1px gray solid;
-    border-right: 1px gray solid;
+    background-color: var(--input-background);
+    border-left: 1px $box_border;
+    border-right: 1px $box_border;
     border-bottom: none;
     padding: 5px;
 
     &:hover {
-      background-color: rgb(218, 227, 241);
+      background-color: $blue;
     }
   }
 }
 
 .view {
-  background-color: white;
+  background-color: var(--input-background);
 }
 
 .container {

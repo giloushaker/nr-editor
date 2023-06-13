@@ -3,7 +3,7 @@
     <div class="static sticky flex items-center h-28px">
       <span
         :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
-        class="bold p-4px unselectable"
+        class="bold p-4px unselectable icon"
         @click="store.back"
         title="Back"
       >
@@ -15,7 +15,7 @@
           'cursor-pointer': store.can_forward(),
           'hover-darken': store.can_forward(),
         }"
-        class="bold p-4px unselectable ml-4px"
+        class="bold p-4px unselectable ml-4px icon"
         @click="store.forward"
         title="Forward"
       >
@@ -23,14 +23,14 @@
       </span>
       <img
         :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
-        class="bold p-4px unselectable ml-5px w-24px h-24px"
+        class="bold p-4px unselectable ml-5px w-24px h-24px icon"
         @click="store.undo"
         title="Undo"
         src="/assets/icons/undo.svg"
       />
       <img
         :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
-        class="bold p-4px unselectable ml-4px w-24px h-24px"
+        class="bold p-4px unselectable ml-4px w-24px h-24px icon"
         @click="store.redo"
         title="Redo"
         src="/assets/icons/redo.svg"
@@ -47,7 +47,7 @@
       </div>
       <img
         @click="uistate.collapse_all"
-        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"
+        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
         title="Collapse All"
         src="/assets/icons/collapse-all.svg"
       />
@@ -78,7 +78,7 @@
 
 <script lang="ts">
 import { EntryPathEntry, forEachParent, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
@@ -366,10 +366,10 @@ input:focus::placeholder {
 }
 .static {
   background-color: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgb(177, 177, 177);
+  border: 1px solid $box_border;
 }
 .rightborder {
-  border-right: 1px solid rgb(177, 177, 177);
+  border-right: 1px solid $box_border;
 }
 
 .enabled {

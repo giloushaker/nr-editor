@@ -47,7 +47,7 @@ async function submit(url: string | null) {
 }
 </script>
 <template>
-  <input ype="url" class="bouton !font-normal" v-model="inputUrl" placeholder='repo eg: "BSData/wh40k"' />
+  <input type="text" class="bouton !font-normal" v-model="inputUrl" placeholder='repo eg: "BSData/wh40k"' />
   <button
     @click="submit(normalizeGithubRepoUrl(inputUrl))"
     class="bouton"

@@ -61,10 +61,10 @@ export default {
 @import "@/shared_components/css/vars.scss";
 
 .editableDiv {
-  border: 1px $gray solid;
+  border: 1px $box_border solid;
   padding: 3px;
   text-align: left;
-  background-color: white;
+  background-color: $background_color;
 }
 
 [contentEditable="true"]:empty:not(:focus):before {

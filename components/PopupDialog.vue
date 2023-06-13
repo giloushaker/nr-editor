@@ -162,9 +162,8 @@ export default {
 
 .close-wrap {
   text-align: center;
-  display: grid;
-  grid-gap: 10px;
-  grid-auto-flow: column;
+  display: flex;
+  align-items: center;
 }
 
 .x {

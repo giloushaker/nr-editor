@@ -34,7 +34,7 @@
               <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
                 <img
                   class="w-24px h-24px align-bottom"
-                  src="/assets/icons/github-light.png"
+                  :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
                   :title="`using repo at ${gst.github.githubUrl}`"
                 />
               </a>
@@ -91,6 +91,7 @@ import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
 import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
+import { useSettingsStore } from "~/stores/settingsState";
 
 export default defineComponent({
   components: {
@@ -117,7 +118,7 @@ export default defineComponent({
     };
   },
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
   },
   created() {
     this.store.init(this.$router);

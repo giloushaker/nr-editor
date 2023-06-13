@@ -19,7 +19,7 @@
     <div class="p-10px">
       <div
         v-for="system in systems"
-        class="item p-2px mt-2px border-gray border-solid border-1px cursor-pointer"
+        class="item p-2px mt-2px cursor-pointer"
         :class="{ highlight: system.highlight }"
         @click="selected(system)"
       >
@@ -156,7 +156,11 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
+<style lang="scss" scoped>
+@import "@/shared_components/css/vars.scss";
+.item {
+  border: 1px solid $box_border;
+}
 .item:hover {
   background-color: rgba(0, 0, 0, 0.15);
 }

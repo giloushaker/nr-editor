@@ -20,7 +20,7 @@
       @dblclick="collapseSwitch"
     >
       <div class="arrow-wrap" @click.stop="collapseSwitch">
-        <img :class="{ hide }" :src="dropdownSrc" class="arrow" />
+        <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
 
       <slot name="title" />
@@ -252,7 +252,7 @@ h3 {
 }
 
 .selected {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(125, 125, 125, 0.3);
 }
 
 .hide {
