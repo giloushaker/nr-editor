@@ -25,7 +25,7 @@
         <span class="icontext">Discord</span>
       </a>
       <NuxtLink v-if="electron" class="iconbox no-underline unselectable" to="/system">
-        <img class="icon" src="/assets/icons/system1.png" />
+        <img class="icon" src="/assets/icons/system2.png" />
         <span class="icontext">Systems</span>
       </NuxtLink>
       <div class="iconbox no-underline unselectable" @click="settingsOpen = true">
