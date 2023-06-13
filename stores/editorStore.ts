@@ -36,7 +36,6 @@ import type {
   BSIDataSystem,
   BSIProfile,
 } from "~/assets/shared/battlescribe/bs_types";
-import type { Router } from "vue-router";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
 import { convertToJson, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
@@ -718,7 +717,7 @@ export const useEditorStore = defineStore("editor", {
         case "sharedProfiles":
         case "profiles":
           const profileType = parent?.catalogue.iterateProfileTypes().next().value;
-          const name = !parent || parent?.isCatalogue() ? undefined : parent?.name;
+          const name = !parent || parent?.isCatalogue() ? undefined : parent?.getName();
           return {
             name: name || "New Profile",
             hidden: false,

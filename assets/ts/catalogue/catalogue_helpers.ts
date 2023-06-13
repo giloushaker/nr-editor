@@ -188,12 +188,11 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
 
   const res = getSearchSelections(catalogue, false);
   if (item.scope == "self") {
-    const parent: EditorBase | null = getModifierOrConditionParent(item);
-    return res.concat(getParentSelections(parent));
+    const parent: EditorBase | undefined = getModifierOrConditionParent(item);
+    return parent ? res.concat(getParentSelections(parent)) : res;
   }
 
   if (item.scope == "ancestor") {
-    const parent: EditorBase | null = getModifierOrConditionParent(item);
     return res;
   }
 
@@ -203,11 +202,8 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
       return getSearchSelections(catalogue, true);
     }
 
-    let parent: EditorBase | null = getModifierOrConditionParent(item);
-    if (parent.parent) {
-      parent = parent.parent;
-    }
-    return res.concat(getParentSelections(parent));
+    const parent: EditorBase | undefined = getModifierOrConditionParent(item);
+    return parent?.parent ? res.concat(getParentSelections(parent.parent)) : res;
   }
 
   if (item.scope == "primary-category") {
