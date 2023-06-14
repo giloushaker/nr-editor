@@ -156,7 +156,7 @@ export default {
 }
 
 .iconselect-input {
-  background-color: white;
+  background-color: var(--input-background);
   width: 100% !important;
   padding-right: 30px;
 }
