@@ -1,21 +1,25 @@
 <template>
   <div>
-    <CatalogueRightPanelFieldsComment
-      :item="item"
-      @catalogueChanged="changed"
-    />
-    <CatalogueRightPanelFieldsBasics
-      :item="item"
-      @catalogueChanged="changed"
-      class="section"
-    />
-    <CatalogueRightPanelFieldsHidden
-      :item="item"
-      @catalogueChanged="changed"
-      class="section"
-    >
+    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
+    <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
+    <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
       Cost Types
     </CatalogueRightPanelFieldsHidden>
+
+    <div class="section">
+      <fieldset>
+        <legend>Limit</legend>
+        <table class="editorTable">
+          <tr>
+            <td>Default Cost Limit: </td>
+            <td>
+              <input type="number" v-model="item.defaultCostLimit" @change="changed" />
+              <span class="gray ml-10px">-1 = No limit</span>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </div>
   </div>
 </template>
 
