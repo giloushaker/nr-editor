@@ -159,7 +159,7 @@ export default {
         this.catalogue.updateLink(this.item);
         const target = this.item.target as EditorBase | undefined;
         this.item.name = target?.name || "Unknown";
-        this.item.type = (target?.editorTypeName || this.type) as any;
+        this.item.type = (target?.editorTypeName || this.item.type) as any;
       }
     },
     changedImportRootEntries() {

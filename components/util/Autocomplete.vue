@@ -16,7 +16,7 @@
       <slot v-else v-bind="selectedOption" name="option"></slot>
     </div>
     <div class="suggestions" :class="{ hidden: !editing }">
-      <div v-for="option of foundOptions" @click="targetSelected(option)">
+      <div v-for="option of foundOptions" @click.capture="targetSelected(option)">
         <slot v-bind="option" name="option"></slot>
       </div>
     </div>
