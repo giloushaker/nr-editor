@@ -147,15 +147,20 @@ export default {
         value: "forces",
         type: "bullet",
       });
-      res.push(
-        ...this.costTypes.map((elt) => {
-          return {
-            name: elt.name,
-            value: elt.id,
+      for (const costType of this.costTypes) {
+        res.push({
+          name: costType.name,
+          value: costType.id,
+          type: "cost",
+        });
+        if (this.item.scope === "roster") {
+          res.push({
+            name: `${costType.name} Limit`,
+            value: `limit::${costType.id}`,
             type: "cost",
-          };
-        })
-      );
+          });
+        }
+      }
       return res;
     },
 
@@ -228,7 +233,7 @@ export default {
         },
       ];
 
-      if (this.item.field != "forces" && this.item.editorTypeName === "condition") {
+      if (this.item.field != "forces" && ["condition"].includes(this.item.editorTypeName)) {
         res = [
           {
             id: "self",
@@ -268,7 +273,7 @@ export default {
         ];
       }
 
-      if (this.item.field !== "forces" && this.item.editorTypeName === "constraint") {
+      if (this.item.field !== "forces" && ["repeat", "constraint"].includes(this.item.editorTypeName)) {
         res = [
           {
             id: "parent",

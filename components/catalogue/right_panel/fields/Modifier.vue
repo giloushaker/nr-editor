@@ -246,6 +246,10 @@ export default {
     },
 
     fieldData() {
+      if (!this.parent) {
+        return [];
+      }
+
       let available: string[] = availableModifiers[this.parent.editorTypeName];
 
       const additional: {
@@ -271,20 +275,15 @@ export default {
       }
 
       if (available.includes("constraints")) {
-        const constraints: BSIConstraint[] = (this.parent as any).constraints;
-
-        if (constraints) {
-          const mapped = constraints.map((constraint) => {
-            return {
-              id: constraint.id,
-              name: getName(constraint),
-              type: "number" as FieldTypes,
-              modifierType: "constraint",
-            };
+        for (const constraint of this.parent.constraintsIterator())
+          additional.push({
+            id: constraint.id,
+            name: getName(constraint),
+            type: "number" as FieldTypes,
+            modifierType: "constraint",
           });
-          additional.push(...mapped);
-        }
       }
+
       if (available.includes("characteristics")) {
         const target = (this.parent.isLink() ? this.parent.target : this.parent) as Profile & EditorBase;
         if (target?.characteristics) {
