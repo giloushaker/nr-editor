@@ -3,7 +3,7 @@
     <legend>Repeat</legend>
     <div class="condition">
       <UtilNumberInput v-model="item.repeats" @change="changed" />
-      <labeL>times for every </labeL>
+      <label>times for every </label>
       <UtilNumberInput v-model="item.value" @change="changed" />
     </div>
     <div class="bools">

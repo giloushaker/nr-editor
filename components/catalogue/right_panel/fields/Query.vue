@@ -121,7 +121,7 @@ export default {
 
   computed: {
     instanceOf() {
-      return this.item.type.includes("nstance");
+      return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
     },
 
     fieldTypes() {
