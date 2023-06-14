@@ -149,7 +149,7 @@ export const entries = {
       "selectionEntries",
       "entryLinks",
       "infoLinks",
-
+      "infoGroups",
       "rules",
     ],
   },
@@ -169,6 +169,7 @@ export const entries = {
       "selectionEntries",
       "entryLinks",
       "infoLinks",
+      "infoGroups",
       "rules",
     ],
   },
