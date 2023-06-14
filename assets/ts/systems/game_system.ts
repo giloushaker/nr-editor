@@ -52,7 +52,7 @@ export class GameSystemFiles extends BSCatalogueManager {
     loaded.processForEditor();
     return loaded;
   }
-  async unloadAll(): Promise<void> {
+  unloadAll() {
     super.unloadAll();
     this.loadedCatalogues = {};
     delete this.allLoaded;

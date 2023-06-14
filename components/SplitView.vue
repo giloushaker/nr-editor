@@ -8,18 +8,10 @@
     }"
     :style="height > 0 ? { height: `${height}px` } : {}"
   >
-    <div
-      class="left"
-      ref="left"
-      :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }"
-    >
+    <div class="left" ref="left" :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }">
       <slot name="left"></slot>
     </div>
-    <div
-      v-if="draggable"
-      class="between unselectable"
-      @mousedown="drag_left_handle"
-    />
+    <div v-if="draggable" class="between unselectable" @mousedown="drag_left_handle" />
 
     <template v-if="triple">
       <div
@@ -29,11 +21,7 @@
       >
         <slot name="middle"></slot>
       </div>
-      <div
-        v-if="draggable"
-        class="between unselectable"
-        @mousedown="drag_right_handle"
-      />
+      <div v-if="draggable" class="between unselectable" @mousedown="drag_right_handle" />
     </template>
     <div
       v-if="showRight"
@@ -106,6 +94,7 @@ export default {
       }
     }
     addEventListener("resize", this.update);
+    this.$nextTick(this.update);
   },
 
   unmounted() {

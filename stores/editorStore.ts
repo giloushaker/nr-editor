@@ -22,7 +22,6 @@ import {
   textSearchRegex,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { entries } from "assets/json/entries";
 import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
@@ -175,6 +174,7 @@ export const useEditorStore = defineStore("editor", {
 
       const allowed = files.filter((o) => isAllowedExtension(o.name));
       for (const file of allowed) {
+        progress && (await progress(result_files.length, allowed.length, file.path));
         const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
 
         const systemId = json?.gameSystem?.id;
@@ -192,7 +192,6 @@ export const useEditorStore = defineStore("editor", {
           systemFiles.catalogueFiles[catalogueId] = json;
         }
         result_files.push(json);
-        progress && (await progress(result_files.length, allowed.length, file.path));
       }
       progress && (await progress(result_files.length, allowed.length));
 
