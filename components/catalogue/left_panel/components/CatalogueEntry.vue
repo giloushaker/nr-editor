@@ -64,6 +64,7 @@
               <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
             </span>
             <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
+            <ErrorIcon :errors="item.errors" />
             <span :class="{ imported: imported, filtered: item.highlight }">
               {{ getName(item) }}
             </span>

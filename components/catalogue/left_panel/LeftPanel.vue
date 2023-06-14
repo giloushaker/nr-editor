@@ -51,6 +51,7 @@
         title="Collapse All"
         src="/assets/icons/collapse-all.svg"
       />
+      <!-- <ErrorIcon :errors="catalogue.errors" /> -->
       <!-- <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"

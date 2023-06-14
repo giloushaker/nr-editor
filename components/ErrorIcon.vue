@@ -11,6 +11,7 @@ import { stripHtml } from "~/assets/shared/util";
 export interface IErrorMessage {
   msg: string;
   severity?: "error" | "warning" | "info" | "debug";
+  source: any;
 }
 export default {
   name: "ErrorIcon",
