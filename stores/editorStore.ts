@@ -660,12 +660,11 @@ export const useEditorStore = defineStore("editor", {
     },
     get_initial_object(key: string, parent?: EditorBase) {
       switch (key) {
-        case "cosTypes":
+        case "costTypes":
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
             defaultCostLimit: -1,
           };
-
         case "repeats":
           return {
             value: 1,
@@ -714,11 +713,13 @@ export const useEditorStore = defineStore("editor", {
             type: "upgrade",
             import: true,
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            hidden: false,
           };
         case "entryLinks":
           return {
             import: true,
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            hidden: false,
           };
         case "associations":
           return {
@@ -730,6 +731,7 @@ export const useEditorStore = defineStore("editor", {
             ids: [],
             label: "Association",
             labelMembers: "Unit",
+            hidden: false,
           };
         case "sharedProfiles":
         case "profiles":
@@ -737,9 +739,9 @@ export const useEditorStore = defineStore("editor", {
           const name = !parent || parent?.isCatalogue() ? undefined : parent?.getName();
           return {
             name: name || "New Profile",
-            hidden: false,
             typeId: profileType?.id,
             typeName: profileType?.name,
+            hidden: false,
           } as BSIProfile;
         case "catalogueLinks":
           return {
@@ -751,11 +753,13 @@ export const useEditorStore = defineStore("editor", {
           return {
             type: "category",
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            hidden: false,
           };
 
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            hidden: false,
           };
       }
     },
