@@ -675,6 +675,7 @@ export const useEditorStore = defineStore("editor", {
             scope: "parent",
             childId: "any",
             shared: true,
+            roundUp: false,
           };
         case "constraints": {
           const isAssociation = parent?.parentKey === "associations";
