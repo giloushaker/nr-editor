@@ -255,6 +255,7 @@ import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/E
 import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
+import { allowed_children } from "~/assets/shared/battlescribe/bs_convert";
 export interface ICost {
   name: string;
   value: number;
@@ -534,7 +535,7 @@ export default {
     },
 
     allowedChildren() {
-      return new Set(this.store.allowed_children(this.item, this.item.parentKey));
+      return allowed_children(this.item, this.item.parentKey);
     },
     forceShow() {
       return this.item.showChildsInEditor || this.forceShowRecursive;

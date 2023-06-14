@@ -37,7 +37,7 @@ import type {
   BSIProfile,
 } from "~/assets/shared/battlescribe/bs_types";
 import { createFolder, getFolderFiles } from "~/electron/node_helpers";
-import { convertToJson, isAllowedExtension, toPlural } from "~/assets/shared/battlescribe/bs_convert";
+import { allowed_children, clean, convertToJson, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
@@ -147,7 +147,6 @@ export const useEditorStore = defineStore("editor", {
           name: name,
           battleScribeVersion: "2.03",
           revision: 1,
-          xmlns: "http://www.battlescribe.net/schema/gameSystemSchema",
         },
       } as BSIDataSystem;
 
@@ -238,7 +237,7 @@ export const useEditorStore = defineStore("editor", {
           }
         }
         const publications = system.gameSystem.gameSystem.publications;
-        const github = publications?.find((o) => o.name.trim().toLowerCase() === "github");
+        const github = publications?.find((o) => o.name?.trim().toLowerCase() === "github");
         if (github && github.shortName?.includes("/") && github.publisherUrl) {
           system.github = {
             githubUrl: github.publisherUrl,
@@ -429,7 +428,12 @@ export const useEditorStore = defineStore("editor", {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
     async do_action(type: string, undo: () => void | Promise<void>, redo: () => void | Promise<void>) {
-      await redo();
+      try {
+        await redo();
+      } catch (e) {
+        console.error(e);
+        return;
+      }
 
       if (this.undoStackPos < this.undoStack.length) {
         const n_to_remove = this.undoStack.length - this.undoStackPos - 1;
@@ -606,14 +610,21 @@ export const useEditorStore = defineStore("editor", {
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
             if (!key) {
               console.warn("Couldn't create", childKey || entry.parentKey, "in", selectedCatalogueKey);
+              continue;
             }
             if (!item[key as keyof Base]) (item as any)[key] = [];
             const arr = item[key as keyof Base];
             if (!Array.isArray(arr)) continue;
 
+            if (!allowed_children(item, item.parentKey)?.has(key as string)) {
+              console.warn("Couldn't add", key, "to a", item.parentKey, "because it is not allowed");
+              continue;
+            }
             // Copy to not affect existing
             const json = entry instanceof Base ? entryToJson(entry, editorFields) : JSON.stringify(entry);
+            console.log(json);
             const copy = JSON.parse(json);
+            clean(copy, key as string);
             delete copy.parentKey;
 
             // Initialize classes from the json
@@ -650,6 +661,12 @@ export const useEditorStore = defineStore("editor", {
     },
     get_initial_object(key: string, parent?: EditorBase) {
       switch (key) {
+        case "cosTypes":
+          return {
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+            defaultCostLimit: -1,
+          };
+
         case "repeats":
           return {
             value: 1,
@@ -886,22 +903,6 @@ export const useEditorStore = defineStore("editor", {
 
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
-    },
-    allowed_children(obj: EditorBase, key: string): Array<string> {
-      const lookup = entries as Record<string, any>;
-      let result = lookup[key]?.allowedChildrens;
-      if (typeof result === "string") {
-        const new_key = toPlural(obj[result as keyof EditorBase] as string);
-        if (typeof new_key !== "string" || new_key === result) {
-          return [];
-        }
-        result = lookup[new_key]?.allowedChildrens;
-      }
-      if (!result) {
-        console.warn(`Couldn't find allowed children for ${key}`);
-        return [];
-      }
-      return result;
     },
     async open(obj: EditorBase, last?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
