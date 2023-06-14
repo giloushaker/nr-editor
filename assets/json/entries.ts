@@ -148,6 +148,8 @@ export const entries = {
       "sharedInfoGroups",
       "selectionEntries",
       "entryLinks",
+      "infoLinks",
+
       "rules",
     ],
   },
@@ -166,6 +168,7 @@ export const entries = {
       "sharedInfoGroups",
       "selectionEntries",
       "entryLinks",
+      "infoLinks",
       "rules",
     ],
   },
