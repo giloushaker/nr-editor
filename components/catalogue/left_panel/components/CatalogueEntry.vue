@@ -296,7 +296,9 @@ const order: Record<string, number> = {
   infoLink: 9,
 };
 const noSort = new Set(["force"]);
+
 const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
+const hiddenTypes = new Set(["characteristicTypes", "characteristics"]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -491,6 +493,10 @@ export default {
         return (this.item.target as any)[field];
       }
     },
+    hideType(type: string) {
+      if (type === "categoryLinks" && this.item.isForce()) return true;
+      if (hiddenTypes.has(type)) return true;
+    },
   },
 
   computed: {
@@ -545,6 +551,8 @@ export default {
     mixedChildren(): Array<CatalogueEntryItem> {
       const childs = [];
       for (const category of this.allowedChildren) {
+        if (this.hideType(category)) continue;
+        if (hiddenTypes.has(category)) continue;
         const arr = this.get_field(category);
         if (arr?.length) {
           for (const elt of arr) {
@@ -557,6 +565,8 @@ export default {
       if (this.item.isLink() && this.item.target) {
         const targetChilds = [];
         for (const category of this.allowedChildren) {
+          if (this.hideType(category)) continue;
+
           const target_arr = this.get_target_field(category);
           if (target_arr?.length) {
             for (const elt of target_arr) {

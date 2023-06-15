@@ -76,24 +76,28 @@ function askForUpdate() {
       });
   });
   autoUpdater.on("download-progress", (progress) => {
-    mainWindow.webContents.executeJavaScript(`
-    const styleElement = document.createElement('style');
-    styleElement.setAttribute('id', 'custom-style');
-    styleElement.textContent = '* { cursor: progress !important; }';
-    document.head.appendChild(styleElement);
-    `);
-    let log_message = "Download speed: " + progress.bytesPerSecond;
-    log_message = log_message + " - Downloaded " + progress.percent + "%";
-    log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
-    mainWindow.setProgressBar(progress.percent / 100);
-    mainWindow.setTitle(progress.percent + "%");
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.executeJavaScript(`
+      const styleElement = document.createElement('style');
+      styleElement.setAttribute('id', 'custom-style');
+      styleElement.textContent = '* { cursor: progress !important; }';
+      document.head.appendChild(styleElement);
+      `);
+      let log_message = "Download speed: " + progress.bytesPerSecond;
+      log_message = log_message + " - Downloaded " + progress.percent + "%";
+      log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
+      mainWindow.setProgressBar(progress.percent / 100);
+      mainWindow.setTitle(progress.percent + "%");
+    }
   });
   autoUpdater.on("update-downloaded", () => {
-    mainWindow.webContents.executeJavaScript(`
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.executeJavaScript(`
     if (styleElement) styleElement.remove();
     `);
-    mainWindow.setTitle(previousTitle);
-    autoUpdater.quitAndInstall(false, true);
+      mainWindow.setTitle(previousTitle);
+      autoUpdater.quitAndInstall(false, true);
+    }
   });
 
   autoUpdater.autoDownload = false;

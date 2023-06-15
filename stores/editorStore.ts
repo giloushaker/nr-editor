@@ -446,7 +446,7 @@ export const useEditorStore = defineStore("editor", {
       if (this.clipboardmode === "json") {
         //@ts-ignore
         const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o })) as EditorBase[];
-        const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false });
+        const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false, formatted: true });
         if (event) {
           event.clipboardData?.setData("text/plain", json);
         } else {
