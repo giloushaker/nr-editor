@@ -28,6 +28,7 @@ export const entries = {
       "constraints",
       "modifiers",
       "modifierGroups",
+      "costs",
     ],
   },
   entryLinks: {
@@ -46,6 +47,7 @@ export const entries = {
       "modifiers",
       "modifierGroups",
       "categoryLinks",
+      "costs",
     ],
   },
   sharedSelectionEntryGroups: {
@@ -61,6 +63,7 @@ export const entries = {
       "modifiers",
       "modifierGroups",
       "categoryLinks",
+      "costs",
     ],
   },
   selectionEntries: {
@@ -77,6 +80,7 @@ export const entries = {
       "modifiers",
       "modifierGroups",
       "categoryLinks",
+      "costs",
     ],
   },
   sharedSelectionEntries: {
@@ -93,6 +97,7 @@ export const entries = {
       "modifiers",
       "modifierGroups",
       "categoryLinks",
+      "costs",
     ],
   },
   associations: {
