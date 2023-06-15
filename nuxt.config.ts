@@ -2,6 +2,10 @@
 import { defineNuxtConfig } from "nuxt/config";
 import pkg from "./package.json";
 const electron = process.argv.includes("--electron");
+const ghpages = process.argv.includes("--ghpages");
+if (ghpages) {
+  console.log("ghpages repo", `/${pkg.build.publish[0].repo}/`);
+}
 export default defineNuxtConfig({
   ssr: false,
   // @ts-ignore
@@ -25,7 +29,11 @@ export default defineNuxtConfig({
     "@pinia-plugin-persistedstate/nuxt",
     ...(electron ? ["nuxt-electron"] : []),
   ],
-
+  app: ghpages
+    ? {
+        baseURL: `/${pkg.build.publish[0].repo}/`,
+      }
+    : undefined,
   // @ts-ignore
   plugins: [
     ...(electron
@@ -56,6 +64,11 @@ export default defineNuxtConfig({
         copyFileSync("electron/index.js", `${outputDir}/index.js`);
         copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
         copyFileSync("package.json", `${outputDir}/package.json`);
+      }
+      if (ghpages) {
+        const { writeFileSync } = require("fs");
+        const outputDir = nitro.options.output.publicDir;
+        writeFileSync(`${outputDir}/.nojekyll`, "");
       }
     },
   },
