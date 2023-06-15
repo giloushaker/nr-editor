@@ -20,8 +20,8 @@
                   ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
                 >
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
-
                 {{ opt.option.name }}
+                <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
               </div>
             </template>
           </UtilAutocomplete>
@@ -34,7 +34,8 @@
 </template>
 
 <script lang="ts">
-import { Base, Group } from "~/assets/shared/battlescribe/bs_main";
+import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { Group } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   emits: ["catalogueChanged"],
@@ -46,6 +47,7 @@ export default {
   },
 
   methods: {
+    getNameExtra,
     changed() {
       this.$emit("catalogueChanged");
     },

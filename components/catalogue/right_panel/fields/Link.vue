@@ -54,6 +54,7 @@
               <div>
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
+                <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared)</span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
@@ -77,7 +78,7 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemTypes, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -122,6 +123,7 @@ export default {
     },
   },
   methods: {
+    getNameExtra,
     availableTargets() {
       if (this.type === "catalogue") {
         const id = this.catalogue.gameSystemId || this.catalogue.id;

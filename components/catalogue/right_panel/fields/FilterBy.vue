@@ -36,6 +36,7 @@
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
 
                 {{ opt.option.name }}
+                <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared) </span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
@@ -62,6 +63,7 @@ import {
   getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
+import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 const baseItems = [
   {
     id: "any",
@@ -111,6 +113,7 @@ export default {
   },
 
   methods: {
+    getNameExtra,
     changed() {
       this.$emit("catalogueChanged");
     },

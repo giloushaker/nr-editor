@@ -29,11 +29,12 @@
       >
         <template #option="opt">
           <div>
-            <template v-if="opt.option.indent >= 2 && !opt.selected"
-              ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
-            >
+            <template v-if="opt.option.indent >= 2 && !opt.selected">
+              <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
+            </template>
             <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
             {{ opt.option.name }}
+            <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
             <span class="shared" v-if="opt.option.shared"> (shared)</span>
             <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
           </div>
@@ -59,6 +60,7 @@
 </template>
 
 <script lang="ts">
+import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
@@ -99,6 +101,7 @@ export default {
   },
 
   methods: {
+    getNameExtra,
     changed() {
       this.$emit("catalogueChanged");
     },
