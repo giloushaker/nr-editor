@@ -113,16 +113,16 @@ Editor:
             ☐ refs panel, show if categories are primary
             ✔ move to doesnt allow choosing if to shared or root, from shared to root? @done(23-06-09 15:49)
                 option to move to non-imported?
-            ☐ github check if revision is incremented
+            ✔ github check if revision is incremented @done(23-06-15 12:36)
 
         ✔ move up/down @done(23-06-01 21:17)
         ☐ alert version of popupdialog
         ✔ move back/forward (like browser navigation) @done(23-06-05 15:55)
         ☐ focus whatever textbox is most commonly edited upon creating (or maybe even selecting) an entry
-        ☐ more intuitive way to return to catalogue list
+        ✔ more intuitive way to return to catalogue list @done(23-06-15 12:36)
 
-        ☐ modifierGroups and conditionGroups nodes themselves provide no info, maybe opening them should automatically open their childs
-        
+        ✔ modifierGroups and conditionGroups nodes themselves provide no info, maybe opening them should automatically open their childs @done(23-06-15 12:36)
+        ☐ fix searchbar bugs
         ✔ collapse all button @done(23-06-02 23:57)
         ☐ filter by
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
