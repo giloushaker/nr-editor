@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol, session, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, session, shell } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
@@ -83,6 +83,8 @@ function askForUpdate() {
       styleElement.textContent = '* { cursor: progress !important; }';
       document.head.appendChild(styleElement);
       `);
+    }
+    if (mainWindow) {
       let log_message = "Download speed: " + progress.bytesPerSecond;
       log_message = log_message + " - Downloaded " + progress.percent + "%";
       log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
@@ -95,9 +97,11 @@ function askForUpdate() {
       mainWindow.webContents.executeJavaScript(`
     if (styleElement) styleElement.remove();
     `);
-      mainWindow.setTitle(previousTitle);
-      autoUpdater.quitAndInstall(false, true);
     }
+    if (mainWindow) {
+      mainWindow.setTitle(previousTitle);
+    }
+    autoUpdater.quitAndInstall(false, true);
   });
 
   autoUpdater.autoDownload = false;
@@ -111,9 +115,6 @@ const createSecondaryWindow = () => {
     width: 1200,
     height: 900,
     autoHideMenuBar: true,
-    contextIsolation: false,
-    nodeIntegration: true,
-    enableRemoteModule: true,
     nativeWindowOpen: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
