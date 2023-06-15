@@ -494,7 +494,7 @@ export default {
       }
     },
     hideType(type: string) {
-      if (type === "categoryLinks" && this.item.isForce()) return true;
+      if (type === "categoryLinks" && !this.item.isForce()) return true;
       if (hiddenTypes.has(type)) return true;
     },
   },
