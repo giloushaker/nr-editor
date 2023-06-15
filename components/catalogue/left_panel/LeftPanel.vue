@@ -314,8 +314,11 @@ export default defineComponent({
     },
   },
   watch: {
-    filterData(data) {
-      this.update(data);
+    filterData: {
+      handler(data) {
+        this.update(data);
+      },
+      immediate: true,
     },
     showImported: {
       immediate: true,
