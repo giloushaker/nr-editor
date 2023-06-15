@@ -298,7 +298,7 @@ const order: Record<string, number> = {
 const noSort = new Set(["force"]);
 
 const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
-const hiddenTypes = new Set(["characteristicTypes", "characteristics"]);
+const hiddenTypes = new Set(["characteristicTypes", "characteristics", "costs"]);
 export default {
   name: "CatalogueEntry",
   components: {
