@@ -1,4 +1,4 @@
-name: ghpages Release
+name: linux Release
 
 on:
   workflow_dispatch:
