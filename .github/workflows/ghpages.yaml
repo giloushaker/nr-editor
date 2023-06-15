@@ -31,4 +31,10 @@ jobs:
         run: npm ci
         
       - name: Build application
-        run: npm run deploy -- --repo "https://github.com/$GITHUB_REPOSITORY"
+        run: npm run generate -- --ghpages
+        
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          publish_dir: ./dist
