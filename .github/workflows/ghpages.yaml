@@ -31,4 +31,4 @@ jobs:
         run: npm ci
         
       - name: Build application
-        run: npm run deploy -- --repo https://github.com/$GITHUB_REPOSITORY
+        run: npm run deploy -- --repo "https://github.com/$GITHUB_REPOSITORY"
