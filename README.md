@@ -24,7 +24,7 @@ git submodules init
 
 ## Development Server
 
-Start the development server on `http://localhost:3000`
+Start the development server on `http://localhost:3005`
 
 ```bash
 npm run dev
