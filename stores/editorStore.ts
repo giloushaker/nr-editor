@@ -202,6 +202,15 @@ export const useEditorStore = defineStore("editor", {
 
       return result_system_ids;
     },
+    async load_systems_from_db(force = false) {
+      if (!this.gameSystemsLoaded && !force) {
+        this.gameSystemsLoaded = true;
+        let systems = await db.systems.offset(0).keys();
+        for (let system of systems) {
+          this.load_system_from_db(system as string);
+        }
+      }
+    },
     async load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);
       const system = dbsystem?.content;
@@ -244,15 +253,6 @@ export const useEditorStore = defineStore("editor", {
             githubOwner: github.shortName?.split("/")[0],
             githubName: github.shortName?.split("/")[1],
           };
-        }
-      }
-    },
-    async load_systems_from_db(force = false) {
-      if (!this.gameSystemsLoaded && !force) {
-        this.gameSystemsLoaded = true;
-        let systems = await db.systems.offset(0).keys();
-        for (let system of systems) {
-          this.load_system_from_db(system as string);
         }
       }
     },

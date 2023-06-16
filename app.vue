@@ -47,7 +47,9 @@ export default defineComponent({
     this.settings.refreshAppearance();
     globalThis.isEditor = true;
     globalThis.notify = notify;
+
     if (!globalThis.electron) {
+      // Prevent errors when accessing undeclare global var
       (globalThis as any).electron = null;
     }
   },
