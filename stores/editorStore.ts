@@ -447,8 +447,8 @@ export const useEditorStore = defineStore("editor", {
         //@ts-ignore
         const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o })) as EditorBase[];
         const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false, formatted: true });
-        if (event) {
-          event.clipboardData?.setData("text/plain", json);
+        if (event?.clipboardData) {
+          event.clipboardData.setData("text/plain", json);
         } else {
           await navigator.clipboard.writeText(json);
         }
@@ -458,8 +458,8 @@ export const useEditorStore = defineStore("editor", {
     },
     async get_clipboard(event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
-        if (event) {
-          const text = event.clipboardData?.getData("text/plain");
+        if (event?.clipboardData) {
+          const text = event.clipboardData.getData("text/plain");
           if (!text) return [];
           return JSON.parse(text);
         } else {
