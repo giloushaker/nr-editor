@@ -119,7 +119,7 @@ export default {
     },
 
     allowGroups() {
-      if (this.item.parent?.isCatalogue() && this.item.parentKey === "selectionEntries") {
+      if (this.item.parent?.isCatalogue() && this.item.parentKey === "entryLinks") {
         return false;
       }
       return true;

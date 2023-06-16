@@ -6,7 +6,6 @@ import { Pinia } from "pinia";
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.use(vClickOutside);
   nuxtApp.vueApp.use(Notifications);
-  console.log(nuxtApp);
   (nuxtApp.$pinia as Pinia).use(({ store }) => {
     store.$router = nuxtApp.$router as Router;
   });
