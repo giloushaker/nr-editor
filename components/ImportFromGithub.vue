@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { convertToJson, getExtension, isAllowedExtension, unzipFolder } from "~/assets/shared/battlescribe/bs_convert";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
-import { normalizeGithubRepoUrl } from "~/assets/ts/systems/github";
+import { normalizeGithubRepoUrl } from "~/assets/shared/battlescribe/github";
 const inputUrl = ref("");
 const busy = ref(false);
 const emit = defineEmits<{

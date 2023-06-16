@@ -160,6 +160,7 @@ export const entries = {
       "infoLinks",
       "infoGroups",
       "rules",
+      "catalogueLinks",
     ],
   },
 

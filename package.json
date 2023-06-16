@@ -10,7 +10,7 @@
     "dev": "nuxi dev --port 3005",
     "start": "nuxi start",
     "generate": "nuxi generate",
-    "preview": "nuxt preview",
+    "preview": "electron dist",
     "postinstall": "nuxt prepare",
     "electron": "npx nuxi generate --electron && npx electron dist",
     "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true"

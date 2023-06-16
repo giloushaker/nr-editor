@@ -24,10 +24,8 @@ import {
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
-import { GameSystemFiles, saveCatalogue } from "~/assets/ts/systems/game_system";
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
-import { db } from "~/assets/ts/dexie";
 import type {
   BSIConstraint,
   BSIData,
@@ -40,7 +38,9 @@ import { allowed_children, clean, convertToJson, isAllowedExtension } from "~/as
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { getNextRevision } from "~/assets/ts/systems/github";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { getNextRevision } from "~/assets/shared/battlescribe/github";
+import { GameSystemFiles, saveCatalogue } from "~/assets/shared/battlescribe/local_game_system";
 
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
@@ -621,7 +621,6 @@ export const useEditorStore = defineStore("editor", {
             }
             // Copy to not affect existing
             const json = entry instanceof Base ? entryToJson(entry, editorFields) : JSON.stringify(entry);
-            console.log(json);
             const copy = JSON.parse(json);
             clean(copy, key as string);
             delete copy.parentKey;

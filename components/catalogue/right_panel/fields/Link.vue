@@ -119,6 +119,9 @@ export default {
     },
 
     allowGroups() {
+      if (this.item.parent?.isCatalogue() && this.item.parentKey === "selectionEntries") {
+        return false;
+      }
       return true;
     },
   },
