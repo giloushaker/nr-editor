@@ -17,6 +17,11 @@ npm install
 pnpm install
 ```
 
+Initialize the submobules (code shared with newrecruit.eu)
+```bash
+git submodules init
+```
+
 ## Development Server
 
 Start the development server on `http://localhost:3000`
