@@ -136,14 +136,12 @@ export default {
         });
         return catalogues;
       }
-      const all = this.catalogue.findOptionsByText("").filter((o) => {
-        if (this.targetIsValid(o as ItemTypes) == false) {
-          return false;
-        }
-
-        if (o.isLink()) return false;
-        return true;
-      });
+      const all = [];
+      for (const entry of this.catalogue.iterateSelectionEntriesWithRoot()) {
+        if (!this.targetIsValid(entry as ItemTypes)) continue;
+        if (entry.isLink()) continue;
+        all.push(entry);
+      }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
     typeChanged() {},

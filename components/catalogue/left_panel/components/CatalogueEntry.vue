@@ -124,7 +124,7 @@
             <img class="pr-4px" src="assets/bsicons/force.png" />
             Force
           </div>
-          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks')">
+          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks') && item.isForce()">
             <img class="pr-4px" src="assets/bsicons/categoryLink.png" />
             Category
           </div>
