@@ -46,7 +46,7 @@ export default {
   },
   computed: {
     showFilterBy() {
-      const key = getModifierOrConditionParent(this.item as EditorBase).parentKey;
+      const key = getModifierOrConditionParent(this.item as EditorBase)?.parentKey;
       return key === "associations";
     },
   },
