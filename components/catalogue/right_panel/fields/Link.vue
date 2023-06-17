@@ -133,7 +133,7 @@ export default {
         return catalogues;
       }
       const all = [];
-      for (const entry of this.catalogue.iterateSelectionEntriesWithRoot()) {
+      for (const entry of this.catalogue.iterateAllImported()) {
         if (!this.targetIsValid(entry as ItemTypes)) continue;
         if (entry.isLink()) continue;
         all.push(entry);

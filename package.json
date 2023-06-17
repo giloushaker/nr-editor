@@ -42,7 +42,7 @@
       },
       {
         "from": "public/assets",
-        "to": "assets"
+        "to": "assets/"
       }
     ],
     "publish": [
