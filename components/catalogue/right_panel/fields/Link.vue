@@ -6,8 +6,8 @@
         <td>Link Type:</td>
         <td>
           <select @change="typeChanged" v-model="item.type">
-            <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
-            <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
+            <option v-if="allowEntries" value="selectionEntry">Selection Entry</option>
+            <option v-if="allowGroups" value="selectionEntryGroup"> Selection Entry Group </option>
           </select>
         </td>
       </tr>
@@ -64,13 +64,9 @@
       </tr>
       <tr v-if="type === 'catalogue'">
         <td></td>
-        <td
-          ><input
-            @change="changedImportRootEntries"
-            id="importRoot"
-            type="checkbox"
-            v-model="item.importRootEntries"
-          /><label for="importRoot">Import Root Entries</label></td
+        <td>
+          <input @change="changedImportRootEntries" id="importRoot" type="checkbox" v-model="item.importRootEntries" />
+          <label for="importRoot">Import Root Entries</label></td
         >
       </tr>
     </table>

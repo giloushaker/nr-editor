@@ -39,6 +39,10 @@
       {
         "from": "dist",
         "to": ""
+      },
+      {
+        "from": "public/assets",
+        "to": "assets"
       }
     ],
     "publish": [

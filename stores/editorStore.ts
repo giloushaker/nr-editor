@@ -88,7 +88,13 @@ export interface CatalogueState {
 export function get_ctx(el: any): any {
   return el.vnode;
 }
-export function get_base_from_vue_el(vue_el: any) {
+/**
+ * Get the {@link EditorBase} (from bs_main.ts) out of a Vue component instance (assumed to be an EditorCollapsibleBox.vue).
+ *
+ * @param {Vue} vue_el - The Vue component instance.
+ * @returns {EditorBase}
+ */
+export function get_base_from_vue_el(vue_el: VueComponent): EditorBase {
   const p1 = vue_el.$parent;
   if (p1.item) return p1.item;
   const p2 = p1.$parent;
@@ -343,10 +349,17 @@ export const useEditorStore = defineStore("editor", {
       this.$state.filter = filter;
       this.filterRegex = textSearchRegex(filter);
     },
+    /**
+     * Sets the active `catalogueComponent` so it can be used by functions in the store
+     * Its typed as `any` to prevent recursive type
+     */
     init(component: any) {
       this.catalogueComponent = component as CatalogueComponentT;
       (globalThis as any).$store = this;
     },
+    /**
+     * Force the left panel to re-render, used for setting its state by having it reload the saved state
+     */
     rerender_catalogue() {
       if (this.catalogueComponent) {
         this.catalogueComponent.key += 1;
@@ -372,16 +385,13 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
-    is_el_selected(obj: any) {
+    is_selected(obj: VueComponent) {
       return this.selections.find((o) => o.obj === obj) !== undefined;
     },
     select(obj: VueComponent, onunselected: () => unknown, payload?: any) {
-      if (!this.is_el_selected(obj)) {
+      if (!this.is_selected(obj)) {
         this.selections.push({ obj, onunselected, payload });
       }
-    },
-    is_selected(obj: VueComponent) {
-      return this.selections.findIndex((o) => o.obj === obj) !== -1;
     },
     do_select(e: MouseEvent | null, el: VueComponent, group: VueComponent | VueComponent[]) {
       const entries = Array.isArray(group) ? group : [group];
@@ -442,6 +452,11 @@ export const useEditorStore = defineStore("editor", {
       }
       this.undoStackPos += 1;
     },
+    /**
+     * Set the content of the clipboard, accepts an event to better conform with browser security/permissions stuff
+     * @param data the entries to set in the clipboard, do not use for copying text
+     * @param event the event to use, if not provided a valid ClipboardEvent, will use the navigator.clipboard.writeText()
+     */
     async set_clipboard(data: EditorBase[], event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
         //@ts-ignore
@@ -456,6 +471,10 @@ export const useEditorStore = defineStore("editor", {
         this.clipboard = data;
       }
     },
+    /**
+     * Get the content of the clipboard, accepts an event to better conform with browser security/permissions stuff
+     * @param event the event to use, if not provided a valid ClipboardEvent, will use the navigator.clipboard.readText()
+     */
     async get_clipboard(event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
         if (event?.clipboardData) {
@@ -468,9 +487,6 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       return this.clipboard;
-    },
-    clear_clipboard() {
-      this.clipboard = [];
     },
     can_undo() {
       return Boolean(this.undoStack[this.undoStackPos]);
@@ -502,6 +518,9 @@ export const useEditorStore = defineStore("editor", {
     async paste(event: ClipboardEvent) {
       this.add(await this.get_clipboard(event));
     },
+    /**
+     * Duplicate the current selections
+     */
     async duplicate() {
       const selections = this.get_selections();
       if (!selections.length) return;
@@ -534,6 +553,9 @@ export const useEditorStore = defineStore("editor", {
       await this.do_action("dupe", undo, redo);
       this.set_catalogue_changed(catalogue, true);
     },
+    /**
+     * Remove the current selections.
+     */
     async remove() {
       const selections = this.get_selections();
       if (!selections.length) return;
@@ -572,6 +594,12 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
+    /**
+     *  Adds entries to the current selections, or provided parents.
+     * @param data the entries to add. Can be an array of entries, or a single entry.
+     * @param childKey the key to use when adding the childs. If not provided, the entries will be added to the parentKey of the first entry.
+     * @param parents the parents to use instead of the current selections. If not provided, the current selections will be used.
+     */
     async add(
       data: MaybeArray<EditorBase | Record<string, any>>,
       childKey?: keyof Base,
@@ -657,7 +685,12 @@ export const useEditorStore = defineStore("editor", {
         el.obj.open();
       }
     },
-    get_initial_object(key: string, parent?: EditorBase) {
+    /**
+     * Returns the default object when creating a given type
+     * @param key the key of the given type (eg: `selectionEntries`)
+     * @param parent (optional) the parent, used to modify the initial object conditionally
+     */
+    get_initial_object(key: string, parent?: EditorBase): any {
       switch (key) {
         case "costTypes":
           return {
@@ -762,6 +795,11 @@ export const useEditorStore = defineStore("editor", {
           };
       }
     },
+    /**
+     * Creates child entries in the current selection
+     * @param key the key of the child (eg: `selectionEntries`)
+     * @param data data to use when creating the child entry
+     */
     async create(key: string & keyof Base, data?: any) {
       const obj = {
         ...this.get_initial_object(key),
@@ -774,6 +812,12 @@ export const useEditorStore = defineStore("editor", {
       await this.add(obj, key);
       this.open_selected();
     },
+    /**
+     * Creates child entries in the provided parent
+     * @param key the key of the child (eg: `selectionEntries`)
+     * @param parent the parent to add the child in
+     * @param data data to use when creating the child entry
+     */
     async create_child(key: string & keyof Base, parent: EditorBase, data?: any) {
       const obj = {
         ...this.get_initial_object(key, parent),
@@ -1102,8 +1146,8 @@ export const useEditorStore = defineStore("editor", {
     async load_state(state: EditorUIState) {
       if (this.catalogueComponent) {
         useEditorUIState().set_state(state.catalogueId!, state);
-        if (await this.goto_catalogue(state.catalogueId!, state.systemId)) {
-        } else {
+        const changedCatalogue = await this.goto_catalogue(state.catalogueId!, state.systemId);
+        if (!changedCatalogue) {
           this.catalogueComponent.load_state(state);
           this.rerender_catalogue();
         }
@@ -1116,10 +1160,6 @@ export const useEditorStore = defineStore("editor", {
       } else {
         this.historyStack.push(state);
       }
-      console.log(
-        `Put state(${state.scroll}) at the end of history`,
-        this.historyStack.map((o) => o?.scroll)
-      );
       this.historyStackPos = this.historyStack.length;
     },
     put_current_state_in_history() {
@@ -1133,17 +1173,8 @@ export const useEditorStore = defineStore("editor", {
     async back() {
       if (this.can_back()) {
         this.historyStack[this.historyStackPos] = this.get_current_state();
-        console.log(
-          `Set state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
-          this.historyStack.map((o) => o?.scroll)
-        );
-
         this.historyStackPos -= 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
-        console.log(
-          `Load state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
-          this.historyStack.map((o) => o?.scroll)
-        );
       }
     },
     can_forward() {
@@ -1155,10 +1186,6 @@ export const useEditorStore = defineStore("editor", {
       if (this.can_forward()) {
         this.historyStackPos += 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
-        console.log(
-          `Load state(${this.historyStack[this.historyStackPos]?.scroll}) at ${this.historyStackPos}`,
-          this.historyStack.map((o) => o?.scroll)
-        );
       }
     },
   },
