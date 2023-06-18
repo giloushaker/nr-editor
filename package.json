@@ -56,7 +56,9 @@
   },
   "devDependencies": {
     "@types/node": "^18",
+    "chokidar": "^3.5.3",
     "electron": "^24.3.1",
+    "electron-updater": "^6.1.0",
     "electron-builder": "^23.6.0",
     "gh-pages": "^5.0.0",
     "nuxt": "^3.5.2",
@@ -75,7 +77,6 @@
     "adm-zip": "^0.5.10",
     "click-outside-vue3": "^4.0.1",
     "dexie": "^3.2.3",
-    "electron-updater": "^6.1.0",
     "fast-xml-parser": "^4.2.2",
     "jszip": "^3.10.1",
     "mongodb": "^4.16.0",

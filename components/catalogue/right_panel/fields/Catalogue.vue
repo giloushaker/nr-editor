@@ -1,7 +1,13 @@
 <template>
   <fieldset>
     <legend>Catalogue</legend>
-    <input type="checkbox" v-model="item.library" @change="changed" id="library" /><label for="library">Library</label>
+    <input type="checkbox" v-model="item.library" @change="changed" id="library" />
+    <label
+      class="hastooltip"
+      for="library"
+      title="indicates that this catalogue is used to store data, no forces may be created from it."
+      >Library</label
+    >
   </fieldset>
 </template>
 

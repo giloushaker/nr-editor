@@ -30,8 +30,8 @@
           >
             <template #option="opt">
               <div v-if="opt.option">
-                <template v-if="opt.option.indent >= 2 && !opt.selected">
-                  <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
+                <template v-if="opt.option.indent >= 1 && !opt.selected">
+                  <span v-for="n of opt.option.indent">&nbsp;&nbsp;&nbsp;</span>
                 </template>
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
 
@@ -69,7 +69,7 @@ const baseItems = [
     id: "any",
     name: "Anything",
     editorTypeName: "bullet",
-    indent: 1,
+    indent: 0,
     catalogue: null,
     shared: false,
   },
@@ -77,7 +77,7 @@ const baseItems = [
     id: "unit",
     name: "Unit",
     editorTypeName: "bullet",
-    indent: 1,
+    indent: 0,
     catalogue: null,
     shared: false,
   },
@@ -85,7 +85,7 @@ const baseItems = [
     id: "model",
     name: "Model",
     editorTypeName: "bullet",
-    indent: 1,
+    indent: 0,
     catalogue: null,
     shared: false,
   },
@@ -93,7 +93,7 @@ const baseItems = [
     id: "upgrade",
     name: "Upgrade",
     editorTypeName: "bullet",
-    indent: 1,
+    indent: 0,
     catalogue: null,
     shared: false,
   },
@@ -138,8 +138,6 @@ export default {
     },
 
     "item.scope"() {
-      console.log("scope changed");
-      const targets = this.availableTargets();
       if (!this.child) {
         this.item.childId = this.availableTargets()[0]?.id || undefined;
       }
@@ -221,7 +219,7 @@ export default {
         return false;
       }
       if (this.item.scope == "ancestor") {
-        return false;
+        return true;
       }
       if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;

@@ -91,7 +91,7 @@ export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
       name: current.name,
       editorTypeName: current.editorTypeName,
       id: current.id,
-      indent: 1,
+      indent: 0,
       catalogue: current.catalogue.getName(),
       shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
     });
@@ -110,7 +110,7 @@ export function getSearchCatalogues(catalogue: Catalogue): EditorSearchItem[] {
       name: current.name,
       editorTypeName: "catalogue",
       id: current.catalogue.id,
-      indent: 1,
+      indent: 0,
       catalogue: null,
       shared: false,
     });
@@ -131,7 +131,7 @@ export function itemDepth(item: EditorBase): number {
 export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
   let res: EditorSearchItem[] = [];
   let parent: EditorBase | undefined = item;
-  let i = 1;
+  let i = 0;
   const rootDepth = itemDepth(item) - 1;
   parent = getModifierOrConditionParent(item);
   while (parent != null && !parent.isCatalogue()) {
@@ -181,7 +181,7 @@ export function getFirstAncestor(item: EditorBase): EditorBase {
 }
 
 export function getFilterSelections(item: BSICondition & EditorBase, catalogue: Catalogue): EditorSearchItem[] {
-  const includeAllRootEntries = ["primary-catalogue", "roster", "force"];
+  const includeAllRootEntries = ["primary-catalogue", "roster", "force", "ancestor"];
   if (includeAllRootEntries.includes(item.scope)) {
     return getSearchSelections(catalogue, true);
   }
@@ -192,9 +192,9 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
     return parent ? res.concat(getParentSelections(parent)) : res;
   }
 
-  if (item.scope == "ancestor") {
-    return res;
-  }
+  // if (item.scope == "ancestor") {
+  //   return res;
+  // }
 
   if (item.scope == "parent") {
     // It looks like first level elements of shared entries and groups consider the Roster as their parent
