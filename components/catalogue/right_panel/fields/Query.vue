@@ -275,7 +275,7 @@ export default {
             name: "Primary Catalogue",
             editorTypeName: "bullet",
           },
-        ];
+        ] as ScopeChoice[];
       }
 
       if (this.item.field !== "forces" && ["repeat", "constraint"].includes(this.item.editorTypeName)) {
