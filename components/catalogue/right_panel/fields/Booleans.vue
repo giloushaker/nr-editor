@@ -12,8 +12,9 @@
           :disabled="field.status == 0"
         />
         <label
-          :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0 }"
+          :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0, hastooltip: Boolean(field.title) }"
           :for="(field.field as string)"
+          :title="field.title"
         >
           {{ field.name }}
         </label>
@@ -26,7 +27,12 @@
 import { PropType } from "nuxt/dist/app/compat/capi";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-
+interface BooleanField {
+  name: string;
+  status: number;
+  field: keyof (Base & EditorBase);
+  title?: string;
+}
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -54,17 +60,15 @@ export default {
           name: "Collective",
           status: this.collective,
           field: "collective",
+          title: "indicates that multiple instances of this entry may be combined into one entry with an amount",
         },
         {
           name: "Import",
           status: this.eimport,
           field: "import",
+          title: "Indicates that this entry may be imported by other catalogues",
         },
-      ] as {
-        name: string;
-        status: number;
-        field: keyof (Base & EditorBase);
-      }[];
+      ] as BooleanField[];
     },
 
     hidden() {

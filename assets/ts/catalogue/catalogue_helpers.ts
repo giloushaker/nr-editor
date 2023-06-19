@@ -1,7 +1,7 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
-import { GameSystemFiles } from "../systems/game_system";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 
 export interface EditorSearchItem {
   id: string;
@@ -91,7 +91,7 @@ export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
       name: current.name,
       editorTypeName: current.editorTypeName,
       id: current.id,
-      indent: 1,
+      indent: 0,
       catalogue: current.catalogue.getName(),
       shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
     });
@@ -110,7 +110,7 @@ export function getSearchCatalogues(catalogue: Catalogue): EditorSearchItem[] {
       name: current.name,
       editorTypeName: "catalogue",
       id: current.catalogue.id,
-      indent: 1,
+      indent: 0,
       catalogue: null,
       shared: false,
     });
@@ -120,18 +120,18 @@ export function getSearchCatalogues(catalogue: Catalogue): EditorSearchItem[] {
 
 export function itemDepth(item: EditorBase): number {
   let res = 0;
-  let parent: EditorBase | null = getModifierOrConditionParent(item);
+  let parent = getModifierOrConditionParent(item);
   while (parent) {
     res++;
-    parent = parent.parent || null;
+    parent = parent.parent;
   }
   return res;
 }
 
 export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
   let res: EditorSearchItem[] = [];
-  let parent: EditorBase | null = item;
-  let i = 1;
+  let parent: EditorBase | undefined = item;
+  let i = 0;
   const rootDepth = itemDepth(item) - 1;
   parent = getModifierOrConditionParent(item);
   while (parent != null && !parent.isCatalogue()) {
@@ -146,7 +146,7 @@ export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
       });
       i++;
     }
-    parent = parent.parent || null;
+    parent = parent.parent;
   }
   res = res.reverse();
   res.forEach((elt, ind) => {
@@ -181,7 +181,7 @@ export function getFirstAncestor(item: EditorBase): EditorBase {
 }
 
 export function getFilterSelections(item: BSICondition & EditorBase, catalogue: Catalogue): EditorSearchItem[] {
-  const includeAllRootEntries = ["primary-catalogue", "roster", "force"];
+  const includeAllRootEntries = ["primary-catalogue", "roster", "force", "ancestor"];
   if (includeAllRootEntries.includes(item.scope)) {
     return getSearchSelections(catalogue, true);
   }
@@ -192,9 +192,9 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
     return parent ? res.concat(getParentSelections(parent)) : res;
   }
 
-  if (item.scope == "ancestor") {
-    return res;
-  }
+  // if (item.scope == "ancestor") {
+  //   return res;
+  // }
 
   if (item.scope == "parent") {
     // It looks like first level elements of shared entries and groups consider the Roster as their parent

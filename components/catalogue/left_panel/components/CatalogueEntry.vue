@@ -124,7 +124,7 @@
             <img class="pr-4px" src="assets/bsicons/force.png" />
             Force
           </div>
-          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks')">
+          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks') && item.isForce()">
             <img class="pr-4px" src="assets/bsicons/categoryLink.png" />
             Category
           </div>
@@ -298,7 +298,7 @@ const order: Record<string, number> = {
 const noSort = new Set(["force"]);
 
 const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
-const hiddenTypes = new Set(["characteristicTypes", "characteristics"]);
+const hiddenTypes = new Set(["characteristicTypes", "characteristics", "costs"]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -511,14 +511,17 @@ export default {
     // },
     costs() {
       const result = [] as ICost[];
-      const index = this.item.getCatalogue().index;
+      const catalogue = this.item.getCatalogue();
       const costs = this.item.getCosts();
       for (const cost of costs) {
-        result.push({
-          name: index[cost.typeId].name,
-          value: cost.value,
-          typeId: cost.typeId,
-        });
+        const name = catalogue.findOptionById(cost.typeId)?.name || cost.name || cost.typeId;
+        if (name) {
+          result.push({
+            name: name,
+            value: cost.value,
+            typeId: cost.typeId,
+          });
+        }
       }
       return formatCosts(result);
     },
@@ -552,7 +555,7 @@ export default {
       const childs = [];
       for (const category of this.allowedChildren) {
         if (this.hideType(category)) continue;
-        if (hiddenTypes.has(category)) continue;
+
         const arr = this.get_field(category);
         if (arr?.length) {
           for (const elt of arr) {

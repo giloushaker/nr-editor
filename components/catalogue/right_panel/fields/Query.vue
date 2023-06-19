@@ -69,7 +69,12 @@ import {
   getSearchElements,
   getParentUnitHierarchy,
 } from "~/assets/ts/catalogue/catalogue_helpers";
-
+interface ScopeChoice {
+  id: string;
+  name: string;
+  editorTypeName: string;
+  title?: string;
+}
 export default {
   emits: ["catalogueChanged"],
   data() {
@@ -218,11 +223,7 @@ export default {
       return getSearchElements(this.catalogue, "forcesIterator");
     },
 
-    allScopes(): {
-      id: string;
-      name: string;
-      editorTypeName: string;
-    }[] {
+    allScopes(): ScopeChoice[] {
       let res = [
         {
           id: "force",
@@ -252,6 +253,7 @@ export default {
             id: "ancestor",
             name: "Ancestor",
             editorTypeName: "bullet",
+            title: "checks the condition in all parents",
           },
           {
             id: "primary-category",
@@ -273,7 +275,7 @@ export default {
             name: "Primary Catalogue",
             editorTypeName: "bullet",
           },
-        ];
+        ] as ScopeChoice[];
       }
 
       if (this.item.field !== "forces" && ["repeat", "constraint"].includes(this.item.editorTypeName)) {

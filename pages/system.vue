@@ -33,13 +33,11 @@
 <script lang="ts">
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
-import { db } from "~/assets/ts/dexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 import CreateSystem from "~/components/CreateSystem.vue";
-import { GameSystemFiles } from "~/assets/ts/systems/game_system";
 import Loading from "~/components/Loading.vue";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 export default defineComponent({

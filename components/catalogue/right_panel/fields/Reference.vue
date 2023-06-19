@@ -2,11 +2,11 @@
   <fieldset>
     <legend>Reference</legend>
     <table class="editorTable">
-      <tr v-if="catalogue.publications">
+      <tr>
         <td>Publication:</td>
         <td>
           <select v-model="item.publicationId" @change="changed">
-            <option :value="publication.id" v-for="publication of catalogue.publications">
+            <option :value="publication.id" v-for="publication of publications">
               {{ publication.name }}
             </option>
           </select>
@@ -38,7 +38,11 @@ export default {
       required: true,
     },
   },
-
+  computed: {
+    publications() {
+      return this.catalogue.iteratePublications();
+    },
+  },
   methods: {
     changed() {
       this.$emit("catalogueChanged");

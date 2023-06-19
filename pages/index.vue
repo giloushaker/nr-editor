@@ -79,8 +79,7 @@ import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battle
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
-import { db } from "~/assets/ts/dexie";
-import { GameSystemFiles } from "~/assets/ts/systems/game_system";
+
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
@@ -92,6 +91,8 @@ import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
 import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 
 export default defineComponent({
   components: {

@@ -6,8 +6,8 @@
         <td>Link Type:</td>
         <td>
           <select @change="typeChanged" v-model="item.type">
-            <option v-if="allowEntries" :value="'selectionEntry'">Selection Entry</option>
-            <option v-if="allowGroups" :value="'selectionEntryGroup'"> Selection Entry Group </option>
+            <option v-if="allowEntries" value="selectionEntry">Selection Entry</option>
+            <option v-if="allowGroups" value="selectionEntryGroup"> Selection Entry Group </option>
           </select>
         </td>
       </tr>
@@ -64,13 +64,9 @@
       </tr>
       <tr v-if="type === 'catalogue'">
         <td></td>
-        <td
-          ><input
-            @change="changedImportRootEntries"
-            id="importRoot"
-            type="checkbox"
-            v-model="item.importRootEntries"
-          /><label for="importRoot">Import Root Entries</label></td
+        <td>
+          <input @change="changedImportRootEntries" id="importRoot" type="checkbox" v-model="item.importRootEntries" />
+          <label for="importRoot">Import Root Entries</label></td
         >
       </tr>
     </table>
@@ -119,6 +115,9 @@ export default {
     },
 
     allowGroups() {
+      if (this.item.parent?.isCatalogue() && this.item.parentKey === "entryLinks") {
+        return false;
+      }
       return true;
     },
   },
@@ -133,14 +132,12 @@ export default {
         });
         return catalogues;
       }
-      const all = this.catalogue.findOptionsByText("").filter((o) => {
-        if (this.targetIsValid(o as ItemTypes) == false) {
-          return false;
-        }
-
-        if (o.isLink()) return false;
-        return true;
-      });
+      const all = [];
+      for (const entry of this.catalogue.iterateAllImported()) {
+        if (!this.targetIsValid(entry as ItemTypes)) continue;
+        if (entry.isLink()) continue;
+        all.push(entry);
+      }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
     typeChanged() {},

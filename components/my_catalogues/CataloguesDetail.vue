@@ -2,7 +2,15 @@
   <fieldset class="details">
     <div>
       <legend>{{ cataloguedata.name }}</legend>
-      <div><span class="grey">Library:</span> {{ cataloguedata.library }}</div>
+      <div v-if="is_catalogue">
+        <span
+          class="grey hastooltip"
+          title="indicates that this catalogue is used to store data, no forces may be created from it."
+        >
+          Library:
+        </span>
+        {{ cataloguedata.library }}
+      </div>
       <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
       <div><span class="grey">path:</span> {{ cataloguedata.fullFilePath }}</div>
       <div v-if="electron"> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
@@ -46,10 +54,7 @@
       v-model="deletePopup"
       v-if="deletePopup"
     >
-      <div
-        >Are you sure you want to delete this
-        {{ (catalogue as BSIDataCatalogue).catalogue ? "catalogue" : "Game System" }}?</div
-      >
+      <div>Are you sure you want to delete this {{ is_catalogue ? "catalogue" : "Game System" }}?</div>
     </PopupDialog>
   </fieldset>
 </template>
@@ -87,6 +92,9 @@ export default {
     },
   },
   computed: {
+    is_catalogue() {
+      return Boolean((this.catalogue as BSIDataCatalogue).catalogue);
+    },
     electron() {
       return Boolean(globalThis.electron);
     },

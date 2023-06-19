@@ -51,14 +51,14 @@
 
 <script lang="ts">
 import LeftPanel, { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { get_ctx, useEditorStore } from "~/stores/editorStore";
-import { ItemTypes, getAtEntryPath, getEntryPath } from "~/assets/shared/battlescribe/bs_editor";
-import { GameSystemFiles } from "~/assets/ts/systems/game_system";
+import { useEditorStore } from "~/stores/editorStore";
+import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
-import { getNextRevision } from "~/assets/ts/systems/github";
+import { getNextRevision } from "~/assets/shared/battlescribe/github";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 
 export default defineComponent({
   components: { LeftPanel },

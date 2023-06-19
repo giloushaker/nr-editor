@@ -173,10 +173,6 @@ export default {
   cursor: pointer;
 }
 
-.container > div {
-  overflow: visible;
-}
-
 .content {
   overflow: visible;
 }

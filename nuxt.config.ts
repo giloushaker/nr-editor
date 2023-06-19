@@ -6,18 +6,15 @@ const ghpages = process.argv.includes("--ghpages");
 if (ghpages) {
   console.log("ghpages repo", `/${pkg.build.publish[0].repo}/`);
 }
+
 export default defineNuxtConfig({
   ssr: false,
-  // @ts-ignore
-  env: {
-    PROD_BUILD: true,
-    editor: true,
-    electron: electron,
+  sourcemap: {
+    server: true,
+    client: true,
   },
-
   runtimeConfig: {
     public: {
-      PROD_BUILD: true,
       editor: true,
       electron: electron,
       clientVersion: pkg.version,

@@ -43,7 +43,13 @@
       </tr>
       <tr>
         <td>
-          <label for="library"> library: </label>
+          <label
+            for="library"
+            class="hastooltip"
+            title="indicates that this catalogue is used to store data, no forces may be created from it."
+          >
+            library:
+          </label>
         </td>
         <td>
           <input type="checkbox" id="library" v-model="cataloguedata.library" />
@@ -70,8 +76,8 @@ export default {
   },
 
   computed: {
-    cataloguedata(): BSICatalogue | BSIGameSystem {
-      return getDataObject(this.catalogue);
+    cataloguedata(): BSICatalogue {
+      return getDataObject(this.catalogue) as BSICatalogue;
     },
   },
 };
