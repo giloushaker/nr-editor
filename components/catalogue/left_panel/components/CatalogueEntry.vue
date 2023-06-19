@@ -73,15 +73,15 @@
           </span>
         </template>
         <template #content>
-          <template v-for="child of mixedChildren" :key="key(child)">
-            <CatalogueEntry
-              :item="child.item"
-              :group="get_group('default')"
-              :forceShowRecursive="forceShow"
-              :imported="imported || child.imported"
-              :depth="depth + 1"
-            />
-          </template>
+          <CatalogueEntry
+            v-for="child of mixedChildren"
+            :key="key(child.item)"
+            :item="child.item"
+            :group="get_group('default')"
+            :forceShowRecursive="forceShow"
+            :imported="imported || child.imported"
+            :depth="depth + 1"
+          />
         </template>
       </EditorCollapsibleBox>
     </template>
@@ -339,12 +339,11 @@ export default {
       open_categories: undefined as Set<string> | undefined,
     };
   },
-  created() {
+  mounted() {
     if (this.catalogue) {
       this.catalogue.processForEditor();
       if (!this.imported) {
         this.open = preferOpen.has(this.item.parentKey) || this.state.get(this.catalogue.id, getEntryPath(this.item));
-
         if (this.item.isCatalogue()) {
           const openCategories = new Set<string>();
           for (const category of this.categories) {
@@ -366,11 +365,11 @@ export default {
     key(entry: EditorBase | any): string {
       if (entry.id) {
         return entry.id;
-      } else if (entry.$id) {
-        return entry.$id;
+      } else if (entry["$id"]) {
+        return entry["$id"];
       } else {
-        entry.$id = `temp-${generateBattlescribeId()}`;
-        return entry.$id;
+        entry["$id"] = `temp-${generateBattlescribeId()}`;
+        return entry["$id"];
       }
     },
 

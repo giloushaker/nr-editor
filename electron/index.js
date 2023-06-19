@@ -57,6 +57,7 @@ async function getFolderFiles(folderPath) {
 }
 
 let mainWindow;
+let first = true;
 let previousTitle = "";
 function askForUpdate() {
   autoUpdater.on("update-available", (info) => {
@@ -75,9 +76,10 @@ function askForUpdate() {
       });
   });
   autoUpdater.on("download-progress", (progress) => {
-    if (mainWindow && mainWindow.webContents) {
+    if (mainWindow && mainWindow.webContents && !first) {
+      first = false;
       mainWindow.webContents.executeJavaScript(`
-      const styleElement = document.createElement('style');
+      let styleElement = document.createElement('style');
       styleElement.setAttribute('id', 'custom-style');
       styleElement.textContent = '* { cursor: progress !important; }';
       document.head.appendChild(styleElement);

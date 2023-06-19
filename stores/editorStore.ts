@@ -1008,10 +1008,12 @@ export const useEditorStore = defineStore("editor", {
         if (node !== lastNode) {
           await open_el(current);
         }
-        if (node === lastNode && last === false) {
-          await close_el(current);
-        } else if (node === lastNode && last === true) {
-          await open_el(current);
+        if (node === lastNode) {
+          if (last === false) {
+            await close_el(current);
+          } else if (last === true) {
+            await open_el(current);
+          }
         }
       }
 
