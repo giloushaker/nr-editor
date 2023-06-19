@@ -1,4 +1,4 @@
-import type { VueElement } from "nuxt/dist/app/compat/capi";
+import type { VueElement } from "vue";
 import { NotificationsOptions } from "@kyvg/vue3-notification";
 
 declare global {
@@ -13,5 +13,6 @@ declare global {
         send: (channel, ...args) => unknown;
         receive: (channel, listener) => unknown;
         invoke: (channel, ...args) => unknown;
+        on: (channel, ...args) => unknown;
       };
 }

@@ -229,7 +229,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { CatalogueEntryItem } from "@/stores/editorStore";
 import { useEditorStore } from "~/stores/editorStore";
 import {

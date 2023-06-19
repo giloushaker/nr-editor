@@ -1,3 +1,4 @@
+import type { Stats } from "fs";
 export function dirname(path: string) {
   return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
 }
@@ -127,4 +128,23 @@ export async function getPath(
 export async function createFolder(dirPath: string) {
   if (!electron) return;
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
+}
+let initialized = false;
+const watchers = {} as Record<string, (path: string, stats: Stats) => unknown>;
+export async function watchFile(path: string, callback: (path: string, stats: Stats) => unknown) {
+  if (!electron) return;
+  if (!initialized) {
+    initialized = true;
+    electron.on("fileChanged", (_: any, _path: string, _stats: Stats) => {
+      const cb = watchers[_path];
+      cb && cb(_path, _stats);
+    });
+  }
+  await electron.invoke("chokidarWatchFile", path);
+  watchers[path] = callback;
+}
+export async function unwatchFile(path: string) {
+  if (!electron) return;
+  delete watchers[path];
+  await electron.invoke("chokidarUnwatchFile", path);
 }

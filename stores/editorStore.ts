@@ -33,7 +33,7 @@ import type {
   BSIDataSystem,
   BSIProfile,
 } from "~/assets/shared/battlescribe/bs_types";
-import { createFolder, getFolderFiles } from "~/electron/node_helpers";
+import { createFolder, getFolderFiles, watchFile } from "~/electron/node_helpers";
 import { allowed_children, clean, convertToJson, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
@@ -41,6 +41,7 @@ import { EditorUIState, useEditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles, saveCatalogue } from "~/assets/shared/battlescribe/local_game_system";
+import { toRaw } from "vue";
 
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
@@ -49,7 +50,7 @@ export interface IEditorStore {
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
   selectedElementGroup: VueComponent[] | null;
   selectedElement: VueComponent | null;
-  selectedItem: any | null;
+  selectedItem: VueComponent | null;
 
   filter: string;
   filterRegex: RegExp;
@@ -261,6 +262,19 @@ export const useEditorStore = defineStore("editor", {
           };
         }
       }
+      for (const catalogue of system.getAllCatalogueFiles()) {
+        const obj = getDataObject(catalogue);
+        if (!obj.fullFilePath) {
+          continue;
+        }
+        watchFile(obj.fullFilePath, () => {
+          system.onFileChanged(obj.id);
+          this.on_file_changed(catalogue);
+        });
+      }
+    },
+    on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
+      console.log(getDataObject(file).name, "changed");
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
@@ -365,7 +379,7 @@ export const useEditorStore = defineStore("editor", {
         this.catalogueComponent.key += 1;
       }
     },
-    unselect(obj?: any) {
+    unselect(obj?: VueComponent) {
       const next_selected = [];
       const next_unselected = [];
       for (const selection of this.selections) {
@@ -417,7 +431,7 @@ export const useEditorStore = defineStore("editor", {
       if (e?.ctrlKey && this.is_selected(el)) {
         this.unselect(el);
       } else {
-        (el as any).select();
+        el.select();
         this.selectedItem = el;
         this.mode = "edit";
       }

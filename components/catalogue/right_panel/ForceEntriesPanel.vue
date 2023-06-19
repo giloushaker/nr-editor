@@ -1,21 +1,8 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-  />
-  <CatalogueRightPanelFieldsReference
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
-  <CatalogueRightPanelFieldsHidden
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
     Entry
   </CatalogueRightPanelFieldsHidden>
 
@@ -29,7 +16,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { Force } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 

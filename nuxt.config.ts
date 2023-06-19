@@ -46,7 +46,7 @@ export default defineNuxtConfig({
     strict: true,
   },
   electron: {
-    build: [{ entry: "electron/index.js" }, { entry: "electron/preload.js" }],
+    build: [{ entry: "electron/index.ts" }, { entry: "electron/preload.js" }, { entry: "electron/filewatch.ts" }],
   },
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
@@ -58,8 +58,8 @@ export default defineNuxtConfig({
       if (electron) {
         const outputDir = nitro.options.output.publicDir;
         const { copyFileSync } = require("fs");
-        copyFileSync("electron/index.js", `${outputDir}/index.js`);
-        copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
+        copyFileSync("dist-electron/index.js", `${outputDir}/index.js`);
+        copyFileSync("dist-electron/preload.js", `${outputDir}/preload.js`);
         copyFileSync("package.json", `${outputDir}/package.json`);
       }
       if (ghpages) {

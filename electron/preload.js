@@ -17,5 +17,8 @@ contextBridge.exposeInMainWorld(
     invoke: (channel, ...args) => {
       return ipcRenderer.invoke(channel, ...args);
     },
+    on: (channel, ...args) => {
+      return ipcRenderer.on(channel, ...args);
+    },
   }
 );

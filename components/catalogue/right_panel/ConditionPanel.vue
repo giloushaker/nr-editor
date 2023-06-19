@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import Condition from "./fields/Condition.vue";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";

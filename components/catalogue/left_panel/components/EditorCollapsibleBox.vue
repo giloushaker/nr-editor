@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {

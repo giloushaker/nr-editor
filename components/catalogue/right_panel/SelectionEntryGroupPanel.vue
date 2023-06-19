@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";

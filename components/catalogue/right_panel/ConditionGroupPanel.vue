@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import ConditionGroup from "./fields/ConditionGroup.vue";
 import { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
 

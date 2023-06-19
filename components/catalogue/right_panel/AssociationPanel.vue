@@ -60,11 +60,10 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
 import FilterBy from "./fields/FilterBy.vue";
-import { NRAssociation } from "~/assets/shared/battlescribe/bs_association";
+import { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
