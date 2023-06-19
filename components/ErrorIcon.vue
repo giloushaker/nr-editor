@@ -11,12 +11,15 @@ import { stripHtml } from "~/assets/shared/util";
 export interface IErrorMessage {
   msg: string;
   severity?: "error" | "warning" | "info" | "debug";
-  source: any;
+  source?: any;
 }
 export default {
   name: "ErrorIcon",
   props: {
-    errors: Array as PropType<IErrorMessage[]>,
+    errors: {
+      type: Array as PropType<IErrorMessage[]>,
+      default: [],
+    },
     showNumber: Boolean,
   },
   computed: {
