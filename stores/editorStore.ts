@@ -53,9 +53,6 @@ import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
-import { FsGameSystemFiles } from "~/assets/shared/battlescribe/fs_game_system";
-import { DbGameSystemFiles } from "~/assets/shared/battlescribe/db_game_system";
-
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
 export interface IEditorStore {

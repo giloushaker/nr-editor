@@ -185,7 +185,7 @@ export default {
     },
 
     targetIsValid(target: ItemTypes) {
-      if (this.item.type == undefined) {
+      if (this.item.type == undefined || this.item.type == "category") {
         return target.editorTypeName == "category";
       }
       return target.editorTypeName == this.item.type;
