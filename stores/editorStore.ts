@@ -20,28 +20,41 @@ import {
   generateBattlescribeId,
   removeSuffix,
   textSearchRegex,
+  zipCompress,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Base, Link, entriesToJson, entryToJson, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link, entriesToJson, entryToJson, goodJsonKeys, rootToJson } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import type {
+  BSICatalogue,
   BSIConstraint,
   BSIData,
   BSIDataCatalogue,
   BSIDataSystem,
+  BSIGameSystem,
   BSIProfile,
 } from "~/assets/shared/battlescribe/bs_types";
-import { createFolder, getFolderFiles, watchFile } from "~/electron/node_helpers";
-import { allowed_children, clean, convertToJson, isAllowedExtension } from "~/assets/shared/battlescribe/bs_convert";
+import { createFolder, filename, getFolderFiles, watchFile, writeFile } from "~/electron/node_helpers";
+import {
+  allowed_children,
+  clean,
+  convertToJson,
+  convertToXml,
+  getExtension,
+  isAllowedExtension,
+  isZipExtension,
+} from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
-import { GameSystemFiles, saveCatalogue } from "~/assets/shared/battlescribe/local_game_system";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
+import { FsGameSystemFiles } from "~/assets/shared/battlescribe/fs_game_system";
+import { DbGameSystemFiles } from "~/assets/shared/battlescribe/db_game_system";
 
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
@@ -103,6 +116,54 @@ export function get_base_from_vue_el(vue_el: VueComponent): EditorBase {
   const p3 = p2.$parent;
   return p3.item;
 }
+
+function saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
+  const stringed = rootToJson(data);
+  const isCatalogue = Boolean(data.gameSystemId);
+  const isSystem = !isCatalogue;
+  if (isSystem) {
+    db.systems.put({
+      content: JSON.parse(stringed),
+      path: data.fullFilePath,
+      id: data.id,
+    });
+  } else {
+    db.catalogues.put({
+      content: JSON.parse(stringed),
+      path: data.fullFilePath,
+      id: `${data.gameSystemId}-${data.id}`,
+    });
+  }
+}
+
+async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
+  const path = data.fullFilePath;
+  if (!path) {
+    console.error(`No path included in the catalogue ${data.name} to save at`);
+    return;
+  }
+  const extension = getExtension(path);
+  if (path.endsWith(".json")) {
+    const content = rootToJson(data);
+    await writeFile(path, content);
+  } else {
+    const xml = convertToXml(data);
+    const shouldZip = isZipExtension(extension);
+    const name = filename(path);
+    const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
+    const content = shouldZip ? await zipCompress(nameInZip, xml, "uint8array") : xml;
+    await writeFile(path, content);
+  }
+}
+
+function saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
+  if (electron) {
+    saveCatalogueInFiles(data);
+  } else {
+    saveCatalogueInDb(data);
+  }
+}
+
 type VueComponent = any;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
@@ -278,14 +339,22 @@ export const useEditorStore = defineStore("editor", {
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
-        this.gameSystems[id] = new GameSystemFiles();
+        if (electron) {
+          this.gameSystems[id] = new FsGameSystemFiles();
+        } else {
+          this.gameSystems[id] = new DbGameSystemFiles();
+        }
         await this.load_system_from_db(id);
       }
       return this.gameSystems[id];
     },
     get_system(id: string) {
       if (!(id in this.gameSystems)) {
-        this.gameSystems[id] = new GameSystemFiles();
+        if (electron) {
+          this.gameSystems[id] = new FsGameSystemFiles();
+        } else {
+          this.gameSystems[id] = new DbGameSystemFiles();
+        }
       }
       return this.gameSystems[id];
     },
