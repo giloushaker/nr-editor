@@ -336,22 +336,14 @@ export const useEditorStore = defineStore("editor", {
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
-        if (electron) {
-          this.gameSystems[id] = new FsGameSystemFiles();
-        } else {
-          this.gameSystems[id] = new DbGameSystemFiles();
-        }
+        this.gameSystems[id] = new GameSystemFiles();
         await this.load_system_from_db(id);
       }
       return this.gameSystems[id];
     },
     get_system(id: string) {
       if (!(id in this.gameSystems)) {
-        if (electron) {
-          this.gameSystems[id] = new FsGameSystemFiles();
-        } else {
-          this.gameSystems[id] = new DbGameSystemFiles();
-        }
+        this.gameSystems[id] = new GameSystemFiles();
       }
       return this.gameSystems[id];
     },
