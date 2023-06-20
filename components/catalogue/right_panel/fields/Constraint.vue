@@ -11,15 +11,11 @@
       <select v-model="item.type" @change="changed">
         <option value="min">Minimum</option>
         <option value="max">Maximum</option>
+        <option value="exactly">Exactly</option>
       </select>
       <UtilNumberInput v-model="item.value" @change="changed" />
       <div>
-        <input
-          id="percent"
-          type="checkbox"
-          v-model="item.percentValue"
-          @change="changed"
-        />
+        <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
         <label for="percent">Percentage?</label>
       </div>
     </div>

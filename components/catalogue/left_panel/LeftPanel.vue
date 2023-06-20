@@ -180,26 +180,31 @@ export default defineComponent({
       //   elt.scrollIntoView({ block: "nearest", inline: "center" });
       // }, 50);
     },
-    should_capture(e: Event) {
+    should_capture_copy(e: Event) {
+      if (getSelection()?.toString()) return false;
+      return true;
+    },
+    should_capture_paste(e: Event) {
       const TAGNAME = ((e.target as HTMLDivElement)?.tagName || "").toLowerCase();
-      if (["input", "div", "span"].includes(TAGNAME)) return false;
+      if (["input"].includes(TAGNAME)) return false;
+      if ((e.target as HTMLSpanElement)?.isContentEditable) return false;
       if (this.$route.name !== "catalogue") return false;
       return true;
     },
     async cut(e: ClipboardEvent) {
-      if (this.should_capture(e)) {
+      if (this.should_capture_copy(e)) {
         e.preventDefault();
         await this.store.cut(e);
       }
     },
     async copy(e: ClipboardEvent) {
-      if (this.should_capture(e)) {
+      if (this.should_capture_copy(e)) {
         e.preventDefault();
         await this.store.copy(e);
       }
     },
     async paste(e: ClipboardEvent) {
-      if (this.should_capture(e)) {
+      if (this.should_capture_paste(e)) {
         e.preventDefault();
         await this.store.paste(e);
       }

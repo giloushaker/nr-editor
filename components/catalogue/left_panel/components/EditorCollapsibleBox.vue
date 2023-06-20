@@ -18,6 +18,9 @@
       @click.ctrl.stop="$emit('ctrlclick')"
       @click.alt.stop="$emit('altclick')"
       @dblclick="collapseSwitch"
+      @paste="paste"
+      @copy="paste"
+      @cut="paste"
     >
       <div class="arrow-wrap" @click.stop="collapseSwitch">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
@@ -156,6 +159,15 @@ export default {
   },
 
   methods: {
+    cut() {
+      console.log("cut");
+    },
+    copy() {
+      console.log("copy");
+    },
+    paste() {
+      console.log("paste");
+    },
     init(data: any) {
       if (data?.select !== undefined) {
         if (data.select) {
@@ -183,6 +195,7 @@ export default {
     },
     do_select(e: MouseEvent) {
       this.store.do_select(e, this as any, this.group);
+      this.$el.focus();
     },
     do_rightcllick_select(e: MouseEvent) {
       this.store.do_rightclick_select(e, this as any, this.group);
