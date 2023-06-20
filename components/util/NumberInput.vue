@@ -6,7 +6,7 @@
 export default {
   props: {
     modelValue: {
-      type: Number,
+      type: [Number, String],
     },
     required: {
       type: Boolean,

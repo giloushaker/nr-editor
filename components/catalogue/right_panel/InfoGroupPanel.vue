@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIInfoGroup } from "~/assets/shared/battlescribe/bs_types";
 

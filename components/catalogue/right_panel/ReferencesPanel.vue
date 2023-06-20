@@ -55,7 +55,7 @@
   <!-- <button class="bouton"> Load from all catalogues </button> -->
 </template>
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 import { findParentWhere, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";

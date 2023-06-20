@@ -24,38 +24,35 @@
       </UtilIconSelect>
 
       <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
-      <UtilNumberInput
-        @change="changed"
-        v-if="selectedField && selectedField.type == 'number'"
-        v-model="(item.value as number)"
-      />
-      <select @change="changed" v-if="selectedField && selectedField.type == 'boolean'" v-model="item.value">
+      <UtilNumberInput @change="changed" v-if="inputType === 'number'" v-model="(item.value as number)" />
+      <select @change="changed" v-if="inputType == 'boolean'" v-model="item.value">
         <option :value="true">True</option>
         <option :value="false">False</option>
       </select>
-      <input
-        @change="changed"
-        type="text"
-        v-if="selectedField && selectedField.type == 'string'"
-        v-model="item.value"
-      />
+      <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
 
-      <select v-if="selectedField && selectedField.type == 'category'" v-model="item.value" @change="changed">
+      <select v-if="inputType == 'category'" v-model="item.value" @change="changed">
         <option :value="cat.id" v-for="cat of allCategories">
           {{ cat.name }}
         </option>
       </select>
     </div>
+    <div v-for="error in errors" class="mt-8px flex items-center">
+      <img src="/assets/icons/error_exclamation.png" />
+      <span class="ml-10px">{{ error.msg }}</span>
+    </div>
   </fieldset>
 </template>
 
 <script lang="ts">
-import { ItemTypes, getModifierOrConditionParent, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { PropType } from "vue";
+import { getModifierOrConditionParent, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { Category, Profile } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIConstraint, BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
+import { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
+import ErrorIcon from "~/components/ErrorIcon.vue";
 
-type FieldTypes = "string" | "number" | "category" | "boolean";
+type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-number";
 const availableModifiers = {
   selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
@@ -82,8 +79,12 @@ const availableTypes = {
   category: "category",
   constraints: "number",
 } as Record<string, FieldTypes>;
-
+function isNumber(value: string | number | boolean | undefined) {
+  return !isNaN(parseFloat(value as string)) && isFinite(value as number);
+}
 export default {
+  components: { ErrorIcon },
+
   emits: ["catalogueChanged"],
   data() {
     return {
@@ -93,6 +94,7 @@ export default {
         name: string;
         type: FieldTypes;
         modifierType: string;
+        value?: string | number | boolean;
       } | null,
       selectedOperation: null as {
         word: string;
@@ -102,23 +104,19 @@ export default {
       selectedValue: null as any,
     };
   },
-
   created() {
     this.update();
   },
-
   props: {
     item: {
       type: Object as PropType<BSIModifier>,
       required: true,
     },
-
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
     },
   },
-
   methods: {
     changed() {
       if (this.selectedField) {
@@ -129,7 +127,6 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-
     fieldChanged() {
       this.selectedOperation = this.operations[0];
       if (this.selectedField) {
@@ -137,37 +134,50 @@ export default {
           number: 0,
           category: this.allCategories[0].id,
           string: "",
+          "string-or-number": "",
           boolean: false,
         }[this.selectedField.type];
       }
       this.changed();
     },
-
     update() {
       this.selectedField = this.fieldData.find((elt) => elt.id === this.item.field) || null;
       this.selectedOperation = this.operations.find((op) => op.id === this.item.type) || null;
-
       if (!this.selectedField) {
         this.selectedField = this.fieldData[0];
       }
-
       if (!this.selectedOperation) {
         this.selectedOperation = this.operations[0] || null;
       }
     },
   },
-
   watch: {
     item() {
       this.update();
     },
   },
-
   computed: {
+    inputType() {
+      if (!this.selectedField) {
+        return "";
+      }
+      if (this.selectedField.type === "category") {
+        return "category";
+      }
+      if (this.selectedField.type === "number") {
+        return "number";
+      }
+      if (this.selectedField.type === "boolean") {
+        return "boolean";
+      }
+      if (this.selectedOperation?.id === "increment" || this.selectedOperation?.id === "decrement") {
+        return "number";
+      }
+      return "string";
+    },
     parent() {
       return getModifierOrConditionParent(this.item as any as EditorBase);
     },
-
     allCategories(): Category[] {
       let res: Category[] = [];
       for (let elt of this.catalogue.iterateCategoryEntries()) {
@@ -175,13 +185,22 @@ export default {
       }
       return res;
     },
-
-    operations(): { id: BSIModifierType; name: string; word: string }[] {
+    operations(): {
+      id: BSIModifierType;
+      name: string;
+      word: string;
+    }[] {
       if (!this.selectedField) {
         return [];
       }
-
-      let ops: Record<string, { id: BSIModifierType; name: string; word: string }[]> = {
+      let ops: Record<
+        string,
+        {
+          id: BSIModifierType;
+          name: string;
+          word: string;
+        }[]
+      > = {
         number: [
           {
             id: "set",
@@ -211,6 +230,28 @@ export default {
             word: "to",
           },
         ],
+        "string-or-number": [
+          {
+            id: "set",
+            name: "Set",
+            word: "to",
+          },
+          {
+            id: "append",
+            name: "Append",
+            word: "to",
+          },
+          {
+            id: "increment",
+            name: "Increment",
+            word: "by",
+          },
+          {
+            id: "decrement",
+            name: "Decrement",
+            word: "by",
+          },
+        ],
         boolean: [
           {
             id: "set",
@@ -218,7 +259,6 @@ export default {
             word: "to",
           },
         ],
-
         category: [
           {
             id: "add",
@@ -244,25 +284,34 @@ export default {
       };
       return ops[this.selectedField.type];
     },
-
+    errors() {
+      if (this.selectedField?.modifierType === "characteristic") {
+        if (["increment", "decrement"].includes(this.selectedOperation?.id || "")) {
+          if (!isNumber(this.selectedField.value)) {
+            return [
+              {
+                msg: `"${this.selectedField.value}" is not a valid number`,
+              },
+            ];
+          }
+        }
+      }
+      return [];
+    },
     fieldData() {
       if (!this.parent) {
         return [];
       }
-
       let available: string[] = availableModifiers[this.parent.editorTypeName];
-
       const additional: {
         id: string;
         name: string;
         type: FieldTypes;
         modifierType: string;
       }[] = [];
-
       if (!available) {
         return [];
       }
-
       if (available.includes("costs")) {
         for (const costType of this.catalogue.iterateCostTypes()) {
           additional.push({
@@ -273,7 +322,6 @@ export default {
           });
         }
       }
-
       if (available.includes("constraints")) {
         for (const constraint of this.parent.constraintsIterator())
           additional.push({
@@ -283,7 +331,6 @@ export default {
             modifierType: "constraint",
           });
       }
-
       if (available.includes("characteristics")) {
         const target = (this.parent.isLink() ? this.parent.target : this.parent) as Profile & EditorBase;
         if (target?.characteristics) {
@@ -291,13 +338,13 @@ export default {
             ...target.characteristics.map((o) => ({
               id: o.typeId,
               name: o.name,
-              type: "string" as FieldTypes,
+              type: "string-or-number" as FieldTypes,
               modifierType: "characteristic",
+              value: o.$text,
             }))
           );
         }
       }
-
       if (available.includes("category")) {
         additional.push({
           id: "category",
@@ -306,12 +353,10 @@ export default {
           modifierType: "category",
         });
       }
-
       // Filter out special fields
       available = available.filter(
         (elt) => ["costs", "constraints", "category", "characteristics"].includes(elt) == false
       );
-
       return available
         .map((elt) => {
           return {

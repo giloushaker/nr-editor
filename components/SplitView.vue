@@ -41,7 +41,6 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
 import { useUIState } from "~/stores/uiState";
 
 export default {

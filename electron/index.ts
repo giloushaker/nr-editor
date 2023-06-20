@@ -2,28 +2,29 @@ const { app, BrowserWindow, ipcMain, session, shell } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
+import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 const { readFile, readdir, stat } = require("fs/promises");
 
 const zipExtensions = ["gstz", "zip", "catz"];
-function getExtension(extension_or_file) {
+function getExtension(extension_or_file: string) {
   const extension = extension_or_file.split(".").pop()?.toLowerCase() || "";
   return extension;
 }
-function isZipExtension(extension_or_file) {
+function isZipExtension(extension_or_file: string) {
   const extension = getExtension(extension_or_file);
   return zipExtensions.includes(extension);
 }
 
-function dirname(path) {
+function dirname(path: string) {
   return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
 }
-async function isFile(f) {
+async function isFile(f: any) {
   const stats = await stat(f);
   return stats.isFile();
 }
 
 var AdmZip = require("adm-zip");
-async function readAndUnzipFile(path) {
+async function readAndUnzipFile(path: string) {
   try {
     if (!(await isFile(path))) return undefined;
     const isZip = isZipExtension(path);
@@ -41,7 +42,7 @@ async function readAndUnzipFile(path) {
   }
 }
 
-async function getFolderFiles(folderPath) {
+async function getFolderFiles(folderPath: any) {
   const fileObjects = [];
   const isPathFile = await isFile(folderPath);
   if (isPathFile) {
@@ -56,11 +57,14 @@ async function getFolderFiles(folderPath) {
   return (await Promise.all(fileObjects)).filter((o) => o.data);
 }
 
-let mainWindow;
-let first = true;
+let mainWindow: {
+  webContents: { executeJavaScript: (arg0: string) => void };
+  setProgressBar: (arg0: number) => void;
+  setTitle: (arg0: string) => void;
+};
 let previousTitle = "";
 function askForUpdate() {
-  autoUpdater.on("update-available", (info) => {
+  autoUpdater.on("update-available", (info: any) => {
     dialog
       .showMessageBox({
         type: "info",
@@ -68,32 +72,34 @@ function askForUpdate() {
         message: "A new update is available. Do you want to install it?",
         buttons: ["Install", "Cancel"],
       })
-      .then((result) => {
+      .then((result: { response: number }) => {
         if (result.response === 0) {
           // User clicked 'Install', start downloading and installing the update
           autoUpdater.downloadUpdate();
         }
       });
   });
-  autoUpdater.on("download-progress", (progress) => {
-    if (mainWindow && mainWindow.webContents && !first) {
-      first = false;
-      mainWindow.webContents.executeJavaScript(`
-      let styleElement = document.createElement('style');
+  autoUpdater.on(
+    "download-progress",
+    (progress: { bytesPerSecond: string; percent: string | number; transferred: string; total: string }) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.executeJavaScript(`
+      const styleElement = document.createElement('style');
       styleElement.setAttribute('id', 'custom-style');
       styleElement.textContent = '* { cursor: progress !important; }';
       document.head.appendChild(styleElement);
       `);
+      }
+      if (mainWindow) {
+        let log_message = "Download speed: " + progress.bytesPerSecond;
+        log_message = log_message + " - Downloaded " + progress.percent + "%";
+        log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
+        const progress_percent = Math.round(Number(progress.percent) * 10) / 10;
+        mainWindow.setProgressBar(progress_percent / 100);
+        mainWindow.setTitle(progress_percent + "%");
+      }
     }
-    if (mainWindow) {
-      let log_message = "Download speed: " + progress.bytesPerSecond;
-      log_message = log_message + " - Downloaded " + progress.percent + "%";
-      log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
-      const progress_percent = Math.round(Number(progress.percent) * 10) / 10;
-      mainWindow.setProgressBar(progress_percent / 100);
-      mainWindow.setTitle(progress_percent + "%");
-    }
-  });
+  );
   autoUpdater.on("update-downloaded", () => {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.executeJavaScript(`
@@ -122,6 +128,9 @@ const createSecondaryWindow = () => {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+  win.on("close", () => {
+    remove_watchers(win.id);
+  });
 
   win.loadFile("index.html", {
     hash: "/system",
@@ -136,39 +145,45 @@ const createMainWindow = () => {
   for (const [key, val] of Object.entries(fs)) {
     if (promiseFunctions.has(key)) continue;
     if (typeof val === "function") {
-      ipcMain.handle(key, (event, ...args) => {
+      ipcMain.handle(key, (event: any, ...args: any) => {
         return val(...args);
       });
     }
   }
   for (const [key, val] of Object.entries(fs.promises)) {
     if (typeof val === "function") {
-      ipcMain.handle(key, async (event, ...args) => {
+      ipcMain.handle(key, async (event: any, ...args: any) => {
         return await val(...args);
       });
     }
   }
-  ipcMain.handle("isDirectory", async (event, ...args) => {
+  ipcMain.handle("isDirectory", async (event: any, ...args: any) => {
     const stats = fs.statSync(...args);
     return stats.isDirectory();
   });
-  ipcMain.handle("isFile", async (event, ...args) => {
+  ipcMain.handle("isFile", async (event: any, ...args: any) => {
     const stats = fs.statSync(...args);
     return stats.isFile();
   });
 
-  session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
-    delete details.requestHeaders["Origin"];
-    delete details.requestHeaders["Referer"];
-    callback({ requestHeaders: details.requestHeaders });
-  });
-
-  session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
-    if (details.responseHeaders) {
-      details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    filter,
+    (details: { requestHeaders: { [x: string]: any } }, callback: (arg0: { requestHeaders: any }) => void) => {
+      delete details.requestHeaders["Origin"];
+      delete details.requestHeaders["Referer"];
+      callback({ requestHeaders: details.requestHeaders });
     }
-    callback({ responseHeaders: details.responseHeaders });
-  });
+  );
+
+  session.defaultSession.webRequest.onHeadersReceived(
+    filter,
+    (details: { responseHeaders: { [x: string]: string[] } }, callback: (arg0: { responseHeaders: any }) => void) => {
+      if (details.responseHeaders) {
+        details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
+      }
+      callback({ responseHeaders: details.responseHeaders });
+    }
+  );
 
   const win = new BrowserWindow({
     width: 1200,
@@ -182,6 +197,9 @@ const createMainWindow = () => {
   });
 
   mainWindow = win;
+  win.on("close", () => {
+    remove_watchers(win.id);
+  });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     // config.fileProtocol is my custom file protocol
@@ -193,23 +211,33 @@ const createMainWindow = () => {
     shell.openExternal(url);
     return { action: "deny" };
   });
-  ipcMain.handle("showOpenDialog", async (event, ...args) => {
+  ipcMain.handle("showOpenDialog", async (event: { sender: any }, ...args: any) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     return await dialog.showOpenDialog(wnd, ...args);
   });
-  ipcMain.handle("showMessageBoxSync", async (event, ...args) => {
+  ipcMain.handle("showMessageBoxSync", async (event: { sender: any }, ...args: any) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     return await dialog.showMessageBoxSync(wnd, ...args);
   });
-  ipcMain.handle("getPath", async (event, ...args) => {
+  ipcMain.handle("getPath", async (event: any, ...args: any) => {
     return await app.getPath(...args);
   });
-  ipcMain.handle("closeWindow", async (event, ...args) => {
+  ipcMain.handle("closeWindow", async (event: { sender: any }, ...args: any) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     return await wnd.close(...args);
   });
-  ipcMain.handle("getFolderFiles", async (event, ...args) => {
+  ipcMain.handle("getFolderFiles", async (event: any, ...args: any) => {
     return await getFolderFiles(...args);
+  });
+  ipcMain.handle("chokidarWatchFile", async (event: { sender: any }, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    add_watcher(path, win.id, (_path, stats) => {
+      win.webContents.send("fileChanged", path, stats);
+    });
+  });
+  ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    remove_watcher(path, win.id);
   });
   win.loadFile("index.html", {
     hash: "/system",

@@ -181,7 +181,8 @@ export default defineComponent({
       // }, 50);
     },
     should_capture(e: Event) {
-      if ((e.target as HTMLDivElement)?.tagName === "INPUT") return false;
+      const TAGNAME = ((e.target as HTMLDivElement)?.tagName || "").toLowerCase();
+      if (["input", "div", "span"].includes(TAGNAME)) return false;
       if (this.$route.name !== "catalogue") return false;
       return true;
     },

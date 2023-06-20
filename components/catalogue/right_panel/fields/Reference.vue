@@ -23,6 +23,7 @@
 </template>
 
 <script lang="ts">
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
@@ -40,7 +41,7 @@ export default {
   },
   computed: {
     publications() {
-      return this.catalogue.iteratePublications();
+      return sortByAscending([...this.catalogue.iteratePublications()], (o) => o?.name || "");
     },
   },
   methods: {

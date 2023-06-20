@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import { PropType } from "vue";
 
 export default {
   props: {
