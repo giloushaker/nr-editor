@@ -326,7 +326,6 @@ export const useEditorStore = defineStore("editor", {
           continue;
         }
         watchFile(obj.fullFilePath, () => {
-          system.onFileChanged(obj.id);
           this.on_file_changed(catalogue);
         });
       }

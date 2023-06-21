@@ -22,7 +22,7 @@
     <SplitView
       :split="true"
       :double="true"
-      :showRight="selectedItem != null"
+      :showMiddle="selectedItem != null"
       leftWidth="calc(100% - 400px)"
       rightWidth="400px"
     >
@@ -49,7 +49,7 @@
           </fieldset>
         </div>
       </template>
-      <template #right>
+      <template #middle>
         <div v-if="selectedItem" class="scrollable">
           <template v-if="mode === 'create'">
             <CataloguesCreate @create="createCatalogue" :catalogue="selectedItem" />

@@ -12,19 +12,12 @@
       <Loading />
     </template>
     <template v-else-if="cat">
-      <SplitView
-        class="h-full"
-        draggable
-        :split="true"
-        :double="true"
-        :showRight="store.selectedItem != null"
-        id="catalogueView"
-      >
+      <SplitView class="h-full" draggable showMiddle id="catalogueView">
         <template #left>
           <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" :key="key" keepalive />
         </template>
-        <template #right>
-          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" />
+        <template #middle>
+          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" v-if="store.selectedItem != null" />
         </template>
       </SplitView>
     </template>
