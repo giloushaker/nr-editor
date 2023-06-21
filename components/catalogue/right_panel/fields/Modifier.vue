@@ -36,6 +36,11 @@
           {{ cat.name }}
         </option>
       </select>
+      <select v-if="inputType == 'defaultSelectionEntryId'" v-model="item.value" @change="changed">
+        <option :value="entry.id" v-for="entry of allGroupEntries">
+          {{ entry.getName() }}
+        </option>
+      </select>
     </div>
     <div v-for="error in errors" class="mt-8px flex items-center">
       <img src="/assets/icons/error_exclamation.png" />
@@ -56,8 +61,8 @@ type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-numb
 const availableModifiers = {
   selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
-  selectionEntryGroup: ["name", "page", "hidden", "category", "constraints"],
-  selectionEntryGroupLink: ["name", "page", "hidden", "category", "constraints"],
+  selectionEntryGroup: ["name", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
+  selectionEntryGroupLink: ["name", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
   profile: ["characteristics", "name", "description", "page", "hidden"],
   profileLink: ["characteristics", "name", "description", "page", "hidden"],
   rule: ["name", "description", "page", "hidden"],
@@ -164,6 +169,9 @@ export default {
       if (this.selectedField.type === "category") {
         return "category";
       }
+      if (this.selectedField.type === "defaultSelectionEntryId") {
+        return "defaultSelectionEntryId";
+      }
       if (this.selectedField.type === "number") {
         return "number";
       }
@@ -184,6 +192,9 @@ export default {
         res.push(elt);
       }
       return res;
+    },
+    allGroupEntries() {
+      return this.parent?.selectionsIterator() || [];
     },
     operations(): {
       id: BSIModifierType;
