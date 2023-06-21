@@ -211,6 +211,46 @@ export const useEditorStore = defineStore("editor", {
           name: name,
           battleScribeVersion: "2.03",
           revision: 1,
+          categoryEntries: [
+            {
+              name: "Default Category",
+              hidden: false,
+              id: "default-category",
+            },
+          ],
+          forceEntries: [
+            {
+              name: "Default Forece",
+              hidden: false,
+              id: "default-force",
+              categoryLinks: [
+                {
+                  name: "Default Category",
+                  hidden: false,
+                  id: "default-force-category-link",
+                  targetId: "default-category",
+                  type: "category",
+                },
+              ],
+            },
+          ],
+          selectionEntries: [
+            {
+              type: "upgrade",
+              import: true,
+              name: "Default Root Entry",
+              hidden: false,
+              id: "default-entry",
+              categoryLinks: [
+                {
+                  targetId: "default-category",
+                  id: "default-category-link",
+                  primary: true,
+                  name: "Default Category",
+                },
+              ],
+            },
+          ],
         },
       } as BSIDataSystem;
 
