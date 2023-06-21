@@ -11,7 +11,7 @@
       <select v-model="item.type" @change="changed">
         <option value="min">Minimum</option>
         <option value="max">Maximum</option>
-        <option value="exactly">Exactly</option>
+        <!-- <option value="exactly">Exactly</option> -->
       </select>
       <UtilNumberInput v-model="item.value" @change="changed" />
       <div>
