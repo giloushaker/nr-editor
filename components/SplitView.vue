@@ -1,22 +1,18 @@
 <template>
-  <div class="splitView" v-if="showLeft" :style="height > 0 ? { height: `${height}px` } : {}">
-    <div class="left" ref="left" :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }">
+  <div class="splitView" :style="height > 0 ? { height: `${height}px` } : {}">
+    <div v-if="showLeft" class="left" ref="left" :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }">
       <slot name="left"></slot>
     </div>
 
-    <div
-      v-if="draggable && showLeft && (showMiddle || showRight)"
-      class="between unselectable"
-      @mousedown="drag_left_handle"
-    />
+    <div v-if="left_draggable" class="between unselectable" @mousedown="drag_left_handle" />
 
     <template v-if="showMiddle">
       <div ref="middle" class="middle grow">
         <slot name="middle"></slot>
       </div>
     </template>
-    <div v-if="draggable && showMiddle && showRight" class="between unselectable" @mousedown="drag_right_handle" />
-    <div
+    <div v-if="right_draggable" class="between unselectable" @mousedown="drag_right_handle" />
+    <span
       v-if="showRight"
       ref="right"
       class="right"
@@ -25,7 +21,7 @@
       }"
     >
       <slot name="right"></slot>
-    </div>
+    </span>
   </div>
 </template>
 
@@ -57,11 +53,11 @@ export default {
       default: false,
     },
     leftWidth: {
-      type: String,
+      type: [String, Number],
       default: "auto",
     },
     rightWidth: {
-      type: String,
+      type: [String, Number],
       default: "auto",
     },
     clamp: {
@@ -70,33 +66,44 @@ export default {
     },
     id: {
       type: String,
+      required: true,
     },
   },
   data() {
-    return { _leftWidth: 0, _rightWidth: 0, dragging: false, height: 0 };
+    return {
+      _leftWidth: typeof this.leftWidth === "number" ? this.leftWidth : 0,
+      _rightWidth: typeof this.rightWidth === "number" ? this.rightWidth : 0,
+      dragging: false,
+      height: 0,
+      staticLeft: false,
+      staticRight: false,
+    };
   },
   setup() {
     return { store: useUIState() };
   },
+
   mounted() {
     if (this.draggable) {
       if (this.id) {
         const left = this.store.get(this.id, "left");
         if (left) this._leftWidth = left;
       }
-      if (!this._leftWidth && this.$refs.left) {
-        const element = this.$refs.left;
-        const width = (element as HTMLDivElement).offsetWidth;
-        this._leftWidth = width;
+      if (!this._leftWidth && this.$refs.left && (this.$refs.left as HTMLDivElement)?.offsetWidth) {
+        this._leftWidth = (this.$refs.left as HTMLDivElement).offsetWidth;
+      }
+      if (this._leftWidth < this.clamp) {
+        this._leftWidth = this.do_clamp(typeof this.leftWidth === "number" ? this.leftWidth : 0);
       }
       if (this.id) {
         const right = this.store.get(this.id, "right");
         if (right) this._rightWidth = right;
       }
-      if (!this._rightWidth && this.$refs.right) {
-        const element = this.$refs.right;
-        const width = (element as HTMLDivElement).offsetWidth;
-        this._rightWidth = width;
+      if (!this._rightWidth && (this.$refs.right as HTMLDivElement)?.offsetWidth) {
+        this._rightWidth = (this.$refs.right as HTMLDivElement).offsetWidth;
+      }
+      if (this._rightWidth < this.clamp) {
+        this._rightWidth = this.do_clamp(typeof this.rightWidth === "number" ? this.rightWidth : 0);
       }
     }
     addEventListener("resize", this.update);
@@ -110,6 +117,13 @@ export default {
     this.update();
   },
   computed: {
+    left_draggable() {
+      if (this.staticLeft) return false;
+      return this.draggable && this.showLeft && (this.showMiddle || this.showRight);
+    },
+    right_draggable() {
+      return this.draggable && this.showMiddle && this.showRight;
+    },
     left() {
       return this.$el?.offsetLeft || 0;
     },
@@ -127,6 +141,19 @@ export default {
     },
     totalWidth() {
       return this.$el.clientWidth;
+    },
+  },
+  watch: {
+    leftWidth(newVal: number | string) {
+      if (typeof newVal === "string") return;
+      if (!newVal) {
+        this._leftWidth = this.store.get(this.id, "left") || 100;
+        this.staticLeft = false;
+      }
+      if (newVal) {
+        this._leftWidth = newVal;
+        this.staticLeft = true;
+      }
     },
   },
   methods: {
