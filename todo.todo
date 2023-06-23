@@ -147,7 +147,7 @@ Editor:
             ✔ modify defaultSelectionEntryId @done(23-06-22 00:29)
             ☐ allow specifying profiles sorting order
             ☐ allow referencing other rules within descriptions
-            ✔ info links: allow overwriting characteristics @done(23-06-23 13:59)
+            ☐ info links: allow overwriting characteristics
             ☐ info links: allow overwriting name
             ☐ some kind of format for text fields, so that numbers wich can vary can be put in text
             
