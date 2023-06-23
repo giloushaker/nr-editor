@@ -110,6 +110,10 @@ function askForUpdate() {
       mainWindow.setTitle(previousTitle);
     }
     autoUpdater.quitAndInstall(false, true);
+    // Put a delay on the install step?  https://github.com/electron-userland/electron-builder/issues/7054#issuecomment-1215289966
+    setTimeout(() => {
+      autoUpdater.quitAndInstall(false, true);
+    }, 6000);
   });
 
   autoUpdater.autoDownload = false;

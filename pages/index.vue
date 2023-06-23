@@ -19,14 +19,8 @@
     Returning to this page will not cause you to lose your changes.
   </p>
   <div class="mx-10px box h-full pb-200px">
-    <SplitView
-      :split="true"
-      :double="true"
-      :showMiddle="selectedItem != null"
-      leftWidth="calc(100% - 400px)"
-      rightWidth="400px"
-    >
-      <template #left>
+    <SplitView showMiddle showRight :rightWidth="400" id="systemView">
+      <template #middle>
         <div class="scrollable">
           <fieldset v-for="gst in systems">
             <legend>
@@ -49,7 +43,7 @@
           </fieldset>
         </div>
       </template>
-      <template #middle>
+      <template #right>
         <div v-if="selectedItem" class="scrollable">
           <template v-if="mode === 'create'">
             <CataloguesCreate @create="createCatalogue" :catalogue="selectedItem" />

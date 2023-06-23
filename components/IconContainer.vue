@@ -64,6 +64,12 @@ export default {
           msg: "Unsaved",
         });
       }
+      if (getDataObject(data).errors) {
+        result.push({
+          severity: "error",
+          msg: "Has Errors",
+        });
+      }
       return result;
     },
     edited(data: BSIData) {
