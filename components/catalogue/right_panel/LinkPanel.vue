@@ -24,6 +24,13 @@
     @catalogueChanged="changed"
     class="section"
   />
+  <CatalogueRightPanelFieldsCreation
+    v-if="item.editorTypeName == 'selectionEntryLink'"
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    class="section"
+  />
 
   <CatalogueRightPanelFieldsBooleans
     :item="item"

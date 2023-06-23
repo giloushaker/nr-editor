@@ -5,6 +5,7 @@
   <CatalogueRightPanelFieldsEntryType :item="item" @catalogueChanged="changed" class="section">
     Selection Entry
   </CatalogueRightPanelFieldsEntryType>
+  <CatalogueRightPanelFieldsCreation :item="item" @catalogueChanged="changed" class="section" />
 
   <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
 
