@@ -82,29 +82,35 @@ function askForUpdate() {
   autoUpdater.on(
     "download-progress",
     (progress: { bytesPerSecond: string; percent: string | number; transferred: string; total: string }) => {
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.executeJavaScript(`
-      const styleElement = document.createElement('style');
-      styleElement.setAttribute('id', 'custom-style');
-      styleElement.textContent = '* { cursor: progress !important; }';
-      document.head.appendChild(styleElement);
-      `);
-      }
-      if (mainWindow) {
-        let log_message = "Download speed: " + progress.bytesPerSecond;
-        log_message = log_message + " - Downloaded " + progress.percent + "%";
-        log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
-        const progress_percent = Math.round(Number(progress.percent) * 10) / 10;
-        mainWindow.setProgressBar(progress_percent / 100);
-        mainWindow.setTitle(progress_percent + "%");
+      try {
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.executeJavaScript(`
+        if (!globalThis.styleElement){
+          globalThis.styleElement = document.createElement('style');
+        }
+        globalThis.styleElement.setAttribute('id', 'custom-style');
+        globalThis.styleElement.textContent = '* { cursor: progress !important; }';
+        document.head.appendChild(globalThis.styleElement);
+        `);
+        }
+        if (mainWindow) {
+          let log_message = "Download speed: " + progress.bytesPerSecond;
+          log_message = log_message + " - Downloaded " + progress.percent + "%";
+          log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
+          const progress_percent = Math.round(Number(progress.percent) * 10) / 10;
+          mainWindow.setProgressBar(progress_percent / 100);
+          mainWindow.setTitle(progress_percent + "%");
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
   );
   autoUpdater.on("update-downloaded", () => {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.executeJavaScript(`
-    if (styleElement) styleElement.remove();
-    `);
+      if (globalThis.styleElement) globalThis.styleElement.remove();
+      `);
     }
     if (mainWindow) {
       mainWindow.setTitle(previousTitle);

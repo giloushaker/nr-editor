@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.1.65",
+  "version": "0.0.65",
   "main": "index.js",
   "scripts": {
     "build": "nuxt generate --electron",
@@ -23,9 +23,7 @@
       "output": ".release"
     },
     "win": {
-      "icon": "dist/favicon.ico",
-      "publisherName": "New Recruit",
-      "certificateFile": "New Recruit.pfx"
+      "icon": "dist/favicon.ico"
     },
     "mac": {
       "icon": "dist/favicon.icns",
@@ -58,7 +56,7 @@
   "devDependencies": {
     "@types/node": "^18",
     "electron": "^24.3.1",
-    "electron-builder": "^23.6.0",
+    "electron-builder": "^24.4.0",
     "gh-pages": "^5.0.0",
     "nuxt": "^3.5.2",
     "nuxt-electron": "^0.5.0",
@@ -71,7 +69,7 @@
   },
   "dependencies": {
     "chokidar": "^3.5.3",
-    "electron-updater": "^6.1.0",
+    "electron-updater": "^6.1.1",
     "@kyvg/vue3-notification": "^2.9.1",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.1",
     "@pinia/nuxt": "^0.4.10",

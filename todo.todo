@@ -13,7 +13,7 @@ Interface:
         ✔ Errors icon on catalogues @done(23-05-09 14:10)
             Errrors:
             Missing imports
-            Errors within the catalogue
+            ✔ Errors within the catalogue @done(23-06-23 20:19)
             ✔ Unsaved? @done(23-06-23 14:01)
             Unreferenced + unplayable
         ✔ Indication that catalogue has been modified by the user @done(23-05-09 14:09)
@@ -93,7 +93,7 @@ Editor:
             ✔ load systems from bs initially in some fast way @done(23-05-28 19:52)
             ✔ save to disk in app @done(23-05-28 19:52)
             ✔ load a roster in ui @done(23-06-22 00:17)
-            ☐ errors
+            ✔ errors @done(23-06-23 20:20)
             ✔ release/installed/auto updater @done(23-05-27 22:28)
                 https://github.com/giloushaker/nr-editor/releases
             
