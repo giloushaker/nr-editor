@@ -1,0 +1,1 @@
+{"version":3,"file":"_id_.645a577a.js","sources":["../../../../pages/nested/[id].vue"],"sourcesContent":["<template>{{ $route.params }}</template>\n<script setup lang=\"ts\"></script>\n"],"names":["_sfc_render","_ctx","_cache"],"mappings":"0DAAG,SAAAA,EAAAC,EAAAC,EAAA"}
