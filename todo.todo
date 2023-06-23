@@ -14,7 +14,7 @@ Interface:
             Errrors:
             Missing imports
             Errors within the catalogue
-            Unsaved?
+            ✔ Unsaved? @done(23-06-23 14:01)
             Unreferenced + unplayable
         ✔ Indication that catalogue has been modified by the user @done(23-05-09 14:09)
 
@@ -27,16 +27,6 @@ Interface:
             Seems to work now, not sure why it did not before
     ✔ BUG: In WEB, When making a change, then saving, if I go back to the index page and Download, my changes are not in the downloaded file. I need to refressh the page before downloading @done(23-06-05 15:43)
     ✔ Fix Empty arrays in export
-        Create a Game System
-        Add a Root Selection Entry
-        Save
-        Delete the new entry
-        Save
-        Quit
-        => this puts an empty root selectrie entries node in the XML <selectionEntries></selectionEntries>
-        Start the program again
-        A dropdown arrow is visible in Root Selection Entries
-        If I try to open the dropdown, the whole Root Selection Entries node disappears
     ☐ Check why Shared? is sometimes active and sometimes inactive and its default value
     ☐ Only allow primary categories for top level elements
     
@@ -151,46 +141,18 @@ Editor:
             
     
             data editor
+            ☐ make the editor non destructive when saving so people can add whatever fields they want in the xml
             ☐ support for adding icons to game system, categories,forces,catalogues,units,profile characteristic types
             ✔ support for exactly constraint @done(23-06-22 00:18)
             ✔ modify defaultSelectionEntryId @done(23-06-22 00:29)
             ☐ allow specifying profiles sorting order
             ☐ allow referencing other rules within descriptions
-            ☐ info links: allow overwriting name & characteristics
-            ☐ some kind of format for text fields, so that numbers wich can vary can be put in 
+            ✔ info links: allow overwriting characteristics @done(23-06-23 13:59)
+            ☐ info links: allow overwriting name
+            ☐ some kind of format for text fields, so that numbers wich can vary can be put in text
             
             ☐ some squads/association kind of thing
                 it would need to:
                     1. able to have constraints, such as certain amount of leader and grunts
                     2. able to select multiple other entries, based on multiple ids
                     3. should be able to split a force into detachments or whatever, and display logically for the user
-
-            
-            
-            hide secondaries
-            
-            {
-              "parentKey": "constraints",
-              "type": "exactly",
-              "value": 1,
-              "field": "selections",
-              "scope": "roster",
-              "shared": true,
-              "id": "2b13-5221-d1bb-a0a"
-            }            
-        
-Clean up shared and nuxt-nr to make standalone builder and make a fully open source & pull-able version
-Shared only needs these:
-        assets\shared\battlescribe\bs_convert.ts
-        assets\shared\battlescribe\bs_editor.ts
-        assets\shared\battlescribe\bs_helpers.ts
-        assets\shared\battlescribe\bs_import_data.ts
-        assets\shared\battlescribe\bs_main_catalogue.ts
-        assets\shared\battlescribe\bs_main_types.ts
-        assets\shared\battlescribe\bs_main.ts
-        assets\shared\battlescribe\bs_modifiers.ts
-        assets\shared\battlescribe\bs_system.ts
-        assets\shared\battlescribe\bs_types.ts
-        assets\shared\battlescribe\bs_versioning.ts
-        assets\shared\battlescribe\bs_xml.ts
-        assets\shared\js\util.js

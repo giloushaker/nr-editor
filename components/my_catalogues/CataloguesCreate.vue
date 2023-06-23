@@ -46,7 +46,7 @@
           <label
             for="library"
             class="hastooltip"
-            title="indicates that this catalogue is used to store data, no forces may be created from it."
+            title="indicates that this catalogue is used to store data, no forces may be created from it if true."
           >
             library:
           </label>

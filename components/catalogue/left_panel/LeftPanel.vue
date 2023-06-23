@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="static sticky flex items-center h-28px">
+    <div class="static sticky flex items-center h-28px z-1">
       <span
         :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
         class="bold p-4px unselectable icon"
@@ -51,7 +51,7 @@
         title="Collapse All"
         src="/assets/icons/collapse-all.svg"
       />
-      <!-- <ErrorIcon :errors="catalogue.errors" /> -->
+      <ErrorIcon :errors="catalogue.errors" showNumber clickable class="z-1" />
       <!-- <img
         @click="uistate.collapse_deepest"
         class="align-middle absolute right-0 p-2px hover-darken cursor-pointer"

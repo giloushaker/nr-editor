@@ -4,7 +4,7 @@
     <table class="editorTable">
       <tr>
         <td>Unique ID:</td>
-        <td><input type="text" v-model="item.id" @change="changed" /></td>
+        <td><input type="text" v-model="id" @change="changed" /></td>
       </tr>
       <tr>
         <td>Name:</td>
@@ -15,6 +15,7 @@
 </template>
 
 <script lang="ts">
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIOption, BSINamed } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
@@ -29,6 +30,20 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+  },
+  computed: {
+    id: {
+      get(): string {
+        return this.item.id;
+      },
+      set(id: string) {
+        const obj = this.item as EditorBase;
+        const catalogue = obj.getCatalogue();
+        catalogue.removeFromIndex(obj);
+        obj.id = id;
+        catalogue.addToIndex(obj);
+      },
     },
   },
 };
