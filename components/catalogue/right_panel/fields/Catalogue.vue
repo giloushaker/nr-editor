@@ -5,7 +5,7 @@
     <label
       class="hastooltip"
       for="library"
-      title="indicates that this catalogue is used to store data, no forces may be created from it."
+      title="indicates that this catalogue is used to store data, no forces may be created from it if true."
       >Library</label
     >
   </fieldset>

@@ -102,7 +102,7 @@ Editor:
         @critical
             ✔ load systems from bs initially in some fast way @done(23-05-28 19:52)
             ✔ save to disk in app @done(23-05-28 19:52)
-            ☐ load a roster in ui 
+            ✔ load a roster in ui @done(23-06-22 00:17)
             ☐ errors
             ✔ release/installed/auto updater @done(23-05-27 22:28)
                 https://github.com/giloushaker/nr-editor/releases
@@ -124,7 +124,7 @@ Editor:
         ✔ modifierGroups and conditionGroups nodes themselves provide no info, maybe opening them should automatically open their childs @done(23-06-15 12:36)
         ✔ fix searchbar bugs @done(23-06-17 15:17)
         ✔ collapse all button @done(23-06-02 23:57)
-        ☐ filter by
+        ✔ filter by @done(23-06-22 00:17)
         ✘ progress bar on auto update @cancelled(23-06-01 21:16)
             No apparent way to do it using native stuff
         ✔ save all @done(23-06-05 16:56)
@@ -149,9 +149,35 @@ Editor:
             ☐ upload to github
             ☐ preview profiles/rules (like in builder)
             
-        
+    
+            data editor
+            ☐ support for adding icons to game system, categories,forces,catalogues,units,profile characteristic types
+            ✔ support for exactly constraint @done(23-06-22 00:18)
+            ✔ modify defaultSelectionEntryId @done(23-06-22 00:29)
+            ☐ allow specifying profiles sorting order
+            ☐ allow referencing other rules within descriptions
+            ☐ info links: allow overwriting name & characteristics
+            ☐ some kind of format for text fields, so that numbers wich can vary can be put in 
+            
+            ☐ some squads/association kind of thing
+                it would need to:
+                    1. able to have constraints, such as certain amount of leader and grunts
+                    2. able to select multiple other entries, based on multiple ids
+                    3. should be able to split a force into detachments or whatever, and display logically for the user
 
             
+            
+            hide secondaries
+            
+            {
+              "parentKey": "constraints",
+              "type": "exactly",
+              "value": 1,
+              "field": "selections",
+              "scope": "roster",
+              "shared": true,
+              "id": "2b13-5221-d1bb-a0a"
+            }            
         
 Clean up shared and nuxt-nr to make standalone builder and make a fully open source & pull-able version
 Shared only needs these:
