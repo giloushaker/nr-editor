@@ -64,11 +64,19 @@ export default {
           msg: "Unsaved",
         });
       }
-      if (getDataObject(data).errors) {
-        result.push({
-          severity: "error",
-          msg: "Has Errors",
-        });
+      const errors = (getDataObject(data) as any as { errors: IErrorMessage[] }).errors;
+      if (errors?.length) {
+        if (errors.find((o) => o.severity === "error")) {
+          result.push({
+            severity: "error",
+            msg: "Has Errors",
+          });
+        } else if (errors.find((o) => o.severity === "warning")) {
+          result.push({
+            severity: "warning",
+            msg: "Has Warnings",
+          });
+        }
       }
       return result;
     },

@@ -1,4 +1,5 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
@@ -101,15 +102,13 @@ export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
 
 export function getSearchCatalogues(catalogue: Catalogue): EditorSearchItem[] {
   const res: EditorSearchItem[] = [];
-  for (let elt of Object.values((catalogue.manager as GameSystemFiles).getAllCatalogueFiles())) {
-    const current = elt as BSIDataCatalogue;
-    if (!current.catalogue) {
-      continue;
-    }
+  for (const elt of Object.values((catalogue.manager as GameSystemFiles).getAllCatalogueFiles())) {
+    if (!(elt as BSIDataCatalogue).catalogue) continue;
+    const obj = getDataObject(elt);
     res.push({
-      name: current.name,
+      name: obj.name,
       editorTypeName: "catalogue",
-      id: current.catalogue.id,
+      id: obj.id,
       indent: 0,
       catalogue: null,
       shared: false,

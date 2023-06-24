@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts">
-import { Category, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { useSettingsStore } from "~/stores/settingsState";
@@ -51,7 +51,7 @@ export default {
   },
   props: {
     item: {
-      type: Object as PropType<Link>,
+      type: Object as PropType<Link & EditorBase>,
       required: true,
     },
     catalogue: {
@@ -69,7 +69,7 @@ export default {
       this.refreshCategories(this.item, cat, false);
     },
 
-    refreshCategories(item: Link, cat: Category | null, primary: boolean) {
+    refreshCategories(item: Link & EditorBase, cat: Category | null, primary: boolean) {
       if (!item.categoryLinks) item.categoryLinks = [];
       const links = item.categoryLinks;
       if (primary) {
@@ -86,14 +86,13 @@ export default {
         }
       }
       this.changed();
-      console.log(links.map((o) => o.target.getName() + " " + o.primary + " " + o.id).join("\n"));
     },
-    removeLink(links: Link[], link: Link) {
+    removeLink(links: Array<CategoryLink>, link: Link) {
       const idx = links.findIndex((o) => o === link);
       if (idx !== -1) {
         const [cl] = links.splice(idx, 1);
-        this.catalogue.removeFromIndex(cl);
-        const targetLinks = (cl.target as EditorBase).links;
+        this.catalogue.removeFromIndex(cl as CategoryLink & EditorBase);
+        const targetLinks = (cl.target as Category & EditorBase).links as Base[];
         if (targetLinks) {
           const targetIdx = targetLinks?.findIndex((o) => o === cl);
           if (targetIdx !== -1) {
@@ -119,11 +118,11 @@ export default {
       );
       links.push(cl);
       this.catalogue.addToIndex(cl);
-      const target = cat as EditorBase;
+      const target = cat as Category & EditorBase;
       if (!target.links) {
         target.links = [];
       }
-      target.links?.push(cl);
+      target.links?.push(cl as CategoryLink & EditorBase);
       return cl;
     },
     changed() {

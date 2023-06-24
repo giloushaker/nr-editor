@@ -39,7 +39,7 @@ export default {
     },
   },
   data() {
-    return { show: this.clickable };
+    return { show: false };
   },
   methods: {
     display() {

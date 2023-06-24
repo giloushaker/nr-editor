@@ -13,13 +13,13 @@
       </tr>
       <tr>
         <td>Child ID:</td>
-        <td><input type="text" v-model="item.childId" @change="changed" /></td>
+        <td><input type="text" v-model="childId" @change="changed" /></td>
       </tr>
       <tr>
         <td>Child:</td>
         <td>
           <UtilAutocomplete
-            v-model="item.childId"
+            v-model="childId"
             :placeholder="`Search Child...`"
             :options="availableTargets"
             valueField="id"
@@ -133,10 +133,6 @@ export default {
   },
 
   watch: {
-    child() {
-      this.catalogue.updateCondition(this.item);
-    },
-
     "item.scope"() {
       if (!this.child) {
         this.item.childId = this.availableTargets()[0]?.id || undefined;
@@ -145,6 +141,16 @@ export default {
   },
 
   computed: {
+    childId: {
+      get() {
+        return this.item.childId;
+      },
+      set(id: string) {
+        const old = this.item.childId;
+        this.item.childId = id;
+        this.catalogue.updateCondition(this.item, old);
+      },
+    },
     child() {
       if (!this.item.childId) {
         return null;
