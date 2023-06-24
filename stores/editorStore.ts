@@ -205,7 +205,7 @@ export const useEditorStore = defineStore("editor", {
         }
         createFolder(folder);
       }
-      const data = {
+      const data: BSIDataSystem = {
         gameSystem: {
           id: id,
           name: name,
@@ -214,13 +214,12 @@ export const useEditorStore = defineStore("editor", {
           categoryEntries: [
             {
               name: "Default Category",
-              hidden: false,
               id: "default-category",
             },
           ],
           forceEntries: [
             {
-              name: "Default Forece",
+              name: "Default Force",
               hidden: false,
               id: "default-force",
               categoryLinks: [
@@ -229,7 +228,6 @@ export const useEditorStore = defineStore("editor", {
                   hidden: false,
                   id: "default-force-category-link",
                   targetId: "default-category",
-                  type: "category",
                 },
               ],
             },
@@ -247,12 +245,13 @@ export const useEditorStore = defineStore("editor", {
                   id: "default-category-link",
                   primary: true,
                   name: "Default Category",
+                  hidden: false,
                 },
               ],
             },
           ],
         },
-      } as BSIDataSystem;
+      };
 
       if (folder) {
         data.gameSystem.fullFilePath = `${folder}/${name}.${extension || "gst"}`;

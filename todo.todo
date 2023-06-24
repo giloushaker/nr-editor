@@ -83,11 +83,7 @@ Editor:
         ✔ subdialog @done(23-05-25 23:06)
         ✔ references to @done(23-05-25 19:16)
         ✔ move to @done(23-05-26 02:01)
-            Would allow the used to right click on an entry to move it somewhere else, 
-            like an imported catalogue for example, 
-            we would do that automatically without breaking previous links
-            make entrylinks/grouplinks within entries
-            ✔ build dependency graph @done(23-05-26 20:35)
+        ✔ build dependency graph @done(23-05-26 20:35)
             
         @critical
             ✔ load systems from bs initially in some fast way @done(23-05-28 19:52)
@@ -145,6 +141,7 @@ Editor:
             ☐ support for adding icons to game system, categories,forces,catalogues,units,profile characteristic types
             ✔ support for exactly constraint @done(23-06-22 00:18)
             ✔ modify defaultSelectionEntryId @done(23-06-22 00:29)
+            ☐ force costs
             ☐ allow specifying profiles sorting order
             ☐ allow referencing other rules within descriptions
             ☐ info links: allow overwriting characteristics
@@ -154,5 +151,5 @@ Editor:
             ☐ some squads/association kind of thing
                 it would need to:
                     1. able to have constraints, such as certain amount of leader and grunts
-                    2. able to select multiple other entries, based on multiple ids
+                    2. able to select multiple other entries, eg: specify all troops,hq, so you dont get stuff from configuration
                     3. should be able to split a force into detachments or whatever, and display logically for the user
