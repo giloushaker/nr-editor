@@ -26,7 +26,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";

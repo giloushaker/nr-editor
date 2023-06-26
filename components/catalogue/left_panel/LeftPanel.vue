@@ -78,12 +78,13 @@
 </template>
 
 <script lang="ts">
-import { EntryPathEntry, forEachParent, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
+import { EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import CatalogueEntry from "./components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
+import { forEachParent } from "~/assets/shared/battlescribe/bs_helpers";
 
 export const LeftPanelDefaults = {
   showImported: false,

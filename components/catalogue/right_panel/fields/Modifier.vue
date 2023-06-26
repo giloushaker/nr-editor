@@ -51,7 +51,8 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { getModifierOrConditionParent, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
+import { getName } from "~/assets/shared/battlescribe/bs_editor";
 import { Category, Profile } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";

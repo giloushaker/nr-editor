@@ -141,6 +141,7 @@ Editor:
             ☐ support for adding icons to game system, categories,forces,catalogues,units,profile characteristic types
             ✔ support for exactly constraint @done(23-06-22 00:18)
             ✔ modify defaultSelectionEntryId @done(23-06-22 00:29)
+            ☐ should default amount be kept? bluescribe has implemented the min 0 hack it seems
             ☐ force costs
             ☐ allow specifying profiles sorting order
             ☐ allow referencing other rules within descriptions

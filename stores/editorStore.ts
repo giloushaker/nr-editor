@@ -10,7 +10,6 @@ import {
   addAtEntryPath,
   scrambleIds,
   getTypeName,
-  forEachParent,
   getTypeLabel,
   fixKey,
   removeEntry,
@@ -21,6 +20,7 @@ import {
   removeSuffix,
   textSearchRegex,
   zipCompress,
+  forEachParent,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Base, Link, entriesToJson, entryToJson, goodJsonKeys, rootToJson } from "~/assets/shared/battlescribe/bs_main";

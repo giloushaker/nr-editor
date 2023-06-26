@@ -1,4 +1,4 @@
-import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_editor";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
@@ -197,7 +197,7 @@ export function getFilterSelections(item: BSICondition & EditorBase, catalogue: 
 
   if (item.scope == "parent") {
     // It looks like first level elements of shared entries and groups consider the Roster as their parent
-    if (getFirstAncestor(item).parentKey.includes("shared")) {
+    if (getFirstAncestor(item)) {
       return getSearchSelections(catalogue, true);
     }
 

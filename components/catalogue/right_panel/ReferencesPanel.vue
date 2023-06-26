@@ -56,7 +56,8 @@
 </template>
 <script lang="ts">
 import { PropType } from "vue";
-import { findParentWhere, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { findParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
+import { getName } from "~/assets/shared/battlescribe/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
