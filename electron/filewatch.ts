@@ -19,7 +19,6 @@ export function initialize(path: string | number) {
       }
     }
   });
-  console.log("created watcher for", path);
   chokidar_watchers[path] = watcher;
 }
 export function cleanup(path: string) {
@@ -27,7 +26,6 @@ export function cleanup(path: string) {
     chokidar_watchers[path].close();
     delete chokidar_watchers[path];
   }
-  console.log("cleaned up watcher for", path);
 }
 export function add_watcher(
   id: string,
@@ -40,14 +38,12 @@ export function add_watcher(
     initialize(id);
   }
   watchers[id][watcher_id] = callback;
-  console.log("set watcher at", id, "for", watcher_id);
 }
 export function remove_watcher(id: string, watcher_id: string | number) {
   id = fix_path(id);
   if (watchers[id]) {
     if (watchers[id][watcher_id]) {
       delete watchers[id][watcher_id];
-      console.log("removed watcher at", id, `for "${watcher_id}",`, Object.values(watchers[id]).length, "remaining");
     }
     if (Object.values(watchers[id]).length === 0) {
       cleanup(id);

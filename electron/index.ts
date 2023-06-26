@@ -1,61 +1,10 @@
-const { app, BrowserWindow, ipcMain, session, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, session, shell, protocol } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const dialog = require("electron").dialog;
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
-const { readFile, readdir, stat } = require("fs/promises");
-
-const zipExtensions = ["gstz", "zip", "catz"];
-function getExtension(extension_or_file: string) {
-  const extension = extension_or_file.split(".").pop()?.toLowerCase() || "";
-  return extension;
-}
-function isZipExtension(extension_or_file: string) {
-  const extension = getExtension(extension_or_file);
-  return zipExtensions.includes(extension);
-}
-
-function dirname(path: string) {
-  return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
-}
-async function isFile(f: any) {
-  const stats = await stat(f);
-  return stats.isFile();
-}
-
-var AdmZip = require("adm-zip");
-async function readAndUnzipFile(path: string) {
-  try {
-    if (!(await isFile(path))) return undefined;
-    const isZip = isZipExtension(path);
-    if (isZip) {
-      var zip = new AdmZip(path);
-      var zipEntries = zip.getEntries();
-      const entry = zipEntries[0];
-      return entry.getData().toString("utf-8");
-    } else {
-      return await readFile(path, "utf-8");
-    }
-  } catch (e) {
-    console.log(e);
-    return undefined;
-  }
-}
-
-async function getFolderFiles(folderPath: any) {
-  const fileObjects = [];
-  const isPathFile = await isFile(folderPath);
-  if (isPathFile) {
-    folderPath = dirname(folderPath);
-  }
-  const entries = await readdir(folderPath);
-  for (const entry of entries) {
-    const filePath = `${folderPath}/${entry}`;
-    fileObjects.push(readAndUnzipFile(filePath).then((data) => ({ data, name: entry, path: filePath })));
-  }
-
-  return (await Promise.all(fileObjects)).filter((o) => o.data);
-}
+import { getFile, getFolderFiles } from "./files";
+import { entry, options } from "./entry";
 
 let mainWindow: {
   webContents: { executeJavaScript: (arg0: string) => void };
@@ -85,13 +34,12 @@ function askForUpdate() {
       try {
         if (mainWindow && mainWindow.webContents) {
           mainWindow.webContents.executeJavaScript(`
-        if (!globalThis.styleElement){
-          globalThis.styleElement = document.createElement('style');
-        }
-        globalThis.styleElement.setAttribute('id', 'custom-style');
-        globalThis.styleElement.textContent = '* { cursor: progress !important; }';
-        document.head.appendChild(globalThis.styleElement);
-        `);
+          if (!globalThis.styleElement){
+            globalThis.styleElement = document.createElement('style');
+            globalThis.styleElement.setAttribute('id', 'custom-style');
+            globalThis.styleElement.textContent = '* { cursor: progress !important; }';
+            document.head.appendChild(globalThis.styleElement);
+          }`);
         }
         if (mainWindow) {
           let log_message = "Download speed: " + progress.bytesPerSecond;
@@ -142,12 +90,33 @@ const createSecondaryWindow = () => {
     remove_watchers(win.id);
   });
 
-  win.loadFile("index.html", {
-    hash: "/system",
-  });
+  win.loadFile(entry, options);
 };
 const createMainWindow = () => {
   askForUpdate();
+
+  // Intercept file protocol to fix loading images
+  const imageRegex = /(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i;
+  const cleanDirName = __dirname.replaceAll("\\", "/");
+  protocol.interceptFileProtocol("file", (request: { url: string; path: any }, callback: (arg0: any) => void) => {
+    if (!request.url.match(imageRegex)) {
+      callback(request);
+      return;
+    }
+
+    if (request.url.includes("app.asar")) {
+      request.url = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+      callback(request);
+      return;
+    }
+    //  move what comes after /assets to correct path
+    if (request.url.includes("/assets/")) {
+      const ressource = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+      request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
+      request.path = ressource;
+    }
+    callback(request);
+  });
 
   // Expose all node functions to invoke
   const fs = require("fs");
@@ -175,7 +144,40 @@ const createMainWindow = () => {
     const stats = fs.statSync(...args);
     return stats.isFile();
   });
+  ipcMain.handle("showOpenDialog", async (event: { sender: any }, ...args: any) => {
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await dialog.showOpenDialog(wnd, ...args);
+  });
+  ipcMain.handle("showMessageBoxSync", async (event: { sender: any }, ...args: any) => {
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await dialog.showMessageBoxSync(wnd, ...args);
+  });
+  ipcMain.handle("getPath", async (event: any, ...args: any) => {
+    return await app.getPath(...args);
+  });
+  ipcMain.handle("closeWindow", async (event: { sender: any }, ...args: any) => {
+    const wnd = BrowserWindow.fromWebContents(event.sender);
+    return await wnd.close(...args);
+  });
+  ipcMain.handle("getFolderFiles", async (event: any, path: string) => {
+    return await getFolderFiles(path);
+  });
+  ipcMain.handle("getFile", async (event: any, path: string) => {
+    return await getFile(path);
+  });
+  ipcMain.handle("chokidarWatchFile", async (event: { sender: any }, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    add_watcher(path, win.id, (_path, stats) => {
+      win.webContents.send("fileChanged", path, stats);
+    });
+  });
+  ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    remove_watcher(path, win.id);
+  });
 
+  // Bypass cors
+  const filter = { urls: ["https://*/*"] };
   session.defaultSession.webRequest.onBeforeSendHeaders(
     filter,
     (details: { requestHeaders: { [x: string]: any } }, callback: (arg0: { requestHeaders: any }) => void) => {
@@ -211,51 +213,19 @@ const createMainWindow = () => {
     remove_watchers(win.id);
   });
 
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    // config.fileProtocol is my custom file protocol
+  // Use the user's primary browser when opening links
+  win.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
     console.log("opening url", url);
     if (!url.startsWith("http")) {
       return { action: "allow" };
     }
-    // open url in a browser and prevent default
     shell.openExternal(url);
     return { action: "deny" };
   });
-  ipcMain.handle("showOpenDialog", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await dialog.showOpenDialog(wnd, ...args);
-  });
-  ipcMain.handle("showMessageBoxSync", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await dialog.showMessageBoxSync(wnd, ...args);
-  });
-  ipcMain.handle("getPath", async (event: any, ...args: any) => {
-    return await app.getPath(...args);
-  });
-  ipcMain.handle("closeWindow", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await wnd.close(...args);
-  });
-  ipcMain.handle("getFolderFiles", async (event: any, ...args: any) => {
-    return await getFolderFiles(...args);
-  });
-  ipcMain.handle("chokidarWatchFile", async (event: { sender: any }, path: string) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    add_watcher(path, win.id, (_path, stats) => {
-      win.webContents.send("fileChanged", path, stats);
-    });
-  });
-  ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    remove_watcher(path, win.id);
-  });
-  win.loadFile("index.html", {
-    hash: "/system",
-  });
+
+  win.loadFile(entry, options);
   previousTitle = win.getTitle();
 };
-const filter = { urls: ["https://*/*"] };
-
 app.whenReady().then(() => {
   if (app.requestSingleInstanceLock()) {
     createMainWindow();
