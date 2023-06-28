@@ -25,9 +25,8 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIProfile } from "~/assets/shared/battlescribe/bs_types";
+import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
@@ -37,11 +36,15 @@ export default {
       required: true,
     },
     item: {
-      type: Object as PropType<BSIProfile>,
+      type: Object as PropType<Profile | Link<Profile>>,
       required: true,
     },
   },
   methods: {
+    changedType() {
+      this.item.getCatalogue().refreshErrors(this.item as EditorBase & (Profile | Link<Profile>));
+      this.$emit("catalogueChanged");
+    },
     changed() {
       this.$emit("catalogueChanged");
     },
