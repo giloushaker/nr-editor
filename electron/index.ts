@@ -1,11 +1,24 @@
-const { app, BrowserWindow, ipcMain, session, shell, protocol } = require("electron");
+const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
-const dialog = require("electron").dialog;
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles } from "./files";
 import { entry, options } from "./entry";
 
+export function stripHtml(originalString: string): string {
+  if (originalString == null) {
+    return "";
+  }
+
+  let res = originalString.replace(/<br ?[/]?>/g, "\n");
+  res = res.replace(/(<([^>]+)>)/gi, "");
+  res = res.replace(/&bull;/g, "•");
+  res = res.replace(/[&][^;]*;/g, "");
+  res = res.replace(/\n */g, "\n");
+  res = res.replace(/\n\n*/g, "\n");
+  res = res.replace(/−/g, "-");
+  return res;
+}
 let mainWindow: {
   webContents: { executeJavaScript: (arg0: string) => void };
   setProgressBar: (arg0: number) => void;
@@ -19,6 +32,7 @@ function askForUpdate() {
         type: "info",
         title: "Update Available",
         message: "A new update is available. Do you want to install it?",
+        detail: `Changelog:\n${stripHtml(info.releaseNotes)}`,
         buttons: ["Install", "Cancel"],
       })
       .then((result: { response: number }) => {
