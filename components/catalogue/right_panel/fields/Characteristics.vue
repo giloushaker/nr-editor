@@ -5,7 +5,7 @@
       <tr v-if="profileTypes">
         <td>Profile Type: </td>
         <td>
-          <select v-model="item.typeId" @change="changed">
+          <select v-model="item.typeId" @change="changedType">
             <option disabled>-- Select Profile Type --</option>
             <option :value="ptype.id" v-for="ptype of profileTypes">
               {{ ptype.name }}
