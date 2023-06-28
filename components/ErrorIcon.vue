@@ -8,6 +8,7 @@
     <div v-if="show" class="fixed bg text">
       <div v-for="error in errors" @click="gotoError(error)" class="border py-3px px-10px hover-darken">
         {{ errorToText(error) }}
+        <span v-if="errorExtraText(error)" class="grey">{{ errorExtraText(error) }}</span>
       </div>
     </div>
   </span>
@@ -21,6 +22,9 @@ export interface IErrorMessage {
   msg: string;
   severity?: "error" | "warning" | "info" | "debug";
   source?: any;
+  extra?: string;
+  id?: string;
+  hash?: string;
 }
 export default {
   name: "ErrorIcon",
@@ -52,6 +56,9 @@ export default {
     },
     errorToText(error: IErrorMessage): string {
       return stripHtml(error.msg);
+    },
+    errorExtraText(error: IErrorMessage): string | undefined {
+      return error.extra;
     },
     gotoError(error: IErrorMessage) {
       const store = useEditorStore();
@@ -94,5 +101,9 @@ img {
   vertical-align: middle;
   top: -1px;
   position: relative;
+}
+.fixed {
+  max-height: 500px;
+  overflow-y: auto;
 }
 </style>
