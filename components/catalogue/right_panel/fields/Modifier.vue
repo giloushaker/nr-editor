@@ -329,17 +329,6 @@ export default {
       return ops[this.selectedField.type];
     },
     errors() {
-      if (this.selectedField?.modifierType === "characteristic") {
-        if (["increment", "decrement"].includes(this.selectedOperation?.id || "")) {
-          if (!isNumber(this.selectedField.value)) {
-            return [
-              {
-                msg: `"${this.selectedField.value}" is not a valid number`,
-              },
-            ];
-          }
-        }
-      }
       return [];
     },
     fieldData() {
