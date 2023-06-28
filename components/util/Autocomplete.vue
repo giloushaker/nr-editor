@@ -54,7 +54,7 @@ export default {
     },
 
     filterField: {
-      type: String,
+      type: [String, Function],
       default: "",
     },
 
@@ -99,7 +99,7 @@ export default {
       const end = this.max || data.length;
       for (let i = 0; i < data.length; i++) {
         const cur = data[i];
-        let val = this.filterField ? cur[this.filterField] : cur;
+        let val = this.getField(cur);
         if (val && val.match && val.match(regex)) {
           result.push({ option: cur });
           if (result.length >= end - 1) break;
@@ -110,6 +110,13 @@ export default {
   },
 
   methods: {
+    getField(cur: any) {
+      if (!this.filterField) return cur;
+      if (this.filterField instanceof Function) {
+        return this.filterField(cur);
+      }
+      return cur[this.filterField];
+    },
     escapeRegex(str: string) {
       return str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
     },

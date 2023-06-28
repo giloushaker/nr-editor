@@ -5,11 +5,21 @@
       <tr>
         <td>Publication:</td>
         <td>
-          <select v-model="item.publicationId" @change="changed">
-            <option :value="publication.id" v-for="publication of publications">
-              {{ publication.name }}
-            </option>
-          </select>
+          <UtilAutocomplete
+            :options="publications"
+            :filterField="(o: Publication) => o.getName()"
+            valueField="id"
+            v-model="item.publicationId"
+            @change="changed"
+          >
+            <template #option="{ option }">
+              <div class="flex align-items flex-row">
+                <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+                  {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+                </span>
+              </div>
+            </template>
+          </UtilAutocomplete>
         </td>
       </tr>
       <tr>
@@ -23,9 +33,10 @@
 </template>
 
 <script lang="ts">
+import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   emits: ["catalogueChanged"],
@@ -45,6 +56,8 @@ export default {
     },
   },
   methods: {
+    getNameExtra,
+    getName,
     changed() {
       this.$emit("catalogueChanged");
     },

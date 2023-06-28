@@ -31,16 +31,38 @@
       </select>
       <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
 
-      <select v-if="inputType == 'category'" v-model="item.value" @change="changed">
-        <option :value="cat.id" v-for="cat of allCategories">
-          {{ cat.name }}
-        </option>
-      </select>
-      <select v-if="inputType == 'defaultSelectionEntryId'" v-model="item.value" @change="changed">
-        <option :value="entry.id" v-for="entry of allGroupEntries">
-          {{ entry.getName() }}
-        </option>
-      </select>
+      <UtilAutocomplete
+        v-if="inputType == 'category'"
+        :options="allCategories"
+        :filterField="(o) => o.getName()"
+        valueField="id"
+        v-model="item.value"
+        @change="changed"
+      >
+        <template #option="{ option }">
+          <div class="flex align-items flex-row">
+            <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+              {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+            </span>
+          </div>
+        </template>
+      </UtilAutocomplete>
+      <UtilAutocomplete
+        v-if="inputType == 'defaultSelectionEntryId'"
+        :options="allGroupEntries"
+        :filterField="(o) => o.getName()"
+        valueField="id"
+        v-model="item.value"
+        @change="changed"
+      >
+        <template #option="{ option }">
+          <div class="flex align-items flex-row">
+            <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+              {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+            </span>
+          </div>
+        </template>
+      </UtilAutocomplete>
     </div>
     <div v-for="error in errors" class="mt-8px flex items-center">
       <img src="/assets/icons/error_exclamation.png" />
@@ -52,13 +74,14 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { getName } from "~/assets/shared/battlescribe/bs_editor";
+import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Category, Profile } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
+import { first } from "~/assets/shared/battlescribe/bs_helpers";
 
-type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-number";
+type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-number" | "defaultSelectionEntryId";
 const availableModifiers = {
   selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
@@ -83,6 +106,7 @@ const availableTypes = {
   hidden: "boolean",
   description: "string",
   category: "category",
+  defaultSelectionEntryId: "defaultSelectionEntryId",
   constraints: "number",
 } as Record<string, FieldTypes>;
 function isNumber(value: string | number | boolean | undefined) {
@@ -124,6 +148,8 @@ export default {
     },
   },
   methods: {
+    getName,
+    getNameExtra,
     changed() {
       if (this.selectedField) {
         this.item.field = this.selectedField.id;
@@ -142,6 +168,7 @@ export default {
           string: "",
           "string-or-number": "",
           boolean: false,
+          defaultSelectionEntryId: first(this.allGroupEntries)?.id,
         }[this.selectedField.type];
       }
       this.changed();
@@ -195,7 +222,7 @@ export default {
       return res;
     },
     allGroupEntries() {
-      return this.parent?.selectionsIterator() || [];
+      return [...(this.parent?.selectionsIterator() || [])];
     },
     operations(): {
       id: BSIModifierType;
@@ -205,14 +232,12 @@ export default {
       if (!this.selectedField) {
         return [];
       }
-      let ops: Record<
-        string,
-        {
-          id: BSIModifierType;
-          name: string;
-          word: string;
-        }[]
-      > = {
+      type Operation = {
+        id: BSIModifierType;
+        name: string;
+        word: string;
+      };
+      let ops: Record<string, Operation[]> = {
         number: [
           {
             id: "set",
@@ -269,6 +294,13 @@ export default {
             id: "set",
             name: "Set",
             word: "to",
+          },
+        ],
+        defaultSelectionEntryId: [
+          {
+            id: "set",
+            name: "Set",
+            word: "",
           },
         ],
         category: [

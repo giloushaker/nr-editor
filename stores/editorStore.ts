@@ -309,9 +309,10 @@ export const useEditorStore = defineStore("editor", {
     async load_systems_from_db(force = false) {
       if (!this.gameSystemsLoaded && !force) {
         this.gameSystemsLoaded = true;
-        let systems = await db.systems.offset(0).keys();
+        let systems = (await db.systems.offset(0).keys()) as string[];
         for (let system of systems) {
-          this.load_system_from_db(system as string);
+          if (system in this.gameSystems) continue;
+          this.load_system_from_db(system);
         }
       }
     },

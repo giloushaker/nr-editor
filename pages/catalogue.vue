@@ -222,6 +222,7 @@ export default defineComponent({
             targetId: catalogueId || systemId,
           });
         }
+        loaded.processForEditor();
         this.systemFiles = system;
         this.cat = loaded;
         if (loaded) {
