@@ -293,7 +293,7 @@ export const useEditorStore = defineStore("editor", {
         }
         if (catalogueId) {
           const systemFiles = this.get_system(json.catalogue.gameSystemId);
-          systemFiles.catalogueFiles[catalogueId] = json;
+          systemFiles.catalogueFiles[catalogueId] = markRaw(json);
         }
         result_files.push(json);
       }
@@ -330,7 +330,7 @@ export const useEditorStore = defineStore("editor", {
       for (let { content, path } of await dbcatalogues.toArray()) {
         const catalogueId = content.catalogue.id;
         content.catalogue.fullFilePath = path;
-        systemFiles.catalogueFiles[catalogueId] = content;
+        systemFiles.catalogueFiles[catalogueId] = markRaw(content);
       }
       this.load_system(systemFiles, true);
     },

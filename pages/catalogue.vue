@@ -9,7 +9,7 @@
       </span>
     </template>
     <template v-else-if="loading">
-      <Loading />
+      <Loading :progress="loading_progress" :progress_max="loading_progress_max" :progress_msg="loading_progress_msg" />
     </template>
     <template v-else-if="cat">
       <SplitView class="h-full" draggable showMiddle id="catalogueView">
@@ -36,7 +36,10 @@
         <span class="status mx-2">saved</span>
       </template>
       <template v-if="systemFiles && !systemFiles.allLoaded">
-        <button class="bouton load ml-10px" @click="systemFiles.loadAll">Load all refs</button>
+        <button class="bouton load ml-10px" @click="load_all"
+          >Load all
+          <span v-if="loading_all">({{ loading_progress }} / {{ loading_progress_max }})</span>
+        </button>
       </template>
     </Teleport>
   </div>
@@ -61,6 +64,10 @@ export default defineComponent({
       item: null as ItemTypes | null,
       systemFiles: null as GameSystemFiles | null,
       loading: false,
+      loading_all: false,
+      loading_progress: 0,
+      loading_progress_max: 0,
+      loading_progress_msg: "",
       saving: false,
       failed: false,
       id: "",
@@ -147,6 +154,27 @@ export default defineComponent({
     },
   },
   methods: {
+    async load_all() {
+      if (this.systemFiles) {
+        try {
+          this.loading_all = true;
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          await this.systemFiles.loadAll(async (current, max, msg) => {
+            this.loading_progress = current;
+            this.loading_progress_max = max;
+            this.loading_progress_msg = msg;
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          });
+          this.loading_progress = 0;
+          this.loading_progress_max = 0;
+          this.loading_progress_msg = "";
+        } catch (e) {
+          console.error(e);
+        } finally {
+          this.loading_all = true;
+        }
+      }
+    },
     async save_all() {
       try {
         this.failed = await this.store.save_all(this.cat?.getSystemId());
