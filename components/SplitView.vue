@@ -1,13 +1,12 @@
 <template>
   <div class="splitView" :style="height > 0 ? { height: `${height}px` } : {}">
-    <div v-if="showLeft" class="left" ref="left" :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }">
+    <div v-if="showLeft" class="left relative" ref="left" :style="{ width: leftw > 0 ? `${leftw}px` : leftWidth }">
       <slot name="left"></slot>
     </div>
-
     <div v-if="left_draggable" class="between unselectable" @mousedown="drag_left_handle" />
 
     <template v-if="showMiddle">
-      <div ref="middle" class="middle grow">
+      <div ref="middle" class="middle grow relative">
         <slot name="middle"></slot>
       </div>
     </template>
@@ -15,7 +14,7 @@
     <span
       v-if="showRight"
       ref="right"
-      class="right"
+      class="right relative"
       :style="{
         width: `${rightw}px`,
       }"
@@ -238,6 +237,10 @@ export default {
   position: relative;
   cursor: ew-resize;
   width: 10px;
+  min-width: 10px;
   z-index: 1;
+}
+.relative {
+  position: relative;
 }
 </style>
