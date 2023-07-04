@@ -1,8 +1,8 @@
 <template>
-  <span class="ErrorIcon cursor-pointer mt-auto" v-if="numErrors" :title="errorText">
-    <span @click="display()" class="inline-flex align-items gap-4px">
-      <img :src="getImage" />
-      <span v-if="computedShowNumber">{{ numErrors }}</span>
+  <span class="ErrorIcon cursor-pointer my-auto" v-if="numErrors" :title="errorText">
+    <span @click="display()" class="gap-4px">
+      <img :src="getImage" class="my-auto align-text-bottom" />
+      <span v-if="computedShowNumber" class="ml-4px align-middle">{{ numErrors }}</span>
     </span>
 
     <div v-if="show" class="fixed bg text">

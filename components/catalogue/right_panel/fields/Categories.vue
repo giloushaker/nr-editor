@@ -27,6 +27,21 @@
           <label :for="`cat${cat.id}`">{{ cat.name }}</label>
         </div>
       </div>
+
+      <div v-for="cat of badLinks" class="category" :key="cat.id">
+        <div>
+          <input name="primary" type="radio" :checked="hasCategory(cat) == 2" @change="primaryChanged(cat)" />
+          Primary?
+        </div>
+        <div>
+          <input :id="`bad${cat.id}`" type="checkbox" :checked="true" @change="secondaryChanged(cat)" />
+          <label :for="`bad${cat.id}`">{{ cat.name }}</label>
+          <ErrorIcon
+            class="ml-5px inline"
+            :errors="[{ msg: `Couldn't find category with id: ${cat.targetId}`, severity: 'error' }]"
+          />
+        </div>
+      </div>
     </div>
   </fieldset>
 </template>
@@ -154,6 +169,16 @@ export default {
   },
 
   computed: {
+    badLinks() {
+      const result = [];
+      const categories = new Set(this.categories.map((o) => o.id));
+      for (const cl of this.item.categoryLinks || []) {
+        if (!categories.has(cl.targetId)) {
+          result.push(cl);
+        }
+      }
+      return result;
+    },
     count() {
       return this.item.categoryLinks?.length || 0;
     },

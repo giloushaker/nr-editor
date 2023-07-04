@@ -53,6 +53,7 @@ import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
+import { Router } from "vue-router";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
 export interface IEditorStore {
@@ -1096,10 +1097,12 @@ export const useEditorStore = defineStore("editor", {
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
         const child = [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
-          // console.error("Invalid path", path);
-          throw new Error("Invalid path");
+          console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
+          // throw new Error("Invalid path");
         }
-        current = child;
+        if (child) {
+          current = child;
+        }
         if (node !== lastNode) {
           await open_el(current);
         }
@@ -1119,12 +1122,13 @@ export const useEditorStore = defineStore("editor", {
      *  Returns true if the route changed
      */
     async goto_catalogue(id: string, systemId?: string) {
-      if (!this.$router) {
+      const $router = (this as any as { $router: Router }).$router;
+      if (!$router) {
         throw new Error("Cannot follow link to another catalogue without $router set");
       }
-      const curId = this.$router.currentRoute.query?.id || this.$router.currentRoute.query?.systemId;
+      const curId = $router.currentRoute.query?.id || $router.currentRoute.query?.systemId;
       if (id !== curId) {
-        this.$router.push({
+        $router.push({
           name: "catalogue",
           query: { systemId: systemId || id, id: id },
         });
