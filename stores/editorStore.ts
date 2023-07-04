@@ -652,14 +652,15 @@ export const useEditorStore = defineStore("editor", {
           }
           setPrototypeRecursive({ [item.parentKey]: copy });
           scrambleIds(catalogue, copy);
-          await onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           arr.push(copy);
+          await onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           addeds.push(copy);
         }
       };
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          onRemoveEntry(entry);
         }
       };
       await this.do_action("dupe", undo, redo);
@@ -787,6 +788,7 @@ export const useEditorStore = defineStore("editor", {
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          onRemoveEntry(entry);
         }
       };
       await this.do_action("add", undo, redo);
