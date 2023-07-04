@@ -172,6 +172,7 @@ export default {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 5px solid #000;
+  filter: var(--image-filter);
 }
 
 .disabled {
