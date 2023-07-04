@@ -769,6 +769,7 @@ export const useEditorStore = defineStore("editor", {
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
+            arr.push(copy);
             await onAddEntry(copy, catalogue, item, this.get_system(sysId));
 
             // Show the newly added entries even if there is a search filter
@@ -780,7 +781,6 @@ export const useEditorStore = defineStore("editor", {
             }
             this.filtered.push(copy);
 
-            arr.push(copy);
             addeds.push(copy);
           }
         }
