@@ -1044,8 +1044,6 @@ export const useEditorStore = defineStore("editor", {
           path[path.length - 1].key = linkKey;
           await onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
           addAtEntryPath(from, path, link);
-        } else {
-          popAtEntryPath(from, getEntryPath(obj));
         }
       };
       function undo() {
