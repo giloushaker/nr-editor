@@ -38,22 +38,8 @@ export default {
 
     onpaste(e: ClipboardEvent) {
       e.preventDefault();
-      // Get the copied text from the clipboard
-      /** https://htmldom.dev/paste-as-plain-text/ */
-      const text = e.clipboardData!.getData("text/plain");
-
-      // Insert text at the current position of caret
-      const range = document.getSelection()!.getRangeAt(0);
-      range.deleteContents();
-
-      const textNode = document.createTextNode(text);
-      range.insertNode(textNode);
-      range.selectNodeContents(textNode);
-      range.collapse(false);
-
-      const selection = window.getSelection()!;
-      selection.removeAllRanges();
-      selection.addRange(range);
+      var text = e.clipboardData?.getData("text/plain") ?? "";
+      document.execCommand("insertText", false, text);
       this.$emit("update:modelValue", this.get().innerText);
       this.$emit("change");
     },
