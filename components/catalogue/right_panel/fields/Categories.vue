@@ -34,7 +34,7 @@
           Primary?
         </div>
         <div>
-          <input :id="`bad${cat.id}`" type="checkbox" :checked="true" @change="secondaryChanged(cat)" />
+          <input :id="`bad${cat.id}`" type="checkbox" :checked="true" @change="removeLink(item.categoryLinks!, cat)" />
           <label :for="`bad${cat.id}`">{{ cat.name }}</label>
           <ErrorIcon
             class="ml-5px inline"
