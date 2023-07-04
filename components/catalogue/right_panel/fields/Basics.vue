@@ -4,7 +4,12 @@
     <table class="editorTable">
       <tr>
         <td>Unique ID:</td>
-        <td><input type="text" v-model="id" @change="changed" /></td>
+        <td class="flex gap-5px">
+          <input type="text" v-model="id" @change="changed" class="flex flex-shrink" />
+          <button class="icon hover-darken mr-8px" @click="refresh">
+            <img class="h-20px w-20px" src="/assets/icons/back.png" title="Generated Id" />
+          </button>
+        </td>
       </tr>
       <tr>
         <td>Name:</td>
@@ -15,6 +20,7 @@
 </template>
 
 <script lang="ts">
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIOption, BSINamed } from "~/assets/shared/battlescribe/bs_types";
 
@@ -30,6 +36,10 @@ export default {
   methods: {
     changed() {
       this.$emit("catalogueChanged");
+    },
+    refresh() {
+      this.id = generateBattlescribeId();
+      this.changed();
     },
   },
   computed: {

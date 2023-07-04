@@ -67,7 +67,7 @@ export default {
       type: Object as PropType<any>,
     },
 
-    none: {
+    nullable: {
       type: Boolean,
       default: false,
     },
@@ -98,8 +98,10 @@ export default {
     },
     foundOptions(): { option: any }[] {
       const regex = this.textSearchRegex(this.searchPattern);
-
       const result = [];
+      if (this.nullable) {
+        result.push({ option: undefined });
+      }
       const data = this.computedOptions;
       const end = this.max || data.length;
       for (let i = 0; i < data.length; i++) {
@@ -136,7 +138,11 @@ export default {
     targetSelected(opt: any) {
       let res = opt.option;
       if (this.valueField.length) {
-        res = opt.option[this.valueField];
+        if (this.nullable && !opt.option) {
+          res = undefined;
+        } else {
+          res = opt.option[this.valueField];
+        }
       }
       this.selectedOption = {
         option: opt.option,
