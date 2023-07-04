@@ -6,8 +6,8 @@
         <td>Unique ID:</td>
         <td class="flex gap-5px">
           <input type="text" v-model="id" @change="changed" class="flex flex-shrink" />
-          <button class="icon hover-darken mr-8px" @click="refresh">
-            <img class="h-20px w-20px" src="/assets/icons/back.png" title="Generated Id" />
+          <button class="hover-darken mr-8px" @click="refresh">
+            <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generated Id" />
           </button>
         </td>
       </tr>
