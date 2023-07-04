@@ -10,6 +10,7 @@ export interface EditorUIState {
   open: Record<string, any>;
   catalogueId?: string;
   systemId?: string;
+  mode?: "edit" | "references";
 }
 
 export const useEditorUIState = defineStore("editor-ui", {

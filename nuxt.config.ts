@@ -46,7 +46,7 @@ export default defineNuxtConfig({
     strict: true,
   },
   electron: {
-    build: [{ entry: "electron/index.ts" }, { entry: "electron/preload.js" }],
+    build: [{ entry: "electron/main.ts" }, { entry: "electron/preload.js" }],
   },
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
@@ -58,9 +58,9 @@ export default defineNuxtConfig({
       if (electron) {
         const outputDir = nitro.options.output.publicDir;
         const { copyFileSync } = require("fs");
-        // copyFileSync("electron/index.js", `${outputDir}/index.js`);
+        // copyFileSync("electron/main.js", `${outputDir}/main.js`);
         // copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
-        copyFileSync("dist-electron/index.js", `${outputDir}/index.js`);
+        copyFileSync("dist-electron/main.js", `${outputDir}/main.js`);
         copyFileSync("dist-electron/preload.js", `${outputDir}/preload.js`);
         copyFileSync("package.json", `${outputDir}/package.json`);
       }

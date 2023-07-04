@@ -66,6 +66,11 @@ export default {
     default: {
       type: Object as PropType<any>,
     },
+
+    none: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   created() {

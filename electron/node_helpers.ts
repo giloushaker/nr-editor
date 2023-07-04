@@ -1,4 +1,5 @@
 import type { Stats } from "fs";
+import type { OpenDialogOptions, OpenDialogReturnValue, MessageBoxSyncOptions } from "electron";
 export function dirname(path: string) {
   return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
 }
@@ -91,11 +92,11 @@ export async function writeFile(filePath: string, data: string | Blob | Buffer |
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
   await electron.invoke("writeFileSync", filePath, data);
 }
-export async function showOpenDialog(options: Electron.OpenDialogOptions) {
+export async function showOpenDialog(options: OpenDialogOptions) {
   if (!electron) return;
-  return electron.invoke("showOpenDialog", options) as Electron.OpenDialogReturnValue;
+  return electron.invoke("showOpenDialog", options) as OpenDialogReturnValue;
 }
-export async function showMessageBox(options: Electron.MessageBoxSyncOptions) {
+export async function showMessageBox(options: MessageBoxSyncOptions) {
   if (!electron) return;
   return electron.invoke("showMessageBoxSync", options) as number;
 }

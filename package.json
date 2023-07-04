@@ -4,7 +4,7 @@
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
   "version": "1.1.69",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "build": "nuxt generate --electron",
     "buildelectron": "npm run build && npm exec electron-builder",

@@ -2,7 +2,7 @@
   <fieldset>
     <legend>Characteristics</legend>
     <table class="editorTable">
-      <tr v-if="profileTypes">
+      <tr>
         <td>Profile Type: </td>
         <td>
           <select v-model="item.typeId" @change="changedType">
@@ -36,7 +36,7 @@ export default {
       required: true,
     },
     item: {
-      type: Object as PropType<Profile | Link<Profile>>,
+      type: Object as PropType<Profile>,
       required: true,
     },
   },
@@ -60,7 +60,9 @@ export default {
         existing[c.name] = c.$text;
       }
       const type = this.catalogue.findOptionById(this.item.typeId) as ProfileType;
-      this.item.typeName = type?.name;
+      if (!this.item.isLink()) {
+        this.item.typeName = type?.name;
+      }
 
       const result = type?.characteristicTypes?.map((elt) => ({
         name: elt.name,

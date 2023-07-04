@@ -1242,6 +1242,7 @@ export const useEditorStore = defineStore("editor", {
       const catalogue = this.catalogueComponent?.cat;
       return {
         ...this.get_leftpanel_state(),
+        mode: this.mode,
         open: this.get_leftpanel_open_collapsible_boxes(),
         selection: selected ? getEntryPath(selected) : undefined,
         catalogueId: catalogue?.id,
@@ -1259,6 +1260,7 @@ export const useEditorStore = defineStore("editor", {
     async load_state(state: EditorUIState) {
       if (this.catalogueComponent) {
         useEditorUIState().set_state(state.catalogueId!, state);
+        this.mode = state.mode || "edit";
         const changedCatalogue = await this.goto_catalogue(state.catalogueId!, state.systemId);
         if (!changedCatalogue) {
           this.catalogueComponent.load_state(state);

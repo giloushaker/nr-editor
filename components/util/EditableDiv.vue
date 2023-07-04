@@ -29,28 +29,44 @@ export default {
         this.$emit("change");
       }
     },
-
+    get() {
+      return this.$refs.div as HTMLDivElement;
+    },
     toHtml(s: string) {
       return s.replace(/\n/g, "<br />");
     },
 
-    onpaste(e: Event) {
+    onpaste(e: ClipboardEvent) {
       e.preventDefault();
-      var text = (e as any).clipboardData.getData("text/plain");
-      (this.$refs.div as any).innerText = text || "";
-      this.$emit("update:modelValue", text);
+      // Get the copied text from the clipboard
+      /** https://htmldom.dev/paste-as-plain-text/ */
+      const text = e.clipboardData!.getData("text/plain");
+
+      // Insert text at the current position of caret
+      const range = document.getSelection()!.getRangeAt(0);
+      range.deleteContents();
+
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      range.selectNodeContents(textNode);
+      range.collapse(false);
+
+      const selection = window.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
+      this.$emit("update:modelValue", this.get().innerText);
       this.$emit("change");
     },
   },
 
   mounted() {
-    (this.$refs.div as any).innerText = this.modelValue || "";
+    this.get().innerText = `${this.modelValue ?? ""}`;
   },
 
   watch: {
     modelValue() {
-      if ((this.$refs.div as any).innerText != this.modelValue) {
-        (this.$refs.div as any).innerText = this.modelValue;
+      if (this.get().innerText != this.modelValue) {
+        this.get().innerText = `${this.modelValue ?? ""}`;
       }
     },
   },
