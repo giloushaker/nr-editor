@@ -323,14 +323,18 @@ export const useEditorStore = defineStore("editor", {
       if (!system) {
         throw new Error("System not found " + id);
       }
-      system.gameSystem.fullFilePath = dbsystem.path;
+      if (!system.gameSystem.fullFilePath) {
+        system.gameSystem.fullFilePath = dbsystem.path;
+      }
 
       const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
       const systemFiles = this.get_system(system.gameSystem.id);
       systemFiles.setSystem(system);
       for (let { content, path } of await dbcatalogues.toArray()) {
         const catalogueId = content.catalogue.id;
-        content.catalogue.fullFilePath = path;
+        if (!content.catalogue.fullFilePath) {
+          content.catalogue.fullFilePath = path;
+        }
         systemFiles.catalogueFiles[catalogueId] = markRaw(content);
       }
       this.load_system(systemFiles, true);
