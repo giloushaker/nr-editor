@@ -171,7 +171,10 @@ export default {
   computed: {
     badLinks() {
       const result = [];
-      const categories = new Set(this.categories.map((o) => o.id));
+      const categories = new Set<String>();
+      for (const category of this.catalogue.iterateCategoryEntries()) {
+        categories.add(category.id);
+      }
       for (const cl of this.item.categoryLinks || []) {
         if (!categories.has(cl.targetId)) {
           result.push(cl);
