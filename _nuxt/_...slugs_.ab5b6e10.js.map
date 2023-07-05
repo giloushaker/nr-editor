@@ -1,0 +1,1 @@
+{"version":3,"file":"_...slugs_.ab5b6e10.js","sources":["../../../../pages/[...slugs].vue"],"sourcesContent":["<template>{{ $route.params }}</template>\n"],"names":["_sfc_render","_ctx","_cache"],"mappings":"qDAAG,SAAAA,EAAAC,EAAAC,EAAA"}
