@@ -4,13 +4,23 @@
     <table class="editorTable">
       <tr>
         <td>Profile Type: </td>
+
         <td>
-          <select v-model="item.typeId" @change="changedType">
-            <option disabled>-- Select Profile Type --</option>
-            <option :value="ptype.id" v-for="ptype of profileTypes">
-              {{ ptype.name }}
-            </option>
-          </select>
+          <UtilAutocomplete
+            :options="profileTypes"
+            :filterField="(o) => o.getName()"
+            valueField="id"
+            v-model="item.typeId"
+            @change="changed"
+          >
+            <template #option="{ option }">
+              <div class="flex align-items flex-row">
+                <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+                  {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+                </span>
+              </div>
+            </template>
+          </UtilAutocomplete>
         </td>
       </tr>
     </table>
@@ -25,9 +35,9 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -41,6 +51,8 @@ export default {
     },
   },
   methods: {
+    getName,
+    getNameExtra,
     changedType() {
       this.item.getCatalogue().refreshErrors(this.item as EditorBase & (Profile | Link<Profile>));
       this.$emit("catalogueChanged");
