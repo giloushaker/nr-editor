@@ -7,7 +7,7 @@
 
     <div v-if="show" class="fixed bg text">
       <div v-for="error in errors" @click="gotoError(error)" class="border py-3px px-10px hover-darken">
-        {{ errorToText(error) }}
+        <img :src="getErrorImage(error)" class="my-auto align-text-bottom" /> {{ errorToText(error) }}
         <span v-if="errorExtraText(error)" class="grey">{{ errorExtraText(error) }}</span>
       </div>
     </div>
@@ -60,6 +60,15 @@ export default {
     errorExtraText(error: IErrorMessage): string | undefined {
       return error.extra;
     },
+    getErrorImage(o: IErrorMessage): string {
+      let hasWarnings = o.severity === "warning";
+      let hasErrors = !o.severity || o.severity === "error";
+      let hasInfos = !o.severity || o.severity === "info";
+      if (hasErrors) return "./assets/icons/error_exclamation.png";
+      if (hasWarnings) return "./assets/icons/warning_exclamation.png";
+      if (hasInfos) return "./assets/icons/info_exclamation.png";
+      return "./assets/icons/error_exclamation.png";
+    },
     gotoError(error: IErrorMessage) {
       const store = useEditorStore();
       if (error.source) {
@@ -84,6 +93,7 @@ export default {
       if (hasInfos) return "./assets/icons/info_exclamation.png";
       return "./assets/icons/error_exclamation.png";
     },
+
     numErrors(): number {
       return this.errors?.length || 0;
     },

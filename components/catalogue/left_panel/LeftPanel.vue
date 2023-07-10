@@ -276,12 +276,7 @@ export default defineComponent({
         }
         // let t2 = Date.now();
         for (const p of this.store.filtered) {
-          p.showInEditor = true;
-          p.showChildsInEditor = true;
-          p.highlight = true;
-          forEachParent(p as EditorBase, (parent) => {
-            parent.showInEditor = true;
-          });
+          this.store.show(p);
         }
         // let t3 = Date.now();
         await nextTick();

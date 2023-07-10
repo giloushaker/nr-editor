@@ -962,10 +962,10 @@ export const useEditorStore = defineStore("editor", {
       }
       if (this.move_to_key(obj, "shared")) {
         for (const imported of catalogue.imports) {
-          result.push({ target: imported, type: "root" });
           result.push({ target: imported, type: "shared" });
         }
-      } else {
+      }
+      if (this.move_to_key(obj, "root")) {
         for (const imported of catalogue.imports) {
           result.push({ target: imported, type: "root" });
         }
@@ -999,7 +999,7 @@ export const useEditorStore = defineStore("editor", {
         case "selectionEntry":
           return "selectionEntries";
         case "selectionEntryGroup":
-          return "selectionEntryGroups";
+          return "";
         default:
           return obj.parentKey;
       }
@@ -1010,7 +1010,6 @@ export const useEditorStore = defineStore("editor", {
         const catalogueKey = this.move_to_key(obj, type) as ItemKeys;
         if (!catalogueKey) {
           console.error("Could not find key for move", obj.editorTypeName, type);
-
           return;
         }
 
@@ -1023,15 +1022,14 @@ export const useEditorStore = defineStore("editor", {
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
         setPrototypeRecursive({ [catalogueKey]: copy });
-        await onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
-        if (!to[catalogueKey]) {
-          to[catalogueKey] = [];
-        }
+        if (!to[catalogueKey]) to[catalogueKey] = [];
+
         to[catalogueKey]!.push(copy);
+        await onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
 
         const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
         const canBeLinked = linkableTypes.includes(obj.editorTypeName);
-        const shouldMakeLink = canBeLinked && !obj.parentKey.startsWith("shared");
+        const shouldMakeLink = !obj.parentKey.startsWith("shared");
 
         // replace previous obj with link to moved obj
         if (canBeLinked && shouldMakeLink) {
@@ -1049,8 +1047,8 @@ export const useEditorStore = defineStore("editor", {
           const linkKey = obj.isEntry() || obj.isGroup() ? "entryLinks" : "infoLinks";
           setPrototypeRecursive({ [linkKey]: link });
           path[path.length - 1].key = linkKey;
-          await onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
           addAtEntryPath(from, path, link);
+          await onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
         }
       };
       function undo() {
@@ -1089,6 +1087,10 @@ export const useEditorStore = defineStore("editor", {
         return;
       }
       current = current.getElementsByClassName(`depth-0 ${path[0].key}`)[0];
+      if (!current) {
+        console.error("Couldn't find root element for", path[0].key, "in", obj.catalogue.getName());
+        return;
+      }
       await open_el(current);
       const nodes = [] as EditorBase[];
       forEachParent(obj, (parent) => {
@@ -1147,13 +1149,28 @@ export const useEditorStore = defineStore("editor", {
       }
       return false;
     },
+
+    async show(obj: EditorBase, highlight = true) {
+      if (!this.filtered.includes(obj)) {
+        this.filtered.push(obj);
+      }
+      obj.showInEditor = true;
+      obj.showChildsInEditor = true;
+      if (highlight) {
+        obj.highlight = true;
+      }
+      forEachParent(obj as EditorBase, (parent) => {
+        parent.showInEditor = true;
+      });
+    },
     async goto(obj: EditorBase) {
       const targetCatalogue = obj.getCatalogue();
       this.put_current_state_in_history();
       const uistate = useEditorUIState();
       uistate.get_data(targetCatalogue.id).selection = getEntryPath(obj);
-      await this.goto_catalogue(targetCatalogue.id, targetCatalogue.gameSystemId);
 
+      await this.goto_catalogue(targetCatalogue.id, targetCatalogue.gameSystemId);
+      this.show(obj, false);
       const el = await this.open(obj as EditorBase);
       if (el) {
         const context = get_ctx(el);
