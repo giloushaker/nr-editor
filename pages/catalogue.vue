@@ -251,6 +251,9 @@ export default defineComponent({
           });
         }
         loaded.processForEditor();
+        for (const imported of loaded.imports) {
+          imported.processForEditor();
+        }
         this.systemFiles = system;
         this.cat = loaded;
         if (loaded) {
