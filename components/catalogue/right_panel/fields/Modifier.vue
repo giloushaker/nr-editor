@@ -82,7 +82,7 @@ import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
 
 type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-number" | "defaultSelectionEntryId";
-const availableModifiers = {
+const availableModifiers: Record<string, string[]> = {
   selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
   selectionEntryGroup: ["name", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
@@ -92,13 +92,12 @@ const availableModifiers = {
   rule: ["name", "description", "page", "hidden"],
   ruleLink: ["name", "description", "page", "hidden"],
   infoLink: ["name", "page", "hidden"],
-  infoGroup: ["name", , "page", "hidden"],
+  infoGroup: ["name", "page", "hidden"],
   infoGroupLink: ["name", "page", "hidden"],
   force: ["name", "page", "hidden", "constraints"],
   category: ["name", "page", "hidden", "constraints"],
   categoryLink: ["name", "page", "hidden", "constraints"],
-} as any;
-
+};
 const availableTypes = {
   costs: "number",
   name: "string",
@@ -109,6 +108,7 @@ const availableTypes = {
   defaultSelectionEntryId: "defaultSelectionEntryId",
   constraints: "number",
 } as Record<string, FieldTypes>;
+type PossibleTypes = keyof typeof availableTypes;
 function isNumber(value: string | number | boolean | undefined) {
   return !isNaN(parseFloat(value as string)) && isFinite(value as number);
 }
@@ -159,17 +159,39 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
+    getDefaultFieldValue(
+      fieldType: PossibleTypes,
+      fieldTypeName: PossibleTypes,
+      currentValue: string | number | boolean | undefined
+    ) {
+      switch (fieldType) {
+        case "number":
+          return typeof currentValue === "number" ? currentValue : 0;
+        case "category":
+          return this.allCategories[0].id;
+        case "string":
+          let _default: string;
+          if (fieldTypeName === "name") {
+            const _item = this.item as { getName?: () => string };
+            _default = _item.getName ? _item.getName() || "" : "";
+          } else {
+            _default = "";
+          }
+          return typeof currentValue === "string" ? currentValue : _default;
+        case "string-or-number":
+          return ["strint", "number"].includes(typeof currentValue) ? currentValue : "";
+        case "boolean":
+          return typeof currentValue === "boolean" ? currentValue : false;
+        case "defaultSelectionEntryId":
+          return first(this.allGroupEntries)?.id;
+        default:
+          throw Error(`fieldType "${fieldType}" has no default value set"`);
+      }
+    },
     fieldChanged() {
       this.selectedOperation = this.operations[0];
       if (this.selectedField) {
-        this.item.value = {
-          number: 0,
-          category: this.allCategories[0].id,
-          string: "",
-          "string-or-number": "",
-          boolean: false,
-          defaultSelectionEntryId: first(this.allGroupEntries)?.id,
-        }[this.selectedField.type];
+        this.item.value = this.getDefaultFieldValue(this.selectedField.type, this.selectedField.name, this.item.value)!;
       }
       this.changed();
     },
