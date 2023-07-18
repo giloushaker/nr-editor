@@ -65,6 +65,7 @@ import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
+import { filename } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 export default {
@@ -88,7 +89,9 @@ export default {
       const data = getDataObject(this.catalogue);
       const loaded = this.store.get_system(data.gameSystemId || data.id).getLoadedCatalogue({ targetId: data.id });
       const xml = convertToXml(loaded || data);
-      download((data as any).gameSystemId ? `${data.name}.cat` : `${data.name}.gst`, "application/xml", xml);
+      const fileName = data.fullFilePath ? filename(data.fullFilePath) : data.name;
+      const extension = data.gameSystemId ? `cat` : `gst`;
+      download(`${fileName}.${extension}`, "application/xml", xml);
     },
   },
   computed: {

@@ -45,6 +45,7 @@ export const useSettingsStore = defineStore("settings", {
   state: () => ({
     systemsFolder: "" as string | undefined,
     showOnlyEnabledCategories: false,
+    globalDuplicateIdError: false,
     sort: "asc" as string,
     theme: "" as "" | "dark" | "light",
   }),

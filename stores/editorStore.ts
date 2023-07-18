@@ -54,6 +54,7 @@ import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
 import { Router } from "vue-router";
+import { useSettingsStore } from "./settingsState";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 
 export interface IEditorStore {
@@ -387,7 +388,9 @@ export const useEditorStore = defineStore("editor", {
     },
     get_system(id: string) {
       if (!(id in this.gameSystems)) {
-        this.gameSystems[id] = new GameSystemFiles();
+        const system = new GameSystemFiles();
+        system.settings = useSettingsStore() as Record<string, any>;
+        this.gameSystems[id] = system;
       }
       return this.gameSystems[id];
     },

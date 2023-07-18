@@ -20,7 +20,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
+import { addOne, capitalize, sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon, { IErrorMessage } from "./ErrorIcon.vue";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
@@ -65,16 +65,31 @@ export default {
         });
       }
       const errors = (getDataObject(data) as any as { errors: IErrorMessage[] }).errors;
+
       if (errors?.length) {
+        const counts = {} as Record<string, number>;
+
+        for (const error of errors) {
+          if (error.severity) {
+            addOne(counts, error.severity);
+          } else {
+            addOne(counts, "error");
+          }
+        }
+
+        let msgPieces = [];
+        for (const key in counts) {
+          msgPieces.push(`${counts[key]} ${capitalize(key)}${counts[key] === 1 ? "" : "s"}`);
+        }
         if (errors.find((o) => o.severity === "error")) {
           result.push({
             severity: "error",
-            msg: "Has Errors",
+            msg: `Has ${msgPieces.join(", ")}`,
           });
         } else if (errors.find((o) => o.severity === "warning")) {
           result.push({
             severity: "warning",
-            msg: "Has Warnings",
+            msg: `Has ${msgPieces.join(", ")}`,
           });
         }
       }
