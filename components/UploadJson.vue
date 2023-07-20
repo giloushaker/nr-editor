@@ -40,7 +40,7 @@ async function onFileSelected(event: any) {
     for (const file of input_files.filter((o) => isAllowedExtension(o.name))) {
       const content = isZipExtension(file.name) ? await file.arrayBuffer() : await file.text();
       const asJson = await convertToJson(content, getExtension(file.name));
-      const obj = ((getDataObject(asJson) as any).fullFilePath = "none");
+      getDataObject(asJson).fullFilePath = file.name;
       result_files.push(asJson);
     }
     if (result_files.length) {
