@@ -61,7 +61,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { convertToXml } from "~/assets/shared/battlescribe/bs_convert";
+import { convertToXml, getExtension, removeExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download } from "~/assets/shared/util";
@@ -89,7 +89,7 @@ export default {
       const data = getDataObject(this.catalogue);
       const loaded = this.store.get_system(data.gameSystemId || data.id).getLoadedCatalogue({ targetId: data.id });
       const xml = convertToXml(loaded || data);
-      const fileName = data.fullFilePath ? filename(data.fullFilePath) : data.name;
+      const fileName = data.fullFilePath ? removeExtension(filename(data.fullFilePath)) : data.name;
       const extension = data.gameSystemId ? `cat` : `gst`;
       download(`${fileName}.${extension}`, "application/xml", xml);
     },
