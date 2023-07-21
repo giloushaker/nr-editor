@@ -66,7 +66,7 @@
             <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
             <ErrorIcon :errors="item.errors" />
             <span :class="{ imported: imported, filtered: item.highlight }">
-              {{ getName(item) }}
+              {{ name }}
             </span>
             <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
             <span class="ml-10px" v-if="costs" v-html="costs" />
@@ -244,7 +244,7 @@ import {
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Link } from "~/assets/shared/battlescribe/bs_main";
+import { Condition, Link } from "~/assets/shared/battlescribe/bs_main";
 import {
   generateBattlescribeId,
   sortByAscending,
@@ -257,6 +257,7 @@ import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
 import { allowed_children } from "~/assets/shared/battlescribe/bs_convert";
+import { getModifiedField } from "~/assets/shared/battlescribe/bs_modifiers";
 export interface ICost {
   name: string;
   value: number;
@@ -337,6 +338,7 @@ export default {
       contextmenuopen: false,
       open: false,
       open_categories: undefined as Set<string> | undefined,
+      name: "",
     };
   },
   mounted() {
@@ -355,6 +357,17 @@ export default {
         }
       }
     }
+  },
+  watch: {
+    "scope.name"(_new) {
+      this.name = getName(this.item);
+    },
+    _name: {
+      immediate: true,
+      handler(_new) {
+        this.name = _new;
+      },
+    },
   },
   methods: {
     escapeXml,
@@ -508,6 +521,18 @@ export default {
     //   }
     //   return result ? result + " " : result;
     // },
+    _name() {
+      return getName(this.item);
+    },
+    scope() {
+      const _item = this.item as Condition & EditorBase;
+      if (_item.scope) {
+        const result = getModifiedField(_item, _item.scope);
+        if (result) {
+          return reactive(result);
+        }
+      }
+    },
     costs() {
       const result = [] as ICost[];
       const catalogue = this.item.getCatalogue();

@@ -139,6 +139,7 @@ export default defineComponent({
         this.store.unselect();
         try {
           await this.load(gameSystemId, this.id);
+          this.systemFiles?.loadAll();
           this.error = null;
 
           // Resolve a promise in the store so that code elsewhere can wait for this to load

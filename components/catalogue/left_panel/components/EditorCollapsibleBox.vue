@@ -17,12 +17,12 @@
       @click.stop="do_select"
       @click.ctrl.stop="$emit('ctrlclick')"
       @click.alt.stop="$emit('altclick')"
-      @dblclick="collapseSwitch"
+      @dblclick="collapseSwitch($event.shiftKey)"
       @paste="paste"
       @copy="paste"
       @cut="paste"
     >
-      <div class="arrow-wrap" @click.stop="collapseSwitch">
+      <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
 
@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { useEditorStore } from "~/stores/editorStore";
+import { get_ctx, useEditorStore } from "~/stores/editorStore";
 
 export default {
   name: "EditorCollapsibleBox",
@@ -184,14 +184,40 @@ export default {
       this.selected = false;
     },
     open() {
+      this.initiated = true;
+
       if (this.collapsed) {
-        this.collapseSwitch();
+        this.collapsed = false;
+        this.$emit("open");
+      }
+    },
+    async open_recursive() {
+      this.open();
+      await this.$nextTick();
+      const el = this.$el as HTMLDivElement;
+      if (el) {
+        for (const nested of el.getElementsByClassName("collapsible-box")) {
+          await get_ctx(nested)?.open_recursive();
+        }
       }
     },
     close() {
+      this.initiated = true;
+
       if (!this.collapsed) {
-        this.collapseSwitch();
+        this.collapsed = true;
+        this.$emit("close");
       }
+    },
+    async close_recursive() {
+      const el = this.$el as HTMLDivElement;
+      if (el) {
+        for (const nested of el.getElementsByClassName("collapsible-box")) {
+          get_ctx(nested)?.close_recursive();
+        }
+      }
+      await this.$nextTick();
+      this.close();
     },
     do_select(e: MouseEvent) {
       this.store.do_select(e, this as any, this.group);
@@ -200,13 +226,13 @@ export default {
     do_rightcllick_select(e: MouseEvent) {
       this.store.do_rightclick_select(e, this as any, this.group);
     },
-    collapseSwitch() {
+    async collapseSwitch(deep?: boolean) {
       this.collapsed = !this.collapsed;
       this.initiated = true;
       if (this.collapsed == false) {
-        this.$emit("open");
+        deep ? await this.open_recursive() : this.open();
       } else {
-        this.$emit("close");
+        deep ? await this.close_recursive() : this.close();
       }
     },
     handleKeyDown(event: KeyboardEvent) {
