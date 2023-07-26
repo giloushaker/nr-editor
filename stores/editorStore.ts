@@ -424,7 +424,8 @@ export const useEditorStore = defineStore("editor", {
      */
     async save_catalogue(system: GameSystemFiles, catalogue: Catalogue): Promise<boolean> {
       const revision = catalogue.revision;
-      if (system.github) {
+      const settings = useSettingsStore();
+      if (system.github && settings.githubAutoIncrement) {
         catalogue.revision = await getNextRevision(system.github, catalogue);
       }
       saveCatalogue(catalogue);

@@ -11,6 +11,10 @@
       <input type="checkbox" id="global-duplicate-id-error" v-model="settings.globalDuplicateIdError" />
       <label for="global-duplicate-id-error">Check for duplicate ids across all catalogues (requires reload)</label>
     </div>
+    <div>
+      <input type="checkbox" id="github-auto-increment" v-model="settings.githubAutoIncrement" />
+      <label for="github-auto-increment">Auto increment revision when saving (requires github integration)</label>
+    </div>
   </div>
 </template>
 <script>
