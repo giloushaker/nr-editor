@@ -66,7 +66,7 @@ export default {
   border: 1px $box_border solid;
   padding: 3px;
   text-align: left;
-  background-color: $background_color;
+  background-color: $input_background;
 }
 
 [contentEditable="true"]:empty:not(:focus):before {
