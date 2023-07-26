@@ -4,9 +4,9 @@
     <table class="editorTable">
       <tr>
         <td>Unique ID:</td>
-        <td class="flex gap-5px">
+        <td class="flex gap-2px">
           <input type="text" v-model="id" @change="changed" class="flex flex-shrink" />
-          <button class="bouton !w-32px flex m-0 p-0 mr-8px" @click="refresh">
+          <button class="btn !w-34px flex items-center mr-8px" @click="refresh">
             <span>
               <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generated Id" />
             </span>
@@ -60,4 +60,10 @@ export default {
   },
 };
 </script>
-<style></style>
+<style>
+.btn {
+  border: 1px solid var(--box-border, #aaa);
+  background-color: var(--input-background);
+  box-shadow: 2px 2px 5px -2px var(--box-border, #aaa);
+}
+</style>
