@@ -12,21 +12,14 @@
         No Primary
       </div>
 
-      <div v-for="cat of categories" class="category" :key="cat.id">
-        <div>
-          <input name="primary" type="radio" :checked="hasCategory(cat) == 2" @change="primaryChanged(cat)" />
-          Primary?
-        </div>
-        <div>
-          <input
-            :id="`cat${cat.id}`"
-            type="checkbox"
-            :checked="hasCategory(cat) != 0"
-            @change="secondaryChanged(cat)"
-          />
-          <label :for="`cat${cat.id}`">{{ cat.name }}</label>
-        </div>
-      </div>
+      <Category
+        v-for="cat of categories"
+        :category="cat"
+        :item="item"
+        :key="cat.id"
+        @primaryChanged="primaryChanged"
+        @secondaryChanged="secondaryChanged"
+      />
 
       <div v-for="cat of badLinks" class="category" :key="cat.id">
         <div>
@@ -51,8 +44,10 @@ import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { useSettingsStore } from "~/stores/settingsState";
+import CategoryVue from "~/components/catalogue/right_panel/fields/Category.vue";
 
 export default {
+  components: { Category: CategoryVue },
   emits: ["catalogueChanged"],
   data() {
     return {
@@ -143,18 +138,6 @@ export default {
     changed() {
       this.$emit("catalogueChanged");
     },
-
-    hasCategory(cat: Category) {
-      let link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
-      if (!link) {
-        return 0;
-      }
-      if (link.primary) {
-        return 2;
-      }
-      return 1;
-    },
-
     noPrimary() {
       let res = true;
       if (this.item.categoryLinks) {
@@ -204,12 +187,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.category {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  grid-gap: 20px;
-}
-
 .categoryList {
   max-height: 200px;
   overflow: auto;

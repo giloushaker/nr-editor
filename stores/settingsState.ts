@@ -48,6 +48,7 @@ export const useSettingsStore = defineStore("settings", {
     globalDuplicateIdError: false,
     sort: "asc" as string,
     theme: "" as "" | "dark" | "light",
+    githubAutoIncrement: true,
   }),
 
   persist: {

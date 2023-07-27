@@ -492,7 +492,7 @@ export default {
           });
         },
         close: (event: MouseEvent, e: any) => {
-          (this.$refs[ref] as any)?.se(event, e);
+          (this.$refs[ref] as any)?.close(event, e);
           this.contextmenuopen = false;
         },
       };
