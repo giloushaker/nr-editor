@@ -26,7 +26,7 @@
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
               <NuxtLink :to="`/search/${gst.getId()}`">
-                <img class="w-24px h-24px align-bottom" src="assets/icons/search.png" title="Search" />
+                <img class="w-24px h-24px align-bottom icon" src="assets/icons/search.png" title="Search" />
               </NuxtLink>
               <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
                 <img
