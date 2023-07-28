@@ -4,6 +4,7 @@ const { autoUpdater } = require("electron-updater");
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles } from "./files";
 import { entry, options } from "./entry";
+import { ProtocolRequest } from "electron";
 
 export function stripHtml(originalString: string): string {
   if (originalString == null) {
@@ -95,7 +96,6 @@ const createSecondaryWindow = () => {
     width: 1200,
     height: 900,
     autoHideMenuBar: true,
-    nativeWindowOpen: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -112,25 +112,28 @@ const createMainWindow = () => {
   // Intercept file protocol to fix loading images
   const imageRegex = /(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i;
   const cleanDirName = __dirname.replaceAll("\\", "/");
-  protocol.interceptFileProtocol("file", (request: { url: string; path: any }, callback: (arg0: any) => void) => {
-    if (!request.url.match(imageRegex)) {
-      callback(request);
-      return;
-    }
+  protocol.interceptFileProtocol(
+    "file",
+    (request: ProtocolRequest & { path?: string }, callback: (arg0: any) => void) => {
+      if (!request.url.match(imageRegex)) {
+        callback(request);
+        return;
+      }
 
-    if (request.url.includes("app.asar")) {
-      request.url = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+      if (request.url.includes("app.asar")) {
+        request.url = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+        callback(request);
+        return;
+      }
+      //  move what comes after /assets to correct path
+      if (request.url.includes("/assets/")) {
+        const ressource = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+        request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
+        request.path = ressource;
+      }
       callback(request);
-      return;
     }
-    //  move what comes after /assets to correct path
-    if (request.url.includes("/assets/")) {
-      const ressource = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
-      request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
-      request.path = ressource;
-    }
-    callback(request);
-  });
+  );
 
   // Expose all node functions to invoke
   const fs = require("fs");
@@ -171,7 +174,9 @@ const createMainWindow = () => {
   });
   ipcMain.handle("closeWindow", async (event: { sender: any }, ...args: any) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await wnd.close(...args);
+    if (wnd) {
+      return await wnd.close(...args);
+    }
   });
   ipcMain.handle("getFolderFiles", async (event: any, path: string) => {
     return await getFolderFiles(path);
@@ -181,13 +186,17 @@ const createMainWindow = () => {
   });
   ipcMain.handle("chokidarWatchFile", async (event: { sender: any }, path: string) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    add_watcher(path, win.id, (_path, stats) => {
-      win.webContents.send("fileChanged", path, stats);
-    });
+    if (win) {
+      add_watcher(path, win.id, (_path, stats) => {
+        win.webContents.send("fileChanged", path, stats);
+      });
+    }
   });
   ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    remove_watcher(path, win.id);
+    if (win) {
+      remove_watcher(path, win.id);
+    }
   });
 
   // Bypass cors
@@ -203,7 +212,7 @@ const createMainWindow = () => {
 
   session.defaultSession.webRequest.onHeadersReceived(
     filter,
-    (details: { responseHeaders: { [x: string]: string[] } }, callback: (arg0: { responseHeaders: any }) => void) => {
+    (details, callback: (arg0: { responseHeaders: any }) => void) => {
       if (details.responseHeaders) {
         details.responseHeaders["Access-Control-Allow-Origin"] = ["*"];
       }
@@ -217,7 +226,6 @@ const createMainWindow = () => {
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
-      enableRemoteModule: true,
       preload: path.join(__dirname, "preload.js"),
     },
   });
