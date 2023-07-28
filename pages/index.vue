@@ -25,9 +25,12 @@
           <fieldset v-for="gst in systems">
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+              <NuxtLink :to="`/search/${gst.getId()}`">
+                <img class="w-24px h-24px align-bottom" src="assets/icons/search.png" title="Search" />
+              </NuxtLink>
               <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
                 <img
-                  class="w-24px h-24px align-bottom"
+                  class="w-24px h-24px ml-5px align-bottom"
                   :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
                   :title="`using repo at ${gst.github.githubUrl}`"
                 />

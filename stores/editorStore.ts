@@ -21,9 +21,19 @@ import {
   textSearchRegex,
   zipCompress,
   forEachParent,
+  addObj,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Base, Link, entriesToJson, entryToJson, goodJsonKeys, rootToJson } from "~/assets/shared/battlescribe/bs_main";
+import {
+  Base,
+  Link,
+  entriesToJson,
+  entryToJson,
+  goodJsonKeys,
+  rootToJson,
+  Characteristic,
+  Rule,
+} from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
@@ -476,6 +486,8 @@ export const useEditorStore = defineStore("editor", {
     init(component: any) {
       this.catalogueComponent = component as CatalogueComponentT;
       (globalThis as any).$store = this;
+      (globalThis as any).$search = (q: string) =>
+        this.system_search(this.catalogueComponent?.systemFiles!, { filter: q });
     },
     /**
      * Force the left panel to re-render, used for setting its state by having it reload the saved state
@@ -1331,6 +1343,89 @@ export const useEditorStore = defineStore("editor", {
         this.historyStackPos += 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
       }
+    },
+    async update_catalogue_search(catalogue: Catalogue, data: { filter: string; ignoreProfilesRules: boolean }) {
+      const { filter, ignoreProfilesRules } = data;
+      const prev = this.filtered as EditorBase[];
+      for (const p of prev) {
+        delete p.showInEditor;
+        delete p.showChildsInEditor;
+        delete p.highlight;
+        forEachParent(p as EditorBase, (parent) => {
+          delete parent.showInEditor;
+          delete p.showChildsInEditor;
+        });
+      }
+      if (this.filter.length <= 1) {
+        this.set_filter("");
+        this.filtered = [];
+        return;
+      }
+
+      this.set_filter(filter);
+      this.filtered = catalogue.findOptionsByText(filter) as EditorBase[];
+      if (ignoreProfilesRules) {
+        this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+      }
+      for (const p of this.filtered) {
+        this.show(p);
+      }
+      await nextTick();
+
+      if (this.filtered.length < 300) {
+        for (const p of this.filtered) {
+          if (!p.parent) continue;
+          try {
+            await this.open(p as EditorBase, false);
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+    },
+    async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
+      const result = [] as EditorBase[];
+
+      const { filter } = query;
+      if (!filter) return null;
+      const regx = textSearchRegex(filter);
+      let more = false;
+
+      await system.loadAll();
+      for (const file of system.getAllLoadedCatalogues()) {
+        file.forEachObjectWhitelist((val: EditorBase, parent) => {
+          if (result.length >= max) return;
+          if (val.isLink()) {
+            if (val.target && val.isCategory() && !parent?.isForce()) {
+              return;
+            }
+          }
+
+          const name = val.getName?.call(val);
+          const text = (val as any as Characteristic).$text;
+          const desc = (val as any as Rule).description;
+          const id = val.id;
+          if (id === filter) {
+            result.push(val);
+          } else if ((name && String(name).match(regx)) || id === filter) {
+            result.push(val);
+          } else if (text && String(text).match(regx)) {
+            result.push(val);
+          } else if (desc && String(desc).match(regx)) {
+            result.push(val);
+          }
+        });
+        if (result.length >= max) {
+          more = true;
+          break;
+        }
+      }
+      console.log("Search for", `"${filter}"`, "found", result.length, "results");
+      const grouped = {} as Record<string, EditorBase[]>;
+      for (const found of result) {
+        addObj(grouped, found.catalogue.name, found);
+      }
+      return { grouped, all: result, more };
     },
   },
 });

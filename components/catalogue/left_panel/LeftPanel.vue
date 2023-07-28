@@ -222,7 +222,7 @@ export default defineComponent({
       if (key === "escape") {
         (this.$refs["editor-searchbox"] as HTMLInputElement).blur();
         this.store.filter = "";
-        this.update(this.filterData);
+        this.store.update_catalogue_search(this.catalogue, this.filterData);
       }
       if (tagName === "body") {
         if (e.ctrlKey && key === "z") {
@@ -255,7 +255,7 @@ export default defineComponent({
         }
       }
     },
-    async update(data: any) {
+    async update(data: { filter: string; ignoreProfilesRules: boolean }) {
       const { filter, ignoreProfilesRules } = data;
       const prev = this.store.filtered as EditorBase[];
       for (const p of prev) {
