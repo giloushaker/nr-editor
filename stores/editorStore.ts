@@ -568,9 +568,10 @@ export const useEditorStore = defineStore("editor", {
     get_selected(): EditorBase | undefined {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
-    async do_action(type: string, undo: () => void | Promise<void>, redo: () => void | Promise<void>) {
+    async do_action(type: string, undo: () => void | Promise<void>, redo: () => any | Promise<any>) {
+      let result;
       try {
-        await redo();
+        result = await redo();
       } catch (e) {
         console.error(e);
         return;
@@ -583,6 +584,7 @@ export const useEditorStore = defineStore("editor", {
         this.undoStack.push({ type, undo, redo });
       }
       this.undoStackPos += 1;
+      return result;
     },
     /**
      * Set the content of the clipboard, accepts an event to better conform with browser security/permissions stuff
@@ -804,10 +806,10 @@ export const useEditorStore = defineStore("editor", {
             await onAddEntry(copy, catalogue, item, this.get_system(sysId));
 
             // Show the newly added entries even if there is a search filter
-
             addeds.push(copy);
           }
         }
+        return addeds[0];
       };
       const undo = () => {
         for (const entry of addeds) {
@@ -815,8 +817,9 @@ export const useEditorStore = defineStore("editor", {
           onRemoveEntry(entry);
         }
       };
-      await this.do_action("add", undo, redo);
+      const initial = await this.do_action("add", undo, redo);
       this.set_catalogue_changed(catalogue, true);
+      return initial;
     },
     open_selected() {
       for (const el of this.selections as any[]) {
@@ -947,7 +950,7 @@ export const useEditorStore = defineStore("editor", {
       if (!["modifiers", "conditions", "modifierGroups", "conditionGroups"].includes(key)) {
         obj.id = generateBattlescribeId();
       }
-      await this.add(obj, key);
+      const added = await this.add(obj, key);
       this.open_selected();
     },
     /**
@@ -1191,6 +1194,9 @@ export const useEditorStore = defineStore("editor", {
 
       await this.goto_catalogue(targetCatalogue.id, targetCatalogue.gameSystemId);
       this.show(obj, false);
+      await this.scrollto(obj);
+    },
+    async scrollto(obj: EditorBase) {
       const el = await this.open(obj as EditorBase);
       if (el) {
         const context = get_ctx(el);

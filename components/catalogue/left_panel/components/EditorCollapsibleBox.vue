@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { get_ctx, useEditorStore } from "~/stores/editorStore";
+import { get_ctx, get_base_from_vue_el, useEditorStore } from "~/stores/editorStore";
 
 export default {
   name: "EditorCollapsibleBox",
@@ -172,6 +172,7 @@ export default {
       if (data?.select !== undefined) {
         if (data.select) {
           this.store.do_select(null, this as any, this.group);
+          this.store.scrollto(get_base_from_vue_el(this));
         }
         delete data?.select;
       }
