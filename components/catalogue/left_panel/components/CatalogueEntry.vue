@@ -290,6 +290,7 @@ export function formatCosts(costs: ICost[]): string {
   return `<span class="costList">${res}</span>`;
 }
 const order: Record<string, number> = {
+  link: 1,
   selectionEntry: 1,
   entryLink: 1,
   selectionEntryGroup: 2,
@@ -297,10 +298,13 @@ const order: Record<string, number> = {
   constraint: 3,
   forceEntry: 4,
   profile: 5,
-  modifier: 6,
-  modifierGroup: 7,
-  categoryLink: 8,
-  infoLink: 9,
+  rule: 6,
+  infoGroup: 7,
+  infoLink: 8,
+  modifier: 9,
+  modifierGroup: 10,
+  categoryLink: 11,
+  association: 12,
 };
 const noSort = new Set(["force"]);
 
@@ -471,22 +475,28 @@ export default {
 
     sorted(items: CatalogueEntryItem[]) {
       if (!this.sortable(this.item)) {
-        return sortByDescending(items, (o) => order[o.item.editorTypeName] || 1000);
+        return items;
       }
       switch (this.settings.sort) {
         default:
         case "asc":
           const asc = sortByAscending(items, (o) => o.item.getName() || "");
-          return sortByDescending(asc, (o) => order[o.item.editorTypeName] || 1000);
+          return asc;
         case "desc":
           const desc = sortByDescending(items, (o) => o.item.getName() || "");
-          return sortByDescending(desc, (o) => order[o.item.editorTypeName] || 1000);
+          return desc;
         case "type":
           const type = sortByAscending(items, (o) => {
             return (o.item.isProfile() ? o.item.getTypeName() : o.item.getType()) || "";
           });
-          return sortByDescending(type, (o) => order[o.item.editorTypeName] || 1000);
+          return type;
       }
+    },
+    grouped(items: CatalogueEntryItem[]) {
+      return sortByAscending(
+        this.sorted(items),
+        (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
+      );
     },
 
     menu(ref: string) {
@@ -527,6 +537,9 @@ export default {
     //   }
     //   return result ? result + " " : result;
     // },
+    order() {
+      return order;
+    },
     _name() {
       return getName(this.item);
     },
@@ -615,9 +628,9 @@ export default {
             }
           }
         }
-        return [...this.sorted(targetChilds), ...this.sorted(childs)];
+        return [...this.grouped(targetChilds), ...this.grouped(childs)];
       }
-      return this.sorted(childs);
+      return this.grouped(childs);
     },
     categories() {
       if (this.item.isCatalogue()) {
@@ -633,7 +646,7 @@ export default {
         if (category.links) this.getTypedArray(this.item as any, category.links, items);
         return {
           ...category,
-          items: this.sorted(items),
+          items: this.grouped(items),
         };
       });
     },
