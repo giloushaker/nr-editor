@@ -789,17 +789,21 @@ export const useEditorStore = defineStore("editor", {
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
-            arr.push(copy);
-            await onAddEntry(copy, catalogue, item, this.get_system(sysId));
 
-            // Show the newly added entries even if there is a search filter
+            // Show it event if there is a filter
+            this.filtered.push(copy);
             copy.showChildsInEditor = true;
             let cur = copy;
             while (cur) {
               cur.showInEditor = true;
               cur = cur.parent;
             }
-            this.filtered.push(copy);
+
+            // Add it to its parent
+            arr.push(copy);
+            await onAddEntry(copy, catalogue, item, this.get_system(sysId));
+
+            // Show the newly added entries even if there is a search filter
 
             addeds.push(copy);
           }

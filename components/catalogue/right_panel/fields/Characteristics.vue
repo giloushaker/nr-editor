@@ -71,6 +71,7 @@ export default {
       for (const c of this.item.characteristics || []) {
         existing[c.name] = c.$text;
       }
+      if (!this.item.typeId) return [];
       const type = this.catalogue.findOptionById(this.item.typeId) as ProfileType;
       if (!this.item.isLink()) {
         this.item.typeName = type?.name;
