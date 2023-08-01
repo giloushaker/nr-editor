@@ -91,13 +91,19 @@
         <template v-if="!payload && item">
           <div v-if="store.can_follow(item)" @click="store.follow(link)">
             Follow
-            <span class="gray" v-if="link.target.catalogue !== item.catalogue">
-              &nbsp;({{ link.target.catalogue?.getName() || link.target.getName() }})
+            <span class="gray" v-if="link.target.getCatalogue() !== item.getCatalogue()">
+              &nbsp;({{ link.target.getCatalogue()?.getName() || link.target.getName() }})
             </span>
           </div>
           <div v-if="imported" @click="store.goto(item)">
             Goto
-            <span class="gray"> &nbsp;({{ item.catalogue?.getName() }}) </span>
+            <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
+          </div>
+          <div v-if="child && store.can_goto(child)" @click="store.goto(child)">
+            Goto {{ child.getName() }}
+            <span class="gray" v-if="item.getCatalogue() !== child.getCatalogue()">
+              &nbsp;({{ child.getCatalogue().getName() }})
+            </span>
           </div>
           <div v-if="item.links?.length || item.other_links?.length" @click="store.mode = 'references'">
             References ({{ item.links ? item.links.length : 0 }})
@@ -244,7 +250,7 @@ import {
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Condition, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Condition, Link } from "~/assets/shared/battlescribe/bs_main";
 import {
   generateBattlescribeId,
   sortByAscending,
@@ -548,6 +554,13 @@ export default {
         }
       }
       return formatCosts(result);
+    },
+    childId(): string | undefined {
+      return (this.item as any as Condition).childId;
+    },
+    child() {
+      if (!this.childId) return undefined;
+      return this.item.getCatalogue().findOptionById(this.childId) as EditorBase;
     },
     link(): Link & EditorBase {
       return this.item as Link & EditorBase;

@@ -1211,6 +1211,10 @@ export const useEditorStore = defineStore("editor", {
         }, 50);
       }
     },
+    can_goto(obj?: EditorBase | string): boolean {
+      if (!obj) return false;
+      return typeof obj === "object" && obj instanceof Base;
+    },
     can_follow(obj?: EditorBase): boolean {
       return Boolean(obj?.target);
     },
