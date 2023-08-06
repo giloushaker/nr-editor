@@ -71,6 +71,16 @@ export default {
   },
 
   methods: {
+    hasCategory(cat: Category) {
+      let link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
+      if (!link) {
+        return 0;
+      }
+      if (link.primary) {
+        return 2;
+      }
+      return 1;
+    },
     primaryChanged(cat: Category | null) {
       this.refreshCategories(this.item, cat, true);
     },
