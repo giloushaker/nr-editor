@@ -471,7 +471,7 @@ export const useEditorStore = defineStore("editor", {
         failed = true;
       }
       if (incremented) {
-        notify(`Incremented ${incremented} catalogue's revision"`);
+        notify(`Incremented ${incremented} catalogue's revision`);
       }
       return failed;
     },
@@ -626,6 +626,7 @@ export const useEditorStore = defineStore("editor", {
       return Boolean(this.undoStack[this.undoStackPos]);
     },
     async undo() {
+      if (!this.can_undo()) return;
       const action = this.undoStack[this.undoStackPos];
       if (action) {
         await action.undo();
@@ -636,6 +637,7 @@ export const useEditorStore = defineStore("editor", {
       return Boolean(this.undoStack[this.undoStackPos + 1]);
     },
     async redo() {
+      if (!this.can_redo()) return;
       const action = this.undoStack[this.undoStackPos + 1];
       if (action) {
         await action.redo();

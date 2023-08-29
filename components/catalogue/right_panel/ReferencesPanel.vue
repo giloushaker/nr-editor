@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
-    <p class="ml-10px info"> Click Load All to have refs from all other catalogues appear. </p>
+    <!-- <p class="ml-10px info"> Click Load All to have refs from all other catalogues appear. </p> -->
     <table class="mb-20px">
       <tr>
         <th> Catalogue </th>
