@@ -14,10 +14,10 @@
         <option value="instanceOf">Instance Of</option>
         <option value="notInstanceOf">Not Instance Of</option>
       </select>
-      <UtilNumberInput v-model="item.value" @change="changed" />
+      <UtilNumberInput :disabled="instanceOf" v-model="item.value" @change="changed" />
       <div>
-        <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
-        <label for="percent">Percentage?</label>
+        <input :disabled="instanceOf" id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
+        <label :class="{ disabled: instanceOf }" for="percent">Percentage?</label>
       </div>
     </div>
   </fieldset>
@@ -48,6 +48,9 @@ export default {
   computed: {
     allowNonInstanceOf() {
       return ["primary-category", "ancestor"].includes(this.item.scope) == false;
+    },
+    instanceOf() {
+      return this.item.type.includes("instance");
     },
   },
   components: { NumberInput },
