@@ -468,6 +468,7 @@ export const useEditorStore = defineStore("editor", {
           }
         }
       } catch (e) {
+        notify({ text: `Failed to save: ${(e as Error).name}: ${(e as Error).message}`, type: "error" });
         failed = true;
       }
       if (incremented) {
