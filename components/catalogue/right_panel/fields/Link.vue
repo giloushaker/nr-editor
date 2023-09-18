@@ -51,12 +51,12 @@
             @change="targetIdChanged"
           >
             <template #option="opt">
-              <div>
+              <div style="white-space: nowrap">
                 <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared)</span>
-                <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
+                <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue.name }}]</span>
               </div>
             </template>
           </UtilAutocomplete>

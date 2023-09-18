@@ -2,32 +2,46 @@
   <fieldset>
     <legend>Quick Constraints</legend>
     <div class="columns">
-      <div class="buttonList">
+      <div class="column">
         <button class="bouton" @click="add('min', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MIN 1 IN PARENT
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MIN 1 IN PARENT</span>
         </button>
         <button class="bouton" v-if="withCategory" @click="add('min', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MIN 1 IN CATEGORY
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MIN 1 IN CATEGORY</span>
         </button>
         <button class="bouton" @click="add('min', 'force')">
-          <img src="/assets/icons/iconeplus.png" />MIN 1 IN FORCE
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MIN 1 IN FORCE</span>
         </button>
         <button class="bouton" @click="add('min', 'roster')">
-          <img src="/assets/icons/iconeplus.png" />MIN 1 IN ROSTER
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MIN 1 IN ROSTER</span>
         </button>
       </div>
-      <div class="buttonList">
+      <div class="column">
         <button class="bouton" @click="add('max', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MAX 1 IN PARENT
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MAX 1 IN PARENT</span>
         </button>
         <button class="bouton" v-if="withCategory" @click="add('max', 'parent')">
-          <img src="/assets/icons/iconeplus.png" />MAX 1 IN CATEGORY
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MAX 1 IN CATEGORY</span>
         </button>
         <button class="bouton" @click="add('max', 'force')">
-          <img src="/assets/icons/iconeplus.png" />MAX 1 IN FORCE
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MAX 1 IN FORCE</span>
         </button>
         <button class="bouton" @click="add('max', 'roster')">
-          <img src="/assets/icons/iconeplus.png" />MAX 1 IN ROSTER
+          <img src="/assets/icons/iconeplus.png" /><span class="text">MAX 1 IN ROSTER</span>
+        </button>
+      </div>
+      <div class="column">
+        <button class="bouton" @click="add('exactly', 'parent')">
+          <img src="/assets/icons/iconeplus.png" /><span class="text">EXACTLY 1 IN PARENT</span>
+        </button>
+        <button class="bouton" v-if="withCategory" @click="add('exactly', 'parent')">
+          <img src="/assets/icons/iconeplus.png" /><span class="text">EXACTLY 1 IN CATEGORY</span>
+        </button>
+        <button class="bouton" @click="add('exactly', 'force')">
+          <img src="/assets/icons/iconeplus.png" /><span class="text">EXACTLY 1 IN FORCE</span>
+        </button>
+        <button class="bouton" @click="add('exactly', 'roster')">
+          <img src="/assets/icons/iconeplus.png" /><span class="text">EXACTLY 1 IN ROSTER</span>
         </button>
       </div>
     </div>
@@ -74,17 +88,21 @@ export default {
 
 <style scoped>
 .columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-
+.column {
+  flex: 1;
+  flex-wrap: wrap;
+}
 .bouton {
   width: 100%;
+  font-size: 15px !important;
+  text-align: left !important;
 }
-
-.buttonList {
-  display: grid;
-  grid-gap: 10px;
+.text {
+  margin-left: 28px;
 }
 </style>

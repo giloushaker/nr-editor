@@ -40,7 +40,7 @@
         @change="changed"
       >
         <template #option="{ option }">
-          <div class="flex align-items flex-row">
+          <div class="flex align-items flex-row" style="white-space: nowrap">
             <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
               {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
             </span>
@@ -56,7 +56,7 @@
         @change="changed"
       >
         <template #option="{ option }">
-          <div class="flex align-items flex-row">
+          <div class="flex align-items flex-row" style="white-space: nowrap">
             <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
               {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
             </span>
