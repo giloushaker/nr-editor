@@ -140,7 +140,7 @@ export default {
   computed: {
     dropdownSrc() {
       let n = 2;
-      let images = [`./assets/icons/right${n}.png`, `./assets/icons/down${n}.png`];
+      let images = [`assets/icons/right${n}.png`, `assets/icons/down${n}.png`];
       let index = this.collapsed ? 0 : 1;
       return images[index];
     },

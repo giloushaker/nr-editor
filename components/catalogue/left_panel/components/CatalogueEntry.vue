@@ -27,7 +27,7 @@
           <template #title>
             <span>
               <span class="typeIcon-wrapper">
-                <img class="typeIcon" :src="`./assets/bsicons/${category.icon}`" />
+                <img class="typeIcon" :src="`assets/bsicons/${category.icon}`" />
               </span>
               {{ category.name }}
             </span>
@@ -61,7 +61,7 @@
         <template #title>
           <span>
             <span class="typeIcon-wrapper">
-              <img class="typeIcon" :src="`./assets/bsicons/${item.editorTypeName}.png`" />
+              <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
             </span>
             <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
             <ErrorIcon :errors="item.errors" />

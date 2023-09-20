@@ -25,7 +25,7 @@
         <td>Link To:</td>
         <td>
           <template v-if="item.target">
-            <img class="linkIcon" v-if="item.type" :src="`./assets/bsicons/${getType(item)}.png`" />
+            <img class="linkIcon" v-if="item.type" :src="`assets/bsicons/${getType(item)}.png`" />
             {{ item.target.name }}
           </template>
           <template v-else>
@@ -52,7 +52,7 @@
           >
             <template #option="opt">
               <div style="white-space: nowrap">
-                <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
+                <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared)</span>
