@@ -43,11 +43,11 @@ export default {
   methods: {
     getType(item: BSIData) {
       if (item.gameSystem) {
-        return { icon: "./assets/icons/system1.png", order: 1 };
+        return { icon: "/assets/icons/system1.png", order: 1 };
       } else if (item.catalogue?.library) {
-        return { icon: "./assets/icons/library.png", order: 2 };
+        return { icon: "/assets/icons/library.png", order: 2 };
       } else {
-        return { icon: "./assets/icons/book.png", order: 3 };
+        return { icon: "/assets/icons/book.png", order: 3 };
       }
     },
     elementDoubleClicked(item: BSIData) {

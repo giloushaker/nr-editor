@@ -16,13 +16,13 @@
             <template #option="{ option }">
               <div class="flex align-items flex-row">
                 <template v-if="option">
-                  <img class="mr-1 my-auto" :src="`./assets/bsicons/${option.editorTypeName}.png`" />
+                  <img class="mr-1 my-auto" :src="`/assets/bsicons/${option.editorTypeName}.png`" />
                   <span class="inline">
                     {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
                   </span>
                 </template>
                 <template v-else>
-                  <img class="mr-1 my-auto" :src="`./assets/bsicons/bullet.png`" />
+                  <img class="mr-1 my-auto" :src="`/assets/bsicons/bullet.png`" />
                   <span class="inline">None</span>
                 </template>
               </div>

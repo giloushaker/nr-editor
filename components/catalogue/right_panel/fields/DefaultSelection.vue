@@ -19,7 +19,7 @@
                 <template v-if="opt.option.indent >= 2 && !opt.selected"
                   ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
                 >
-                <img class="mr-1 align-middle" :src="`./assets/bsicons/${opt.option.editorTypeName}.png`" />
+                <img class="mr-1 align-middle" :src="`/assets/bsicons/${opt.option.editorTypeName}.png`" />
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
               </div>
