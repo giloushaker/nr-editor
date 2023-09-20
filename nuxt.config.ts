@@ -34,6 +34,16 @@ export default defineNuxtConfig({
   app: ghpages
     ? {
         baseURL: `/${pkg.build.publish[0].repo}/`,
+        head: {
+          title: "New Recruit - Editor",
+          ...(ghpages
+            ? {
+                base: {
+                  href: `/${getGhRepo()}/`,
+                },
+              }
+            : {}),
+        },
       }
     : undefined,
   // @ts-ignore
@@ -77,10 +87,4 @@ export default defineNuxtConfig({
     },
   },
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
-  head: {
-    title: "New Recruit - Editor",
-    base: {
-      href: `/${getGhRepo()}/`,
-    },
-  },
 });
