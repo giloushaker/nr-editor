@@ -70,15 +70,16 @@
     "vite-plugin-electron-renderer": "^0.14.5"
   },
   "dependencies": {
-    "chokidar": "^3.5.3",
-    "electron-updater": "^6.1.1",
     "@kyvg/vue3-notification": "^2.9.1",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.1",
     "@pinia/nuxt": "^0.4.10",
     "adm-zip": "^0.5.10",
+    "chokidar": "^3.5.3",
     "click-outside-vue3": "^4.0.1",
     "dexie": "^3.2.3",
+    "electron-updater": "^6.1.1",
     "fast-xml-parser": "^4.2.2",
+    "glob-promise": "^6.0.5",
     "jszip": "^3.10.1",
     "mongodb": "^4.16.0",
     "pinia": "^2.0.36",

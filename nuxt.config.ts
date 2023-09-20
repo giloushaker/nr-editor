@@ -3,8 +3,12 @@ import { defineNuxtConfig } from "nuxt/config";
 import pkg from "./package.json";
 const electron = process.argv.includes("--electron");
 const ghpages = process.argv.includes("--ghpages");
+
+function getGhRepo() {
+  return pkg.build.publish[0].repo;
+}
 if (ghpages) {
-  console.log("ghpages repo", `/${pkg.build.publish[0].repo}/`);
+  console.log("ghpages repo", `/${getGhRepo()}/`);
 }
 
 export default defineNuxtConfig({
@@ -17,6 +21,7 @@ export default defineNuxtConfig({
     public: {
       editor: true,
       electron: electron,
+      ghpages: ghpages,
       clientVersion: pkg.version,
     },
   },
@@ -65,7 +70,7 @@ export default defineNuxtConfig({
         copyFileSync("package.json", `${outputDir}/package.json`);
       }
       if (ghpages) {
-        const { writeFileSync } = require("fs");
+        const { writeFileSync, readdirSync } = require("fs");
         const outputDir = nitro.options.output.publicDir;
         writeFileSync(`${outputDir}/.nojekyll`, "");
       }
@@ -74,5 +79,8 @@ export default defineNuxtConfig({
   components: [{ path: "~/shared_components" }, { path: "~/components" }],
   head: {
     title: "New Recruit - Editor",
+    base: {
+      href: `/${getGhRepo()}/`,
+    },
   },
 });
