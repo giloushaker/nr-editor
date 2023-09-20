@@ -1091,7 +1091,7 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
     },
-    async open(obj: EditorBase, last?: boolean) {
+    async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
@@ -1114,7 +1114,9 @@ export const useEditorStore = defineStore("editor", {
       }
       current = current.getElementsByClassName(`depth-0 ${path[0].key}`)[0];
       if (!current) {
-        console.error("Couldn't find root element for", path[0].key, "in", obj.catalogue.getName());
+        if (noLog !== true) {
+          console.error("Couldn't find root element for", path[0].key, "in", obj.catalogue.getName());
+        }
         return;
       }
       await open_el(current);
@@ -1131,7 +1133,9 @@ export const useEditorStore = defineStore("editor", {
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
         const child = [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
-          console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
+          if (noLog !== true) {
+            console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
+          }
           // throw new Error("Invalid path");
         }
         if (child) {
@@ -1393,7 +1397,7 @@ export const useEditorStore = defineStore("editor", {
         for (const p of this.filtered) {
           if (!p.parent) continue;
           try {
-            await this.open(p as EditorBase, false);
+            await this.open(p as EditorBase, false, true);
           } catch (e) {
             continue;
           }

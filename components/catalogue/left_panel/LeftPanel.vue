@@ -286,7 +286,7 @@ export default defineComponent({
           for (const p of this.store.filtered) {
             if (!p.parent) continue;
             try {
-              await this.store.open(p as EditorBase, false);
+              await this.store.open(p as EditorBase, false, true);
             } catch (e) {
               continue;
             }
