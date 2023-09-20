@@ -1,8 +1,9 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
+import { Base, getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { ChildProcess } from "child_process";
 
 export interface EditorSearchItem {
   id: string;
@@ -12,7 +13,9 @@ export interface EditorSearchItem {
   catalogue: string | null;
   shared: boolean;
 }
-
+function getCatalogueName(obj: Base) {
+  return obj.catalogue?.getName() ?? null;
+}
 function recursive(current: Catalogue | EditorBase, iterator: string, result: EditorSearchItem[], indent = 0) {
   for (const child of (current as any)[iterator]()) {
     result.push({
@@ -20,7 +23,7 @@ function recursive(current: Catalogue | EditorBase, iterator: string, result: Ed
       editorTypeName: child.editorTypeName,
       id: child.id,
       indent: indent,
-      catalogue: child.catalogue.getName(),
+      catalogue: getCatalogueName(child),
       shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
     });
     recursive(child, iterator, result, indent + 1);
@@ -40,7 +43,7 @@ function recursiveWithFilter(
       editorTypeName: child.editorTypeName,
       id: child.id,
       indent: indent,
-      catalogue: child.catalogue.getName(),
+      catalogue: getCatalogueName(child),
       shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
     });
     recursive(child, iterator, result, indent + 1);
@@ -84,17 +87,17 @@ export function getSearchSelectionsWithCategory(
 export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
   const res: EditorSearchItem[] = [];
   for (let elt of catalogue.iterateCategoryEntries()) {
-    const current = elt as any;
-    if (current.isCatalogue()) {
+    const child = elt as any;
+    if (child.isCatalogue()) {
       continue;
     }
     res.push({
-      name: current.name,
-      editorTypeName: current.editorTypeName,
-      id: current.id,
+      name: child.name,
+      editorTypeName: child.editorTypeName,
+      id: child.id,
       indent: 0,
-      catalogue: current.catalogue.getName(),
-      shared: getFirstAncestor(current)?.parentKey?.includes("shared") || false,
+      catalogue: getCatalogueName(child),
+      shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
     });
   }
   return res;
@@ -140,7 +143,7 @@ export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
         id: parent.id,
         editorTypeName: parent.editorTypeName,
         indent: i,
-        catalogue: parent.catalogue.getName(),
+        catalogue: getCatalogueName(parent),
         shared: getFirstAncestor(parent)?.parentKey?.includes("shared") || false,
       });
       i++;
