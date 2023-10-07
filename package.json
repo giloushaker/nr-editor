@@ -83,6 +83,7 @@
     "jszip": "^3.10.1",
     "mongodb": "^4.16.0",
     "pinia": "^2.0.36",
+    "simple-git": "^3.20.0",
     "unzipit": "^1.4.3"
   },
   "prettier": {

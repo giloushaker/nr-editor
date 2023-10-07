@@ -149,3 +149,8 @@ export async function unwatchFile(path: string) {
   delete watchers[path];
   await electron.invoke("chokidarUnwatchFile", path);
 }
+
+export async function getFolderRemote(path: string): Promise<string | null> {
+  if (!electron) return null;
+  return (await electron.invoke("getFolderRemote", path)) as string | null;
+}

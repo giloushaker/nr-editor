@@ -20,18 +20,18 @@
         <img src="/assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
       </div> -->
-      <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
-        <img class="static-icon" src="/assets/icons/discord.png" />
-        <span class="icontext">Discord</span>
-      </a>
-      <NuxtLink v-if="electron" class="iconbox no-underline unselectable" to="/system">
-        <img class="icon" src="/assets/icons/system2.png" />
-        <span class="icontext">Systems</span>
-      </NuxtLink>
       <div class="iconbox no-underline unselectable" @click="settingsOpen = true">
         <img class="icon" src="/assets/icons/filtre.png" />
         <span class="icontext">Settings</span>
       </div>
+      <NuxtLink v-if="electron" class="iconbox no-underline unselectable" to="/system">
+        <img class="icon" src="/assets/icons/system2.png" />
+        <span class="icontext">Systems</span>
+      </NuxtLink>
+      <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
+        <img class="static-icon" src="/assets/icons/discord.png" />
+        <span class="icontext">Discord</span>
+      </a>
 
       <div v-if="electron">
         <img src="/assets/icons/electron32.png" />

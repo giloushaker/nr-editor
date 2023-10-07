@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = require("electron");
 const path = require("path");
+const simpleGit = require("simple-git");
 const { autoUpdater } = require("electron-updater");
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles } from "./files";
@@ -190,6 +191,17 @@ const createMainWindow = () => {
       add_watcher(path, win.id, (_path, stats) => {
         win.webContents.send("fileChanged", path, stats);
       });
+    }
+  });
+  ipcMain.handle("getFolderRemote", async (event: { sender: any }, path: string) => {
+    try {
+      const git = simpleGit({
+        baseDir: path,
+      });
+
+      return await git.listRemote(["--get-url", "origin"]);
+    } catch (e) {
+      return null;
     }
   });
   ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {

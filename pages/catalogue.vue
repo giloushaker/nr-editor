@@ -68,6 +68,7 @@ export default defineComponent({
       loading_progress: 0,
       loading_progress_max: 0,
       loading_progress_msg: "",
+      initial: true,
       saving: false,
       failed: false,
       id: "",
@@ -244,6 +245,10 @@ export default defineComponent({
       }
       try {
         this.loading = true;
+        if (this.initial) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          this.initial = false;
+        }
         const system = await this.store.get_or_load_system(systemId);
         let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
         if (!loaded) {

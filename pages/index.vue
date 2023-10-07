@@ -32,7 +32,7 @@
                 <img
                   class="w-24px h-24px ml-5px align-bottom"
                   :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
-                  :title="`using repo at ${gst.github.githubUrl}`"
+                  :title="githubHoverTitle(gst.github)"
                 />
               </a>
             </legend>
@@ -90,6 +90,7 @@ import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { GithubIntegration } from "~/assets/shared/battlescribe/github";
 
 export default defineComponent({
   components: {
@@ -156,6 +157,14 @@ export default defineComponent({
     },
   },
   methods: {
+    githubHoverTitle(github: GithubIntegration) {
+      if (github.discovered) {
+        return `using discovered .git repo at ${github.githubUrl}
+use a publication name="Github", url="https://github.com/{owner}/{repo}" in the gameSystem to overwrite.`;
+      }
+
+      return `using repo at ${github.githubUrl}`;
+    },
     saveAll() {
       let failed = false;
       try {

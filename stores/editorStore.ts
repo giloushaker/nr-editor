@@ -46,7 +46,15 @@ import type {
   BSIGameSystem,
   BSIProfile,
 } from "~/assets/shared/battlescribe/bs_types";
-import { createFolder, filename, getFolderFiles, watchFile, writeFile } from "~/electron/node_helpers";
+import {
+  createFolder,
+  dirname,
+  filename,
+  getFolderFiles,
+  getFolderRemote,
+  watchFile,
+  writeFile,
+} from "~/electron/node_helpers";
 import {
   allowed_children,
   clean,
@@ -60,7 +68,7 @@ import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
-import { getNextRevision } from "~/assets/shared/battlescribe/github";
+import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
 import { Router } from "vue-router";
@@ -367,6 +375,19 @@ export const useEditorStore = defineStore("editor", {
         }
         const publications = system.gameSystem.gameSystem.publications;
         const github = publications?.find((o) => o.name?.trim().toLowerCase() === "github");
+        const path = system.gameSystem.gameSystem.fullFilePath;
+        console.log("path", path);
+        if (path) {
+          try {
+            const remote = await getFolderRemote(dirname(path));
+            if (remote) {
+              console.log(path, "remote = ", remote);
+              system.github = { ...parseGitHubUrl(remote), discovered: true };
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
         if (github && github.shortName?.includes("/") && github.publisherUrl) {
           system.github = {
             githubUrl: github.publisherUrl,
