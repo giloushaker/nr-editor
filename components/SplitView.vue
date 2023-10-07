@@ -6,7 +6,7 @@
     <div v-if="left_draggable" class="between unselectable" @mousedown="drag_left_handle" />
 
     <template v-if="showMiddle">
-      <div ref="middle" class="middle grow relative">
+      <div ref="middle" class="middle grow relative overflow-x-auto overflow-y-auto scrollbarstyle">
         <slot name="middle"></slot>
       </div>
     </template>

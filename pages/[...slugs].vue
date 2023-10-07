@@ -1,1 +1,3 @@
-<template>{{ $route.params }}</template>
+<template>
+  <pre>{{ $route }}</pre>
+</template>

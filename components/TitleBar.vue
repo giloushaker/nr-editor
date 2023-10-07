@@ -12,14 +12,14 @@
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
-      <div class="iconbox" @click="bug = true">
+      <!-- <div class="iconbox" @click="bug = true">
         <img src="/assets/icons/bug.png" class="icon" />
         <span class="icontext">Bug</span>
       </div>
       <div class="iconbox" @click="feedback = true">
         <img src="/assets/icons/feedback.png" class="icon" />
         <span class="icontext">Feedback</span>
-      </div>
+      </div> -->
       <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
         <img class="static-icon" src="/assets/icons/discord.png" />
         <span class="icontext">Discord</span>

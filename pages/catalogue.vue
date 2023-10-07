@@ -17,7 +17,7 @@
           <LeftPanel ref="leftpanel" class="h-full" :catalogue="cat" :defaults="defaults" :key="key" keepalive />
         </template>
         <template #middle>
-          <CatalogueRightPanel class="h-full overflow-y-auto" :catalogue="cat" v-if="store.selectedItem != null" />
+          <CatalogueRightPanel :catalogue="cat" v-if="store.selectedItem != null" />
         </template>
       </SplitView>
     </template>

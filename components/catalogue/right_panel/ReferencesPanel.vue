@@ -1,55 +1,42 @@
 <template>
-  <div>
+  <div class="mb-50px">
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
-    <!-- <p class="ml-10px info"> Click Load All to have refs from all other catalogues appear. </p> -->
-    <table class="mb-20px">
-      <tr>
-        <th> Catalogue </th>
-        <th> Name </th>
-      </tr>
-      <tr v-for="link of links">
-        <td class="gray">
-          {{ link.isCatalogue() ? link.getName() : link.catalogue?.getName() }}
-        </td>
-        <td>
-          <template v-if="show_link_name">
-            {{ link.getName() }}
-          </template>
-          <template v-else>
-            {{ link.parent?.getName() }}
-          </template>
-        </td>
-        <td>
-          <button @click="store.goto(gotoTarget(link))">Goto</button>
-        </td>
-      </tr>
-    </table>
-
-    <div v-if="other_links.length">
-      <h3> From conditions/constraints/modifiers/repeats: </h3>
+    <div v-if="links.length" class="mr-60px">
       <table class="mb-20px">
         <tr>
           <th> Catalogue </th>
           <th> Name </th>
-          <th> Type </th>
-          <th> Details </th>
         </tr>
-        <tr v-for="link of other_links">
+        <tr v-for="link of links">
           <td class="gray">
             {{ link.isCatalogue() ? link.getName() : link.catalogue?.getName() }}
           </td>
           <td>
-            {{ parentEntry(link)?.getName() || "No parent (likely a bug)" }}
+            <template v-if="show_link_name">
+              {{ link.getName() }}
+            </template>
+            <template v-else>
+              {{ link.parent?.getName() }}
+            </template>
           </td>
           <td>
-            {{ link.editorTypeName }}
-          </td>
-          <td> {{ link.type }} {{ link.value }} </td>
-          <td>
-            <button @click="store.goto(link)">Goto</button>
+            <button @click="store.goto(gotoTarget(link))">Goto</button>
           </td>
         </tr>
       </table>
+      <!-- <div>
+        <div v-for="link of links">
+          <NodePath :path="path(link)" @click="store.goto(link)" class="hover-darken cursor-pointer p-1px" />
+        </div>
+      </div> -->
+    </div>
+    <div v-if="other_links.length" class="mr-60px">
+      <h3> From conditions/constraints/modifiers/repeats </h3>
+      <div>
+        <div v-for="link of other_links">
+          <NodePath :path="other_path(link)" @click="store.goto(link)" class="hover-darken cursor-pointer p-1px" />
+        </div>
+      </div>
     </div>
   </div>
   <!-- <button class="bouton"> Load from all catalogues </button> -->
@@ -57,10 +44,11 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { findParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
-import { getName } from "~/assets/shared/battlescribe/bs_editor";
+import { getEntryPathInfo, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
+import NodePath from "~/components/util/NodePath.vue";
 
 export default {
   props: {
@@ -82,6 +70,14 @@ export default {
     parentEntry(link: EditorBase) {
       return findParentWhere(link, (o) => o.getName());
     },
+    path(link: EditorBase) {
+      const path = getEntryPathInfo(link);
+      path.pop();
+      return path;
+    },
+    other_path(link: EditorBase) {
+      return getEntryPathInfo(link);
+    },
   },
   computed: {
     show_link_name() {
@@ -98,6 +94,7 @@ export default {
       return getName(this.item);
     },
   },
+  components: { NodePath },
 };
 </script>
 <style scope>

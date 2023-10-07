@@ -92,6 +92,7 @@ export const LeftPanelDefaults = {
   filter: "",
   scroll: 0,
   selection: undefined as EntryPathEntry[] | undefined,
+  mode: "edit",
 };
 
 export default defineComponent({
@@ -150,6 +151,7 @@ export default defineComponent({
               if (el) {
                 const ctx = get_ctx(el);
                 await ctx.do_select();
+                this.store.mode = this.defaults.mode;
                 this.shouldScrollToElement = el;
               }
             }

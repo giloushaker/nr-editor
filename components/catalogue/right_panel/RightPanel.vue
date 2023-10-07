@@ -1,5 +1,5 @@
 <template>
-  <div class="rightPanel h-full" v-if="item">
+  <div class="rightPanel" v-if="item">
     <template v-if="store.mode === 'edit'">
       <CatalogueRightPanelPublicationPanel v-if="typeName == 'publication'" :item="item" @catalogueChanged="changed" />
 
@@ -207,7 +207,6 @@ export default {
 }
 
 .rightPanel {
-  overflow-y: auto;
   padding-top: 10px;
   padding-right: 10px;
   padding-left: 5px;
