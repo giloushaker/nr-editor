@@ -24,7 +24,16 @@
 
     <Teleport to="#titlebar-content" v-if="cat && route_is_catalogue">
       <span class="ml-10px">
-        Editing {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
+        Editing
+        <img
+          class="inline"
+          style="vertical-align: -2px"
+          v-if="self_or_imports_changed"
+          title="This file or one of it's dependencies was changed by another program. 
+You may want to reload the system through the Systems tab"
+          src="/assets/icons/warning_sign.png"
+        />
+        {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
       <template v-if="store.unsavedCount">
         <button class="bouton save ml-10px" @click="save_all"> Save All </button>
@@ -49,7 +58,7 @@
 import LeftPanel, { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorStore";
+import { TrackedFile, useEditorStore } from "~/stores/editorStore";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
@@ -113,6 +122,11 @@ export default defineComponent({
   },
 
   computed: {
+    self_or_imports_changed() {
+      return (
+        (this.cat as TrackedFile).isChangedOnDisk || this.cat?.imports?.find((o) => (o as TrackedFile).isChangedOnDisk)
+      );
+    },
     changed() {
       if (!this.cat) return false;
       return this.store.get_catalogue_state(this.cat as Catalogue)?.changed || false;
@@ -239,6 +253,7 @@ export default defineComponent({
     load_state(data: Record<string, any>) {
       this.defaults = data;
     },
+
     async load(systemId: string, catalogueId?: string) {
       if (!catalogueId && !systemId) {
         throw new Error("couldn't load catalogue: no id");

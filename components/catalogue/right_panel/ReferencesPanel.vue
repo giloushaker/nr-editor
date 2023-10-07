@@ -34,7 +34,11 @@
       <h3> From conditions/constraints/modifiers/repeats </h3>
       <div>
         <div v-for="link of other_links">
-          <NodePath :path="other_path(link)" @click="store.goto(link)" class="hover-darken cursor-pointer p-1px" />
+          <NodePath
+            :path="other_path(link)"
+            @click="store.goto(link)"
+            class="hover-darken cursor-pointer p-1px mb-3px"
+          />
         </div>
       </div>
     </div>

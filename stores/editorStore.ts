@@ -52,6 +52,7 @@ import {
   filename,
   getFolderFiles,
   getFolderRemote,
+  unwatchFile,
   watchFile,
   writeFile,
 } from "~/electron/node_helpers";
@@ -116,6 +117,11 @@ export interface CatalogueState {
   unsaved: boolean;
   savingPromise?: Promise<any>;
 }
+
+export interface TrackedFile {
+  fullFilePath?: string;
+  isChangedOnDisk?: boolean;
+}
 export function get_ctx(el: any): any {
   return el.vnode;
 }
@@ -179,8 +185,17 @@ function saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
   } else {
     saveCatalogueInDb(data);
   }
+  unmarkChangedOnDisk(data);
 }
 
+function markChangedOnDisk(file: any) {
+  (file as TrackedFile).isChangedOnDisk = true;
+}
+function unmarkChangedOnDisk(file: any) {
+  if ((file as TrackedFile).isChangedOnDisk) {
+    delete (file as TrackedFile).isChangedOnDisk;
+  }
+}
 type VueComponent = any;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
@@ -361,7 +376,7 @@ export const useEditorStore = defineStore("editor", {
     async load_system(system: GameSystemFiles, keepState = false) {
       if (system.gameSystem) {
         const cataloguesStore = useCataloguesStore();
-        system.unloadAll();
+        await system.unloadAll();
         if (!keepState) {
           for (const catalogue of system.getAllCatalogueFiles()) {
             const state = this.get_catalogue_state(catalogue);
@@ -376,12 +391,12 @@ export const useEditorStore = defineStore("editor", {
         const publications = system.gameSystem.gameSystem.publications;
         const github = publications?.find((o) => o.name?.trim().toLowerCase() === "github");
         const path = system.gameSystem.gameSystem.fullFilePath;
-        console.log("path", path);
+
         if (path) {
           try {
             const remote = await getFolderRemote(dirname(path));
             if (remote) {
-              console.log(path, "remote = ", remote);
+              console.log("remote", remote);
               system.github = { ...parseGitHubUrl(remote), discovered: true };
             }
           } catch (e) {
@@ -409,6 +424,7 @@ export const useEditorStore = defineStore("editor", {
     },
     on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
       console.log(getDataObject(file).name, "changed");
+      markChangedOnDisk(getDataObject(file));
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {

@@ -7,9 +7,19 @@
       @click="elementClicked(item)"
       @dblclick="elementDoubleClicked(item)"
     >
-      <ErrorIcon class="error" :errors="errors(item)" />
       <img class="icon" :src="getType(item).icon" />
       <div>{{ name(item) }}</div>
+      <div class="error flex flex-row">
+        <span
+          class="my-auto"
+          v-if="changed(item)"
+          title="This file was changed by another program.
+You may want to reload the system through the Systems tab"
+        >
+          <img class="my-auto align-text-bottom" src="/assets/icons/warning_sign.png" />
+        </span>
+        <ErrorIcon :errors="errors(item)" />
+      </div>
     </div>
     <div class="relative item add unselectable" @click="add">
       <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
@@ -25,7 +35,7 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon, { IErrorMessage } from "./ErrorIcon.vue";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { useEditorStore } from "~/stores/editorStore";
+import { TrackedFile, useEditorStore } from "~/stores/editorStore";
 export default {
   emits: ["new", "itemClicked", "itemDoubleClicked"],
   setup() {
@@ -55,6 +65,9 @@ export default {
     },
     elementClicked(item: BSIData) {
       this.$emit("itemClicked", item);
+    },
+    changed(data: BSIData) {
+      return (getDataObject(data) as TrackedFile).isChangedOnDisk;
     },
     errors(data: BSIData): IErrorMessage[] {
       const result = [] as IErrorMessage[];
