@@ -85,6 +85,7 @@ html {
 }
 
 img.icon,
+svg.icon,
 img.imgBt {
   filter: var(--image-filter);
 }
