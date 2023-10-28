@@ -9,6 +9,7 @@
         <SelectFile @uploaded="uploaded" />
         <SelectFolder @selected="selectedFolder" />
         <CreateSystem @created="update" />
+        <button class="bouton" @click="update()"> Refresh </button>
       </div>
 
       <p
@@ -33,6 +34,7 @@
 <script lang="ts">
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
@@ -40,6 +42,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 import CreateSystem from "~/components/CreateSystem.vue";
 import Loading from "~/components/Loading.vue";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_main";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 export default defineComponent({
   components: { CreateSystem, Loading },
   head() {
@@ -78,7 +81,9 @@ export default defineComponent({
           return promise;
         });
         this.loading = false;
-        this.$router.push(`/?id=${loaded.join(",")}`);
+        if (loaded?.length) {
+          this.$router.push(`/?id=${loaded.join(",")}`);
+        }
       }
     },
     async uploaded(files: any[]) {
@@ -109,18 +114,17 @@ export default defineComponent({
       }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
+    onBeforeRouteUpdate() {
+      console.log("update");
+      this.update();
+    },
+    onBeforeRouteEnter() {
+      console.log("update");
+    },
     async update(highlight?: GameSystemFiles) {
       try {
         const result = [] as Array<{ name: string; path: string }>;
-        if (!electron) {
-          // const repos = await fetch_bs_repos_datas(true);
-          // for (const repo of repos.repositories) {
-          // result.push({ name: repo.name, path: repo.repositoryUrl });
-          // }
-          for (let i = 0; i < 100; i++) {
-            result.push({ name: "Warhammer 40k", path: "BSData/wh40k" });
-          }
-        } else {
+        if (electron) {
           if (this.settings.systemsFolder) {
             const systems = await getFolderFolders(this.settings.systemsFolder);
             if (systems) {
