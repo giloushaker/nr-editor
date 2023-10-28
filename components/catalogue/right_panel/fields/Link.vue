@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Link</legend>
+    <legend> <img src="assets/bsicons/link.png" /> Link</legend>
     <table class="editorTable">
       <tr v-if="type == 'entry'">
         <td>Link Type:</td>

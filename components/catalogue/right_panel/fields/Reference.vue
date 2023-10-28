@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Reference</legend>
+    <legend> <img src="assets/bsicons/publication.png" /> Reference</legend>
     <table class="editorTable">
       <tr>
         <td>Publication:</td>

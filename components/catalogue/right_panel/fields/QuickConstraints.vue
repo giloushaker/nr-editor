@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Quick Constraints</legend>
+    <legend><img src="assets/bsicons/constraint.png" /> Quick Constraints</legend>
     <div class="columns">
       <div class="column">
         <button class="bouton" @click="add('min', 'parent')">

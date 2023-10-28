@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Costs</legend>
+    <legend><img src="assets/bsicons/cost.png" /> Costs</legend>
     <div class="costs">
       <div v-for="cost of costTypes">
         <label>{{ cost.name }}: </label>

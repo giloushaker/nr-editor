@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Quick Modifiers</legend>
+    <legend><img src="assets/bsicons/modifier.png" /> Quick Modifiers</legend>
     <div class="columns">
       <template v-if="type === 'constraint'">
         <div class="buttonList">

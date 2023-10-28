@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Quick Conditions</legend>
+    <legend><img src="assets/bsicons/condition.png" /> Quick Conditions</legend>
     <div class="columns">
       <div class="buttonList">
         <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
