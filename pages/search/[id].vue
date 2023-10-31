@@ -5,7 +5,7 @@
     <div>
       <input type="search" v-model="filter" @keydown.enter="search" />
       <button class="inputstyle" @click="search"> Search </button>
-      <span v-if="searching">Searching...</span>
+      <span v-if="searching"> Searching...</span>
       <template v-else-if="count !== null">
         <span>Found {{ count }}<template v-if="more">+</template> results</span>
         <span>, Displaying {{ displayed_count }} results</span>
@@ -110,7 +110,6 @@ export default defineComponent({
       const from = this.from;
       const to = this.to;
       const result = {} as Record<string, EditorBase[]>;
-      console.log(`to=${to}, from=${from}`);
       for (const key in this.results) {
         const items = this.results[key];
         const count = items.length;
@@ -126,7 +125,6 @@ export default defineComponent({
           const diff = Math.max(from - n, 0);
           if (count && end > diff) result[key] = items.slice(diff, end);
         }
-        console.log(key, "n=", n, "count=", count, "start=", "end=", end);
         n += count;
         if (n > to) {
           break;
@@ -148,8 +146,8 @@ export default defineComponent({
     async search() {
       try {
         this.searching = true;
-        await new Promise((resolve) => setTimeout(resolve, 5));
         await this.$nextTick(() => this.$forceUpdate());
+        await new Promise((resolve) => setTimeout(resolve, 5));
         const found = await this.store.system_search(await this.system, this.data, this.max_results);
         if (!found) {
           this.results = null;
