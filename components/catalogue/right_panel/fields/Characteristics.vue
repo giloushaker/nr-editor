@@ -11,7 +11,7 @@
             :filterField="(o) => o.getName()"
             valueField="id"
             v-model="item.typeId"
-            @change="changed"
+            @change="changedType"
           >
             <template #option="{ option }">
               <div class="flex align-items flex-row" style="white-space: nowrap">
