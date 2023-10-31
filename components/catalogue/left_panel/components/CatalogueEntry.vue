@@ -223,6 +223,19 @@
             </div>
           </ContextMenu>
         </template>
+
+        <div
+          @click="
+            store.create_child('entryLinks', catalogue, {
+              targetId: item.id,
+              type: 'selectionEntry',
+              name: item.getName(),
+            })
+          "
+          v-if="item.parentKey === 'sharedSelectionEntries'"
+        >
+          Add Root Link<span class="gray" v-if="hasRootLink(catalogue, item)">&nbsp;(already has one)</span>
+        </div>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
           <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
@@ -430,6 +443,9 @@ export default {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
       console.log("component", this);
       console.log(this.allowedChildren);
+    },
+    hasRootLink(catalogue: Catalogue, item: Base) {
+      return catalogue.entryLinks?.find((o) => o.targetId === item.id);
     },
     getTypedArray(item: Catalogue, type: ItemKeys, output: CatalogueEntryItem[]) {
       if (!type) return;
