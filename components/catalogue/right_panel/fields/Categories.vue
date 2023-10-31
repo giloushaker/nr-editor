@@ -1,41 +1,56 @@
 <template>
   <fieldset>
-    <legend>Categories ({{ count }})</legend>
-    <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
-    <div class="section inline">
-      <input type="checkbox" id="onlyEnabled" v-model="settings.showOnlyEnabledCategories" />
-      <label for="onlyEnabled">Only show selected categories</label>
-    </div>
-    <div class="section categoryList">
-      <div>
-        <input name="primary" type="radio" :checked="noPrimary" @change="primaryChanged(null)" />
-        No Primary
+    <legend>
+      <div class="inline">
+        <Tag class="icon" />
       </div>
-
-      <Category
-        v-for="cat of categories"
-        :category="cat"
-        :item="item"
-        :key="cat.id"
-        @primaryChanged="primaryChanged"
-        @secondaryChanged="secondaryChanged"
-      />
-
-      <div v-for="cat of badLinks" class="category" :key="cat.id">
+      Categories ({{ count }})
+    </legend>
+    <template v-if="settings.useNewCategoriesUI">
+      <CatalogueEditV2Categories :item="item" />
+    </template>
+    <template v-else>
+      <input class="section" type="text" v-model="filter" placeholder="Filter categories..." />
+      <div class="section inline">
+        <input type="checkbox" id="onlyEnabled" v-model="settings.showOnlyEnabledCategories" />
+        <label for="onlyEnabled">Only show selected categories</label>
+      </div>
+      <div class="section categoryList">
         <div>
-          <input name="primary" type="radio" :checked="hasCategory(cat) == 2" @change="primaryChanged(cat)" />
-          Primary?
+          <input name="primary" type="radio" :checked="noPrimary" @change="primaryChanged(null)" />
+          No Primary
         </div>
-        <div>
-          <input :id="`bad${cat.id}`" type="checkbox" :checked="true" @change="removeLink(item.categoryLinks!, cat)" />
-          <label :for="`bad${cat.id}`">{{ cat.name }}</label>
-          <ErrorIcon
-            class="ml-5px inline"
-            :errors="[{ msg: `Couldn't find category with id: ${cat.targetId}`, severity: 'error' }]"
-          />
+
+        <Category
+          v-for="cat of categories"
+          :category="cat"
+          :item="item"
+          :key="cat.id"
+          @primaryChanged="primaryChanged"
+          @secondaryChanged="secondaryChanged"
+        />
+
+        <div v-for="lnk of badLinks" class="category" :key="lnk.id">
+          <div>
+            <input name="primary" type="radio" :checked="hasCategory(lnk) == 2" @change="primaryChanged(lnk)" />
+            Primary?
+          </div>
+          <div>
+            <input
+              :id="`bad${lnk.id}`"
+              type="checkbox"
+              :checked="true"
+              @change="removeLink(item.categoryLinks!, lnk)"
+            />
+            <label :for="`bad${lnk.id}`">{{ lnk.name }}</label>
+            <ErrorIcon
+              class="ml-5px inline"
+              :errors="[{ msg: `Couldn't find category with id: ${lnk.targetId}`, severity: 'error' }]"
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </fieldset>
 </template>
 
@@ -45,9 +60,10 @@ import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_cata
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { useSettingsStore } from "~/stores/settingsState";
 import CategoryVue from "~/components/catalogue/right_panel/fields/Category.vue";
+import Tag from "../../edit_v2/Tag.vue";
 
 export default {
-  components: { Category: CategoryVue },
+  components: { Category: CategoryVue, Tag },
   emits: ["catalogueChanged"],
   data() {
     return {
