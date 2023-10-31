@@ -2,7 +2,7 @@
   <div class="mb-50px">
     <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
     <div v-if="links.length" class="mr-60px">
-      <table class="mb-20px">
+      <!-- <table class="mb-20px">
         <tr>
           <th> Catalogue </th>
           <th> Name </th>
@@ -23,12 +23,12 @@
             <button @click="store.goto(gotoTarget(link))">Goto</button>
           </td>
         </tr>
-      </table>
-      <!-- <div>
+      </table> -->
+      <div>
         <div v-for="link of links">
           <NodePath :path="path(link)" @click="store.goto(link)" class="hover-darken cursor-pointer p-1px" />
         </div>
-      </div> -->
+      </div>
     </div>
     <div v-if="other_links.length" class="mr-60px">
       <h3> From conditions/constraints/modifiers/repeats </h3>
@@ -74,9 +74,11 @@ export default {
     parentEntry(link: EditorBase) {
       return findParentWhere(link, (o) => o.getName());
     },
-    path(link: EditorBase) {
+    path(link: EditorBase, pop = true) {
       const path = getEntryPathInfo(link);
-      path.pop();
+      if (pop) {
+        path.pop();
+      }
       return path;
     },
     other_path(link: EditorBase) {
