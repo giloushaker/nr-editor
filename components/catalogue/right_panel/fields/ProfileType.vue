@@ -19,13 +19,13 @@
           <tr>
             <td>Unique Id:</td>
             <td>
-              <input type="text" v-model="selectedType.id" @change="changed" />
+              <input type="text" v-model="selectedType.id" @change="characteristicIdChanged(selectedType)" />
             </td>
           </tr>
           <tr>
             <td>Name:</td>
             <td>
-              <input type="text" v-model="selectedType.name" @change="changed" />
+              <input type="text" v-model="selectedType.name" @change="characteristicNameChanged(selectedType)" />
             </td>
           </tr>
         </table>
@@ -36,8 +36,10 @@
 
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { BSICharacteristicType, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
+import { BSICharacteristicType, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { PropType } from "vue";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorStore";
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -50,6 +52,9 @@ export default {
     return {
       selectedType: null as BSICharacteristicType | null,
     };
+  },
+  setup() {
+    return { store: useEditorStore() };
   },
   computed: {
     selected: {
@@ -66,26 +71,76 @@ export default {
       if (!this.item.characteristicTypes) {
         this.item.characteristicTypes = [];
       }
-      this.item.characteristicTypes.push({
+
+      const type = {
         id: generateBattlescribeId(),
         name: "New Characteristic Type",
-      });
-      this.changed();
+      };
+      this.item.characteristicTypes.push(type);
+
+      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      for (const ref of refs) {
+        for (const profile of ref.profilesIterator()) {
+          if (profile.typeId === this.item.id) {
+            if (!profile.characteristics) profile.characteristics = [];
+            profile.characteristics.push({ typeId: type.id, name: type.name, $text: "" });
+          }
+        }
+      }
+      this.$emit("catalogueChanged");
     },
 
     del() {
+      let type: BSICharacteristicType;
       if (this.selectedType) {
         if (this.item.characteristicTypes) {
           const ind = this.item.characteristicTypes.indexOf(this.selectedType);
           if (ind != -1) {
-            this.item.characteristicTypes.splice(ind, 1);
+            type = this.item.characteristicTypes.splice(ind, 1)[0];
             this.selectedType = this.item.characteristicTypes[0];
           }
         }
       }
+
+      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      for (const ref of refs) {
+        for (const profile of ref.profilesIterator()) {
+          if (profile.typeId === this.item.id) {
+            if (profile.characteristics) {
+              profile.characteristics = profile.characteristics.filter((o) => o.typeId !== type.id);
+            }
+          }
+        }
+      }
+      this.$emit("catalogueChanged");
     },
 
-    changed() {
+    characteristicIdChanged(type: BSICharacteristicType) {
+      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      for (const ref of refs as (BSIProfile & EditorBase)[]) {
+        if (ref.typeId === this.item.id) {
+          for (const char of ref.characteristics || []) {
+            if (char.name == type.name) {
+              char.typeId = type.id;
+              this.store.set_catalogue_changed(ref.catalogue);
+            }
+          }
+        }
+      }
+      this.$emit("catalogueChanged");
+    },
+    characteristicNameChanged(type: BSICharacteristicType) {
+      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      for (const ref of refs as (BSIProfile & EditorBase)[]) {
+        if (ref.typeId === this.item.id) {
+          for (const char of ref.characteristics || []) {
+            if (char.typeId == type.id) {
+              char.name = type.name;
+              this.store.set_catalogue_changed(ref.catalogue);
+            }
+          }
+        }
+      }
       this.$emit("catalogueChanged");
     },
 

@@ -53,8 +53,15 @@ export default {
   methods: {
     getName,
     getNameExtra,
-    changedType() {
+    changedType(newType: ProfileType & EditorBase, oldOption: ProfileType & EditorBase) {
       this.item.getCatalogue().refreshErrors(this.item as EditorBase & (Profile | Link<Profile>));
+
+      if (oldOption) {
+        this.catalogue.removeRef(this.item as Profile & EditorBase, oldOption);
+      }
+      if (newType) {
+        this.catalogue.addRef(this.item as Profile & EditorBase, newType);
+      }
       this.$emit("catalogueChanged");
     },
     changed() {

@@ -5,7 +5,7 @@
       <tr>
         <td>Unique ID:</td>
         <td class="flex gap-2px">
-          <input type="text" v-model="id" @change="changed" class="flex flex-shrink" />
+          <input type="text" v-model="id" @change="idchanged" class="flex flex-shrink" />
           <button class="btn !w-34px flex items-center mr-8px" @click="refresh">
             <span>
               <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generated Id" />
@@ -15,7 +15,7 @@
       </tr>
       <tr>
         <td>Name:</td>
-        <td><input type="text" v-model="item.name" @change="changed" /></td>
+        <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
     </table>
   </fieldset>
@@ -27,7 +27,7 @@ import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIOption, BSINamed } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
+  emits: ["catalogueChanged", "namechanged", "idchanged"],
   props: {
     item: {
       type: Object as PropType<BSIOption & BSINamed>,
@@ -36,12 +36,18 @@ export default {
   },
 
   methods: {
-    changed() {
+    idchanged() {
+      this.$emit("idchanged");
       this.$emit("catalogueChanged");
     },
+    namechanged() {
+      this.$emit("namechanged");
+      this.$emit("catalogueChanged");
+    },
+
     refresh() {
       this.id = generateBattlescribeId();
-      this.changed();
+      this.idchanged();
     },
   },
   computed: {

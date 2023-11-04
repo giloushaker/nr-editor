@@ -4,6 +4,9 @@ import { goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_base_from_vue_el, get_ctx } from "./editorStore";
 
+/**
+ * This class represents a snapsnot of the editor's current state, in order to reload it for navigating around
+ */
 export interface EditorUIState {
   selection?: EntryPathEntry[];
   scroll?: number;
