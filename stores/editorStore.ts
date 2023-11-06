@@ -123,6 +123,7 @@ export interface CatalogueState {
 export interface TrackedFile {
   fullFilePath?: string;
   isChangedOnDisk?: boolean;
+  isSaving?: boolean;
 }
 export function get_ctx(el: any): any {
   return el.vnode;
@@ -167,6 +168,7 @@ async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSyst
     console.error(`No path included in the catalogue ${data.name} to save at`);
     return;
   }
+  markSaving(data);
   const extension = getExtension(path);
   if (path.endsWith(".json")) {
     const content = rootToJson(data);
@@ -190,8 +192,17 @@ function saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
   unmarkChangedOnDisk(data);
 }
 
+function markSaving(file: any) {
+  const f = file as TrackedFile;
+  f.isSaving = true;
+}
 function markChangedOnDisk(file: any) {
-  (file as TrackedFile).isChangedOnDisk = true;
+  const f = file as TrackedFile;
+  if (f.isSaving) {
+    delete f.isSaving;
+    return;
+  }
+  f.isChangedOnDisk = true;
 }
 function unmarkChangedOnDisk(file: any) {
   if ((file as TrackedFile).isChangedOnDisk) {
@@ -419,13 +430,13 @@ export const useEditorStore = defineStore("editor", {
         if (!obj.fullFilePath) {
           continue;
         }
-        watchFile(obj.fullFilePath, () => {
-          this.on_file_changed(catalogue);
+        watchFile(obj.fullFilePath, (path, stats) => {
+          this.on_file_changed(catalogue, stats);
         });
       }
     },
-    on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
-      console.log(getDataObject(file).name, "changed");
+    on_file_changed(file: BSIDataCatalogue | BSIDataSystem, stats) {
+      console.log(getDataObject(file).name, "changed", stats);
       markChangedOnDisk(getDataObject(file));
     },
     async get_or_load_system(id: string) {
