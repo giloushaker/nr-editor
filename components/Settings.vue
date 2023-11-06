@@ -18,7 +18,7 @@
       >
     </div>
     <div class="row">
-      <input type="checkbox" id="revision-popup" v-model="settings.noRevisionPopup" />
+      <input type="checkbox" id="revision-popup" v-model="noRevisionPopup" />
       <label for="revision-popupt">Don't show popups asking to increment revision</label>
     </div>
     <div class="row">
@@ -29,10 +29,21 @@
 </template>
 <script>
 import { useSettingsStore } from "~/stores/settingsState";
+import { usePromptStore } from "~/stores/promptStore";
 
 export default {
   setup() {
-    return { settings: useSettingsStore() };
+    return { settings: useSettingsStore(), prompt: usePromptStore() };
+  },
+  computed: {
+    noRevisionPopup: {
+      get() {
+        this.prompt.get("revision");
+      },
+      set(val) {
+        this.prompt.set("revision", val);
+      },
+    },
   },
 };
 </script>
