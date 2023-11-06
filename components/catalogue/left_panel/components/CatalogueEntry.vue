@@ -92,17 +92,26 @@
           <div v-if="store.can_follow(item)" @click="store.follow(link)">
             Follow
             <span class="gray" v-if="link.target.getCatalogue() !== item.getCatalogue()">
-              &nbsp;({{ link.target.getCatalogue()?.getName() || link.target.getName() }})
+              &nbsp;[{{ link.target.getCatalogue()?.getName() || link.target.getName() }}]
             </span>
           </div>
           <div v-if="imported" @click="store.goto(item)">
             Goto
             <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
           </div>
+          <div
+            v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
+            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)"
+          >
+            Goto {{ item.typeName }}
+            <span class="gray">
+              &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
+            </span>
+          </div>
           <div v-if="child && store.can_goto(child)" @click="store.goto(child)">
             Goto {{ child.getName() }}
             <span class="gray" v-if="item.getCatalogue() !== child.getCatalogue()">
-              &nbsp;({{ child.getCatalogue().getName() }})
+              &nbsp;[{{ child.getCatalogue().getName() }}]
             </span>
           </div>
           <div v-if="item.links?.length || item.other_links?.length" @click="store.mode = 'references'">
@@ -263,7 +272,7 @@ import {
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { Base, Condition, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Condition, Link, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import {
   generateBattlescribeId,
   sortByAscending,
