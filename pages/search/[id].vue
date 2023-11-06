@@ -24,7 +24,7 @@
         <span class="bold">{{ catalogue }}</span>
         <div class="ml-8px">
           <div class="hover-darken cursor-pointer" v-for="item in items" @click="store.goto(item)">
-            <template v-if="showFullPath">
+            <template v-if="showFullPath && path(item).length">
               <NodePath
                 :path="path(item)"
                 @click="store.goto(item)"
@@ -164,7 +164,7 @@ export default defineComponent({
     path(link: EditorBase) {
       const path = getEntryPathInfo(link);
       path.pop();
-
+      path.shift();
       return path;
     },
     async search() {
