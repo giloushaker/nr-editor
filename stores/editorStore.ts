@@ -74,8 +74,9 @@ import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system"
 import { toRaw } from "vue";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
+import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
-
+const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
   selectionsParent?: Object | null;
   selections: { obj: any; onunselected: () => unknown; payload?: any }[];
@@ -115,6 +116,7 @@ export interface CatalogueEntryItem {
 export interface CatalogueState {
   changed: boolean;
   unsaved: boolean;
+  incremented?: boolean;
   savingPromise?: Promise<any>;
 }
 
@@ -392,11 +394,11 @@ export const useEditorStore = defineStore("editor", {
         const github = publications?.find((o) => o.name?.trim().toLowerCase() === "github");
         const path = system.gameSystem.gameSystem.fullFilePath;
 
-        if (path) {
+        if (path && enableGithubIntegrationWithGitFolder) {
           try {
             const remote = await getFolderRemote(dirname(path));
-            if (remote) {
-              console.log("remote", remote);
+            if (remote && remote !== "origin") {
+              console.log("remote:", remote);
               system.github = { ...parseGitHubUrl(remote), discovered: true };
             }
           } catch (e) {
@@ -469,36 +471,104 @@ export const useEditorStore = defineStore("editor", {
     /**
      * Returns true if the revision was incremented
      */
-    async save_catalogue(system: GameSystemFiles, catalogue: Catalogue): Promise<boolean> {
+
+    async save_catalogue(
+      system: GameSystemFiles,
+      catalogue: Catalogue,
+      incrementRevision?: "github" | "yes" | "no"
+    ): Promise<boolean> {
+      const state = this.get_catalogue_state(catalogue);
       const revision = catalogue.revision;
-      const settings = useSettingsStore();
-      if (system.github && settings.githubAutoIncrement) {
+      if (incrementRevision === "github" && system.github) {
         catalogue.revision = await getNextRevision(system.github, catalogue);
+      }
+      if (incrementRevision === "yes" && !state?.incremented) {
+        catalogue.revision = catalogue.revision ? catalogue.revision + 1 : 1;
+        state.incremented = true;
+      }
+      if (incrementRevision === "no") {
+        state.incremented = true;
       }
       saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
       cataloguesStore.updateCatalogue(catalogue);
       cataloguesStore.setEdited(id, true);
-      const state = this.get_catalogue_state(catalogue);
-      if (state.unsaved) {
+      if (state?.unsaved) {
         this.unsavedCount--;
         state.unsaved = false;
       }
       return catalogue.revision !== revision;
     },
+    async prompt_revision(catalogue: Catalogue | GameSystemFiles) {
+      const settings = useSettingsStore();
 
+      const sys = (catalogue instanceof Catalogue ? catalogue.manager : catalogue) as GameSystemFiles;
+      for (const cat of catalogue instanceof Catalogue ? [catalogue] : sys.getAllLoadedCatalogues()) {
+        const state = this.get_catalogue_state(cat);
+        if (state?.unsaved && !state.incremented) {
+          if (sys.github && settings.githubAutoIncrement && !navigator.onLine) {
+            if (
+              globalThis.customPrompt &&
+              globalThis.customPrompt({
+                html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
+    <span class="gray">This is shown because Github cannot be accessed as your are offline</span>`,
+                cancel: "No",
+                accept: "Yes",
+                id: "revision",
+              })
+            ) {
+              return "yes";
+            }
+            return "no";
+          } else if (sys.github && settings.githubAutoIncrement) {
+            return "github";
+          } else if (sys.github) {
+            if (
+              globalThis.customPrompt &&
+              globalThis.customPrompt({
+                html: `<span>Would you like to increase the revision of this catalogue?<span><br/>`,
+                cancel: "No",
+                accept: "Yes",
+                id: "revision",
+              })
+            ) {
+              return "yes";
+            }
+            return "no";
+          } else {
+            if (
+              globalThis.customPrompt &&
+              globalThis.customPrompt({
+                html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
+    <span class="gray">Note: You can enable automatic revision increments by integrating with GitHub.<br/>This can be achieved by adding a publication named "GitHub" with the repository's GitHub URL as the Publication URL.`,
+                cancel: "No",
+                accept: "Yes",
+                id: "revision",
+              })
+            ) {
+              return "yes";
+            }
+            return "no";
+          }
+        }
+      }
+    },
     async save_all(system?: string) {
       let failed = false;
       let incremented = 0;
+
+      const settings = useSettingsStore();
       try {
         for (const sys of Object.values(this.gameSystems)) {
           if (system && sys.gameSystem?.gameSystem?.id !== system) {
             continue;
           }
+          let increment = "no" as "yes" | "no" | "github" | undefined;
+          this.prompt_revision(sys);
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.get_catalogue_state(cat)?.unsaved) {
-              if (await this.save_catalogue(sys, cat)) {
+              if (await this.save_catalogue(sys, cat, increment)) {
                 incremented += 1;
               }
             }
@@ -1107,7 +1177,7 @@ export const useEditorStore = defineStore("editor", {
           if (obj.isEntry()) {
             link.collective = obj.collective;
           }
-          const linkKey = obj.isEntry() || obj.isGroup() ? "entryLinks" : "infoLinks";
+          const linkKey = obj.isGroup() || obj.isEntry() ? "entryLinks" : "infoLinks";
           setPrototypeRecursive({ [linkKey]: link });
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
@@ -1201,7 +1271,9 @@ export const useEditorStore = defineStore("editor", {
       if (!$router) {
         throw new Error("Cannot follow link to another catalogue without $router set");
       }
-      const curId = $router.currentRoute.query?.id || $router.currentRoute.query?.systemId;
+      const rawQuery = ($router.currentRoute as any as RouteLocationNormalizedLoaded)?.query;
+      const query = rawQuery ?? $router.currentRoute?.value?.query;
+      const curId = query?.id || query?.systemId;
       if (id !== curId) {
         $router.push({
           name: "catalogue",
@@ -1308,8 +1380,9 @@ export const useEditorStore = defineStore("editor", {
           const parent = item.parent;
 
           if (parent) {
-            if (!parent[key]) continue;
-            const index = parent[key].indexOf(item);
+            const val = parent[key];
+            if (!val || !Array.isArray(val)) continue;
+            const index = val.indexOf(item as any);
             if (!(key in obj)) obj[key] = {};
             if (!(index in obj[key])) obj[key][index] = {};
             find_open_recursive(cur, obj[key][index], depth + 1);

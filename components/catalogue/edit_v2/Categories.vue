@@ -26,17 +26,19 @@
       </span>
       <AutocompleteTags
         v-if="adding"
+        v-model="input"
         @blur="adding = false"
         focus
         class="inline-block"
         lazy
-        always
+        :always="Boolean(input.trim()) && !allCategories().find((o) => o.name === input)"
         :options="allCategories"
         placeholder="Search... (Right click = Primary)"
         :filterField="(o: Category) => o.getName()"
         @add="addCategory"
         @add-special="addCategoryAndMakePrimary"
         @always="createCategory"
+        @always-special="createPrimaryCategory"
       >
         <template #option="{ option }">
           <div class="flex align-items flex-row" style="white-space: nowrap">
@@ -49,7 +51,7 @@
           </div>
         </template>
         <template #always="{ input }">
-          <div class="flex align-items flex-row" style="white-space: nowrap" v-if="input.trim()">
+          <div class="flex align-items flex-row" style="white-space: nowrap">
             <span>Create: </span>&nbsp;<Tag class="icon" /><span>&nbsp;{{ input }}</span>
           </div>
         </template>
@@ -90,7 +92,7 @@
       <div v-if="selectedCategory.primary" @click="makeSecondary(selectedCategory)">
         Make Secondary: {{ selectedCategory.getName() }}
       </div>
-      <div @click="store.goto(selectedCategory)">
+      <div @click="gotoCategory(selectedCategory)">
         Goto {{ selectedCategory.getName() }}
         <span class="gray"> &nbsp;({{ selectedCategory.catalogue?.getName() }}) </span>
       </div>
@@ -102,10 +104,11 @@ import Tag from "./Tag.vue";
 import AutocompleteTags from "~/components/util/AutocompleteTags.vue";
 import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorStore } from "~/stores/editorStore";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 
 export default defineComponent({
   components: { AutocompleteTags, Tag, ContextMenu },
@@ -263,7 +266,33 @@ export default defineComponent({
         this.removeLink(links, found);
       }
     },
-    createCategory(name: string) {},
+    async createCategory(name: string, primary = false) {
+      const parent = this.item.catalogue as Catalogue & EditorBase;
+      const key = "categoryEntries";
+      const obj = {
+        ...this.store.get_initial_object(key, parent),
+        name,
+        id: generateBattlescribeId(),
+      };
+      await this.store.add(obj, key, parent);
+      const added = this.item.catalogue.categoryEntries?.find((o) => o.name === name);
+      if (added) {
+        if (primary) {
+          return this.addCategoryAndMakePrimary(added);
+        } else {
+          return this.addCategory(added);
+        }
+      }
+    },
+    async createPrimaryCategory(name: string) {
+      await this.createCategory(name, true);
+    },
+    gotoCategory(category: EditorBase & CategoryLink) {
+      const entry = this.catalogue.findOptionById(category.id);
+      if (entry) {
+        this.store.goto(entry as EditorBase);
+      }
+    },
   },
 });
 </script>

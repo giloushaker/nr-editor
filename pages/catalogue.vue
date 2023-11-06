@@ -200,7 +200,12 @@ export default defineComponent({
     },
     async save() {
       try {
-        const incremented = await this.store.save_catalogue(this.systemFiles as GameSystemFiles, this.cat as Catalogue);
+        const increment = await this.store.prompt_revision(this.cat as Catalogue);
+        const incremented = await this.store.save_catalogue(
+          this.systemFiles as GameSystemFiles,
+          this.cat as Catalogue,
+          increment
+        );
         if (incremented) {
           notify("Incremented 1 catalogue's revision");
         }

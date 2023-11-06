@@ -18,8 +18,12 @@
       >
     </div>
     <div class="row">
+      <input type="checkbox" id="revision-popup" v-model="settings.noRevisionPopup" />
+      <label for="revision-popupt">Don't show popups asking to increment revision</label>
+    </div>
+    <div class="row">
       <input type="checkbox" id="categories-ui-v2" v-model="settings.useNewCategoriesUI" />
-      <label for="categories-ui-v2">use New UI for Categories</label>
+      <label for="categories-ui-v2">Use new ui for categories</label>
     </div>
   </div>
 </template>

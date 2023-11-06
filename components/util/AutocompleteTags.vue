@@ -37,13 +37,19 @@
         <div
           class="suggestion"
           v-else
-          @click.capture.stop="targetSelected(option)"
-          @contextmenu.capture="targetSelectedRightClick($event, option)"
+          @click.stop="targetSelected(option)"
+          @contextmenu.prevent="targetSelectedRightClick($event, option)"
         >
           <slot v-bind="option" name="option"></slot>
         </div>
       </template>
-      <div v-if="always" class="suggestion" :class="{ selected: selected === foundOptions.length }">
+      <div
+        v-if="always"
+        class="suggestion"
+        :class="{ selected: selected === foundOptions.length }"
+        @click="$emit('always', searchPattern)"
+        @contextmenu.prevent="$emit('always-special', searchPattern)"
+      >
         <slot name="always" v-bind="{ input: searchPattern }"></slot>
       </div>
     </div>

@@ -144,12 +144,13 @@ export default {
           res = opt.option[this.valueField];
         }
       }
+      const old = this.selectedOption?.option;
       this.selectedOption = {
         option: opt.option,
         selected: true,
       };
       this.$emit("update:modelValue", res);
-      this.$emit("change");
+      this.$emit("change", opt.option, old);
     },
 
     reset() {
