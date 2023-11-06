@@ -7,6 +7,7 @@ declare global {
   var notify: (arg: NotificationsOptions | string) => unknown;
   var $set: (o, k, v) => unknown;
   var $delete: (o, k) => unknown;
+  var customPrompt: (data: string | {html: string, accept?: string, cancel?: string, id?: string}),
   var electron:
     | undefined
     | {

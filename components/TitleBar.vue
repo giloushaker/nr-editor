@@ -72,12 +72,13 @@
         <Settings />
       </PopupDialog>
     </div>
+    <Prompt />
   </div>
 </template>
 <script lang="ts">
-import { Settings } from "~/.nuxt/components";
 import { useSettingsStore } from "~/stores/settingsState";
 import Settings from "./Settings.vue";
+import Prompt from "./Prompt.vue";
 
 export default {
   data() {
@@ -136,7 +137,7 @@ export default {
       });
     },
   },
-  components: { Settings },
+  components: { Settings, Prompt },
 };
 </script>
 <style scoped lang="scss">
