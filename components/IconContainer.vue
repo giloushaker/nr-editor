@@ -35,8 +35,7 @@ import { BSIData } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon, { IErrorMessage } from "./ErrorIcon.vue";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { TrackedFile, useEditorStore } from "~/stores/editorStore";
-import ChangedWarning from "./ChangedWarning.vue";
+import { useEditorStore } from "~/stores/editorStore";
 export default {
   emits: ["new", "itemClicked", "itemDoubleClicked"],
   setup() {
@@ -69,7 +68,7 @@ export default {
       this.$emit("itemClicked", item);
     },
     changed(data: BSIData) {
-      return (getDataObject(data) as TrackedFile).isChangedOnDisk;
+      return this.store.get_catalogue_state(data).isChangedOnDisk;
     },
     errors(data: BSIData): IErrorMessage[] {
       const result = [] as IErrorMessage[];
@@ -128,7 +127,7 @@ export default {
       );
     },
   },
-  components: { ErrorIcon, ChangedWarning },
+  components: { ErrorIcon },
 };
 </script>
 

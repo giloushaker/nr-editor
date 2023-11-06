@@ -450,8 +450,7 @@ export default {
     },
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
-      console.log("component", this);
-      console.log(this.allowedChildren);
+      (globalThis as any).$debugOption = this.item;
     },
     hasRootLink(catalogue: Catalogue, item: Base) {
       return catalogue.entryLinks?.find((o) => o.targetId === item.id);

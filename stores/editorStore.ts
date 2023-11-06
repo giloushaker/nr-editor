@@ -33,11 +33,11 @@ import {
   rootToJson,
   Characteristic,
   Rule,
-  rpelaceDataObject,
+  getDataObject,
+  getDataDbId,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataObject, replaceDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import type {
   BSICatalogue,
   BSIConstraint,
@@ -119,13 +119,10 @@ export interface CatalogueState {
   unsaved: boolean;
   incremented?: boolean;
   savingPromise?: Promise<any>;
-}
-
-export interface TrackedFile {
-  fullFilePath?: string;
   isChangedOnDisk?: boolean;
   isSaving?: boolean;
 }
+
 export function get_ctx(el: any): any {
   return el.vnode;
 }
@@ -144,60 +141,11 @@ export function get_base_from_vue_el(vue_el: VueComponent): EditorBase {
   return p3.item;
 }
 
-function saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
-  const stringed = rootToJson(data);
-  const isCatalogue = Boolean(data.gameSystemId);
-  const isSystem = !isCatalogue;
-  if (isSystem) {
-    db.systems.put({
-      content: JSON.parse(stringed),
-      path: data.fullFilePath,
-      id: data.id,
-    });
-  } else {
-    db.catalogues.put({
-      content: JSON.parse(stringed),
-      path: data.fullFilePath,
-      id: `${data.gameSystemId}-${data.id}`,
-    });
-  }
-}
-
-async function saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
-  const path = data.fullFilePath;
-  if (!path) {
-    console.error(`No path included in the catalogue ${data.name} to save at`);
-    return;
-  }
-  markSaving(data);
-  const extension = getExtension(path);
-  if (path.endsWith(".json")) {
-    const content = rootToJson(data);
-    await writeFile(path, content);
-  } else {
-    const xml = convertToXml(data);
-    const shouldZip = isZipExtension(extension);
-    const name = filename(path);
-    const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
-    const content = shouldZip ? await zipCompress(nameInZip, xml, "uint8array") : xml;
-    await writeFile(path, content);
-  }
-}
-
-function saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
-  if (electron) {
-    saveCatalogueInFiles(data);
-  } else {
-    saveCatalogueInDb(data);
-  }
-  unmarkChangedOnDisk(data);
-}
-
-function markSaving(file: any) {
+function markSaving(file: CatalogueState) {
   const f = file as TrackedFile;
   f.isSaving = true;
 }
-function markChangedOnDisk(file: any) {
+function markChangedOnDisk(file: CatalogueState) {
   const f = file as TrackedFile;
   if (f.isSaving) {
     f.isSaving = false;
@@ -205,7 +153,7 @@ function markChangedOnDisk(file: any) {
   }
   f.isChangedOnDisk = true;
 }
-function unmarkChangedOnDisk(file: any) {
+function unmarkChangedOnDisk(file: CatalogueState) {
   const f = file as TrackedFile;
   if (f.isChangedOnDisk) {
     f.isChangedOnDisk = false;
@@ -311,8 +259,58 @@ export const useEditorStore = defineStore("editor", {
       }
       files.setSystem(data);
       this.get_catalogue_state(data.gameSystem).incremented = true;
-      saveCatalogue(data.gameSystem);
+      this.saveCatalogue(data.gameSystem);
       return files;
+    },
+    saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
+      const stringed = rootToJson(data);
+      const isCatalogue = Boolean(data.gameSystemId);
+      const isSystem = !isCatalogue;
+      if (isSystem) {
+        db.systems.put({
+          content: JSON.parse(stringed),
+          path: data.fullFilePath,
+          id: data.id,
+        });
+      } else {
+        db.catalogues.put({
+          content: JSON.parse(stringed),
+          path: data.fullFilePath,
+          id: `${data.gameSystemId}-${data.id}`,
+        });
+      }
+    },
+
+    async saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
+      const path = data.fullFilePath;
+      if (!path) {
+        console.error(`No path included in the catalogue ${data.name} to save at`);
+        return;
+      }
+
+      const extension = getExtension(path);
+      if (path.endsWith(".json")) {
+        const content = rootToJson(data);
+        await writeFile(path, content);
+      } else {
+        const xml = convertToXml(data);
+        const shouldZip = isZipExtension(extension);
+        const name = filename(path);
+        const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
+        const content = shouldZip ? await zipCompress(nameInZip, xml, "uint8array") : xml;
+        await writeFile(path, content);
+      }
+    },
+
+    saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
+      const state = this.get_catalogue_state(data);
+      markSaving(state);
+      if (electron) {
+        this.saveCatalogueInFiles(data);
+      } else {
+        this.saveCatalogueInDb(data);
+      }
+      unmarkChangedOnDisk(state);
     },
     async load_systems_from_folder(
       folder: string,
@@ -333,21 +331,20 @@ export const useEditorStore = defineStore("editor", {
       for (const file of allowed) {
         progress && (await progress(result_files.length, allowed.length, file.path));
         const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
-        replaceDataObject(json, shallowReactive(getDataObject(json)));
         const systemId = json?.gameSystem?.id;
         const catalogueId = json?.catalogue?.id;
         const obj = getDataObject(json);
         obj.fullFilePath = file.path.replaceAll("\\", "/");
-        unmarkChangedOnDisk(obj);
+        const state = this.get_catalogue_state(json);
         if (systemId) {
           const systemFiles = this.get_system(systemId);
-          systemFiles.setSystem(json);
+          systemFiles.setSystem(markRaw(json));
           systems.push(systemFiles);
           result_system_ids.push(systemId);
         }
         if (catalogueId) {
           const systemFiles = this.get_system(json.catalogue.gameSystemId);
-          systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
+          systemFiles.catalogueFiles[catalogueId] = markRaw(json);
         }
         result_files.push(json);
       }
@@ -436,14 +433,14 @@ export const useEditorStore = defineStore("editor", {
         if (!obj.fullFilePath) {
           continue;
         }
-        watchFile(obj.fullFilePath, (path, stats) => {
-          this.on_file_changed(catalogue, stats);
+        watchFile(obj.fullFilePath, () => {
+          this.on_file_changed(catalogue);
         });
       }
     },
-    on_file_changed(file: BSIDataCatalogue | BSIDataSystem, stats) {
-      console.log(getDataObject(file).name, "changed", stats);
-      markChangedOnDisk(getDataObject(file));
+    on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
+      console.log(getDataObject(file).name, "changed");
+      markChangedOnDisk(this.get_catalogue_state(file));
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
@@ -465,24 +462,24 @@ export const useEditorStore = defineStore("editor", {
     },
     get_catalogue_state(catalogue: BSIData | Catalogue) {
       const id = getDataDbId(catalogue);
-      return this.unsavedChanges[id];
-    },
-    set_catalogue_changed(catalogue: Catalogue | BSIDataCatalogue | BSIDataSystem, state: boolean = true) {
-      const id = getDataDbId(catalogue);
-      if (!(id in this.unsavedChanges)) {
+      if (!this.unsavedChanges[id]) {
         this.unsavedChanges[id] = {
           changed: false,
           unsaved: false,
         };
       }
-      if (state) {
-        this.unsavedChanges[id].changed = true;
-        if (!this.unsavedChanges[id].unsaved) {
+      return this.unsavedChanges[id];
+    },
+    set_catalogue_changed(catalogue: Catalogue | BSIDataCatalogue | BSIDataSystem, changedState: boolean = true) {
+      const state = this.get_catalogue_state(catalogue);
+      if (changedState) {
+        state.changed = true;
+        if (!state.unsaved) {
           this.unsavedCount += 1;
-          this.unsavedChanges[id].unsaved = state;
+          state.unsaved = changedState;
         }
       } else {
-        this.unsavedChanges[id].unsaved = state;
+        state.unsaved = changedState;
       }
     },
     /**

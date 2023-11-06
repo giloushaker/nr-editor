@@ -114,7 +114,7 @@ export default {
     },
 
     scopeChanged() {
-      this.catalogue.updateCondition(this.item as EditorBase & (Condition | Constraint));
+      this.item.catalogue.updateCondition(this.item as EditorBase & (Condition | Constraint));
       this.changed();
     },
     fieldChanged() {
