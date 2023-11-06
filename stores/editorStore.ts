@@ -294,7 +294,7 @@ export const useEditorStore = defineStore("editor", {
         data.gameSystem.fullFilePath = `${folder}/${name}.${extension || "gst"}`;
       }
       files.setSystem(data);
-
+      this.get_catalogue_state(data.gameSystem).incremented = true;
       saveCatalogue(data.gameSystem);
       return files;
     },

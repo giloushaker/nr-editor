@@ -276,6 +276,7 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       system.setCatalogue(copy);
       this.cataloguesStore.setEdited(getDataDbId(copy), true);
       this.store.set_catalogue_changed(copy, true);
+      this.store.get_catalogue_state(copy).incremented = true;
       this.selectedItem = copy;
       if (!electron) {
         db.catalogues.put({
