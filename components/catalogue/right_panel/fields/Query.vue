@@ -25,7 +25,7 @@
         :options="allScopes"
         valueField="id"
         filterField="name"
-        @change="changed"
+        @change="scopeChanged"
         :disabled="itemField?.value?.startsWith('limit::')"
       >
         <template #option="opt">
@@ -62,6 +62,7 @@
 
 <script lang="ts">
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
@@ -112,6 +113,10 @@ export default {
       this.$emit("catalogueChanged");
     },
 
+    scopeChanged() {
+      this.catalogue.updateCondition(this.item as EditorBase & (Condition | Constraint));
+      this.changed();
+    },
     fieldChanged() {
       this.item.field = this.itemField.value;
       if (this.item.field.startsWith("limit::")) {
