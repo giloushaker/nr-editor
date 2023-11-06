@@ -16,7 +16,7 @@
         </template>
       </span>
       <!-- <span class="gray" v-if="i < path.length - 1"> >&nbsp;</span> -->
-      <span class="gray" v-if="i < path.length - 1">&nbsp;> </span>
+      <span class="gray" v-if="endArrow || i < path.length - 1">&nbsp;> </span>
     </div>
   </div>
 </template>
@@ -27,6 +27,7 @@ export default defineComponent({
   props: {
     path: { type: Array<EntryPathEntryExtended>, required: true },
     maxLength: { type: Number, default: 80, required: false },
+    endArrow: { type: Boolean, default: false },
   },
 });
 </script>
