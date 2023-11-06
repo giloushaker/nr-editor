@@ -12,7 +12,11 @@
 
     <div v-if="promptId">
       <br />
-      <input type="checkbox" :id="promptId" /><label :for="promptId">Dont show this again</label>
+      <input
+        type="checkbox"
+        :id="promptId"
+        @change="dontChanged(promptId, ($event.target as HTMLInputElement).checked)"
+      /><label :for="promptId">Dont show this again</label>
     </div>
   </PopupDialog>
 </template>
@@ -26,7 +30,9 @@ const promptAccept = ref("Yes");
 const promptCancel = ref("Cancel");
 const promptId = ref<string | null>(null);
 let promptResolve = null as ((response: number) => void) | null;
-
+function dontChanged(id: string, val: boolean) {
+  store.set(id, val);
+}
 globalThis.customPrompt = (data: any) => {
   if (promptResolve !== null) {
     throw new Error("Cannot create a Prompt when one is already active");

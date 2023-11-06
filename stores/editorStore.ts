@@ -541,7 +541,7 @@ export const useEditorStore = defineStore("editor", {
               await (globalThis.customPrompt &&
                 globalThis.customPrompt({
                   html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
-    <span class="gray">Note: You can enable automatic revision increments by integrating with GitHub.<br/>This can be achieved by adding a publication named "GitHub" with the repository's GitHub URL as the Publication URL.`,
+    <span class="gray">Note: You can enable automatic revision increments by integrating with GitHub.<br/>This can be achieved by adding a publication in the GameSystem named "GitHub" with the repository's GitHub URL as the Publication URL.`,
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
