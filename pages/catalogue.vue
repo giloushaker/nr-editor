@@ -58,7 +58,7 @@ You may want to reload the system through the Systems tab"
 import LeftPanel, { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
-import { TrackedFile, useEditorStore } from "~/stores/editorStore";
+import { useEditorStore } from "~/stores/editorStore";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
@@ -76,7 +76,7 @@ export default defineComponent({
       loading_all: false,
       loading_progress: 0,
       loading_progress_max: 0,
-      loading_progress_msg: "",
+      loading_progress_msg: "" as string,
       initial: true,
       saving: false,
       failed: false,
@@ -123,9 +123,7 @@ export default defineComponent({
 
   computed: {
     self_or_imports_changed() {
-      return (
-        (this.cat as TrackedFile).isChangedOnDisk || this.cat?.imports?.find((o) => (o as TrackedFile).isChangedOnDisk)
-      );
+      return this.file_changed(this.cat as Catalogue) || this.cat?.imports?.find((o) => this.file_changed(o));
     },
     changed() {
       if (!this.cat) return false;
@@ -170,6 +168,9 @@ export default defineComponent({
     },
   },
   methods: {
+    file_changed(catalogue: Catalogue) {
+      return this.store.get_catalogue_state(catalogue).isChangedOnDisk;
+    },
     async load_all() {
       if (this.systemFiles) {
         try {
@@ -178,7 +179,7 @@ export default defineComponent({
           await this.systemFiles.loadAll(async (current, max, msg) => {
             this.loading_progress = current;
             this.loading_progress_max = max;
-            this.loading_progress_msg = msg;
+            this.loading_progress_msg = msg ?? "";
             await new Promise((resolve) => setTimeout(resolve, 0));
           });
           this.loading_progress = 0;
