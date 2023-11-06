@@ -512,7 +512,7 @@ export const useEditorStore = defineStore("editor", {
               await (globalThis.customPrompt &&
                 globalThis.customPrompt({
                   html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
-    <span class="gray">This is shown because Github cannot be accessed as your are offline</span>`,
+    <span class="gray">Note: This is shown because Github cannot be accessed as your are offline</span>`,
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
