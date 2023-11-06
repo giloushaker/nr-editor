@@ -47,7 +47,7 @@
 </template>
 <script lang="ts">
 import { PropType } from "vue";
-import { findParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
+import { findParentWhere, sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { getEntryPathInfo, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -91,10 +91,10 @@ export default {
       return false;
     },
     links() {
-      return this.item?.links || [];
+      return sortByAscending(this.item?.links || [], (o) => o.catalogue.name);
     },
     other_links() {
-      return this.item?.other_links || [];
+      return sortByAscending(this.item?.other_links || [], (o) => o.catalogue.name);
     },
     label() {
       return getName(this.item);
