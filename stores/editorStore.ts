@@ -142,24 +142,21 @@ export function get_base_from_vue_el(vue_el: VueComponent): EditorBase {
 }
 
 function markSaving(file: CatalogueState) {
-  const f = file as TrackedFile;
-  f.isSaving = true;
+  file.isSaving = true;
 }
 function markChangedOnDisk(file: CatalogueState) {
-  const f = file as TrackedFile;
-  if (f.isSaving) {
-    f.isSaving = false;
+  if (file.isSaving) {
+    file.isSaving = false;
     return;
   }
-  f.isChangedOnDisk = true;
+  file.isChangedOnDisk = true;
 }
 function unmarkChangedOnDisk(file: CatalogueState) {
-  const f = file as TrackedFile;
-  if (f.isChangedOnDisk) {
-    f.isChangedOnDisk = false;
+  if (file.isChangedOnDisk) {
+    file.isChangedOnDisk = false;
   }
-  if (f.isSaving === undefined) {
-    f.isSaving = false;
+  if (file.isSaving === undefined) {
+    file.isSaving = false;
   }
 }
 type VueComponent = any;
@@ -503,7 +500,7 @@ export const useEditorStore = defineStore("editor", {
       if (incrementRevision === "no") {
         state.incremented = true;
       }
-      saveCatalogue(catalogue);
+      this.saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
       cataloguesStore.updateCatalogue(catalogue);
