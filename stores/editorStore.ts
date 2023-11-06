@@ -33,10 +33,11 @@ import {
   rootToJson,
   Characteristic,
   Rule,
+  rpelaceDataObject,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
-import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
+import { getDataObject, replaceDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import type {
   BSICatalogue,
   BSIConstraint,
@@ -199,14 +200,18 @@ function markSaving(file: any) {
 function markChangedOnDisk(file: any) {
   const f = file as TrackedFile;
   if (f.isSaving) {
-    delete f.isSaving;
+    f.isSaving = false;
     return;
   }
   f.isChangedOnDisk = true;
 }
 function unmarkChangedOnDisk(file: any) {
-  if ((file as TrackedFile).isChangedOnDisk) {
-    delete (file as TrackedFile).isChangedOnDisk;
+  const f = file as TrackedFile;
+  if (f.isChangedOnDisk) {
+    f.isChangedOnDisk = false;
+  }
+  if (f.isSaving === undefined) {
+    f.isSaving = false;
   }
 }
 type VueComponent = any;
@@ -328,11 +333,12 @@ export const useEditorStore = defineStore("editor", {
       for (const file of allowed) {
         progress && (await progress(result_files.length, allowed.length, file.path));
         const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
-
+        replaceDataObject(json, shallowReactive(getDataObject(json)));
         const systemId = json?.gameSystem?.id;
         const catalogueId = json?.catalogue?.id;
-
-        getDataObject(json).fullFilePath = file.path.replaceAll("\\", "/");
+        const obj = getDataObject(json);
+        obj.fullFilePath = file.path.replaceAll("\\", "/");
+        unmarkChangedOnDisk(obj);
         if (systemId) {
           const systemFiles = this.get_system(systemId);
           systemFiles.setSystem(json);
@@ -341,7 +347,7 @@ export const useEditorStore = defineStore("editor", {
         }
         if (catalogueId) {
           const systemFiles = this.get_system(json.catalogue.gameSystemId);
-          systemFiles.catalogueFiles[catalogueId] = markRaw(json);
+          systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
         }
         result_files.push(json);
       }
@@ -382,7 +388,7 @@ export const useEditorStore = defineStore("editor", {
         if (!content.catalogue.fullFilePath) {
           content.catalogue.fullFilePath = path;
         }
-        systemFiles.catalogueFiles[catalogueId] = markRaw(content);
+        systemFiles.catalogueFiles[catalogueId] = shallowReactive(content);
       }
       this.load_system(systemFiles, true);
     },

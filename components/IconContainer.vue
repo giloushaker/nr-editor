@@ -36,6 +36,7 @@ import ErrorIcon, { IErrorMessage } from "./ErrorIcon.vue";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { TrackedFile, useEditorStore } from "~/stores/editorStore";
+import ChangedWarning from "./ChangedWarning.vue";
 export default {
   emits: ["new", "itemClicked", "itemDoubleClicked"],
   setup() {
@@ -51,6 +52,7 @@ export default {
     },
   },
   methods: {
+    getDataObject,
     getType(item: BSIData) {
       if (item.gameSystem) {
         return { icon: "assets/icons/system1.png", order: 1 };
@@ -126,7 +128,7 @@ export default {
       );
     },
   },
-  components: { ErrorIcon },
+  components: { ErrorIcon, ChangedWarning },
 };
 </script>
 
