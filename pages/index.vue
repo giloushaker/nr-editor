@@ -165,13 +165,14 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 
       return `using repo at ${github.githubUrl}`;
     },
-    saveAll() {
+    async saveAll() {
       let failed = false;
       try {
         for (const sys of Object.values(this.systems)) {
+          const increment = await this.store.prompt_revision(sys);
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.store.get_catalogue_state(cat)?.unsaved) {
-              this.store.save_catalogue(sys, cat);
+              this.store.save_catalogue(sys, cat, increment);
             }
           }
         }
