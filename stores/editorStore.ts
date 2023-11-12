@@ -575,8 +575,7 @@ export const useEditorStore = defineStore("editor", {
           if (system && sys.gameSystem?.gameSystem?.id !== system) {
             continue;
           }
-          let increment = "no" as "yes" | "no" | "github" | undefined;
-          this.prompt_revision(sys);
+          const increment = await this.prompt_revision(sys);
           for (const cat of sys.getAllLoadedCatalogues()) {
             if (this.get_catalogue_state(cat)?.unsaved) {
               if (await this.save_catalogue(sys, cat, increment)) {
