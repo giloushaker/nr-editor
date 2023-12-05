@@ -42,14 +42,8 @@
       <tr>
         <td>Target:</td>
         <td>
-          <UtilAutocomplete
-            v-model="item.targetId"
-            :placeholder="`Search Target...`"
-            :options="availableTargets"
-            valueField="id"
-            filterField="name"
-            @change="targetIdChanged"
-          >
+          <UtilAutocomplete v-model="item.targetId" :placeholder="`Search Target...`" :options="availableTargets"
+            valueField="id" filterField="name" @change="targetIdChanged">
             <template #option="opt">
               <div style="white-space: nowrap">
                 <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
@@ -66,8 +60,8 @@
         <td></td>
         <td>
           <input @change="changedImportRootEntries" id="importRoot" type="checkbox" v-model="item.importRootEntries" />
-          <label for="importRoot">Import Root Entries</label></td
-        >
+          <label for="importRoot">Import Root Entries</label>
+        </td>
       </tr>
     </table>
   </fieldset>
@@ -129,7 +123,7 @@ export default {
         const values = Object.values(this.store.get_system(id).catalogueFiles);
         const catalogues = values.map((elt) => {
           return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLink" };
-        });
+        }).filter(o => o.id !== this.catalogue.id);
         return catalogues;
       }
       const all = [];
@@ -140,7 +134,7 @@ export default {
       }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-    typeChanged() {},
+    typeChanged() { },
 
     targetIdChanged() {
       this.updateLink();

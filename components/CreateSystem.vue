@@ -6,8 +6,8 @@
     <input class="w-full" type="text" v-model="text" required />
     <span>Format </span>
     <select v-model="format">
-      <option value="gstz">.gstz (Zipped Xml)</option>
-      <option value="gst">.gst (Xml)</option>
+      <option value="gstz">.gstz (Zipped XML)</option>
+      <option value="gst">.gst (XML)</option>
       <option value="json">.json (JSON)</option>
     </select>
     <template v-if="electron">

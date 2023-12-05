@@ -255,8 +255,8 @@ export const useEditorStore = defineStore("editor", {
         data.gameSystem.fullFilePath = `${folder}/${name}.${extension || "gst"}`;
       }
       files.setSystem(data);
-      this.get_catalogue_state(data.gameSystem).incremented = true;
-      this.saveCatalogue(data.gameSystem);
+      this.get_catalogue_state(data).incremented = true;
+      this.saveCatalogue(data);
       return files;
     },
     saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
@@ -299,13 +299,14 @@ export const useEditorStore = defineStore("editor", {
       }
     },
 
-    saveCatalogue(data: Catalogue | BSICatalogue | BSIGameSystem) {
+    saveCatalogue(data: Catalogue | BSIData) {
       const state = this.get_catalogue_state(data);
+      const obj = getDataObject(data);
       markSaving(state);
       if (electron) {
-        this.saveCatalogueInFiles(data);
+        this.saveCatalogueInFiles(obj);
       } else {
-        this.saveCatalogueInDb(data);
+        this.saveCatalogueInDb(obj);
       }
       unmarkChangedOnDisk(state);
     },
@@ -332,7 +333,6 @@ export const useEditorStore = defineStore("editor", {
         const catalogueId = json?.catalogue?.id;
         const obj = getDataObject(json);
         obj.fullFilePath = file.path.replaceAll("\\", "/");
-        const state = this.get_catalogue_state(json);
         if (systemId) {
           const systemFiles = this.get_system(systemId);
           systemFiles.setSystem(markRaw(json));
@@ -396,6 +396,7 @@ export const useEditorStore = defineStore("editor", {
             if (state) {
               state.changed = false;
               state.unsaved = false;
+              state.isChangedOnDisk = false;
             }
             cataloguesStore.updateCatalogue(getDataObject(catalogue));
             cataloguesStore.setEdited(getDataObject(catalogue).id, false);

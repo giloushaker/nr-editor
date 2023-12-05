@@ -92,6 +92,11 @@ export async function writeFile(filePath: string, data: string | Blob | Buffer |
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
   await electron.invoke("writeFileSync", filePath, data);
 }
+export async function deleteFile(filePath: string) {
+  if (!electron) return;
+  return await electron.invoke("unlinkSync", filePath);
+}
+
 export async function showOpenDialog(options: OpenDialogOptions) {
   if (!electron) return;
   return electron.invoke("showOpenDialog", options) as OpenDialogReturnValue;
