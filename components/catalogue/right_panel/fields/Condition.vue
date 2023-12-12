@@ -47,7 +47,9 @@ export default {
   },
   computed: {
     allowNonInstanceOf() {
-      return ["primary-category", "ancestor"].includes(this.item.scope) == false;
+      // Somehow atLeast seem to work fine with primary-category so lets allow it even if BS does not
+      return true;
+      // return ["primary-category", "ancestor"].includes(this.item.scope) == false;
     },
     instanceOf() {
       return this.item.type.includes("instance");
