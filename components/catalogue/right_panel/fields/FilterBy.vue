@@ -45,8 +45,8 @@
         </td>
       </tr>
     </table>
-    <input type="checkbox" v-model="item.shared" id="shared" @change="changed" />
-    <label for="shared">Shared?</label>
+    <input :disabled="noshared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
+    <label :class="{ gray: noshared }" for="shared">Shared?</label>
   </fieldset>
 </template>
 
@@ -109,6 +109,11 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
+    },
+
+    noshared: {
+      type: Boolean,
+      default: false,
     },
   },
 

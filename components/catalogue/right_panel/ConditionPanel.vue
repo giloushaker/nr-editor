@@ -13,7 +13,7 @@
       childSelections
     />
 
-    <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
+    <FilterBy noshared class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
   </div>
 </template>
 
