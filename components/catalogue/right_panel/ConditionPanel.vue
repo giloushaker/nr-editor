@@ -13,7 +13,14 @@
       childSelections
     />
 
-    <FilterBy noshared class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
+    <FilterBy
+      v-if="item.field.startsWith('limit::') == false"
+      noshared
+      class="section"
+      :item="item"
+      @catalogueChanged="changed"
+      :catalogue="catalogue"
+    />
   </div>
 </template>
 

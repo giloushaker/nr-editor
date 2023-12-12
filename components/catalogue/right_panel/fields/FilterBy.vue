@@ -45,8 +45,8 @@
         </td>
       </tr>
     </table>
-    <input :disabled="noshared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
-    <label :class="{ gray: noshared }" for="shared">Shared?</label>
+    <input :disabled="noshared && item.shared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
+    <label :class="{ gray: noshared && item.shared }" for="shared">Shared?</label>
   </fieldset>
 </template>
 
