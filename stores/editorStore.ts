@@ -417,13 +417,15 @@ export const useEditorStore = defineStore("editor", {
             console.error(e);
           }
         }
-        if (github && github.shortName?.includes("/") && github.publisherUrl) {
+        if (github &&  github.publisherUrl) {
           system.github = {
             githubUrl: github.publisherUrl,
-            githubRepo: github.shortName,
-            githubOwner: github.shortName?.split("/")[0],
-            githubName: github.shortName?.split("/")[1],
           };
+          if (github.shortName && github.shortName.includes("/")){
+            system.github.githubRepo = github.shortName
+            system.github.githubOwner= github.shortName?.split("/")[0]
+            system.github.githubName=  github.shortName?.split("/")[1]
+          }
         }
       }
       for (const catalogue of system.getAllCatalogueFiles()) {
