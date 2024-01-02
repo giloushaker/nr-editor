@@ -1,22 +1,13 @@
 <template>
-  <PopupDialog
-    v-model="isOpen"
-    v-if="isOpen"
-    :text="promptCancel"
-    @button="doResolve(true)"
-    @close="doResolve(false)"
-    :button="promptAccept"
-    nocloseonclickoutside
-  >
+  <PopupDialog v-model="isOpen" v-if="isOpen" :text="promptCancel" @button="doResolve(true)" @close="doResolve(false)"
+    :button="promptAccept" nocloseonclickoutside>
     <div v-html="promptHtml"></div>
 
     <div v-if="promptId">
       <br />
-      <input
-        type="checkbox"
-        :id="promptId"
-        @change="dontChanged(promptId, ($event.target as HTMLInputElement).checked)"
-      /><label :for="promptId">Dont show this again</label>
+      <input type="checkbox" :id="promptId"
+        @change="dontChanged(promptId, ($event.target as HTMLInputElement).checked)" /><label :for="promptId">Dont show
+        this again</label>
     </div>
   </PopupDialog>
 </template>
@@ -34,6 +25,7 @@ function dontChanged(id: string, val: boolean) {
   store.set(id, val);
 }
 globalThis.customPrompt = (data: any) => {
+  let shouldOpen = true;
   if (promptResolve !== null) {
     throw new Error("Cannot create a Prompt when one is already active");
   }
@@ -42,6 +34,7 @@ globalThis.customPrompt = (data: any) => {
       promptHtml.value = data;
     } else if (isObject(data)) {
       if (data.id && store.get(data.id)) {
+        shouldOpen = false;
         resolve(false);
         return;
       }
@@ -52,7 +45,7 @@ globalThis.customPrompt = (data: any) => {
     }
     promptResolve = resolve;
   });
-  isOpen.value = true;
+  isOpen.value = shouldOpen;
   return promise;
 };
 function doResolve(result: any) {
