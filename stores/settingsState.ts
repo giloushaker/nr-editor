@@ -231,7 +231,11 @@ export const useSettingsStore = defineStore("settings", {
   persist: {
     storage: globalThis.localStorage,
   },
-
+  getters: {
+      isDarkTheme(): boolean{
+        return this.theme === "dark"
+      }
+  },
   actions: {
     getDefaultAppareance(): AppearanceTheme {
       if (this.theme === "dark") {

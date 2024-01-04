@@ -1,58 +1,42 @@
 <template>
-  <div>
+  <div :class="{ 'dark': settings.isDarkTheme }">
     <div>
       <template v-if="ownCategories?.length || ownPrimaryCategories?.length">
-        <div
-          v-for="category in ownPrimaryCategories"
-          class="label hover-brighten"
-          @contextmenu.stop="context($event, category)"
-        >
+        <div v-for="category in ownPrimaryCategories" class="label hover-brighten"
+          @contextmenu.stop="context($event, category)">
           <span class="primary bold"> Primary </span>
-          <span class="name">{{ category.getName() }} </span
-          ><span class="cursor-pointer hover-darken px-5px rounded-8px" @click="removeCategory(category)">&times;</span>
+          <span class="name">{{ category.getName() }} </span><span class="cursor-pointer hover-darken px-5px rounded-8px"
+            @click="removeCategory(category)">&times;</span>
         </div>
         <div v-for="category in ownCategories" class="label" @contextmenu.stop="context($event, category)">
-          <span class="name">{{ category.getName() }} </span
-          ><span class="cursor-pointer hover-darken px-5px rounded-8px" @click="removeCategory(category)">&times;</span>
+          <span class="name">{{ category.getName() }} </span><span class="cursor-pointer hover-darken px-5px rounded-8px"
+            @click="removeCategory(category)">&times;</span>
         </div>
       </template>
       <template v-else>
         <span class="gray"> None </span>
       </template>
-      <span class="py-1px rounded-8px bg-lime-400"
-        ><span class="px-5px py-1px rounded-8px cursor-pointer hover-darken" @click="adding = true" v-if="!adding"
-          >+</span
-        >
+      <span class="py-1px rounded-8px bg-lime-400"><span class="px-5px py-1px rounded-8px cursor-pointer hover-darken"
+          @click="adding = true" :style="{ color: settings.isDarkTheme ? 'black' : 'white' }" v-if="!adding">+</span>
       </span>
-      <AutocompleteTags
-        v-if="adding"
-        v-model="input"
-        @blur="adding = false"
-        focus
-        class="inline-block"
-        lazy
-        :always="Boolean(input.trim()) && !allCategories().find((o) => o.name === input)"
-        :options="allCategories"
-        placeholder="Search... (Right click = Primary)"
-        :filterField="(o: Category) => o.getName()"
-        @add="addCategory"
-        @add-special="addCategoryAndMakePrimary"
-        @always="createCategory"
-        @always-special="createPrimaryCategory"
-      >
-        <template #option="{ option }">
+      <AutocompleteTags v-if="adding" v-model="input" @blur="adding = false" focus class="inline-block" lazy
+        :always="Boolean(input.trim()) && !allCategories().find((o) => o.name === input)" :options="allCategories"
+        :dark="settings.isDarkTheme" placeholder="Search... (Right click = Primary)"
+        :filterField="(o: Category) => o.getName()" @add="addCategory" @add-special="addCategoryAndMakePrimary"
+        @always="createCategory" @always-special="createPrimaryCategory">
+
+        <template #option="{ option, selected }">
           <div class="flex align-items flex-row" style="white-space: nowrap">
             <template v-if="option?.name">
               <Tag class="icon" />
-              <span
-                >&nbsp;{{ option.name }}<span class="gray"> [{{ option.catalogue.name }}]</span></span
-              >
+              <span>&nbsp;{{ option.name }}<span class="gray"> [{{ option.catalogue.name }}]</span></span>
             </template>
           </div>
         </template>
         <template #always="{ input }">
           <div class="flex align-items flex-row" style="white-space: nowrap">
-            <span>Create: </span>&nbsp;<Tag class="icon" /><span>&nbsp;{{ input }}</span>
+            <span>Create: </span>&nbsp;
+            <Tag class="icon" /><span>&nbsp;{{ input }}</span>
           </div>
         </template>
       </AutocompleteTags>
@@ -61,31 +45,19 @@
     <div class="align-top mt-4px" v-if="targetCategories.length || targetPrimaryCategories.length">
       <img src="assets/bsicons/link.png" />
       From Target:
-      <span
-        v-for="category in targetPrimaryCategories"
-        class="label"
-        @contextmenu.stop="linked_context($event, category)"
-      >
+      <span v-for="category in targetPrimaryCategories" class="label"
+        @contextmenu.stop="linked_context($event, category)">
         <span class="primary bold"> Primary </span>
         <span class="name">{{ category.getName() }} </span>&nbsp;<span
-          class="cursor-pointer hover-darken px-3px rounded-2px"
-          @click="removeCategory(category)"
-          >&times;</span
-        >
+          class="cursor-pointer hover-darken px-3px rounded-2px" @click="removeCategory(category)">&times;</span>
       </span>
       <span v-for="category in targetCategories" class="label" @contextmenu.stop="linked_context($event, category)">
         <span class="name">{{ category.getName() }} </span>&nbsp;<span
-          class="cursor-pointer hover-darken px-3px rounded-2px"
-          @click="removeCategory(category)"
-          >&times;</span
-        >
+          class="cursor-pointer hover-darken px-3px rounded-2px" @click="removeCategory(category)">&times;</span>
       </span>
     </div>
-    <ContextMenu
-      v-if="contextmenuopen && selectedCategory && selectedCategoryParent"
-      v-model="contextmenuopen"
-      ref="contextmenu"
-    >
+    <ContextMenu v-if="contextmenuopen && selectedCategory && selectedCategoryParent" v-model="contextmenuopen"
+      ref="contextmenu">
       <div v-if="!selectedCategory.primary" @click="makePrimary(selectedCategory, selectedCategoryParent)">
         Make Primary: {{ selectedCategory.getName() }}
       </div>
@@ -109,6 +81,7 @@ import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorStore } from "~/stores/editorStore";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { useSettingsStore } from "~/stores/settingsState";
 
 export default defineComponent({
   components: { AutocompleteTags, Tag, ContextMenu },
@@ -117,6 +90,7 @@ export default defineComponent({
       type: Object as PropType<EditorBase>,
       required: true,
     },
+
   },
   data() {
     return {
@@ -128,7 +102,7 @@ export default defineComponent({
     };
   },
   setup() {
-    return { store: useEditorStore() };
+    return { store: useEditorStore(), settings: useSettingsStore() };
   },
 
   computed: {
@@ -303,5 +277,9 @@ export default defineComponent({
   padding: 2px 0px 2px 4px;
   border-radius: 5px;
   margin: 2px;
+}
+
+.dark * .plus {
+  color: white;
 }
 </style>
