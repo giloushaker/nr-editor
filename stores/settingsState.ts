@@ -19,10 +19,11 @@ function hexToRgb(hex: string): RGB | null {
     : null;
 }
 
-export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any; }) {
+export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any }) {
   if (appearence.background) {
     const bgRgb = hexToRgb(appearence.background);
     document.documentElement.style.setProperty(`--bg`, appearence.background);
+    document.documentElement.style.setProperty(`--popups_background`, appearence.background);
 
     if (bgRgb != null) {
       for (const field in bgRgb) {
