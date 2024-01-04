@@ -68,11 +68,28 @@ export default {
           field: "import",
           title: "Indicates that this entry may be imported by other catalogues",
         },
+        {
+          name: "No children sort",
+          status: this.alphasort,
+          field: "noAlphabeticalSort",
+          title:
+            "Children are sorted by type (groups last) and alphabetically. This will have entries sorted in the roster builder in the same order as they are in the editor",
+        },
       ] as BooleanField[];
     },
 
     hidden() {
       return true;
+    },
+
+    alphasort() {
+      switch (this.item.editorTypeName) {
+        case "selectionEntry":
+          return 1;
+        case "selectionEntryGroup":
+          return 1;
+          defaut: return 0;
+      }
     },
 
     collective() {

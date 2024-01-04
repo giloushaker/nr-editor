@@ -60,7 +60,7 @@ export default {
     "item.scope"() {
       const allowed = ["instanceOf", "notInstanceOf"];
       if (!this.allowNonInstanceOf && !allowed.includes(this.item.type)) {
-        this.item.type = allowed[0] as string;
+        this.item.type = allowed[0] as any;
       }
     },
   },
