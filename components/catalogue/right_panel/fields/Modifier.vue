@@ -8,12 +8,7 @@
         </option>
       </select>
 
-      <UtilIconSelect
-        v-model="selectedField"
-        :fetch="() => fieldData"
-        @change="fieldChanged"
-        class="modType min-w-200px"
-      >
+      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged" class="modType min-w-200px">
         <template #option="opt">
           <div class="flex align-items flex-row">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${opt.option.modifierType}.png`" /><span class="inline">{{
@@ -31,14 +26,8 @@
       </select>
       <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
 
-      <UtilAutocomplete
-        v-if="inputType == 'category'"
-        :options="allCategories"
-        :filterField="(o) => o.getName()"
-        valueField="id"
-        v-model="item.value"
-        @change="changed"
-      >
+      <UtilAutocomplete v-if="inputType == 'category'" :options="allCategories" :filterField="(o) => o.getName()"
+        valueField="id" v-model="item.value" @change="changed">
         <template #option="{ option }">
           <div class="flex align-items flex-row" style="white-space: nowrap">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -47,14 +36,8 @@
           </div>
         </template>
       </UtilAutocomplete>
-      <UtilAutocomplete
-        v-if="inputType == 'defaultSelectionEntryId'"
-        :options="allGroupEntries"
-        :filterField="(o) => o.getName()"
-        valueField="id"
-        v-model="item.value"
-        @change="changed"
-      >
+      <UtilAutocomplete v-if="inputType == 'defaultSelectionEntryId'" :options="allGroupEntries"
+        :filterField="(o) => o.getName()" valueField="id" v-model="item.value" @change="changed">
         <template #option="{ option }">
           <div class="flex align-items flex-row" style="white-space: nowrap">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -288,6 +271,11 @@ export default {
             name: "Append",
             word: "to",
           },
+          {
+            id: "prepend",
+            name: "Append",
+            word: "to",
+          },
         ],
         "string-or-number": [
           {
@@ -297,6 +285,11 @@ export default {
           },
           {
             id: "append",
+            name: "Append",
+            word: "to",
+          },
+          {
+            id: "prepend",
             name: "Append",
             word: "to",
           },
