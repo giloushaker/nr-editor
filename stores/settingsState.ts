@@ -22,6 +22,8 @@ function hexToRgb(hex: string): RGB | null {
 export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any; }) {
   if (appearence.background) {
     const bgRgb = hexToRgb(appearence.background);
+    document.documentElement.style.setProperty(`--bg`, appearence.background);
+
     if (bgRgb != null) {
       for (const field in bgRgb) {
         document.documentElement.style.setProperty(`--bg-${field}`, bgRgb[field]);
