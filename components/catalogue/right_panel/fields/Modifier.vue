@@ -273,7 +273,7 @@ export default {
           },
           {
             id: "prepend",
-            name: "Append",
+            name: "Prepend",
             word: "to",
           },
         ],
