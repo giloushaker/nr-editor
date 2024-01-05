@@ -269,12 +269,12 @@ export default {
           {
             id: "append",
             name: "Append",
-            word: "to",
+            word: "with",
           },
           {
             id: "prepend",
             name: "Prepend",
-            word: "to",
+            word: "with",
           },
         ],
         "string-or-number": [
