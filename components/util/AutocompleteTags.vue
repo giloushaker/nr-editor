@@ -149,13 +149,12 @@ export default {
     onEnter() {
       if (this.bounce) return;
       this.bounce = true;
-      this.reset();
-      this.searchPattern = "";
       if (this.always && this.selected === this.foundOptions.length) {
         this.$emit("always", this.searchPattern);
       } else {
         this.targetSelected(this.foundOptions[this.fix(this.selected)]);
       }
+      this.reset();
     },
     onEnterUp() {
       this.bounce = false;
