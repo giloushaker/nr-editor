@@ -1,37 +1,52 @@
 <template>
-  <fieldset>
-    <legend>Profil Type</legend>
-    <h3>Characteristic Types</h3>
-    <div>
-      <select size="2" v-model="selected">
-        <option :value="t.id" v-for="t of item.characteristicTypes">
-          {{ t.name }}
-        </option>
-      </select>
-      <div class="section add">
-        <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
-        <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
-      </div>
+  <span>
 
-      <template v-if="selectedType">
-        <h3 class="section">Selected Characteristic Type</h3>
-        <table class="editorTable">
-          <tr>
-            <td>Unique Id:</td>
-            <td>
-              <input type="text" v-model="selectedType.id" @change="characteristicIdChanged(selectedType)" />
-            </td>
-          </tr>
-          <tr>
-            <td>Name:</td>
-            <td>
-              <input type="text" v-model="selectedType.name" @change="characteristicNameChanged(selectedType)" />
-            </td>
-          </tr>
-        </table>
-      </template>
-    </div>
-  </fieldset>
+    <fieldset>
+      <legend>
+        Order
+      </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
+    </fieldset>
+    <fieldset>
+      <legend>Profil Type</legend>
+      <h3>Characteristic Types</h3>
+      <div>
+        <select size="2" v-model="selected">
+          <option :value="t.id" v-for="t of item.characteristicTypes">
+            {{ t.name }}
+          </option>
+        </select>
+        <div class="section add">
+          <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+          <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
+        </div>
+
+        <template v-if="selectedType">
+          <h3 class="section">Selected Characteristic Type</h3>
+          <table class="editorTable">
+            <tr>
+              <td>Unique Id:</td>
+              <td>
+                <input type="text" v-model="selectedType.id" @change="characteristicIdChanged(selectedType)" />
+              </td>
+            </tr>
+            <tr>
+              <td>Name:</td>
+              <td>
+                <input type="text" v-model="selectedType.name" @change="characteristicNameChanged(selectedType)" />
+              </td>
+            </tr>
+          </table>
+        </template>
+      </div>
+    </fieldset>
+    <PopupDialog v-id="orderPopup" v-model="orderPopup">
+      <div class="text-center">Drag & Drop to change profileTypes order</div>
+      <SortOrder :items="get_profile_types()" :get="(item: BSIProfileType) => item.sortIndex"
+        :set="(item: BSIProfileType, v: number) => item.sortIndex = v" :del="(o: BSIProfileType) => delete o.sortIndex">
+        <template #item="{ item }">{{ item.name }}</template>
+      </SortOrder>
+    </PopupDialog>
+  </span>
 </template>
 
 <script lang="ts">
@@ -40,6 +55,8 @@ import { BSICharacteristicType, BSIProfile, BSIProfileType } from "~/assets/shar
 import { PropType } from "vue";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
+import SortOrder from "./SortOrder.vue";
+import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -51,6 +68,7 @@ export default {
   data() {
     return {
       selectedType: null as BSICharacteristicType | null,
+      orderPopup: false,
     };
   },
   setup() {
@@ -67,29 +85,37 @@ export default {
     },
   },
   methods: {
+    get_profile_types() {
+      const files = ((this.item as any as EditorBase).catalogue.manager as GameSystemFiles).getAllLoadedCatalogues();
+      const found = []
+      for (const file of files) {
+        for (const profileType of file.profileTypes || []) {
+          found.push(profileType)
+        }
+      }
+      return found;
+    },
     add() {
       if (!this.item.characteristicTypes) {
         this.item.characteristicTypes = [];
       }
-
       const type = {
         id: generateBattlescribeId(),
         name: "New Characteristic Type",
       };
       this.item.characteristicTypes.push(type);
-
       const refs = (this.item as BSIProfileType & EditorBase).links || [];
       for (const ref of refs) {
         for (const profile of ref.profilesIterator()) {
           if (profile.typeId === this.item.id) {
-            if (!profile.characteristics) profile.characteristics = [];
+            if (!profile.characteristics)
+              profile.characteristics = [];
             profile.characteristics.push({ typeId: type.id, name: type.name, $text: "" });
           }
         }
       }
       this.$emit("catalogueChanged");
     },
-
     del() {
       let type: BSICharacteristicType;
       if (this.selectedType) {
@@ -101,7 +127,6 @@ export default {
           }
         }
       }
-
       const refs = (this.item as BSIProfileType & EditorBase).links || [];
       for (const ref of refs) {
         for (const profile of ref.profilesIterator()) {
@@ -114,7 +139,6 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-
     characteristicIdChanged(type: BSICharacteristicType) {
       const refs = (this.item as BSIProfileType & EditorBase).links || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
@@ -143,23 +167,21 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-
     init() {
       if (this.item.characteristicTypes?.length) {
         this.selectedType = this.item.characteristicTypes[0];
       }
     },
   },
-
   created() {
     this.init();
   },
-
   watch: {
     item() {
       this.init();
     },
   },
+  components: { SortOrder }
 };
 </script>
 

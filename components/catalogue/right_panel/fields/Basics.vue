@@ -8,7 +8,7 @@
           <input type="text" v-model="id" @change="idchanged" class="flex flex-shrink" />
           <button class="btn !w-34px flex items-center mr-8px" @click="refresh">
             <span>
-              <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generated Id" />
+              <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generate Id" />
             </span>
           </button>
         </td>

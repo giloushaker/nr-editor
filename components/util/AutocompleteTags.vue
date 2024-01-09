@@ -152,7 +152,7 @@ export default {
       if (this.always && this.selected === this.foundOptions.length) {
         this.$emit("always", this.searchPattern);
       } else {
-        this.targetSelected(this.foundOptions[this.fix(this.selected)]);
+        this.targetSelected(this.foundOptions[this.boundedSelected]);
       }
       this.reset();
     },
