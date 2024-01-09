@@ -39,7 +39,7 @@
         </template>
       </div>
     </fieldset>
-    <PopupDialog v-id="orderPopup" v-model="orderPopup">
+    <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
       <SortOrder :items="get_profile_types()" :get="(item: BSIProfileType) => item.sortIndex"
         :set="(item: BSIProfileType, v: number) => item.sortIndex = v" :del="(o: BSIProfileType) => delete o.sortIndex">
