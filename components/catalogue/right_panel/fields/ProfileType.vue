@@ -41,8 +41,7 @@
     </fieldset>
     <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
-      <SortOrder :items="get_profile_types()" :get="(item: BSIProfileType) => item.sortIndex"
-        :set="(item: BSIProfileType, v: number) => item.sortIndex = v" :del="(o: BSIProfileType) => delete o.sortIndex">
+      <SortOrder :items="get_profile_types()" :get="get" :set="set" :del="del">
         <template #item="{ item }">{{ item.name }}</template>
       </SortOrder>
     </PopupDialog>
@@ -85,6 +84,17 @@ export default {
     },
   },
   methods: {
+    get(item: BSIProfileType & EditorBase) {
+      return item.sortIndex;
+    },
+    set(item: BSIProfileType & EditorBase, v: number) {
+      item.sortIndex = v;
+      this.store.set_catalogue_changed(item.catalogue, true);
+    },
+    del(item: BSIProfileType & EditorBase) {
+      delete item.sortIndex;
+      this.store.set_catalogue_changed(item.catalogue, true);
+    },
     get_profile_types() {
       const files = ((this.item as any as EditorBase).catalogue.manager as GameSystemFiles).getAllLoadedCatalogues();
       const found = []
@@ -93,7 +103,7 @@ export default {
           found.push(profileType)
         }
       }
-      return found;
+      return found as Array<BSIProfileType & EditorBase>
     },
     add() {
       if (!this.item.characteristicTypes) {
