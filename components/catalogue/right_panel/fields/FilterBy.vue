@@ -7,8 +7,7 @@
         <td>
           <span v-if="child">
             <img class="mr-1 align-middle" :src="`assets/bsicons/${child.editorTypeName}.png`" />
-            {{ child.name }}</span
-          >
+            {{ child.name }}</span>
         </td>
       </tr>
       <tr>
@@ -18,16 +17,8 @@
       <tr>
         <td>Child:</td>
         <td>
-          <UtilAutocomplete
-            v-model="childId"
-            :placeholder="`Search Child...`"
-            :options="availableTargets"
-            valueField="id"
-            filterField="name"
-            @change="changed"
-            :default="child"
-            lazy
-          >
+          <UtilAutocomplete v-model="childId" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
+            filterField="name" @change="changed" :default="child" lazy>
             <template #option="opt">
               <div v-if="opt.option" style="white-space: nowrap">
                 <template v-if="opt.option.indent >= 1 && !opt.selected">
@@ -46,7 +37,8 @@
       </tr>
     </table>
     <input :disabled="noshared && item.shared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
-    <label :class="{ gray: noshared && item.shared }" for="shared">Shared?</label>
+    <label :class="{ gray: noshared && item.shared }" class="hastooltip"
+      :title="`Its recommended to keep shared checked on ${item.editorTypeName}s`" for="shared">Shared?</label>
   </fieldset>
 </template>
 
@@ -255,6 +247,7 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
+
 .catalogueName {
   color: rgb(144, 152, 197);
   font-style: italic;

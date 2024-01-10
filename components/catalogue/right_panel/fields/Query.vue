@@ -2,13 +2,8 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <UtilIconSelect
-        v-model="itemField"
-        :fetch="() => fieldTypes"
-        @change="fieldChanged"
-        class="modType"
-        :disabled="instanceOf"
-      >
+      <UtilIconSelect v-model="itemField" :fetch="() => fieldTypes" @change="fieldChanged" class="modType"
+        :disabled="instanceOf">
         <template #option="opt">
           <div>
             <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.type}.png`" />
@@ -19,15 +14,8 @@
 
       <span> in </span>
 
-      <UtilAutocomplete
-        v-model="item.scope"
-        :placeholder="`Search Scope...`"
-        :options="allScopes"
-        valueField="id"
-        filterField="name"
-        @change="scopeChanged"
-        :disabled="itemField?.value?.startsWith('limit::')"
-      >
+      <UtilAutocomplete v-model="item.scope" :placeholder="`Search Scope...`" :options="allScopes" valueField="id"
+        filterField="name" @change="scopeChanged" :disabled="itemField?.value?.startsWith('limit::')">
         <template #option="opt">
           <div style="white-space: nowrap">
             <template v-if="opt.option.indent >= 2 && !opt.selected">
@@ -45,7 +33,7 @@
       <div class="checks">
         <div v-if="shared">
           <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
-          <label for="shared">Shared</label>
+          <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
         </div>
         <div v-if="childSelections">
           <input @change="changed" id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
@@ -137,6 +125,16 @@ export default {
   },
 
   computed: {
+    sharedTooltip() {
+      if (this.item.editorTypeName !== "constraint") {
+        return `Its recommended to keep shared checked on ${this.item.editorTypeName}s`
+      }
+      return `Indicates that constraints on links should be evaluated as if they are on their target, usually only relevant if the scope is above "parent"
+eg: a unit has a Leader and a Model which have a link to the same entry, with a max 1 constraint on the links scoped to the unit.
+assuming both have selected 1 of that entry:
+- a shared constraint would error if they both take the entry as its evaluating the target of the links
+- a non-shared constraint would not error as it would be evaluating the link itself`
+    },
     instanceOf() {
       return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
     },
@@ -352,6 +350,7 @@ export default {
 }
 
 @import "@/shared_components/css/vars.scss";
+
 .catalogueName {
   color: rgb(144, 152, 197);
   font-style: italic;
