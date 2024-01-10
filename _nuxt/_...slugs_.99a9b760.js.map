@@ -1,1 +1,0 @@
-{"version":3,"file":"_...slugs_.99a9b760.js","sources":["../../../../pages/[...slugs].vue"],"sourcesContent":["<template>\n  <pre>{{ $route }}</pre>\n</template>\n"],"names":["_sfc_render","_ctx","_cache"],"mappings":"wEACE,SAAAA,EAAAC,EAAAC,EAAA"}
