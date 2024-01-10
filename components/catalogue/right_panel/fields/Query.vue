@@ -130,6 +130,7 @@ export default {
         return `Its recommended to keep shared checked on ${this.item.editorTypeName}s`
       }
       return `Indicates that constraints on links should be evaluated as if they are on their target, usually only relevant if the scope is above "parent"
+      
 eg: a unit has a Leader and a Model which have a link to the same entry, with a max 1 constraint on the links scoped to the unit.
 assuming both have selected 1 of that entry:
 - a shared constraint would error if they both take the entry as its evaluating the target of the links
