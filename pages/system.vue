@@ -1,9 +1,7 @@
 <template>
   <div class="scrollable" v-if="!loading">
     <div class="mt-10px p-10px">
-      <div
-        >Working Folder: <span class="workdir">{{ settings.systemsFolder }}</span></div
-      >
+      <div>Working Folder: <span class="workdir">{{ settings.systemsFolder }}</span></div>
 
       <div class="boutons">
         <SelectFile @uploaded="uploaded" />
@@ -12,18 +10,12 @@
         <button class="bouton" @click="update()"> Refresh </button>
       </div>
 
-      <p
-        >You can open a system by clicking any of the systems in your working folder, listed below, or click Load System
-        to load a system outside this folder.</p
-      >
+      <p>You can open a system by clicking any of the systems in your working folder, listed below, or click Load System
+        to load a system outside this folder.</p>
     </div>
     <div class="p-10px">
-      <div
-        v-for="system in systems"
-        class="item p-2px mt-2px cursor-pointer"
-        :class="{ highlight: system.highlight }"
-        @click="selected(system)"
-      >
+      <div v-for="system in systems" class="item p-2px mt-2px cursor-pointer" :class="{ highlight: system.highlight }"
+        @click="selected(system)">
         {{ system.name }}
       </div>
     </div>
@@ -112,6 +104,10 @@ export default defineComponent({
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
       }
+      for (const system of systems) {
+        const sys = this.store.get_system(system.gameSystem.id)
+        this.store.load_system(sys)
+      }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
     onBeforeRouteUpdate() {
@@ -160,12 +156,15 @@ export default defineComponent({
 </script>
 <style lang="scss" scoped>
 @import "@/shared_components/css/vars.scss";
+
 .item {
   border: 1px solid $box_border;
 }
+
 .item:hover {
   background-color: rgba(0, 0, 0, 0.15);
 }
+
 .highlight {
   background-color: rgba(0, 0, 0, 0.5);
 }
