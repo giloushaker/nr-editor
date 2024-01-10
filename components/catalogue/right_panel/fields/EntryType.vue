@@ -1,11 +1,13 @@
 <template>
   <fieldset>
-    <legend><slot /></legend>
+    <legend>
+      <slot />
+    </legend>
     <table class="editorTable">
       <tr>
         <td>Type:</td>
         <td>
-          <select v-model="item.type" @change="changed">
+          <select v-model="type" @change="changed">
             <option value="model">Model</option>
             <option value="upgrade">Upgrade</option>
             <option value="unit">Unit</option>
@@ -24,7 +26,8 @@ export default {
   props: {
     item: {
       type: Object as PropType<{
-        type: "model" | "unit" | "upgrade" | "mount" | "crew";
+        type: "model" | "unit" | "upgrade";
+        subType?: "mount" | "crew";
       }>,
       required: true,
     },
@@ -35,5 +38,29 @@ export default {
       this.$emit("catalogueChanged");
     },
   },
+  computed: {
+    type: {
+      get() {
+        return this.item.subType ?? this.item.type
+      },
+      set(val: "model" | "unit" | "upgrade" | "mount" | "crew") {
+        switch (val) {
+          case "model":
+          case "upgrade":
+          case "unit":
+          default:
+            this.item.type = val;
+            delete this.item.subType;
+            break;
+          case "mount":
+          case "crew":
+            this.item.type = "model";
+            this.item.subType = val;
+            break;
+
+        }
+      }
+    }
+  }
 };
 </script>
