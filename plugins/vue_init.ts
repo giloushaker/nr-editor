@@ -9,4 +9,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   (nuxtApp.$pinia as Pinia).use(({ store }) => {
     store.$router = nuxtApp.$router as Router;
   });
+  $toRaw = toRaw
 });
