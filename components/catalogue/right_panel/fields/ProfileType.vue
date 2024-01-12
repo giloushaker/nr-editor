@@ -41,7 +41,7 @@
     </fieldset>
     <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
-      <SortOrder :items="get_profile_types()" :get="get" :set="set" :del="del">
+      <SortOrder :items="get_profile_types()" :get="get" :set="set" :del="del_sort">
         <template #item="{ item }">{{ item.name }}</template>
       </SortOrder>
     </PopupDialog>
@@ -91,7 +91,7 @@ export default {
       item.sortIndex = v;
       this.store.set_catalogue_changed(item.catalogue, true);
     },
-    del(item: BSIProfileType & EditorBase) {
+    del_sort(item: BSIProfileType & EditorBase) {
       delete item.sortIndex;
       this.store.set_catalogue_changed(item.catalogue, true);
     },
