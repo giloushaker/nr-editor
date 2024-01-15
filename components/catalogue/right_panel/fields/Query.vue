@@ -108,7 +108,7 @@ export default {
     fieldChanged() {
       this.item.field = this.itemField.value;
       if (this.item.field.startsWith("limit::")) {
-        delete this.item.childId;
+        this.item.childId = "any";
       }
       this.changed();
     },
