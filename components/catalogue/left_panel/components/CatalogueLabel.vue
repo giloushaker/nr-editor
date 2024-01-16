@@ -12,11 +12,11 @@
       <template #default="{ payload }">
         <template v-if="item">
           <div v-if="item" @click="store.goto(item)">
-            Goto -{{ item.getName() }}
+            Goto {{ item.getName() }}
           </div>
           <Separator />
           <div
-            @click="store.create_child('profiles', catalogue as EditorBase, { typeName: item?.getName(), typeId: item?.getId() })">
+            @click="store.create_child('sharedProfiles', catalogue as EditorBase, { typeName: item?.getName(), typeId: item?.getId() })">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile <span class="gray">&nbsp;({{ item?.getName() }})</span>
           </div>
