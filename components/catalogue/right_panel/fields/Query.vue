@@ -107,7 +107,7 @@ export default {
     },
     fieldChanged() {
       this.item.field = this.itemField.value;
-      if (this.item.field.startsWith("limit::")) {
+      if (this.item.field.startsWith("limit::") && this.item.editorTypeName !== "constraint") {
         this.item.childId = "any";
       }
       this.changed();
