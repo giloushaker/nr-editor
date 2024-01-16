@@ -69,11 +69,11 @@ export default {
           title: "Indicates that this entry may be imported by other catalogues",
         },
         {
-          name: "No children sort",
+          name: "Flatten",
           status: this.alphasort,
-          field: "noAlphabeticalSort",
+          field: "flatten",
           title:
-            "Children are sorted by type (groups last) and alphabetically. This will have entries sorted in the roster builder in the same order as they are in the editor",
+            "If this is checked, the group will not be visible as a group in the New Recruit UI. This is useful if you need to make logical groups (for constraints) but not display group boxes in the UI.",
         },
       ] as BooleanField[];
     },
@@ -83,13 +83,13 @@ export default {
     },
 
     alphasort() {
-      switch (this.item.editorTypeName) {
-        case "selectionEntry":
-          return 1;
-        case "selectionEntryGroup":
-          return 1;
-          defaut: return 0;
+      if (this.item.editorTypeName === "selectionEntry") {
+        return 1;
       }
+      if (this.item.editorTypeName === "selectionEntryGroup") {
+        return 1;
+      }
+      return 0;
     },
 
     collective() {
