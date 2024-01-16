@@ -417,14 +417,14 @@ export const useEditorStore = defineStore("editor", {
             console.error(e);
           }
         }
-        if (github &&  github.publisherUrl) {
+        if (github && github.publisherUrl) {
           system.github = {
             githubUrl: github.publisherUrl,
           };
-          if (github.shortName && github.shortName.includes("/")){
-            system.github.githubRepo = github.shortName
-            system.github.githubOwner= github.shortName?.split("/")[0]
-            system.github.githubName=  github.shortName?.split("/")[1]
+          if (github.shortName && github.shortName.includes("/")) {
+            system.github.githubRepo = github.shortName;
+            system.github.githubOwner = github.shortName?.split("/")[0];
+            system.github.githubName = github.shortName?.split("/")[1];
           }
         }
       }
@@ -774,6 +774,56 @@ export const useEditorStore = defineStore("editor", {
     },
     async paste(event: ClipboardEvent) {
       this.add(await this.get_clipboard(event));
+    },
+    async pasteLink(event: ClipboardEvent) {
+      const data = await this.get_clipboard(event);
+      console.log("DATA");
+      console.log(data);
+      if (Array.isArray(data)) {
+        return;
+      }
+      const entry = data as EditorBase;
+      if (!entry.parentKey) {
+        return;
+      }
+
+      const types: Record<string, string> = {
+        selectionEntries: "selectionEntry",
+        sharedSelectionEntries: "selectionEntry",
+        selectionEntryGroups: "selectionEntryGroup",
+        sharedSelectionEntryGroups: "selectionEntryGroup",
+        infoGroups: "infoGroup",
+        sharedInfoGroups: "infoGroup",
+        profiles: "profile",
+        sharedProfiles: "profile",
+        rules: "rule",
+        sharedRules: "rule",
+      };
+
+      const parents: Record<string, string> = {
+        selectionEntries: "entryLinks",
+        sharedSelectionEntries: "entryLinks",
+        selectionEntryGroups: "entryLinks",
+        sharedSelectionEntryGroups: "entryLinks",
+        infoGroups: "infoLinks",
+        sharedInfoGroups: "infoLinks",
+        profiles: "infoLinks",
+        sharedProfiles: "infoLinks",
+        rules: "infoLinks",
+        sharedRules: "infoLinks",
+      };
+
+      const link: Record<string, any> = {
+        hidden: false,
+        id: "",
+        name: data.name,
+        targetId: entry.id,
+        type: types[entry.parentKey],
+        parentKey: parents[data.parentKey],
+      };
+      console.log("LINK");
+      console.log(link);
+      this.add(link);
     },
     /**
      * Duplicate the current selections

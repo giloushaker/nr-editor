@@ -251,6 +251,10 @@ export default defineComponent({
           e.preventDefault();
           await this.store.duplicate();
         }
+        if (e.ctrlKey && key === "l") {
+          e.preventDefault();
+          await this.store.pasteLink();
+        }
         if (key === "delete") {
           e.preventDefault();
           await this.store.remove();
