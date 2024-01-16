@@ -1,40 +1,23 @@
 <template>
   <div class="leftPanel">
     <div class="static sticky flex items-center h-28px z-1">
-      <span
-        :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
-        class="bold p-4px unselectable icon"
-        @click="store.back"
-        title="Back"
-      >
+      <span :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
+        class="bold p-4px unselectable icon" @click="store.back" title="Back">
         🡰
       </span>
-      <span
-        :class="{
-          grey: !store.can_forward(),
-          'cursor-pointer': store.can_forward(),
-          'hover-darken': store.can_forward(),
-        }"
-        class="bold p-4px unselectable ml-4px icon"
-        @click="store.forward"
-        title="Forward"
-      >
+      <span :class="{
+        grey: !store.can_forward(),
+        'cursor-pointer': store.can_forward(),
+        'hover-darken': store.can_forward(),
+      }" class="bold p-4px unselectable ml-4px icon" @click="store.forward" title="Forward">
         🡲
       </span>
-      <img
-        :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
-        class="bold p-4px unselectable ml-5px w-24px h-24px icon"
-        @click="store.undo"
-        title="Undo"
-        src="/assets/icons/undo.svg"
-      />
-      <img
-        :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
-        class="bold p-4px unselectable ml-4px w-24px h-24px icon"
-        @click="store.redo"
-        title="Redo"
-        src="/assets/icons/redo.svg"
-      />
+      <img :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
+        class="bold p-4px unselectable ml-5px w-24px h-24px icon" @click="store.undo" title="Undo"
+        src="/assets/icons/undo.svg" />
+      <img :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
+        class="bold p-4px unselectable ml-4px w-24px h-24px icon" @click="store.redo" title="Redo"
+        src="/assets/icons/redo.svg" />
 
       <div class="absolute right-30px">
         Sort
@@ -45,12 +28,8 @@
           <option value="type">Type</option>
         </select>
       </div>
-      <img
-        @click="uistate.collapse_all"
-        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
-        title="Collapse All"
-        src="/assets/icons/collapse-all.svg"
-      />
+      <img @click="uistate.collapse_all" class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
+        title="Collapse All" src="/assets/icons/collapse-all.svg" />
       <ErrorIcon :errors="catalogue.errors" showNumber clickable class="z-1" />
       <!-- <img
         @click="uistate.collapse_deepest"
@@ -81,7 +60,7 @@
 import { EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
-import CatalogueEntry from "./components/CatalogueEntry.vue";
+import CatalogueEntry from "~/components/catalogue/left_panel/components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
 import { forEachParent } from "~/assets/shared/battlescribe/bs_helpers";
@@ -365,21 +344,26 @@ export default defineComponent({
   flex-direction: column;
   flex-grow: 1;
 }
+
 .top {
   position: relative;
 }
+
 .bottom {
   position: sticky;
   margin-top: auto;
   bottom: 0;
 }
+
 input:focus::placeholder {
   color: transparent;
 }
+
 .static {
   background-color: rgba(0, 0, 0, 0.1);
   border: 1px solid $box_border;
 }
+
 .rightborder {
   border-right: 1px solid $box_border;
 }

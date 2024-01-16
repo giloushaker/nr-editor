@@ -1,27 +1,14 @@
 <template>
-  <div
-    :class="{ box, nobox, nocollapse, collapsed, opened }"
-    class="collapsible-box"
-    @contextmenu="do_rightcllick_select"
-  >
-    <h3
-      v-if="!notitle"
-      class="title hover-darken"
-      :class="{
-        selected,
-        arrowTitle: collapsible,
-        normalTitle: !collapsible,
-        collapsed: collapsible && collapsed,
-        alt: alt && altclickable,
-      }"
-      @click.stop="do_select"
-      @click.ctrl.stop="$emit('ctrlclick')"
-      @click.alt.stop="$emit('altclick')"
-      @dblclick="collapseSwitch($event.shiftKey)"
-      @paste="paste"
-      @copy="paste"
-      @cut="paste"
-    >
+  <div :class="{ box, nobox, nocollapse, collapsed, opened }" class="collapsible-box"
+    @contextmenu="do_rightcllick_select">
+    <h3 v-if="!notitle" class="title hover-darken" :class="{
+      selected,
+      arrowTitle: collapsible,
+      normalTitle: !collapsible,
+      collapsed: collapsible && collapsed,
+      alt: alt && altclickable,
+    }" @click.stop="do_select" @click.ctrl.stop="$emit('ctrlclick')" @click.alt.stop="$emit('altclick')"
+      @dblclick="collapseSwitch($event.shiftKey)" @paste="paste" @copy="paste" @cut="paste">
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
@@ -82,12 +69,16 @@ export default {
     altclickable: {
       default: false,
     },
+    vshow: {
+      default: false,
+      type: Boolean
+    }
   },
 
   data() {
     return {
       collapsed: true,
-      initiated: false,
+      initiated: this.vshow,
       selected: false,
       alt: false,
     };
@@ -171,6 +162,8 @@ export default {
     init(data: any) {
       if (data?.select !== undefined) {
         if (data.select) {
+          const parentBox = this.$parent?.$parent as { open?: () => unknown }
+          parentBox.open && parentBox.open()
           this.store.do_select(null, this as any, this.group);
           this.store.scrollto(get_base_from_vue_el(this));
         }
@@ -263,6 +256,7 @@ export default {
     margin-right: 4px;
   }
 }
+
 .title {
   white-space: nowrap;
   min-height: 23px;
@@ -271,13 +265,16 @@ export default {
   align-items: center;
   // padding-top: 2px;
 }
+
 h3 {
   font-size: 16px;
   font-weight: normal;
 }
+
 .arrow {
   height: 12px;
 }
+
 .arrow-wrap {
   vertical-align: middle;
 
@@ -286,8 +283,9 @@ h3 {
   min-width: 22px;
   margin-left: 2px;
 }
+
 // indent
-.nobox > .content {
+.nobox>.content {
   padding-left: 20px;
 }
 

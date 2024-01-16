@@ -1269,11 +1269,19 @@ export const useEditorStore = defineStore("editor", {
       nodes.pop(); // pop catalogue
       nodes.reverse();
       nodes.push(obj);
+
+      // hack so that the correct label for sharedProfiles is opened
+      if (nodes[0].parentKey === 'sharedProfiles'){
+        nodes.unshift({
+          parentKey: (`label-${nodes[0].typeName ?? "Untyped"}`)
+        } as any)
+      }
       const lastNode = nodes[nodes.length - 1];
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-        const child = [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
+
+        const child = node.parentKey.startsWith('label-') ? childs[0] : [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
           if (noLog !== true) {
             console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
@@ -1283,6 +1291,8 @@ export const useEditorStore = defineStore("editor", {
         if (child) {
           current = child;
         }
+        
+
         if (node !== lastNode) {
           await open_el(current);
         }
@@ -1422,7 +1432,7 @@ export const useEditorStore = defineStore("editor", {
             if (!(index in obj[key])) obj[key][index] = {};
             find_open_recursive(cur, obj[key][index], depth + 1);
           } else {
-            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o));
+            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o) || o.startsWith('label-'));
             for (const key of keys) {
               obj[key] = {};
               obj[key][0] = {};

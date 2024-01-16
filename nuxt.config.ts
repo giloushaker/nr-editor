@@ -4,11 +4,11 @@ import pkg from "./package.json";
 const electron = process.argv.includes("--electron");
 const ghpages = process.argv.includes("--ghpages");
 
-function getGhRepo() {
+function getGitHubRepo() {
   return pkg.build.publish[0].repo;
 }
 if (ghpages) {
-  console.log("ghpages repo", `/${getGhRepo()}/`);
+  console.log("ghpages repo", `/${getGitHubRepo()}/`);
 }
 
 export default defineNuxtConfig({
@@ -39,7 +39,7 @@ export default defineNuxtConfig({
           ...(ghpages
             ? {
                 base: {
-                  href: `/${getGhRepo()}/`,
+                  href: `/${getGitHubRepo()}/`,
                 },
               }
             : {}),
@@ -86,5 +86,6 @@ export default defineNuxtConfig({
       }
     },
   },
-  components: [{ path: "~/shared_components" }, { path: "~/components" }],
+  components: [{ path: "~/shared_components/" }, { path: "~/components/" }],
+  
 });

@@ -55,12 +55,12 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Category, Profile } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
+import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
 

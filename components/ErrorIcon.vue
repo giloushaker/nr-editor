@@ -1,5 +1,5 @@
 <template>
-  <span class="ErrorIcon cursor-pointer my-auto" v-if="numErrors" :title="errorText">
+  <span class="cursor-pointer my-auto" v-if="numErrors" :title="errorText">
     <span @click="display()" class="gap-4px">
       <img :src="getImage" class="my-auto align-text-bottom" />
       <span v-if="computedShowNumber" class="ml-4px align-middle">{{ numErrors }}</span>
@@ -14,7 +14,7 @@
   </span>
 </template>
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { stripHtml } from "~/assets/shared/util";
 import { useEditorStore } from "~/stores/editorStore";
@@ -27,7 +27,6 @@ export interface IErrorMessage {
   hash?: string;
 }
 export default {
-  name: "ErrorIcon",
   props: {
     errors: {
       type: Array as PropType<IErrorMessage[]>,
@@ -112,6 +111,7 @@ img {
   top: -1px;
   position: relative;
 }
+
 .fixed {
   max-height: 500px;
   overflow-y: auto;

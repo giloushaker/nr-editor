@@ -3,27 +3,20 @@
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
       <div class="head">
         <EditorCollapsibleBox :payload="catalogue" nobox :group="[]" :collapsible="false">
-          <template #title
-            ><img src="/assets/bsicons/catalogue.png" />
+          <template #title><img src="/assets/bsicons/catalogue.png" />
             {{ catalogue.name }}
             <span v-if="getNameExtra(catalogue)" class="gray">&nbsp;{{ getNameExtra(catalogue) }} </span>
           </template>
           <template #content></template>
+
         </EditorCollapsibleBox>
       </div>
 
       <template v-for="category of groupedCategories" :key="category.type">
-        <EditorCollapsibleBox
-          :altclickable="store.can_follow(item) || imported"
-          @altclick="onctrlclick"
-          :collapsible="category.items.length > 0"
-          :group="get_group('entries')"
-          :payload="category.type"
+        <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+          :collapsible="category.items.length > 0" :group="get_group('entries')" :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
-          :class="[category.type, category.links, `depth-${depth}`]"
-          nobox
-          :defcollapsed="!should_be_open(category.type)"
-        >
+          :class="[category.type, category.links, `depth-${depth}`]" nobox :defcollapsed="!should_be_open(category.type)">
           <template #title>
             <span>
               <span class="typeIcon-wrapper">
@@ -33,31 +26,31 @@
             </span>
           </template>
           <template #content>
-            <template v-for="entry of category.items" :key="key(entry.item)">
-              <CatalogueEntry
-                :item="entry.item"
-                :group="get_group(category.type)"
-                :forceShowRecursive="forceShow"
-                :imported="entry.imported"
-                :depth="depth + 1"
-              />
+            <template v-if="should_be_grouped(category.type)">
+              <template v-for="group of groupBy(category.items, (o) => o.item.typeName || 'Untyped')">
+                <CatalogueLabel :label="group[0].item.typeName ?? 'Untyped'" :depth="depth + 1" :catalogue="catalogue"
+                  :item="catalogue.findOptionById(group[0].item.typeId!)">
+                  <template v-for="entry of group" :key="key(entry.item)">
+                    <CatalogueEntry :item="entry.item" :group="get_group(category.type)" :forceShowRecursive="forceShow"
+                      :imported="entry.imported" :depth="depth + 2" noType />
+                  </template>
+                </CatalogueLabel>
+              </template>
+            </template>
+            <template v-else>
+              <template v-for="entry of category.items" :key="key(entry.item)">
+                <CatalogueEntry :item="entry.item" :group="get_group(category.type)" :forceShowRecursive="forceShow"
+                  :imported="entry.imported" :depth="depth + 1" />
+              </template>
             </template>
           </template>
         </EditorCollapsibleBox>
       </template>
     </template>
     <template v-else>
-      <EditorCollapsibleBox
-        :altclickable="store.can_follow(item) || imported"
-        @altclick="onctrlclick"
-        :collapsible="mixedChildren && mixedChildren.length > 0"
-        :empty="!mixedChildren || mixedChildren.length == 0"
-        :group="group || []"
-        :payload="item"
-        :class="[item.parentKey, `depth-${depth}`]"
-        :defcollapsed="!open"
-        nobox
-      >
+      <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+        :collapsible="mixedChildren && mixedChildren.length > 0" :empty="!mixedChildren || mixedChildren.length == 0"
+        :group="group || []" :payload="item" :class="[item.parentKey, `depth-${depth}`]" :defcollapsed="!open" nobox>
         <template #title>
           <span>
             <span class="typeIcon-wrapper">
@@ -68,20 +61,15 @@
             <span :class="{ imported: imported, filtered: item.highlight }">
               {{ name }}
             </span>
-            <span v-if="getNameExtra(item)" class="gray">&nbsp;{{ getNameExtra(item) }} </span>
+            <span v-if="getNameExtra(item, true, !noType)" class="gray">&nbsp;{{ getNameExtra(item, true, !noType) }}
+            </span>
             <span class="ml-10px" v-if="costs" v-html="costs" />
           </span>
         </template>
         <template #content>
-          <CatalogueEntry
-            v-for="child of mixedChildren"
-            :key="key(child.item)"
-            :item="child.item"
-            :group="get_group('default')"
-            :forceShowRecursive="forceShow"
-            :imported="imported || child.imported"
-            :depth="depth + 1"
-          />
+          <CatalogueEntry v-for="child of mixedChildren" :key="key(child.item)" :item="child.item"
+            :group="get_group('default')" :forceShowRecursive="forceShow" :imported="imported || child.imported"
+            :depth="depth + 1" />
         </template>
       </EditorCollapsibleBox>
     </template>
@@ -99,10 +87,8 @@
             Goto
             <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
           </div>
-          <div
-            v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
-            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)"
-          >
+          <div v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
+            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)">
             Goto {{ item.typeName }}
             <span class="gray">
               &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
@@ -223,33 +209,27 @@
             <span class="absolute right-5px">❯</span>
           </div>
           <ContextMenu ref="nestedcontextmenu">
-            <div
-              v-for="target of store.get_move_targets(item)"
-              @click="store.move(item, catalogue, target.target, target.type)"
-            >
+            <div v-for="target of store.get_move_targets(item)"
+              @click="store.move(item, catalogue, target.target, target.type)">
               {{ target.target.name }} -
               {{ target.type }}
             </div>
           </ContextMenu>
         </template>
 
-        <div
-          @click="
-            store.create_child('entryLinks', catalogue, {
-              targetId: item.id,
-              type: 'selectionEntry',
-              name: item.getName(),
-            })
-          "
-          v-if="item.parentKey === 'sharedSelectionEntries'"
-        >
+        <div @click="
+          store.create_child('entryLinks', catalogue, {
+            targetId: item.id,
+            type: 'selectionEntry',
+            name: item.getName(),
+          })
+          " v-if="item.parentKey === 'sharedSelectionEntries'">
           Add Root Link<span class="gray" v-if="hasRootLink(catalogue, item)">&nbsp;(already has one)</span>
         </div>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
-          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
-            >Del</span
-          >
+          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span
+            class="gray absolute right-5px">Del</span>
         </div>
       </template>
     </ContextMenu>
@@ -257,12 +237,12 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import { CatalogueEntryItem } from "@/stores/editorStore";
+import type { PropType } from "vue";
+import type { CatalogueEntryItem } from "@/stores/editorStore";
 import { useEditorStore } from "~/stores/editorStore";
 import {
-  ItemKeys,
-  ItemTypes,
+  type ItemKeys,
+  type ItemTypes,
   getName,
   getTypeLabel,
   getTypeName,
@@ -271,21 +251,25 @@ import {
   getNameExtra,
   getEntryPath,
 } from "~/assets/shared/battlescribe/bs_editor";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Base, Condition, Link, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import {
   generateBattlescribeId,
   sortByAscending,
   sortByDescending,
   escapeXml,
+  groupBy,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import ContextMenu from "~/components/dialog/ContextMenu.vue";
-import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
+
 import { useEditorUIState } from "~/stores/editorUIState";
 import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
 import { allowed_children } from "~/assets/shared/battlescribe/bs_convert";
 import { getModifiedField } from "~/assets/shared/battlescribe/bs_modifiers";
+
+import ContextMenu from "~/components/dialog/ContextMenu.vue";
+import CatalogueLabel from "~/components/catalogue/left_panel/components/CatalogueLabel.vue";
+import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 export interface ICost {
   name: string;
   value: number;
@@ -337,6 +321,7 @@ export default {
   components: {
     ContextMenu,
     EditorCollapsibleBox,
+    CatalogueLabel
   },
   setup() {
     return { store: useEditorStore(), state: useEditorUIState(), settings: useSettingsStore() };
@@ -363,6 +348,10 @@ export default {
       type: Number,
       default: 0,
     },
+    noType: {
+      type: Boolean,
+      default: false,
+    }
   },
   data() {
     return {
@@ -417,7 +406,9 @@ export default {
         return entry["$id"];
       }
     },
-
+    should_be_grouped(category: string) {
+      return category === "sharedProfiles"
+    },
     should_be_open(category: string) {
       return this.open_categories?.has(category);
     },
@@ -451,6 +442,7 @@ export default {
     debug() {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
       (globalThis as any).$debugOption = this.item;
+      (globalThis as any).$debugElement = this;
     },
     hasRootLink(catalogue: Catalogue, item: Base) {
       return catalogue.entryLinks?.find((o) => o.targetId === item.id);
@@ -522,6 +514,7 @@ export default {
         (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
       );
     },
+    groupBy,
 
     menu(ref: string) {
       return {
@@ -680,16 +673,20 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
+
 .imported {
   color: rgb(128, 145, 183);
   // font-style: italic;
 }
+
 .filtered {
   background-color: rgba(10, 80, 255, 0.15);
 }
+
 .typeIcon {
   max-width: 18px;
 }
+
 .typeIcon-wrapper {
   display: inline-block;
   min-width: 20px;

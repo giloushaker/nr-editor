@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { BSIOption } from "~/assets/shared/battlescribe/bs_types";
+import { type BSIOption } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -22,7 +22,7 @@ export default {
         return (Array.isArray(this.item.comment) ? this.item.comment[0] : this.item.comment) || "";
       },
       set(str: string) {
-        this.item.comment = str ? [str] : undefined;
+        this.item.comment = str ? str : undefined;
       },
     },
   },
