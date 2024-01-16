@@ -776,54 +776,28 @@ export const useEditorStore = defineStore("editor", {
       this.add(await this.get_clipboard(event));
     },
     async pasteLink(event: ClipboardEvent) {
-      const data = await this.get_clipboard(event);
-      console.log("DATA");
-      console.log(data);
-      if (Array.isArray(data)) {
+      const obj = await this.get_clipboard(event);
+      if (!obj.parentKey || Array.isArray(obj)) {
         return;
       }
-      const entry = data as EditorBase;
-      if (!entry.parentKey) {
+      const selections = this.get_selections();
+      const first = selections[0];
+      if (!first) {
         return;
       }
-
-      const types: Record<string, string> = {
-        selectionEntries: "selectionEntry",
-        sharedSelectionEntries: "selectionEntry",
-        selectionEntryGroups: "selectionEntryGroup",
-        sharedSelectionEntryGroups: "selectionEntryGroup",
-        infoGroups: "infoGroup",
-        sharedInfoGroups: "infoGroup",
-        profiles: "profile",
-        sharedProfiles: "profile",
-        rules: "rule",
-        sharedRules: "rule",
-      };
-
-      const parents: Record<string, string> = {
-        selectionEntries: "entryLinks",
-        sharedSelectionEntries: "entryLinks",
-        selectionEntryGroups: "entryLinks",
-        sharedSelectionEntryGroups: "entryLinks",
-        infoGroups: "infoLinks",
-        sharedInfoGroups: "infoLinks",
-        profiles: "infoLinks",
-        sharedProfiles: "infoLinks",
-        rules: "infoLinks",
-        sharedRules: "infoLinks",
-      };
-
-      const link: Record<string, any> = {
-        hidden: false,
-        id: "",
-        name: data.name,
-        targetId: entry.id,
-        type: types[entry.parentKey],
-        parentKey: parents[data.parentKey],
-      };
-      console.log("LINK");
-      console.log(link);
-      this.add(link);
+      const actual = first.getCatalogue().findOptionById(obj.id) as EditorBase | undefined
+      if (actual) {
+        const link = {
+          parentKey: actual.isGroup() || actual.isEntry() ? "entryLinks" : "infoLinks",
+          targetId: actual.id,
+          id: generateBattlescribeId(),
+          type: actual.editorTypeName,
+          name: actual.getName(),
+          hidden: actual.hidden,
+          select: true,
+        } ;
+        this.add(link);
+      }
     },
     /**
      * Duplicate the current selections
@@ -965,7 +939,7 @@ export const useEditorStore = defineStore("editor", {
             setPrototypeRecursive({ [key]: copy });
             scrambleIds(catalogue, copy);
 
-            // Show it event if there is a filter
+            // Show added entry even if there is a search
             this.filtered.push(copy);
             copy.showChildsInEditor = true;
             let cur = copy;
@@ -977,8 +951,6 @@ export const useEditorStore = defineStore("editor", {
             // Add it to its parent
             arr.push(copy);
             await onAddEntry(copy, catalogue, item, this.get_system(sysId));
-
-            // Show the newly added entries even if there is a search filter
             addeds.push(copy);
           }
         }
