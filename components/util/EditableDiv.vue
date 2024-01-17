@@ -1,12 +1,6 @@
 <template>
-  <div
-    :placeholder="placeholder"
-    class="editableDiv"
-    @input="change"
-    @paste="onpaste"
-    contenteditable="true"
-    ref="div"
-  ></div>
+  <div :placeholder="placeholder" class="editableDiv" @input="change" @paste="onpaste" contenteditable="true" ref="div">
+  </div>
 </template>
 
 <script lang="ts">
@@ -35,12 +29,18 @@ export default {
     toHtml(s: string) {
       return s.replace(/\n/g, "<br />");
     },
-
+    decodeHtml(html: string) {
+      var txt = document.createElement("textarea");
+      txt.innerHTML = html;
+      return txt.value;
+    },
     onpaste(e: ClipboardEvent) {
       e.preventDefault();
-      var text = e.clipboardData?.getData("text/plain") ?? "";
+      // &nbsp;
+      var text = this.decodeHtml(e.clipboardData?.getData("text/plain") ?? "");
       document.execCommand("insertText", false, text);
       this.$emit("update:modelValue", this.get().innerText);
+
       this.$emit("change");
     },
   },

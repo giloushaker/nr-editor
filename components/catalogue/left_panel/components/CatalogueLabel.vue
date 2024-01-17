@@ -12,13 +12,18 @@
       <template #default="{ payload }">
         <template v-if="item">
           <div v-if="item" @click="store.goto(item)">
-            Goto {{ item.getName() }}
+            Goto ({{ item.getName() }}
           </div>
           <Separator />
           <div
             @click="store.create_child('sharedProfiles', catalogue as EditorBase, { typeName: item?.getName(), typeId: item?.getId() })">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile <span class="gray">&nbsp;({{ item?.getName() }})</span>
+          </div>
+        </template>
+        <template v-else>
+          <div>
+            Nothing
           </div>
         </template>
       </template>
@@ -32,8 +37,8 @@ import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
-import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
-import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   name: "CatalogueEntry",
