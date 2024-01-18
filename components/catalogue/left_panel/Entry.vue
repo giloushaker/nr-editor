@@ -4,14 +4,14 @@
             <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
         </span>
         <ErrorIcon :errors="item.errors" />
-        <span v-if="item.sortIndex && settings.display.sortIndex && !noSortIndex" class="gray">
+        <span v-if="item.sortIndex && !noSortIndex" class="gray">
             [{{ item.sortIndex }}]
         </span>
         <span :class="{ imported: imported, filtered: item.highlight }">{{ getName(item) }}</span>
-        <span v-if="getNameExtra(item, settings.display.references)" class="gray">&nbsp;
-            {{ getNameExtra(item, settings.display.references) }}
+        <span v-if="getNameExtra(item)" class="gray">&nbsp;
+            {{ getNameExtra(item) }}
         </span>
-        <span class="ml-10px" v-if="costs && settings.display.costs" v-html="costs" />
+        <span class="ml-10px" v-if="costs" v-html="costs" />
     </span>
 </template>
 <script lang="ts">
