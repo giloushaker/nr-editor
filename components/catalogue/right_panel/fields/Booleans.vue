@@ -1,21 +1,15 @@
 <template>
   <fieldset>
-    <legend><slot></slot></legend>
+    <legend>
+      <slot></slot>
+    </legend>
     <div class="booleans">
       <div v-for="field of fields.filter((f) => f.status != -1)">
-        <input
-          :class="{ 'cursor-pointer': field.status !== 0 }"
-          :id="(field.field as string)"
-          type="checkbox"
-          v-model="item[field.field]"
-          @change="changed"
-          :disabled="field.status == 0"
-        />
+        <input :class="{ 'cursor-pointer': field.status !== 0 }" :id="(field.field as string)" type="checkbox"
+          v-model="item[field.field]" @change="changed" :disabled="field.status == 0" />
         <label
           :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0, hastooltip: Boolean(field.title) }"
-          :for="(field.field as string)"
-          :title="field.title"
-        >
+          :for="(field.field as string)" :title="field.title">
           {{ field.name }}
         </label>
       </div>
@@ -50,7 +44,7 @@ export default {
 
   computed: {
     fields() {
-      return [
+      const result = [
         {
           name: "Hidden",
           status: this.hidden,
@@ -60,7 +54,7 @@ export default {
           name: "Collective",
           status: this.collective,
           field: "collective",
-          title: "indicates that multiple instances of this entry may be combined into one entry with an amount",
+          title: "Indicates that multiple instances of this entry may be combined into one entry with an amount",
         },
         {
           name: "Import",
@@ -68,14 +62,17 @@ export default {
           field: "import",
           title: "Indicates that this entry may be imported by other catalogues",
         },
-        {
+
+      ] as BooleanField[];
+      if (this.item.isGroup()) {
+        result.push({
           name: "Flatten",
           status: this.alphasort,
           field: "flatten",
-          title:
-            "If this is checked, the group will not be visible as a group in the New Recruit UI. This is useful if you need to make logical groups (for constraints) but not display group boxes in the UI.",
-        },
-      ] as BooleanField[];
+          title: "If this is checked, the group will not be visible as a group in the New Recruit UI. This is useful if you need to make logical groups (for constraints) but not display group boxes in the UI.",
+        })
+      }
+      return result;
     },
 
     hidden() {
@@ -165,8 +162,10 @@ export default {
 <style scoped lang="scss">
 .booleans {
   display: flex;
-  > div {
+
+  >div {
     margin-right: 10px;
+
     &:last-child {
       margin-right: 0;
     }
