@@ -39,7 +39,8 @@
       /> -->
     </div>
     <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
-      <CatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries" :showImported="showImported" />
+      <CatalogueLeftPanelComponentsCatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries"
+        :showImported="showImported" />
     </div>
     <div class="bottom static">
       <span v-if="!catalogue.isGameSystem()">
@@ -60,7 +61,6 @@
 import { EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
-import CatalogueEntry from "~/components/catalogue/left_panel/components/CatalogueEntry.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
 import { forEachParent } from "~/assets/shared/battlescribe/bs_helpers";
@@ -75,7 +75,6 @@ export const LeftPanelDefaults = {
 };
 
 export default defineComponent({
-  components: { CatalogueEntry },
   emits: ["scrolltop"],
   setup() {
     return { store: useEditorStore(), uistate: useEditorUIState(), settings: useSettingsStore() };
