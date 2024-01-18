@@ -775,9 +775,9 @@ export const useEditorStore = defineStore("editor", {
     async paste(event: ClipboardEvent) {
       this.add(await this.get_clipboard(event));
     },
-    async pasteLink(event: ClipboardEvent) {
-      const obj = await this.get_clipboard(event);
-      if (!obj.parentKey || Array.isArray(obj)) {
+    async pasteLink() {
+      const obj = await this.get_clipboard();
+      if (!obj || !obj.parentKey || Array.isArray(obj)) {
         return;
       }
       const selections = this.get_selections();
