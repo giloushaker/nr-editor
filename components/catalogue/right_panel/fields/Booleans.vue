@@ -86,7 +86,13 @@ export default {
       if (this.item.editorTypeName === "selectionEntry") {
         return 1;
       }
+      if (this.item.editorTypeName === "selectionEntryLink") {
+        return 1;
+      }
       if (this.item.editorTypeName === "selectionEntryGroup") {
+        return 1;
+      }
+      if (this.item.editorTypeName === "selectionEntryGroupLink") {
         return 1;
       }
       return 0;
