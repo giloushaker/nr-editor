@@ -44,7 +44,7 @@ export default {
 
   computed: {
     fields() {
-      const result = [
+      return [
         {
           name: "Hidden",
           status: this.hidden,
@@ -54,7 +54,7 @@ export default {
           name: "Collective",
           status: this.collective,
           field: "collective",
-          title: "Indicates that multiple instances of this entry may be combined into one entry with an amount",
+          title: "indicates that multiple instances of this entry may be combined into one entry with an amount",
         },
         {
           name: "Import",
@@ -62,17 +62,14 @@ export default {
           field: "import",
           title: "Indicates that this entry may be imported by other catalogues",
         },
-
-      ] as BooleanField[];
-      if (this.item.isGroup()) {
-        result.push({
+        {
           name: "Flatten",
           status: this.alphasort,
           field: "flatten",
-          title: "If this is checked, the group will not be visible as a group in the New Recruit UI. This is useful if you need to make logical groups (for constraints) but not display group boxes in the UI.",
-        })
-      }
-      return result;
+          title:
+            "If this is checked, the group box for this entry/group will not be visible in the New Recruit UI.",
+        },
+      ] as BooleanField[];
     },
 
     hidden() {
