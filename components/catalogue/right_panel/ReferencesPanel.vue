@@ -1,6 +1,7 @@
 <template>
   <div class="mb-50px">
-    <h2 class="text-center"><span class="gray">References to</span> {{ label }}</h2>
+    <h2 class="text-center"><span class="gray">References to</span> {{ label }} <span class="gray">({{ item.editorTypeName
+    }})</span> </h2>
     <div v-if="links.length" class="mr-60px">
       <!-- <table class="mb-20px">
         <tr>
@@ -31,14 +32,10 @@
       </div>
     </div>
     <div v-if="other_links.length" class="mr-60px">
-      <h3> From conditions/constraints/modifiers/repeats </h3>
+      <h3> From conditions/constraints/modifiers/repeats: </h3>
       <div>
         <div v-for="link of other_links">
-          <NodePath
-            :path="other_path(link)"
-            @click="store.goto(link)"
-            class="hover-darken cursor-pointer p-1px mb-3px"
-          />
+          <NodePath :path="other_path(link)" @click="store.goto(link)" class="hover-darken cursor-pointer p-1px mb-3px" />
         </div>
       </div>
     </div>
@@ -74,9 +71,10 @@ export default {
     parentEntry(link: EditorBase) {
       return findParentWhere(link, (o) => o.getName());
     },
-    path(link: EditorBase, pop = true) {
+    path(link: EditorBase) {
       const path = getEntryPathInfo(link);
-      if (pop) {
+
+      if (this.item.editorTypeName !== "profileType") {
         path.pop();
       }
       return path;

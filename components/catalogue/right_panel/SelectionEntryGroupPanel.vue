@@ -2,40 +2,23 @@
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
   <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
   <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsDefaultSelection
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsDefaultSelection :item="item" :catalogue="catalogue" @catalogueChanged="changed"
+    class="section" />
 
-  <CatalogueRightPanelFieldsBooleans
-    :item="item"
-    @catalogueChanged="changed"
-    :fields="[
-      { field: 'hidden', enabled: true, name: 'Hidden' },
-      { field: 'collective', enabled: false, name: 'Collective' },
-      { field: 'import', enabled: true, name: 'Import' },
-    ]"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed" :fields="[
+    { field: 'hidden', enabled: true, name: 'Hidden' },
+    { field: 'collective', enabled: false, name: 'Collective' },
+    { field: 'import', enabled: true, name: 'Import' },
+  ]" class="section">
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsCategories
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsCategories :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
 
-  <CatalogueRightPanelFieldsQuickConstraints
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="false"
+    class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
+  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" @catalogueChanged="changed" />
 </template>
 
 <script lang="ts">

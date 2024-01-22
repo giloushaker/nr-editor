@@ -13,20 +13,14 @@
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsCategories
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsCategories :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
 
-  <CatalogueRightPanelFieldsQuickConstraints
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  >
+
+  <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="false"
+    class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
+
+  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" @catalogueChanged="changed" />
 </template>
 
 <script lang="ts">
@@ -40,7 +34,6 @@ export default {
       type: Object as PropType<any>,
       required: true,
     },
-
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
@@ -54,3 +47,15 @@ export default {
   },
 };
 </script>
+<style scoped>
+.typeIcon {
+  max-width: 18px;
+  vertical-align: middle;
+}
+
+.typeIcon-wrapper {
+  display: inline-block;
+  min-width: 20px;
+  min-height: 1px;
+}
+</style>

@@ -52,19 +52,24 @@
         :collapsible="mixedChildren && mixedChildren.length > 0" :empty="!mixedChildren || mixedChildren.length == 0"
         :group="group || []" :payload="item" :class="[item.parentKey, `depth-${depth}`]" :defcollapsed="!open" nobox>
         <template #title>
-          <span>
-            <span class="typeIcon-wrapper">
-              <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
-            </span>
-            <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
-            <ErrorIcon :errors="item.errors" />
-            <span :class="{ imported: imported, filtered: item.highlight }">
-              {{ name }}
-            </span>
-            <span v-if="getNameExtra(item, true, !noType)" class="gray">&nbsp;{{ getNameExtra(item, true, !noType) }}
-            </span>
-            <span class="ml-10px" v-if="costs" v-html="costs" />
+          <CatalogueLeftPanelEntry :item="item" :imported="imported" />
+          <!-- 
+
+            <span>
+              <span class="typeIcon-wrapper">
+                <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
+              </span>
+              <span v-if="primary" class="text-orange">{{ primary }}</span>
+              <ErrorIcon :errors="item.errors" />
+              <span v-if="item.sortIndex" class="gray">[{{ item.sortIndex }}]&nbsp;</span>
+              <span :class="{ imported: imported, filtered: item.highlight }">
+                {{ name }}
+              </span>
+              <span v-if="getNameExtra(item, true, !noType)" class="gray">&nbsp;{{ getNameExtra(item, true, !noType) }}
+              </span>
+              <span class="ml-10px" v-if="costs" v-html="costs" />
           </span>
+            -->
         </template>
         <template #content>
           <CatalogueEntry v-for="child of mixedChildren" :key="key(child.item)" :item="child.item"

@@ -36,11 +36,9 @@ export default {
     },
     onpaste(e: ClipboardEvent) {
       e.preventDefault();
-      // &nbsp;
       var text = this.decodeHtml(e.clipboardData?.getData("text/plain") ?? "");
       document.execCommand("insertText", false, text);
       this.$emit("update:modelValue", this.get().innerText);
-
       this.$emit("change");
     },
   },
