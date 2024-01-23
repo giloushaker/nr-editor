@@ -217,17 +217,7 @@ export const defaultAppearence: AppearanceTheme = {
   costColor: "#284781",
   titleBarColor: "#708090",
 };
-const defaultState = {
-  systemsFolder: "" as string | undefined,
-  showOnlyEnabledCategories: false,
-  globalDuplicateIdError: false,
-  useNewCategoriesUI: false,
-  sort: "asc" as string,
-  theme: "" as "" | "dark" | "light",
-  githubAutoIncrement: true,
-  autosort: {
-    config: `
-    type:model
+const defaultSortConfiguration = `type:model
 type:mount
 type:crew
 type:upgrade
@@ -240,8 +230,19 @@ type:group & name:/items/i
 type:group & name:/options/i
 type:group
 cost:pts
-name`
-    
+cost:points
+name` 
+
+const defaultState = {
+  systemsFolder: "" as string | undefined,
+  showOnlyEnabledCategories: false,
+  globalDuplicateIdError: false,
+  useNewCategoriesUI: false,
+  sort: "asc" as string,
+  theme: "" as "" | "dark" | "light",
+  githubAutoIncrement: true,
+  autosort: {
+    config: defaultSortConfiguration
   },
   display: {          
     sortIndex: true,
