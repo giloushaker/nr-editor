@@ -96,7 +96,14 @@ export async function deleteFile(filePath: string) {
   if (!electron) return;
   return await electron.invoke("unlinkSync", filePath);
 }
-
+export async function readFile(filePath: string) {
+  if (!electron) return;
+  return (await electron.invoke("readFileSync", filePath)) as {
+    name: string;
+    path: string;
+    data: string;
+  };
+}
 export async function showOpenDialog(options: OpenDialogOptions) {
   if (!electron) return;
   return electron.invoke("showOpenDialog", options) as OpenDialogReturnValue;
