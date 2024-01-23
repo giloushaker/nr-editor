@@ -1,5 +1,5 @@
 <template>
-  <div class="item unselectable" @contextmenu.stop="contextmenu.show">
+  <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
     <EditorCollapsibleBox nobox :group="[]" :collapsible="true" :class="[`depth-${depth}`, `label-${label}`]" vshow>
       <template #title><img src="/assets/bsicons/profileType.png" />
         <span class="gray"> {{ label }}</span>
@@ -10,15 +10,15 @@
     </EditorCollapsibleBox>
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
       <template #default="{ payload }">
-        <template v-if="item">
-          <div v-if="item" @click="store.goto(item)">
-            Goto ({{ item.getName() }}
+        <template v-if="typeItem">
+          <div v-if="typeItem" @click="store.goto(typeItem)">
+            Goto ({{ typeItem.getName() }}
           </div>
           <Separator />
           <div
-            @click="store.create_child('sharedProfiles', catalogue as EditorBase, { typeName: item?.getName(), typeId: item?.getId() })">
+            @click="store.create_child('sharedProfiles', catalogue as EditorBase, { typeName: typeItem?.getName(), typeId: typeItem?.getId() })">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
-            Profile <span class="gray">&nbsp;({{ item?.getName() }})</span>
+            Profile <span class="gray">&nbsp;({{ typeItem?.getName() }})</span>
           </div>
         </template>
         <template v-else>
@@ -65,8 +65,8 @@ export default {
     path: {
       type: Array
     },
-    item: {
-      type: Object as PropType<EditorBase>
+    typeItem: {
+      type: Object as PropType<EditorBase>,
     }
   },
   data() {
@@ -81,11 +81,6 @@ export default {
   mounted() {
     if (this.catalogue) {
       this.catalogue.processForEditor();
-      const fullPath = [...(this.path || []), {
-        key: `label-${this.label}`,
-        index: 0,
-      }] as EntryPathEntry[];
-      this.open = this.state.get(this.catalogue.id, fullPath);
     }
   },
   methods: {
@@ -103,7 +98,18 @@ export default {
         },
       };
     },
-
+    should_be_open() {
+      const fullPath = [...(this.path || []), {
+        key: `label-${this.label}`,
+        index: 0,
+      }] as EntryPathEntry[];
+      this.open = this.state.get(this.catalogue.id, fullPath);
+    },
+    debug() {
+      console.log(this.typeItem?.name, this.typeItem?.editorTypeName, toRaw(this.typeItem));
+      (globalThis as any).$debugOption = this.typeItem;
+      (globalThis as any).$debugElement = this;
+    },
   },
 
   computed: {

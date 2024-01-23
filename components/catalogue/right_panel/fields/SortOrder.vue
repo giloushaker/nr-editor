@@ -1,9 +1,42 @@
 <template>
     <div class="scrollable max-h-60vh p-10px">
-        <div v-for="item, i in sorted" class="p-4px border-solid -mt-1px border-1px hover-darken unselectable 0px"
-            draggable="true" @dragstart="dragStart(item)" @dragover.prevent @drop="drop(realDropIndex)"
-            @dragenter="dragEnter(i)" :class="{ 'drop-target': realDropIndex === i }">
+        <div class="mb-10px" v-if="autosort">
+            <button class="bouton" id="auto-sort" @click="autoSort">
+                AutoSort
+                <img src="/assets/icons/filtre.png" class="cursor-pointer hover-darken right-icon"
+                    @click.prevent="configure = true" />
+            </button>
+            <PopupDialog v-if="configure" v-model="configure">
+                <div>
 
+                    Enter rules for sorting below:
+                    <br />Possible rules:
+                </div>
+                <div>
+                    <span class="cost">type:model</span><span class="cost">type:upgrade</span><span
+                        class="cost">type:unit</span><span class="cost">type:mount</span><span
+                        class="cost">type:crew</span><span class="cost">type:entry</span><span
+                        class="cost">type:group</span><br />
+                    <span class="cost">cost:{name}</span><br />
+                    <span class="cost">name</span><span class="cost">name:/{regex}/i</span><br />
+                </div>
+                <div>
+                    Multiple rules may be combined on the same line with <span class="cost">&</span>
+                    eg: <span class="cost">type:group & name:/options/i</span>
+                    <br />Higher rules take priority.
+                </div>
+
+
+                <UtilEditableDiv v-model="settings.autosort.config" style="font-family: monospace;" spellcheck="false" />
+            </PopupDialog>
+        </div>
+        <div v-for="item, i in sorted" class="p-4px border-solid -mt-1px border-1px hover-darken unselectable 0px drop-item"
+            draggable="true" @dragstart="dragStart(item)" @dragover.prevent @drop="drop(realDropIndex)"
+            @dragenter="dragEnter($event, i)" @dragover="dragEnter($event, i)" :class="{
+                'drop-target-is-above': realDropIndex === i && !same(i),
+                'drop-target-is-below': realDropIndex === i + 1 && !same_below(i + 1),
+                'dragging': item === dragging
+            }">
             <template v-if="get(item) === undefined">
                 <span :class="{ gray: get(item) === undefined }"
                     title="Will not be ordered specifically (but will be after anything with an index set)">
@@ -25,12 +58,14 @@
     </div>
 </template>
 <script lang="ts">
-import { sortByAscending } from '~/assets/shared/battlescribe/bs_helpers';
+import { sortByAscending, sortByAscendingInplace } from '~/assets/shared/battlescribe/bs_helpers';
+import { Base } from '~/assets/shared/battlescribe/bs_main';
+import { useSettingsStore } from '~/stores/settingsState';
 
 export default defineComponent({
     props: {
         items: {
-            type: Array,
+            type: Array<Base>,
             required: true,
         },
         get: {
@@ -44,10 +79,17 @@ export default defineComponent({
         del: {
             type: Function,
             required: true,
+        },
+        autosort: {
+            type: Boolean,
+            default: true,
         }
     },
+    setup() {
+        return { settings: useSettingsStore() }
+    },
     data() {
-        return { dragging: null as null | number, dropIndex: null as null | number }
+        return { dragging: null as null | number, dropIndex: null as null | number, configure: false }
     },
     computed: {
         sorted() {
@@ -60,12 +102,32 @@ export default defineComponent({
         },
     },
     methods: {
+        same(index: number) {
+            const item = this.sorted[index];
+            if (!this.get(item)) return false;
+            if (item !== this.dragging && this.sorted[index - 1] !== this.dragging) return false;
+            return true;
+        },
+        same_below(index: number) {
+            const item = this.sorted[index - 1];
+            if (!this.get(item)) return false;
+            if (item !== this.dragging && this.sorted[index] !== this.dragging) return false;
+            return true;
+        },
         dragStart(item: any) {
             this.dragging = item;
         },
-        dragEnter(index: number) {
+        dragEnter(e: DragEvent, index: number) {
+            const target = (e.target as HTMLElement).closest(".drop-item")!
+            const rect = target.getBoundingClientRect()
+            const half = (rect.top + rect.bottom) / 2
+            if (e.clientY > half) {
+                index += 1;
+            }
             if (this.dragging !== index) {
                 this.dropIndex = index;
+            } else {
+                this.dropIndex = null;
             }
         },
         drop(index: number | null) {
@@ -100,20 +162,114 @@ export default defineComponent({
                     i++;
                 }
             }
-        }
+        },
+        parseAutoSortConfig(str: string) {
+            const lines = str.split('\n').map(o => o.trim()).filter(o => o)
+            const result = []
+            for (const line of lines) {
+                const ands = line.split('&').map(o => o.trim()).filter(o => o)
+                const split = ands.map(o => o.split(':')
+                    .map(o => o.trim())
+                    .map(o => {
+                        const regexResult = /^\/(.*?)\/([gimuy]*)$/.exec(o)
+                        if (regexResult) {
+                            return RegExp(regexResult[1], regexResult[2])
+                        }
+                        return o
+                    })
+                )
+                result.push(split)
+            }
+            return result.reverse()
+        },
+        evalLine(element: Base, line: (string | RegExp)[][]) {
+            let result = 0;
+            for (const rule of line) {
+                const token = rule[0]
+                switch (token) {
+                    case "type":
+                        const type = rule[1]
+                        if (type === "group") result = element.isGroup() ? -1 : 0
+                        if (type === "entry") result = element.isEntry() ? -1 : 0
+                        result = element.getType() === type ? -1 : 0
+                        break;
+                    case "name":
+                        result = (rule[1] as RegExp).exec(element.getName()) ? -1 : 0
+                        break;
+                }
+                if (result === 1) return result;
+            }
+
+            return result;
+        },
+        autoSort() {
+            const parsed = this.parseAutoSortConfig(this.settings.autosort.config)
+            const childs = [...this.items];
+            for (const line of parsed) {
+                const token = line[0][0] as string;
+                const isLineCondition = line.length > 1 || ["type"].includes(token)
+                if (isLineCondition) {
+                    sortByAscendingInplace(childs, o => this.evalLine(o, line))
+                } else {
+                    switch (token) {
+                        case "cost":
+                            const costName = (line[0][1] as string).toLowerCase()
+                            sortByAscendingInplace(childs, o => o.getCosts().find(cost => cost.name.toLowerCase() === costName)?.value ?? 0)
+                            break;
+                        case "name":
+                            sortByAscendingInplace(childs, o => o.getName())
+                            break;
+                    }
+                }
+            }
+            let i = 1;
+            for (const child of childs) {
+                this.set(child, i);
+                i += 1
+            }
+        },
+
     }
 })
 </script>
-<style scoped>
-.drop-target {
-    border-top: 3px solid red;
+<style scoped lang="scss">
+@import "@/shared_components/css/vars.scss";
+
+.drop-target-is-above {
+    border-top: 4px solid rgb(101, 161, 101);
+}
+
+.drop-target-is-below {
+    border-bottom: 4px solid rgb(101, 161, 101);
+}
+
+.drop-target-is-below+.drop-target-is-above {
+    border-top: unset;
+}
+
+.dragging {
+    color: gray;
+    border-style: dashed;
+    border-width: 2px;
 }
 
 [draggable="true"] {
     cursor: move;
-    /* fallback if grab cursor is unsupported */
     cursor: grab;
     cursor: -moz-grab;
     cursor: -webkit-grab;
+}
+
+.right-icon {
+    left: unset;
+    right: -6px;
+    top: -1px;
+    border: 1px solid $box_border;
+    padding: 5px 5px 6px 5px
+}
+
+.cost {
+    font-family: monospace;
+    line-height: 1.5em;
 }
 </style>

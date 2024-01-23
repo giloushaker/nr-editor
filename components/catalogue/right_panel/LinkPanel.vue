@@ -7,23 +7,22 @@
   <CatalogueRightPanelFieldsLink :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section"
     :type="type" />
 
-  <CatalogueRightPanelFieldsCosts v-if="item.editorTypeName == 'selectionEntryLink'" :item="item" :catalogue="catalogue"
-    @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsCreation v-if="item.editorTypeName == 'selectionEntryLink'" :item="item"
-    :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsCosts v-if="isEntry" :item="item" :catalogue="catalogue" @catalogueChanged="changed"
+    class="section" />
+  <CatalogueRightPanelFieldsCreation v-if="isEntry" :item="item" :catalogue="catalogue" @catalogueChanged="changed"
+    class="section" />
 
   <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed" class="section" v-if="type != 'catalogue'">
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsCategories
-    v-if="item.editorTypeName == 'selectionEntryLink' || item.editorTypeName == 'selectionEntryGroupLink'" :item="item"
-    :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsCategories v-if="isEntryOrGroup" :item="item" :catalogue="catalogue"
+    @catalogueChanged="changed" class="section" />
 
   <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="false"
     class="section" v-if="type == 'entry' || type == 'category'" />
 
-  <CatalogueRightPanelFieldsSortChilds v-if="type == 'entry'" :item="item" :catalogue="catalogue"
+  <CatalogueRightPanelFieldsSortChilds v-if="isEntryOrGroup" :item="item" :catalogue="catalogue"
     @catalogueChanged="changed" />
 </template>
 
@@ -56,5 +55,16 @@ export default {
       this.$emit("catalogueChanged");
     },
   },
+  computed: {
+    isEntryOrGroup() {
+      return this.item.editorTypeName == 'selectionEntryLink' || this.item.editorTypeName == 'selectionEntryGroupLink'
+    },
+    isGroup() {
+      return this.item.editorTypeName == 'selectionEntryGroupLink'
+    },
+    isEntry() {
+      return this.item.editorTypeName == 'selectionEntryLink'
+    }
+  }
 };
 </script>

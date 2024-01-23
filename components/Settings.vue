@@ -13,9 +13,8 @@
     </div>
     <div class="row">
       <input type="checkbox" id="github-auto-increment" v-model="settings.githubAutoIncrement" />
-      <label for="github-auto-increment"
-        >Auto increment revision when saving (requires github integration & internet)</label
-      >
+      <label for="github-auto-increment">Auto increment revision when saving (requires github integration &
+        internet)</label>
     </div>
     <div class="row">
       <input type="checkbox" id="revision-popup" v-model="noRevisionPopup" />
@@ -25,6 +24,22 @@
       <input type="checkbox" id="categories-ui-v2" v-model="settings.useNewCategoriesUI" />
       <label for="categories-ui-v2">Use new ui for categories</label>
     </div>
+    <fieldset class="mt-10px">
+      <legend>Display</legend>
+      <div class="row">
+        <input type="checkbox" id="sort" v-model="settings.display.sortIndex" />
+        <label for="">Sort Index</label>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="refs" v-model="settings.display.references" />
+        <label for="refs">Refs</label>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="costs" v-model="settings.display.costs" />
+        <label for="">Costs</label>
+      </div>
+
+    </fieldset>
   </div>
 </template>
 <script>

@@ -33,35 +33,45 @@ export default defineNuxtConfig({
   ],
   app: ghpages
     ? {
-        baseURL: `/${pkg.build.publish[0].repo}/`,
-        head: {
-          title: "New Recruit - Editor",
-          ...(ghpages
-            ? {
-                base: {
-                  href: `/${getGitHubRepo()}/`,
-                },
-              }
-            : {}),
-        },
-      }
+      baseURL: `/${pkg.build.publish[0].repo}/`,
+      head: {
+        title: "New Recruit - Editor",
+        ...(ghpages
+          ? {
+            base: {
+              href: `/${getGitHubRepo()}/`,
+            },
+          }
+          : {}),
+      },
+    }
     : undefined,
   // @ts-ignore
   plugins: [
     ...(electron
       ? [
-          {
-            mode: "client",
-            src: "electron/renderer.js",
-          },
-        ]
+        {
+          mode: "client",
+          src: "electron/renderer.js",
+        },
+      ]
       : []),
   ],
   typescript: {
     strict: true,
   },
   electron: {
-    build: [{ entry: "electron/main.ts" }, { entry: "electron/preload.js" }],
+    build: [
+      {
+        entry: "electron/main.ts",
+        vite: {
+          build: {
+            sourcemap: true
+          }
+        }
+      },
+      { entry: "electron/preload.js" }
+    ],
   },
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
@@ -87,5 +97,5 @@ export default defineNuxtConfig({
     },
   },
   components: [{ path: "~/shared_components/" }, { path: "~/components/" }],
-  
+
 });

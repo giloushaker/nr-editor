@@ -80,7 +80,8 @@ type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
   selectionsParent?: Object | null;
-  selections: { obj: any; onunselected: () => unknown; payload?: any }[];
+  selections: Array<{ obj: any; onunselected: () => unknown; payload?: any }>;
+  selectedEntries: Array<{ obj: EditorBase; onunselected: () => unknown; payload?: any }>;
   selectedElementGroup: VueComponent[] | null;
   selectedElement: VueComponent | null;
   selectedItem: VueComponent | null;
@@ -132,7 +133,10 @@ export function get_ctx(el: any): any {
  * @param {Vue} vue_el - The Vue component instance.
  * @returns {EditorBase}
  */
-export function get_base_from_vue_el(vue_el: VueComponent): EditorBase {
+export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorBase {
+  if (vue_el instanceof Base) {
+    return vue_el as EditorBase
+  }
   const p1 = vue_el.$parent;
   if (p1.item) return p1.item;
   const p2 = p1.$parent;
@@ -164,6 +168,7 @@ const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEdi
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorStore => ({
     selections: [],
+    selectedEntries: [],
     selectedElementGroup: null,
     selectedElement: null,
     selectedItem: null,
@@ -618,10 +623,17 @@ export const useEditorStore = defineStore("editor", {
         this.catalogueComponent.key += 1;
       }
     },
-    unselect(obj?: VueComponent) {
+    unselect(obj?: VueComponent | Base) {
       const next_selected = [];
       const next_unselected = [];
       for (const selection of this.selections) {
+        if (obj === undefined || toRaw(selection.obj) === toRaw(obj)) {
+          next_unselected.push(selection);
+        } else {
+          next_selected.push(selection);
+        }
+      }
+      for (const selection of this.selectedEntries) {
         if (obj === undefined || toRaw(selection.obj) === toRaw(obj)) {
           next_unselected.push(selection);
         } else {
@@ -639,11 +651,19 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     is_selected(obj: VueComponent) {
-      return this.selections.find((o) => o.obj === obj) !== undefined;
+      if (obj instanceof Base) {
+        return this.selectedEntries.find((o) => o.obj === obj) !== undefined;
+      } else {
+        return this.selections.find((o) => o.obj === obj) !== undefined;
+      }
     },
-    select(obj: VueComponent, onunselected: () => unknown, payload?: any) {
+    select(obj: VueComponent | EditorBase, onunselected: () => unknown, payload?: any) {
       if (!this.is_selected(obj)) {
-        this.selections.push({ obj, onunselected, payload });
+        if (obj instanceof Base) {
+          this.selectedEntries.push({ obj: obj as EditorBase, onunselected, payload });
+        } else {
+          this.selections.push({ obj, onunselected, payload });
+        }
       }
     },
     do_select(e: MouseEvent | null, el: VueComponent, group: VueComponent | VueComponent[]) {
@@ -679,15 +699,26 @@ export const useEditorStore = defineStore("editor", {
       if (this.is_selected(el)) return;
       this.do_select(e, el, group);
     },
-
+    clear_selections(){
+      this.unselect();
+    },
     get_selections(): EditorBase[] {
-      return this.selections.map((o) => get_base_from_vue_el(o.obj));
+      const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
+      this.selectedEntries.forEach(o => result.push(o.obj))
+      return result;
     },
     get_selections_with_payload(): Array<{ obj: EditorBase; payload: any }> {
-      return this.selections.map((o) => ({ obj: get_base_from_vue_el(o.obj), payload: o.payload }));
+      const result = this.selections.map((o) => ({ obj: get_base_from_vue_el(o.obj), payload: o.payload }));
+      this.selectedEntries.forEach(o => result.push({ obj: o.obj, payload: o.payload }))
+      return result;
     },
     get_selected(): EditorBase | undefined {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
+    },
+    set_selections(entry_or_entries: MaybeArray<EditorBase>) {
+      this.clear_selections()
+      const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]
+      this.selectedEntries = arr.map(o => ({obj: o, onunselected: () => null }))
     },
     async do_action(type: string, undo: () => void | Promise<void>, redo: () => any | Promise<any>) {
       let result;
@@ -810,7 +841,7 @@ export const useEditorStore = defineStore("editor", {
 
       let addeds = [] as EditorBase[];
 
-      const redo = async () => {
+      const redo = () => {
         addeds = [];
         for (const item of selections) {
           const copy = JSON.parse(entryToJson(item, editorFields));
@@ -822,7 +853,7 @@ export const useEditorStore = defineStore("editor", {
           setPrototypeRecursive({ [item.parentKey]: copy });
           scrambleIds(catalogue, copy);
           arr.push(copy);
-          await onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
+          onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           addeds.push(copy);
         }
       };
@@ -838,16 +869,22 @@ export const useEditorStore = defineStore("editor", {
     /**
      * Remove the current selections.
      */
-    async remove() {
-      const selections = this.get_selections();
-      if (!selections.length) return;
-      const catalogue = selections[0].getCatalogue();
-      const sysId = catalogue.getSystemId();
+    remove(entry_or_entries?: MaybeArray<Base>) {
       let entries = [] as EditorBase[];
-      for (const selected of selections) {
-        if (selected.catalogue !== catalogue) continue;
-        entries.push(selected);
+      if (entry_or_entries) {
+        for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
+          entries.push(entry as EditorBase)
+        }
+      } else {
+        const selections = this.get_selections();
+        if (!selections.length) return;
+        for (const selected of selections) {
+          entries.push(selected);
+        }
       }
+
+      const catalogue = entries[0].getCatalogue();
+      const sysId = catalogue.getSystemId();
 
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
@@ -861,7 +898,7 @@ export const useEditorStore = defineStore("editor", {
           const removed = popAtEntryPath(catalogue, path);
           removeds.push(removed);
           paths.push(path);
-          await onRemoveEntry(removed, manager);
+          onRemoveEntry(removed, manager);
         }
         removeds.reverse();
         paths.reverse();
@@ -869,10 +906,10 @@ export const useEditorStore = defineStore("editor", {
       const undo = async () => {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
           const parent = addAtEntryPath(catalogue, path, entry);
-          await onAddEntry(entry, catalogue, parent, this.get_system(sysId));
+          onAddEntry(entry, catalogue, parent, this.get_system(sysId));
         }
       };
-      await this.do_action("remove", undo, redo);
+      this.do_action("remove", undo, redo);
       this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
@@ -950,7 +987,7 @@ export const useEditorStore = defineStore("editor", {
 
             // Add it to its parent
             arr.push(copy);
-            await onAddEntry(copy, catalogue, item, this.get_system(sysId));
+            onAddEntry(copy, catalogue, item, this.get_system(sysId));
             addeds.push(copy);
           }
         }
@@ -981,6 +1018,7 @@ export const useEditorStore = defineStore("editor", {
         case "costTypes":
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            id: generateBattlescribeId(),
             defaultCostLimit: -1,
           };
         case "repeats":
@@ -992,6 +1030,7 @@ export const useEditorStore = defineStore("editor", {
             childId: "any",
             shared: true,
             roundUp: false,
+            id: generateBattlescribeId(),
           };
         case "constraints": {
           const isAssociation = parent?.parentKey === "associations";
@@ -1001,6 +1040,7 @@ export const useEditorStore = defineStore("editor", {
             field: parent?.isForce() ? "forces" : "selections",
             scope: "parent",
             shared: true,
+            id: generateBattlescribeId(),
           } as BSIConstraint;
           if (isAssociation) {
             result.childId = "any";
@@ -1032,12 +1072,14 @@ export const useEditorStore = defineStore("editor", {
             import: true,
             name: `New ${getTypeLabel(getTypeName(key))}`,
             hidden: false,
+            id: generateBattlescribeId(),
           };
         case "entryLinks":
           return {
             import: true,
             name: `New ${getTypeLabel(getTypeName(key))}`,
             hidden: false,
+            id: generateBattlescribeId(),
           };
         case "associations":
           return {
@@ -1050,6 +1092,7 @@ export const useEditorStore = defineStore("editor", {
             label: "Association",
             labelMembers: "Unit",
             hidden: false,
+            id: generateBattlescribeId(),
           };
         case "sharedProfiles":
         case "profiles":
@@ -1060,11 +1103,13 @@ export const useEditorStore = defineStore("editor", {
             typeId: profileType?.id,
             typeName: profileType?.name,
             hidden: false,
+            id: generateBattlescribeId(),
           } as BSIProfile;
         case "catalogueLinks":
           return {
             type: "catalogue",
             name: `New ${getTypeLabel(getTypeName(key))}`,
+            id: generateBattlescribeId(),
           };
 
         case "categoryLinks":
@@ -1072,12 +1117,14 @@ export const useEditorStore = defineStore("editor", {
             type: "category",
             name: `New ${getTypeLabel(getTypeName(key))}`,
             hidden: false,
+            id: generateBattlescribeId(),
           };
 
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
             hidden: false,
+            id: generateBattlescribeId(),
           };
       }
     },
@@ -1092,14 +1139,13 @@ export const useEditorStore = defineStore("editor", {
         select: true,
         ...data,
       };
-      if (!["modifiers", "conditions", "modifierGroups", "conditionGroups"].includes(key)) {
-        obj.id = generateBattlescribeId();
-      }
       const added = await this.add(obj, key);
       this.open_selected();
     },
     /**
-     * Creates child entries in the provided parent
+     * Creates child entries in the provided parent after a user action
+     * Will select the added child if possible.
+     * Supports undo & redo
      * @param key the key of the child (eg: `selectionEntries`)
      * @param parent the parent to add the child in
      * @param data data to use when creating the child entry
@@ -1107,12 +1153,57 @@ export const useEditorStore = defineStore("editor", {
     async create_child(key: string & keyof Base, parent: EditorBase, data?: any) {
       const obj = {
         ...this.get_initial_object(key, parent),
-        id: generateBattlescribeId(),
         select: true,
         ...data,
       };
       await this.add(obj, key, parent);
       this.open_selected();
+    }, 
+    /**
+     * Synchronous version of create_child for use by scripts
+     * Adds a child (specified by `_key` to a specified parent)
+     * Will not select the added child
+     * Does not Support undo & redo
+     * 
+     * @param key The parent's key to add the child in, will affect the fields generated by default.
+     * @param parent The entry to add the child in
+     * @param data The fields to add on to the generated object, overwrites default fields
+     * @returns 
+     */
+    add_child(_key: string & keyof Base, parent: EditorBase, data?: Object) {
+      const key = fixKey(parent, _key);
+      if (!key) {
+        throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
+      }
+      const catalogue = parent.catalogue;
+      const sysId = catalogue.getSystemId();
+
+      const obj = {
+        ...this.get_initial_object(key as string, parent),
+        id: generateBattlescribeId(),
+        ...data,
+      };
+
+      // Ensure there is array to put the childs in
+      if (!parent[key as keyof Base]) (parent as any)[key] = [];
+      const arr = parent[key as keyof Base];
+      if (!Array.isArray(arr)) return;
+      if (!allowed_children(parent, parent.parentKey)?.has(key as string)) {
+        console.warn("Couldn't add", key, "to a", parent.parentKey, "because it is not allowed");
+        return;
+      }
+
+      // Copy to not affect existing
+      const copy = JSON.parse(obj);
+      clean(copy, key as string);
+      delete copy.parentKey;
+
+      // Initialize classes from the json
+      setPrototypeRecursive({ [key]: copy });
+
+      // Add it to its parent
+      arr.push(copy);
+      onAddEntry(copy, catalogue, parent, this.get_system(sysId));
     },
     can_move(obj: EditorBase) {
       if (obj.isLink()) return false;
@@ -1172,8 +1263,8 @@ export const useEditorStore = defineStore("editor", {
           return obj.parentKey;
       }
     },
-    async move(obj: EditorBase, from: Catalogue, to: Catalogue, type: "root" | "shared") {
-      const redo = async () => {
+    move(obj: EditorBase, from: Catalogue, to: Catalogue, type: "root" | "shared") {
+      const redo = () => {
         // Get key the object will end up in
         const catalogueKey = this.move_to_key(obj, type) as ItemKeys;
         if (!catalogueKey) {
@@ -1193,7 +1284,7 @@ export const useEditorStore = defineStore("editor", {
         if (!to[catalogueKey]) to[catalogueKey] = [];
 
         to[catalogueKey]!.push(copy);
-        await onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
+        onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
 
         const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
         const canBeLinked = linkableTypes.includes(obj.editorTypeName);
@@ -1216,7 +1307,7 @@ export const useEditorStore = defineStore("editor", {
           setPrototypeRecursive({ [linkKey]: link });
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
-          await onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
+          onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
         }
       };
       function undo() {
@@ -1228,7 +1319,7 @@ export const useEditorStore = defineStore("editor", {
 
       // Undo is not done at this feature stills needs some iteration
       // await this.do_action("move", undo, redo);
-      await redo();
+      redo();
 
       this.set_catalogue_changed(from, true);
       this.set_catalogue_changed(to, true);
@@ -1560,7 +1651,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
-      const result = [] as EditorBase[];
+      const result = [] as Base[];
 
       const { filter } = query;
       if (!filter) return null;
@@ -1569,26 +1660,32 @@ export const useEditorStore = defineStore("editor", {
 
       await system.loadAll();
       for (const file of system.getAllLoadedCatalogues()) {
-        file.forEachObjectWhitelist((val: EditorBase, parent) => {
-          if (result.length >= max) return;
-          if (val.isLink()) {
-            if (val.target && val.isCategory() && !parent?.isForce()) {
-              return;
+        file.forEachObjectWhitelist((val: Base, parent) => {
+          try {
+
+            if (result.length >= max) return;
+            if ((val as Link).targetId) {
+              if (val.target && val.target.isCategory() && !parent?.isForce()) {
+                return;
+              }
+            }
+            
+            const name = val.getName?.call(val);
+            const text = (val as any as Characteristic).$text;
+            const desc = (val as any as Rule).description;
+            const id = val.id;
+            if (id === filter) {
+              result.push(val);
+            } else if ((name && String(name).match(regx)) || id === filter) {
+              result.push(val);
+            } else if (text && String(text).match(regx)) {
+              result.push(val);
+            } else if (desc && String(desc).match(regx)) {
+              result.push(val);
             }
           }
-
-          const name = val.getName?.call(val);
-          const text = (val as any as Characteristic).$text;
-          const desc = (val as any as Rule).description;
-          const id = val.id;
-          if (id === filter) {
-            result.push(val);
-          } else if ((name && String(name).match(regx)) || id === filter) {
-            result.push(val);
-          } else if (text && String(text).match(regx)) {
-            result.push(val);
-          } else if (desc && String(desc).match(regx)) {
-            result.push(val);
+          catch(e){
+            console.error("Error while searching:", e)
           }
         });
         if (result.length >= max) {
@@ -1597,7 +1694,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       console.log("Search for", `"${filter}"`, "found", result.length, "results");
-      const grouped = {} as Record<string, EditorBase[]>;
+      const grouped = {} as Record<string, Base[]>;
       for (const found of result) {
         addObj(grouped, found.catalogue.name, found);
       }

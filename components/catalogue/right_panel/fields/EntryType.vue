@@ -48,10 +48,10 @@ export default {
           case "model":
           case "upgrade":
           case "unit":
-          default:
             this.item.type = val;
             delete this.item.subType;
             break;
+          default:
           case "mount":
           case "crew":
             this.item.type = "model";

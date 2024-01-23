@@ -162,49 +162,26 @@ export default defineComponent({
         if (found && primary) {
           found.primary = true;
         } else if (found) {
-          this.removeLink(links, found);
+          this.removeLink(this.item, found);
         } else {
-          this.addLink(links, cat, primary);
+          this.addLink(this.item, cat, primary);
         }
       }
     },
-    removeLink(links: Array<CategoryLink>, link: Link) {
-      const idx = links.findIndex((o) => o === link);
-      if (idx !== -1) {
-        const [cl] = links.splice(idx, 1);
-        this.catalogue.removeFromIndex(cl as CategoryLink & EditorBase);
-        const targetLinks = (cl.target as Category & EditorBase).links as Base[];
-        if (targetLinks) {
-          const targetIdx = targetLinks?.findIndex((o) => o === cl);
-          if (targetIdx !== -1) {
-            targetLinks?.splice(targetIdx, 1);
-          }
-        }
-      }
+    removeLink(parent: EditorBase, link: Link) {
+      this.store.remove(link)
     },
-    addLink(links: Link[], cat: Category, primary = false) {
+    async addLink(parent: EditorBase, cat: Category, primary = false) {
       if (!cat.isCategory()) {
         throw Error("Invalid argument, target must be a category");
       }
-      const cl = setPrototype(
-        {
-          targetId: cat.id,
-          target: cat,
-          id: this.item.catalogue.generateNonConflictingId(),
-          primary: primary,
-          catalogue: this.item.catalogue,
-          name: cat.name,
-        },
-        "categoryLinks"
-      );
-      links.push(cl);
-      this.catalogue.addToIndex(cl);
-      const target = cat as Category & EditorBase;
-      if (!target.links) {
-        target.links = [];
-      }
-      target.links?.push(cl as CategoryLink & EditorBase);
-      return cl;
+      const added = this.store.create_child("categoryLinks", parent, {
+        targetId: cat.id,
+        id: this.item.catalogue.generateNonConflictingId(),
+        primary: primary,
+        name: cat.name,
+      });
+      return added;
     },
     allCategories() {
       const current = new Set<string>();
@@ -226,7 +203,7 @@ export default defineComponent({
       if (found) {
         return found;
       }
-      return this.addLink(links, category, false);
+      return this.addLink(this.item, category, false);
     },
     addCategoryAndMakePrimary(category: Category) {
       const cl = this.addCategory(category);

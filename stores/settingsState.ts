@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/shared/appearance";
 import { AppearanceTheme } from "~/assets/shared/types/appearance";
-
+import merge from "lodash.merge"
 export interface RGB {
   r: number;
   g: number;
@@ -217,20 +217,49 @@ export const defaultAppearence: AppearanceTheme = {
   costColor: "#284781",
   titleBarColor: "#708090",
 };
+const defaultState = {
+  systemsFolder: "" as string | undefined,
+  showOnlyEnabledCategories: false,
+  globalDuplicateIdError: false,
+  useNewCategoriesUI: false,
+  sort: "asc" as string,
+  theme: "" as "" | "dark" | "light",
+  githubAutoIncrement: true,
+  autosort: {
+    config: `
+    type:model
+type:mount
+type:crew
+type:upgrade
+type:entry
+type:group & name:/mount/i
+type:group & name:/weapons/i
+type:group & name:/armour/i
+type:group & name:/equipment/i
+type:group & name:/items/i
+type:group & name:/options/i
+type:group
+cost:pts
+name`
+    
+  },
+  display: {          
+    sortIndex: true,
+    references: true,
+    costs: true,
+  }
+}
 export const useSettingsStore = defineStore("settings", {
-  state: () => ({
-    systemsFolder: "" as string | undefined,
-    showOnlyEnabledCategories: false,
-    globalDuplicateIdError: false,
-    useNewCategoriesUI: false,
-    sort: "asc" as string,
-    theme: "" as "" | "dark" | "light",
-    githubAutoIncrement: true,
-  }),
+  state: () => ({...defaultState}),
 
   persist: {
     storage: globalThis.localStorage,
-  },
+    deserialize(text: string) {
+      const parsed = JSON.parse(text)
+      return merge(parsed, defaultState)
+    },
+    serialize: JSON.stringify
+  } as any, // It makes an error without any but it works fine so idc.
   getters: {
       isDarkTheme(): boolean{
         return this.theme === "dark"
@@ -272,5 +301,14 @@ export const useSettingsStore = defineStore("settings", {
     refreshAppearance() {
       updateCssVars(this.getDefaultAppareance(), {});
     },
+    init(){
+      if(!this.display){
+        this.display = {
+          sortIndex: true,
+          references: true,
+          costs: true,
+        }
+      }
+    }
   },
 });

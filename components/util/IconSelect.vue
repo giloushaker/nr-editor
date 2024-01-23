@@ -53,6 +53,11 @@ export default {
       availableOptions: [] as OptionArray,
     };
   },
+  watch: {
+    modelValue() {
+      this.reset()
+    }
+  },
 
   methods: {
     async foundOptions(): Promise<OptionArray> {
@@ -120,7 +125,7 @@ export default {
   border-top: 1px $box_border;
   border-bottom: 1px $box_border;
 
-  > * {
+  >* {
     background-color: var(--input-background);
     border-left: 1px $box_border;
     border-right: 1px $box_border;

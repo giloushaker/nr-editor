@@ -133,8 +133,11 @@ export default {
       
 eg: a unit has a Leader and a Model which have a link to the same entry, with a max 1 constraint on the links scoped to the unit.
 assuming both have selected 1 of that entry:
-- a shared constraint would error if they both take the entry as its evaluating the target of the links
-- a non-shared constraint would not error as it would be evaluating the link itself`
+- a shared constraint would error as its evaluating the target of the links
+- a non-shared constraint would not error as it would be evaluating the amount of the links themselves
+
+note: shared=false on BS will also limit the constraint to it's parent rootSelectionEntry ID
+`
     },
     instanceOf() {
       return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
@@ -288,6 +291,11 @@ assuming both have selected 1 of that entry:
 
       if (this.item.field !== "forces" && ["repeat", "constraint"].includes(this.item.editorTypeName)) {
         res = [
+          {
+            id: "self",
+            name: "Self",
+            editorTypeName: "bullet",
+          },
           {
             id: "parent",
             name: "Parent",

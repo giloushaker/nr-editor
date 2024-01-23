@@ -16,7 +16,8 @@
         <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
           :collapsible="category.items.length > 0" :group="get_group('entries')" :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
-          :class="[category.type, category.links, `depth-${depth}`]" nobox :defcollapsed="!should_be_open(category.type)">
+          :class="[category.type, category.links, `depth-${depth}`]" nobox :defcollapsed="!should_be_open(category.type)"
+          :path="[{ key: category.type, index: 0 }]">
           <template #title>
             <span>
               <span class="typeIcon-wrapper">
@@ -27,10 +28,9 @@
           </template>
           <template #content>
             <template v-if="should_be_grouped(category.type)">
-              <template v-for="group of groupBy(category.items, (o) => o.item.typeName || 'Untyped')">
-                <CatalogueLabel :label="group[0].item.typeName ?? 'Untyped'" :depth="depth + 1" :catalogue="catalogue"
-                  :item="catalogue.findOptionById(group[0].item.typeId!)">
-                  <template v-for="entry of group" :key="key(entry.item)">
+              <template v-for="{ label, type, items } of display_groups(category.type, category.items)">
+                <CatalogueLabel :label="label" :depth="depth + 1" :catalogue="catalogue" :typeItem="type">
+                  <template v-for="entry of items" :key="key(entry.item)">
                     <CatalogueEntry :item="entry.item" :group="get_group(category.type)" :forceShowRecursive="forceShow"
                       :imported="entry.imported" :depth="depth + 2" noType />
                   </template>
@@ -264,10 +264,11 @@ import {
   sortByDescending,
   escapeXml,
   groupBy,
+  addObj,
+  sortByAscendingInplace,
 } from "~/assets/shared/battlescribe/bs_helpers";
 
 import { useEditorUIState } from "~/stores/editorUIState";
-import { debug } from "util";
 import { useSettingsStore } from "~/stores/settingsState";
 import { allowed_children } from "~/assets/shared/battlescribe/bs_convert";
 import { getModifiedField } from "~/assets/shared/battlescribe/bs_modifiers";
@@ -367,11 +368,11 @@ export default {
       name: "",
     };
   },
-  mounted() {
+  created() {
     if (this.catalogue) {
       this.catalogue.processForEditor();
       if (!this.imported) {
-        this.open = preferOpen.has(this.item.parentKey) || this.state.get(this.catalogue.id, getEntryPath(this.item));
+        this.open = this.should_be_open()
         if (this.item.isCatalogue()) {
           const openCategories = new Set<string>();
           for (const category of this.categories) {
@@ -414,8 +415,35 @@ export default {
     should_be_grouped(category: string) {
       return category === "sharedProfiles"
     },
-    should_be_open(category: string) {
-      return this.open_categories?.has(category);
+    display_groups(category: string, items: CatalogueEntryItem[]) {
+      const grouped = {} as Record<string, { label: string, type?: EditorBase, items: CatalogueEntryItem[] }>
+      const leftover = []
+      for (const entry of items) {
+        const item = entry.item
+        if (!item.typeId) {
+          leftover.push(entry)
+          continue;
+        }
+        const type = item.catalogue.findOptionById(item.typeId) as EditorBase;
+        if (!type) {
+          leftover.push(entry)
+          continue;
+        }
+        const label = type.name || "Untyped";
+        if (!(label in grouped)) {
+          grouped[label] = { type, label, items: [] }
+        }
+        grouped[label].items.push(entry)
+      }
+      const result = Object.values(grouped)
+      result.push({ label: "Untyped", items: leftover })
+      return result;
+    },
+    should_be_open(category?: string): boolean {
+      if (category) {
+        return this.open_categories !== undefined && this.open_categories.has(category)
+      }
+      return preferOpen.has(this.item.parentKey) || this.state.get(this.catalogue.id, getEntryPath(this.item));
     },
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
@@ -514,10 +542,12 @@ export default {
       }
     },
     grouped(items: CatalogueEntryItem[]) {
-      return sortByAscending(
+      const result = sortByAscending(
         this.sorted(items),
         (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
       );
+      sortByAscendingInplace(result, (o) => o.item.sortIndex ?? 10000);
+      return result;
     },
     groupBy,
 

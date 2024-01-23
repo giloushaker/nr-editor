@@ -64,7 +64,7 @@ export default {
         },
         {
           name: "Flatten",
-          status: this.alphasort,
+          status: this.flatten,
           field: "flatten",
           title:
             "If this is checked, the group box for this entry/group will not be visible in the New Recruit UI.",
@@ -76,7 +76,7 @@ export default {
       return true;
     },
 
-    alphasort() {
+    flatten() {
       if (this.item.editorTypeName === "selectionEntry") {
         return 1;
       }
@@ -89,7 +89,7 @@ export default {
       if (this.item.editorTypeName === "selectionEntryGroupLink") {
         return 1;
       }
-      return 0;
+      return -1;
     },
 
     collective() {
