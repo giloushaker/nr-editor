@@ -22,6 +22,7 @@ import {
   zipCompress,
   forEachParent,
   addObj,
+  type MaybeArray
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
@@ -109,7 +110,6 @@ export interface IEditorStore {
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
 }
-export type MaybeArray<T> = T | Array<T>;
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
   type: ItemKeys;
@@ -951,6 +951,7 @@ export const useEditorStore = defineStore("editor", {
           const item = selection.obj;
           const selectedCatalogueKey = selection.payload;
           await this.open(item, true);
+          const toAdd = []
           for (const entry of entries as Record<string, any>[]) {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
@@ -974,22 +975,31 @@ export const useEditorStore = defineStore("editor", {
 
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
-            scrambleIds(catalogue, copy);
+            toAdd.push({key, entry: copy})
+          }
+          
+          scrambleIds(catalogue, toAdd.map(o => o.entry));
+          
+          for (const {key, entry} of toAdd){
+            if (!item[key as keyof Base]) (item as any)[key] = [];
+            const arr = item[key as keyof Base];
+            if (!Array.isArray(arr)) continue;
 
             // Show added entry even if there is a search
-            this.filtered.push(copy);
-            copy.showChildsInEditor = true;
-            let cur = copy;
+            this.filtered.push(entry);
+            entry.showChildsInEditor = true;
+            let cur = entry;
             while (cur) {
               cur.showInEditor = true;
               cur = cur.parent;
             }
-
+            
             // Add it to its parent
-            arr.push(copy);
-            onAddEntry(copy, catalogue, item, this.get_system(sysId));
-            addeds.push(copy);
+            arr.push(entry);
+            onAddEntry(entry, catalogue, item, this.get_system(sysId));
+            addeds.push(entry);
           }
+          
         }
         return addeds[0];
       };
