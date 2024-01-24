@@ -41,7 +41,7 @@
     </fieldset>
     <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
-      <SortOrder :items="get_profile_types()" :get="get" :set="set" :del="del_sort">
+      <SortOrder :items="get_profile_types()" :get="get" :set="set" :del="del_sort" :autosort="false">
         <template #item="{ item }">{{ item.name }}</template>
       </SortOrder>
     </PopupDialog>
