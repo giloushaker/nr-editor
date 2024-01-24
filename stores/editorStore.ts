@@ -1203,17 +1203,25 @@ export const useEditorStore = defineStore("editor", {
         return;
       }
 
-      // Copy to not affect existing
-      const copy = JSON.parse(obj);
-      clean(copy, key as string);
-      delete copy.parentKey;
+      clean(obj, key as string);
+      delete obj.parentKey;
 
       // Initialize classes from the json
-      setPrototypeRecursive({ [key]: copy });
+      setPrototypeRecursive({ [key]: obj });
 
       // Add it to its parent
-      arr.push(copy);
-      onAddEntry(copy, catalogue, parent, this.get_system(sysId));
+      arr.push(obj);
+      onAddEntry(obj, catalogue, parent, this.get_system(sysId));
+      this.set_catalogue_changed(catalogue);
+      return obj;
+    },
+    del_child(entry: Base){
+      const catalogue = entry.catalogue;
+      const manager = catalogue.manager;
+      const path = getEntryPath(entry as EditorBase);
+      const removed = popAtEntryPath(catalogue, path);      
+      onRemoveEntry(removed, manager);
+      this.set_catalogue_changed(catalogue);
     },
     can_move(obj: EditorBase) {
       if (obj.isLink()) return false;

@@ -169,13 +169,13 @@ export default defineComponent({
       }
     },
     removeLink(parent: EditorBase, link: Link) {
-      this.store.remove(link)
+      this.store.del_child(link)
     },
     async addLink(parent: EditorBase, cat: Category, primary = false) {
       if (!cat.isCategory()) {
         throw Error("Invalid argument, target must be a category");
       }
-      const added = this.store.create_child("categoryLinks", parent, {
+      const added = this.store.add_child("categoryLinks", parent, {
         targetId: cat.id,
         id: this.item.catalogue.generateNonConflictingId(),
         primary: primary,
@@ -210,11 +210,17 @@ export default defineComponent({
       this.makePrimary(cl, this.item);
     },
     removeCategory(category: Category) {
-      if (!this.item.categoryLinks) this.item.categoryLinks = [];
-      const links = this.item.categoryLinks;
+      const links = this.item.categoryLinks || [];
       const found = links.find((o) => o.targetId === category.getId());
       if (found) {
-        this.removeLink(links, found);
+        return this.removeLink(this.item, found);
+      }
+      if (this.item.target) {
+        const links2 = this.item.target?.categoryLinks || [];
+        const found2 = links2.find((o) => o.targetId === category.getId());
+        if (found2) {
+          return this.removeLink(this.item.target as EditorBase, found2);
+        }
       }
     },
     async createCategory(name: string, primary = false) {
