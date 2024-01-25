@@ -3,8 +3,7 @@
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
       <div class="head">
         <EditorCollapsibleBox :payload="catalogue" nobox :group="[]" :collapsible="false">
-          <template #title
-            ><img src="/assets/bsicons/catalogue.png" />
+          <template #title><img src="/assets/bsicons/catalogue.png" />
             {{ catalogue.name }}
             <span v-if="getNameExtra(catalogue)" class="gray">&nbsp;{{ getNameExtra(catalogue) }} </span>
           </template>
@@ -13,18 +12,11 @@
       </div>
 
       <template v-for="category of groupedCategories" :key="category.type">
-        <EditorCollapsibleBox
-          :altclickable="store.can_follow(item) || imported"
-          @altclick="onctrlclick"
-          :collapsible="category.items.length > 0"
-          :group="get_group('entries')"
-          :payload="category.type"
+        <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+          :collapsible="category.items.length > 0" :group="get_group('entries')" :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
-          :class="[category.type, category.links, `depth-${depth}`]"
-          nobox
-          :defcollapsed="!should_be_open(category.type)"
-          :path="[{ key: category.type, index: 0 }]"
-        >
+          :class="[category.type, category.links, `depth-${depth}`]" nobox :defcollapsed="!should_be_open(category.type)"
+          :path="[{ key: category.type, index: 0 }]">
           <template #title>
             <span>
               <span class="typeIcon-wrapper">
@@ -38,27 +30,16 @@
               <template v-for="{ label, type, items } of display_groups(category.type, category.items)">
                 <CatalogueLabel :label="label" :depth="depth + 1" :catalogue="catalogue" :typeItem="type">
                   <template v-for="entry of items" :key="key(entry.item)">
-                    <CatalogueEntry
-                      :item="entry.item"
-                      :group="get_group(category.type)"
-                      :forceShowRecursive="forceShow"
-                      :imported="entry.imported"
-                      :depth="depth + 2"
-                      noType
-                    />
+                    <CatalogueEntry :item="entry.item" :group="get_group(category.type)" :forceShowRecursive="forceShow"
+                      :imported="entry.imported" :depth="depth + 2" noType />
                   </template>
                 </CatalogueLabel>
               </template>
             </template>
             <template v-else>
               <template v-for="entry of category.items" :key="key(entry.item)">
-                <CatalogueEntry
-                  :item="entry.item"
-                  :group="get_group(category.type)"
-                  :forceShowRecursive="forceShow"
-                  :imported="entry.imported"
-                  :depth="depth + 1"
-                />
+                <CatalogueEntry :item="entry.item" :group="get_group(category.type)" :forceShowRecursive="forceShow"
+                  :imported="entry.imported" :depth="depth + 1" />
               </template>
             </template>
           </template>
@@ -66,17 +47,9 @@
       </template>
     </template>
     <template v-else>
-      <EditorCollapsibleBox
-        :altclickable="store.can_follow(item) || imported"
-        @altclick="onctrlclick"
-        :collapsible="mixedChildren && mixedChildren.length > 0"
-        :empty="!mixedChildren || mixedChildren.length == 0"
-        :group="group || []"
-        :payload="item"
-        :class="[item.parentKey, `depth-${depth}`]"
-        :defcollapsed="!open"
-        nobox
-      >
+      <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+        :collapsible="mixedChildren && mixedChildren.length > 0" :empty="!mixedChildren || mixedChildren.length == 0"
+        :group="group || []" :payload="item" :class="[item.parentKey, `depth-${depth}`]" :defcollapsed="!open" nobox>
         <template #title>
           <CatalogueLeftPanelEntry :item="item" :imported="imported" />
           <!-- 
@@ -98,15 +71,9 @@
             -->
         </template>
         <template #content>
-          <CatalogueEntry
-            v-for="child of mixedChildren"
-            :key="key(child.item)"
-            :item="child.item"
-            :group="get_group('default')"
-            :forceShowRecursive="forceShow"
-            :imported="imported || child.imported"
-            :depth="depth + 1"
-          />
+          <CatalogueEntry v-for="child of mixedChildren" :key="key(child.item)" :item="child.item"
+            :group="get_group('default')" :forceShowRecursive="forceShow" :imported="imported || child.imported"
+            :depth="depth + 1" />
         </template>
       </EditorCollapsibleBox>
     </template>
@@ -124,10 +91,8 @@
             Goto
             <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
           </div>
-          <div
-            v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
-            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)"
-          >
+          <div v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
+            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)">
             Goto {{ item.typeName }}
             <span class="gray">
               &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
@@ -198,10 +163,10 @@
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Info Link
           </div>
-          <!-- <div @click="store.create('associations')" v-if="allowed('associations')">
+          <div @click="store.create('associations')" v-if="allowed('associations')">
             <img class="pr-4px" src="assets/bsicons/association.png" />
             Association
-          </div> -->
+          </div>
           <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
             <img class="pr-4px" src="assets/bsicons/condition.png" />
@@ -228,10 +193,6 @@
             <img class="pr-4px" src="assets/bsicons/modifierGroup.png" />
             Modifier Group
           </div>
-          <div @click="store.create('associations')" v-if="allowed('associations')">
-            <img class="pr-4px" src="assets/bsicons/association.png" />
-            Association
-          </div>
           <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />
         </template>
 
@@ -252,33 +213,27 @@
             <span class="absolute right-5px">❯</span>
           </div>
           <ContextMenu ref="nestedcontextmenu">
-            <div
-              v-for="target of store.get_move_targets(item)"
-              @click="store.move(item, catalogue, target.target, target.type)"
-            >
+            <div v-for="target of store.get_move_targets(item)"
+              @click="store.move(item, catalogue, target.target, target.type)">
               {{ target.target.name }} -
               {{ target.type }}
             </div>
           </ContextMenu>
         </template>
 
-        <div
-          @click="
-            store.create_child('entryLinks', catalogue, {
-              targetId: item.id,
-              type: 'selectionEntry',
-              name: item.getName(),
-            })
-          "
-          v-if="item.parentKey === 'sharedSelectionEntries'"
-        >
+        <div @click="
+          store.create_child('entryLinks', catalogue, {
+            targetId: item.id,
+            type: 'selectionEntry',
+            name: item.getName(),
+          })
+          " v-if="item.parentKey === 'sharedSelectionEntries'">
           Add Root Link<span class="gray" v-if="hasRootLink(catalogue, item)">&nbsp;(already has one)</span>
         </div>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
-          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
-            >Del</span
-          >
+          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span
+            class="gray absolute right-5px">Del</span>
         </div>
       </template>
     </ContextMenu>
