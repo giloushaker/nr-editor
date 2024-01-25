@@ -89,7 +89,7 @@ export default defineComponent({
         return { settings: useSettingsStore() }
     },
     data() {
-        return { dragging: null as null | number, dropIndex: null as null | number, configure: false }
+        return { dragging: null as null | any, dropIndex: null as null | number, configure: false }
     },
     computed: {
         sorted() {

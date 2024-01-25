@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { defineNuxtConfig } from "nuxt/config";
 import pkg from "./package.json";
+import { dirname } from "path";
 const electron = process.argv.includes("--electron");
 const ghpages = process.argv.includes("--ghpages");
 
@@ -65,8 +66,28 @@ export default defineNuxtConfig({
       {
         entry: "electron/main.ts",
         vite: {
+          resolve: {
+            alias: {
+              
+                "~": dirname(__filename),
+                "@": dirname(__filename),
+                "~~": dirname(__filename),
+                "@@": dirname(__filename),
+                "assets": `${dirname(__filename)}/assets`,
+                "public": `${dirname(__filename)}/public`
+              
+            }
+          },  
           build: {
-            sourcemap: true
+            sourcemap: true,
+            rollupOptions: {
+              output: {
+                // Setting format to 'iife' for a self-executing function, or 'umd' for universal module definition
+                format: 'umd', // or 'umd'
+                // Optionally, you can name your module, useful especially for 'umd' format
+                name: 'main.js'
+              }
+            }
           }
         }
       },

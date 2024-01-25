@@ -69,7 +69,7 @@ import {
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
-import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
+import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";

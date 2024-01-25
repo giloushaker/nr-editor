@@ -65,14 +65,7 @@ import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
 import { forEachParent } from "~/assets/shared/battlescribe/bs_helpers";
 
-export const LeftPanelDefaults = {
-  showImported: false,
-  ignoreProfilesRules: false,
-  filter: "",
-  scroll: 0,
-  selection: undefined as EntryPathEntry[] | undefined,
-  mode: "edit",
-};
+import { LeftPanelDefaults } from "./LeftPanelDefaults";
 
 export default defineComponent({
   emits: ["scrolltop"],
