@@ -22,7 +22,7 @@ import {
   zipCompress,
   forEachParent,
   addObj,
-  type MaybeArray
+  type MaybeArray,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
@@ -135,7 +135,7 @@ export function get_ctx(el: any): any {
  */
 export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorBase {
   if (vue_el instanceof Base) {
-    return vue_el as EditorBase
+    return vue_el as EditorBase;
   }
   const p1 = vue_el.$parent;
   if (p1.item) return p1.item;
@@ -699,26 +699,26 @@ export const useEditorStore = defineStore("editor", {
       if (this.is_selected(el)) return;
       this.do_select(e, el, group);
     },
-    clear_selections(){
+    clear_selections() {
       this.unselect();
     },
     get_selections(): EditorBase[] {
       const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
-      this.selectedEntries.forEach(o => result.push(o.obj))
+      this.selectedEntries.forEach((o) => result.push(o.obj));
       return result;
     },
     get_selections_with_payload(): Array<{ obj: EditorBase; payload: any }> {
       const result = this.selections.map((o) => ({ obj: get_base_from_vue_el(o.obj), payload: o.payload }));
-      this.selectedEntries.forEach(o => result.push({ obj: o.obj, payload: o.payload }))
+      this.selectedEntries.forEach((o) => result.push({ obj: o.obj, payload: o.payload }));
       return result;
     },
     get_selected(): EditorBase | undefined {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
     set_selections(entry_or_entries: MaybeArray<EditorBase>) {
-      this.clear_selections()
-      const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]
-      this.selectedEntries = arr.map(o => ({obj: o, onunselected: () => null }))
+      this.clear_selections();
+      const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries];
+      this.selectedEntries = arr.map((o) => ({ obj: o, onunselected: () => null }));
     },
     async do_action(type: string, undo: () => void | Promise<void>, redo: () => any | Promise<any>) {
       let result;
@@ -816,7 +816,7 @@ export const useEditorStore = defineStore("editor", {
       if (!first) {
         return;
       }
-      const actual = first.getCatalogue().findOptionById(obj.id) as EditorBase | undefined
+      const actual = first.getCatalogue().findOptionById(obj.id) as EditorBase | undefined;
       if (actual) {
         const link = {
           parentKey: actual.isGroup() || actual.isEntry() ? "entryLinks" : "infoLinks",
@@ -826,7 +826,7 @@ export const useEditorStore = defineStore("editor", {
           name: actual.getName(),
           hidden: actual.hidden,
           select: true,
-        } ;
+        };
         this.add(link);
       }
     },
@@ -873,7 +873,7 @@ export const useEditorStore = defineStore("editor", {
       let entries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
-          entries.push(entry as EditorBase)
+          entries.push(entry as EditorBase);
         }
       } else {
         const selections = this.get_selections();
@@ -951,7 +951,7 @@ export const useEditorStore = defineStore("editor", {
           const item = selection.obj;
           const selectedCatalogueKey = selection.payload;
           await this.open(item, true);
-          const toAdd = []
+          const toAdd = [];
           for (const entry of entries as Record<string, any>[]) {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
@@ -975,12 +975,15 @@ export const useEditorStore = defineStore("editor", {
 
             // Initialize classes from the json
             setPrototypeRecursive({ [key]: copy });
-            toAdd.push({key, entry: copy})
+            toAdd.push({ key, entry: copy });
           }
-          
-          scrambleIds(catalogue, toAdd.map(o => o.entry));
-          
-          for (const {key, entry} of toAdd){
+
+          scrambleIds(
+            catalogue,
+            toAdd.map((o) => o.entry)
+          );
+
+          for (const { key, entry } of toAdd) {
             if (!item[key as keyof Base]) (item as any)[key] = [];
             const arr = item[key as keyof Base];
             if (!Array.isArray(arr)) continue;
@@ -993,13 +996,12 @@ export const useEditorStore = defineStore("editor", {
               cur.showInEditor = true;
               cur = cur.parent;
             }
-            
+
             // Add it to its parent
             arr.push(entry);
             onAddEntry(entry, catalogue, item, this.get_system(sysId));
             addeds.push(entry);
           }
-          
         }
         return addeds[0];
       };
@@ -1025,6 +1027,15 @@ export const useEditorStore = defineStore("editor", {
      */
     get_initial_object(key: string, parent?: EditorBase): any {
       switch (key) {
+        case "associations":
+          return {
+            name: "New Association",
+            scope: "parent",
+            childId: "any",
+            field: "selections",
+            min: 0,
+            max: 0,
+          };
         case "costTypes":
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
@@ -1168,17 +1179,17 @@ export const useEditorStore = defineStore("editor", {
       };
       await this.add(obj, key, parent);
       this.open_selected();
-    }, 
+    },
     /**
      * Synchronous version of create_child for use by scripts
      * Adds a child (specified by `_key` to a specified parent)
      * Will not select the added child
      * Does not Support undo & redo
-     * 
+     *
      * @param key The parent's key to add the child in, will affect the fields generated by default.
      * @param parent The entry to add the child in
      * @param data The fields to add on to the generated object, overwrites default fields
-     * @returns 
+     * @returns
      */
     add_child(_key: string & keyof Base, parent: EditorBase, data?: Object) {
       const key = fixKey(parent, _key);
@@ -1215,11 +1226,11 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(catalogue);
       return obj;
     },
-    del_child(entry: Base){
+    del_child(entry: Base) {
       const catalogue = entry.catalogue;
       const manager = catalogue.manager;
       const path = getEntryPath(entry as EditorBase);
-      const removed = popAtEntryPath(catalogue, path);      
+      const removed = popAtEntryPath(catalogue, path);
       onRemoveEntry(removed, manager);
       this.set_catalogue_changed(catalogue);
     },
@@ -1380,17 +1391,19 @@ export const useEditorStore = defineStore("editor", {
       nodes.push(obj);
 
       // hack so that the correct label for sharedProfiles is opened
-      if (nodes[0].parentKey === 'sharedProfiles'){
+      if (nodes[0].parentKey === "sharedProfiles") {
         nodes.unshift({
-          parentKey: (`label-${nodes[0].typeName ?? "Untyped"}`)
-        } as any)
+          parentKey: `label-${nodes[0].typeName ?? "Untyped"}`,
+        } as any);
       }
       const lastNode = nodes[nodes.length - 1];
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
 
-        const child = node.parentKey.startsWith('label-') ? childs[0] : [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
+        const child = node.parentKey.startsWith("label-")
+          ? childs[0]
+          : [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
         if (!child) {
           if (noLog !== true) {
             console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
@@ -1400,7 +1413,6 @@ export const useEditorStore = defineStore("editor", {
         if (child) {
           current = child;
         }
-        
 
         if (node !== lastNode) {
           await open_el(current);
@@ -1541,7 +1553,7 @@ export const useEditorStore = defineStore("editor", {
             if (!(index in obj[key])) obj[key][index] = {};
             find_open_recursive(cur, obj[key][index], depth + 1);
           } else {
-            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o) || o.startsWith('label-'));
+            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o) || o.startsWith("label-"));
             for (const key of keys) {
               obj[key] = {};
               obj[key][0] = {};
@@ -1680,14 +1692,13 @@ export const useEditorStore = defineStore("editor", {
       for (const file of system.getAllLoadedCatalogues()) {
         file.forEachObjectWhitelist((val: Base, parent) => {
           try {
-
             if (result.length >= max) return;
             if ((val as Link).targetId) {
               if (val.target && val.target.isCategory() && !parent?.isForce()) {
                 return;
               }
             }
-            
+
             const name = val.getName?.call(val);
             const text = (val as any as Characteristic).$text;
             const desc = (val as any as Rule).description;
@@ -1701,9 +1712,8 @@ export const useEditorStore = defineStore("editor", {
             } else if (desc && String(desc).match(regx)) {
               result.push(val);
             }
-          }
-          catch(e){
-            console.error("Error while searching:", e)
+          } catch (e) {
+            console.error("Error while searching:", e);
           }
         });
         if (result.length >= max) {
