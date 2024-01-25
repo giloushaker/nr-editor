@@ -155,10 +155,14 @@ export default defineComponent({
       // }, 50);
     },
     should_capture_copy(e: Event) {
+      // check if a popup is open
+      if (document.getElementsByClassName('veil').length) return false;
       if (getSelection()?.toString()) return false;
       return true;
     },
     should_capture_paste(e: Event) {
+      // check if a popup is open
+      if (document.getElementsByClassName('veil').length) return false;
       const TAGNAME = ((e.target as HTMLDivElement)?.tagName || "").toLowerCase();
       if (["input"].includes(TAGNAME)) return false;
       if ((e.target as HTMLSpanElement)?.isContentEditable) return false;

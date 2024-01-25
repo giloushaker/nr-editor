@@ -1,7 +1,7 @@
 <template>
     <fieldset class="mt-10px" v-if="get_sort_items.length > 1">
         <legend>Childs Order</legend>
-        <SortOrder :items="get_sort_items" :get="get" :set="set" :del="del">
+        <SortOrder :items="get_sort_items" :get="get" :set="set" :del="del" :parent="item">
             <template #item="{ item }">
                 <Entry :item="item" noSortIndex />
                 <template v-if="item.links?.length > 1">>1 refs</template>
