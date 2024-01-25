@@ -1028,15 +1028,6 @@ export const useEditorStore = defineStore("editor", {
      */
     get_initial_object(key: string, parent?: EditorBase): any {
       switch (key) {
-        case "associations":
-          return {
-            name: "New Association",
-            scope: "parent",
-            childId: "any",
-            field: "selections",
-            min: 0,
-            max: 0,
-          };
         case "costTypes":
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
@@ -1160,6 +1151,7 @@ export const useEditorStore = defineStore("editor", {
       };
       const added = await this.add(obj, key);
       this.open_selected();
+      return added;
     },
     /**
      * Creates child entries in the provided parent after a user action
