@@ -6,11 +6,11 @@
           @contextmenu.stop="context($event, category)">
           <span class="primary bold"> Primary </span>
           <span class="name">{{ category.getName() }} </span><span class="cursor-pointer hover-darken px-5px rounded-8px"
-            @click="removeCategory(category)">&times;</span>
+            @click="removeCategory(item, category)">&times;</span>
         </div>
         <div v-for="category in ownCategories" class="label" @contextmenu.stop="context($event, category)">
           <span class="name">{{ category.getName() }} </span><span class="cursor-pointer hover-darken px-5px rounded-8px"
-            @click="removeCategory(category)">&times;</span>
+            @click="removeCategory(item, category)">&times;</span>
         </div>
       </template>
       <template v-else>
@@ -49,11 +49,13 @@
         @contextmenu.stop="linked_context($event, category)">
         <span class="primary bold"> Primary </span>
         <span class="name">{{ category.getName() }} </span>&nbsp;<span
-          class="cursor-pointer hover-darken px-3px rounded-2px" @click="removeCategory(category)">&times;</span>
+          class="cursor-pointer hover-darken px-3px rounded-2px"
+          @click="removeCategory((item as EditorBase & Link).target, category)">&times;</span>
       </span>
       <span v-for="category in targetCategories" class="label" @contextmenu.stop="linked_context($event, category)">
         <span class="name">{{ category.getName() }} </span>&nbsp;<span
-          class="cursor-pointer hover-darken px-3px rounded-2px" @click="removeCategory(category)">&times;</span>
+          class="cursor-pointer hover-darken px-3px rounded-2px"
+          @click="removeCategory((item as EditorBase & Link), category)">&times;</span>
       </span>
     </div>
     <ContextMenu v-if="contextmenuopen && selectedCategory && selectedCategoryParent" v-model="contextmenuopen"
@@ -75,7 +77,6 @@
 import Tag from "./Tag.vue";
 import AutocompleteTags from "~/components/util/AutocompleteTags.vue";
 import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
-import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
@@ -171,7 +172,7 @@ export default defineComponent({
     removeLink(parent: EditorBase, link: Link) {
       this.store.del_child(link)
     },
-    async addLink(parent: EditorBase, cat: Category, primary = false) {
+    addLink(parent: EditorBase, cat: Category, primary = false) {
       if (!cat.isCategory()) {
         throw Error("Invalid argument, target must be a category");
       }
@@ -209,18 +210,11 @@ export default defineComponent({
       const cl = this.addCategory(category);
       this.makePrimary(cl, this.item);
     },
-    removeCategory(category: Category) {
-      const links = this.item.categoryLinks || [];
+    removeCategory(parent: Base, category: Category) {
+      const links = parent.categoryLinks || [];
       const found = links.find((o) => o.targetId === category.getId());
       if (found) {
         return this.removeLink(this.item, found);
-      }
-      if (this.item.target) {
-        const links2 = this.item.target?.categoryLinks || [];
-        const found2 = links2.find((o) => o.targetId === category.getId());
-        if (found2) {
-          return this.removeLink(this.item.target as EditorBase, found2);
-        }
       }
     },
     async createCategory(name: string, primary = false) {
