@@ -5,8 +5,7 @@
 
     <div v-if="promptId">
       <br />
-      <input type="checkbox" :id="promptId"
-        @change="dontChanged(promptId, ($event.target as HTMLInputElement).checked)" /><label :for="promptId">Dont show
+      <input type="checkbox" v-model="promptDontShowAgain" /><label>Dont show
         this again</label>
     </div>
   </PopupDialog>
@@ -20,10 +19,8 @@ const promptHtml = ref("");
 const promptAccept = ref("Yes");
 const promptCancel = ref("Cancel");
 const promptId = ref<string | null>(null);
+const promptDontShowAgain = ref(false);
 let promptResolve = null as ((response: number) => void) | null;
-function dontChanged(id: string, val: boolean) {
-  store.set(id, val);
-}
 globalThis.customPrompt = (data: any) => {
   let shouldOpen = true;
   if (promptResolve !== null) {
@@ -41,6 +38,7 @@ globalThis.customPrompt = (data: any) => {
       promptHtml.value = data.html;
       promptCancel.value = data.cancel ?? "Cancel";
       promptAccept.value = data.accept ?? "Yes";
+      promptDontShowAgain.value = false;
       promptId.value = data.id ?? null;
     }
     promptResolve = resolve;
@@ -52,6 +50,9 @@ function doResolve(result: any) {
   if (promptResolve) {
     promptResolve(result);
     promptResolve = null;
+  }
+  if (promptDontShowAgain.value && promptId.value) {
+    store.set(promptId.value, promptDontShowAgain.value)
   }
   isOpen.value = false;
 }

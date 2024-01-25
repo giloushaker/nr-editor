@@ -53,7 +53,7 @@ export default {
   computed: {
     noRevisionPopup: {
       get() {
-        this.prompt.get("revision");
+        return this.prompt.get("revision");
       },
       set(val) {
         this.prompt.set("revision", val);

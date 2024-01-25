@@ -527,49 +527,39 @@ export const useEditorStore = defineStore("editor", {
       for (const cat of catalogue instanceof Catalogue ? [catalogue] : sys.getAllLoadedCatalogues()) {
         const state = this.get_catalogue_state(cat);
         if (state?.unsaved && !state.incremented) {
-          if (sys.github && settings.githubAutoIncrement && !navigator.onLine) {
-            if (
-              await (globalThis.customPrompt &&
+          if (sys.github) {
+            if (settings.githubAutoIncrement && !navigator.onLine) {
+              const promptResult = await (globalThis.customPrompt &&
                 globalThis.customPrompt({
                   html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
-    <span class="gray">Note: This is shown because Github cannot be accessed as your are offline</span>`,
+  <span class="gray">Note: This is shown because Github cannot be accessed as your are offline</span>`,
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
                 }))
-            ) {
-              return "yes";
-            }
-            return "no";
-          } else if (sys.github && settings.githubAutoIncrement) {
-            return "github";
-          } else if (sys.github) {
-            if (
-              await (globalThis.customPrompt &&
+              return promptResult ? "yes" : "no";
+            } else if (settings.githubAutoIncrement) {
+              return "github";
+            } else {
+              const promptResult = await (globalThis.customPrompt &&
                 globalThis.customPrompt({
                   html: `<span>Would you like to increase the revision of this catalogue?<span><br/>`,
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
                 }))
-            ) {
-              return "yes";
+              return promptResult ? "yes" : "no";
             }
-            return "no";
           } else {
-            if (
-              await (globalThis.customPrompt &&
-                globalThis.customPrompt({
-                  html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
-    <span class="gray">Note: You can enable automatic revision increments by integrating with GitHub.<br/>This can be achieved by adding a publication in the GameSystem named "GitHub" with the repository's GitHub URL as the Publication URL.`,
-                  cancel: "No",
-                  accept: "Yes",
-                  id: "revision",
-                }))
-            ) {
-              return "yes";
-            }
-            return "no";
+            const promptResult = await (globalThis.customPrompt &&
+              globalThis.customPrompt({
+                html: `<span>Would you like to increase the revision of this catalogue?<span><br/>
+  <span class="gray">Note: You can enable automatic revision increments by integrating with GitHub.<br/>This can be achieved by adding a publication in the GameSystem named "GitHub" with the repository's GitHub URL as the Publication URL.`,
+                cancel: "No",
+                accept: "Yes",
+                id: "revision",
+              }))
+            return promptResult ? "yes" : "no";
           }
         }
       }

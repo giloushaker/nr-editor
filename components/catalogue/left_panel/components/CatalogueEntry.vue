@@ -545,7 +545,9 @@ export default {
         this.sorted(items),
         (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
       );
-      sortByAscendingInplace(result, (o) => o.item.sortIndex ?? 10000);
+      if (this.settings.display.sortIndex) {
+        sortByAscendingInplace(result, (o) => o.item.sortIndex ?? 10000);
+      }
       return result;
     },
     groupBy,
