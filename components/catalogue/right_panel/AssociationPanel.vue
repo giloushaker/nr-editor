@@ -20,7 +20,7 @@
     />
     <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
     <fieldset class="section">
-      <legend>Temporary</legend>
+      <legend>Constraints</legend>
       <table class="editorTable">
         <tr>
           <td>Min: </td><td><input @input="changed" v-model="item.min" type="number" /></td>
