@@ -36,6 +36,7 @@ import {
   Rule,
   getDataObject,
   getDataDbId,
+  BaseChildsT,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
@@ -921,7 +922,7 @@ export const useEditorStore = defineStore("editor", {
      */
     async add(
       data: MaybeArray<EditorBase | Record<string, any>>,
-      childKey?: keyof Base,
+      childKey?: string & BaseChildsT,
       parents?: EditorBase | EditorBase[]
     ) {
       let parentsWithPayload = [] as Array<{ obj: EditorBase; payload?: string }>;
@@ -1095,13 +1096,10 @@ export const useEditorStore = defineStore("editor", {
           return {
             min: 1,
             max: 1,
-            scope: "roster",
-            includeChildSelections: false,
-            of: "any",
+            scope: "parent",
+            childId: "any",
             ids: [],
-            label: "Association",
-            labelMembers: "Unit",
-            hidden: false,
+            name: "New Association",
             id: generateBattlescribeId(),
           };
         case "sharedProfiles":
@@ -1143,7 +1141,7 @@ export const useEditorStore = defineStore("editor", {
      * @param key the key of the child (eg: `selectionEntries`)
      * @param data data to use when creating the child entry
      */
-    async create(key: string & keyof Base, data?: any) {
+    async create(key: string & BaseChildsT, data?: any) {
       const obj = {
         ...this.get_initial_object(key),
         select: true,
@@ -1160,7 +1158,7 @@ export const useEditorStore = defineStore("editor", {
      * @param parent the parent to add the child in
      * @param data data to use when creating the child entry
      */
-    async create_child(key: string & keyof Base, parent: EditorBase, data?: any) {
+    async create_child(key: string & BaseChildsT, parent: EditorBase, data?: any) {
       const obj = {
         ...this.get_initial_object(key, parent),
         select: true,
