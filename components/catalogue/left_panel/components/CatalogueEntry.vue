@@ -435,7 +435,9 @@ export default {
         grouped[label].items.push(entry);
       }
       const result = Object.values(grouped);
-      result.push({ label: "Untyped", items: leftover });
+      if (leftover.length) {
+        result.push({ label: "Untyped", items: leftover });
+      }
       return result;
     },
     should_be_open(category?: string): boolean {

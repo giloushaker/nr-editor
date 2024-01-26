@@ -78,6 +78,7 @@ import { toRaw } from "vue";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
+import * as $node from "~/electron/node_helpers";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
@@ -603,6 +604,7 @@ export const useEditorStore = defineStore("editor", {
     init(component: any) {
       this.catalogueComponent = component as CatalogueComponentT;
       (globalThis as any).$store = this;
+      (globalThis as any).$node = $node;
       (globalThis as any).$search = (q: string) =>
         this.system_search(this.catalogueComponent?.systemFiles!, { filter: q });
     },
@@ -950,7 +952,9 @@ export const useEditorStore = defineStore("editor", {
               console.warn("Couldn't create", childKey || entry.parentKey, "in", selectedCatalogueKey);
               continue;
             }
-            if (!item[key as keyof Base]) (item as any)[key] = [];
+            if (!item[key as keyof Base]) {
+              (item as any)[key] = [];
+            }
             const arr = item[key as keyof Base];
             if (!Array.isArray(arr)) continue;
 
@@ -1176,7 +1180,7 @@ export const useEditorStore = defineStore("editor", {
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
       }
-      const catalogue = parent.catalogue;
+      const catalogue = parent.getCatalogue();
       const sysId = catalogue.getSystemId();
 
       const obj = {
@@ -1217,6 +1221,13 @@ export const useEditorStore = defineStore("editor", {
     can_move(obj: EditorBase) {
       if (obj.isLink()) return false;
       return true;
+    },
+    edit_child(entry: EditorBase, data?: Object) {
+      const obj = JSON.parse(entry.toJson())
+      Object.assign(obj, data);
+      setPrototypeRecursive({[entry.parentKey]: obj})
+      Object.assign(entry, obj);
+      this.set_catalogue_changed(entry.catalogue);
     },
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;

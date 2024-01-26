@@ -98,7 +98,7 @@ export async function deleteFile(filePath: string) {
 }
 export async function readFile(filePath: string) {
   if (!electron) return;
-  return (await electron.invoke("readFileSync", filePath)) as {
+  return (await electron.invoke("getFile", filePath)) as {
     name: string;
     path: string;
     data: string;
