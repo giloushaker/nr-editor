@@ -5,11 +5,19 @@
     </legend>
     <div class="booleans">
       <div v-for="field of fields.filter((f) => f.status != -1)">
-        <input :class="{ 'cursor-pointer': field.status !== 0 }" :id="(field.field as string)" type="checkbox"
-          v-model="item[field.field]" @change="changed" :disabled="field.status == 0" />
+        <input
+          :class="{ 'cursor-pointer': field.status !== 0 }"
+          :id="(field.field as string)"
+          type="checkbox"
+          v-model="item[field.field]"
+          @change="changed"
+          :disabled="field.status == 0"
+        />
         <label
           :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0, hastooltip: Boolean(field.title) }"
-          :for="(field.field as string)" :title="field.title">
+          :for="(field.field as string)"
+          :title="field.title"
+        >
           {{ field.name }}
         </label>
       </div>
@@ -66,8 +74,14 @@ export default {
           name: "Flatten",
           status: this.flatten,
           field: "flatten",
+          title: "If this is checked, the group box for this entry/group will not be visible in the New Recruit UI.",
+        },
+        {
+          name: "Collapsible",
+          status: this.collapsible,
+          field: "collapsible",
           title:
-            "If this is checked, the group box for this entry/group will not be visible in the New Recruit UI.",
+            "If this is checked, the group box for this entry/group will show as a collapsible box even if it has less than 5 items.",
         },
       ] as BooleanField[];
     },
@@ -77,6 +91,22 @@ export default {
     },
 
     flatten() {
+      if (this.item.editorTypeName === "selectionEntry") {
+        return 1;
+      }
+      if (this.item.editorTypeName === "selectionEntryLink") {
+        return 1;
+      }
+      if (this.item.editorTypeName === "selectionEntryGroup") {
+        return 1;
+      }
+      if (this.item.editorTypeName === "selectionEntryGroupLink") {
+        return 1;
+      }
+      return -1;
+    },
+
+    collapsible() {
       if (this.item.editorTypeName === "selectionEntry") {
         return 1;
       }
@@ -160,7 +190,7 @@ export default {
 .booleans {
   display: flex;
 
-  >div {
+  > div {
     margin-right: 10px;
 
     &:last-child {
