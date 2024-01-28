@@ -3,6 +3,8 @@ import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, B
 import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, SpecialRule, Unit, Weapon } from "./import_types"
 import { hashFnv32a, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix } from "./import_helpers"
 import { toEquipment, toInfoLink, toModelProfile, toSpecialRule, toUnitProfile, toWeaponProfile } from "./import_create_entries";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
+import { parseOptionsLine } from "./import_options";
 
 
 function findProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
@@ -448,13 +450,6 @@ function updateWeapons(cat: Catalogue & EditorBase, pages: Page[]) {
     }
 }
 
-/**
- * Splits a string using center dots and colons to construct an object.
- * If no center dots are found, returns an object with "all" as the key.
- * @param {string} str - The input string to split.
- * @returns {Object} - An object constructed from the split string.
- */
-
 function parseUnitField(field: string) {
     const clean = field.replace(/([\n]|\s)+/g, " ");
     return splitByCenterDot(clean);
@@ -476,47 +471,6 @@ function parseEquipment(field: string): Equipment[] {
         }
     }
     return parsed;
-}
-
-const all = new Set<string>()
-interface ParsedOption {
-    text: string
-    cost: string
-    nested?: Array<Omit<ParsedOption, "nested">>;
-}
-function parseOptions(options: string) {
-    const lines = options.split('\n').map(o => o.trim()).filter(o => o);
-    let context = null as null | ParsedOption;
-    const found = []
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const nextLine = lines[i + 1];
-        const [_, text, cost] = line.match(/([^.]*)(?:[.]{2,})?([^.]*)?/) as [unknown, string, string];
-        if (line.startsWith("•")) {
-            if (!nextLine || nextLine.startsWith("•")) {
-                found.push({ text: removePrefix(text, "• "), cost })
-            } else {
-                all.add(line)
-                const cur = { text: removePrefix(text, "• "), cost, nested: [] } as ParsedOption;
-                found.push(cur)
-                context = cur;
-            }
-        } else if (line.startsWith("- ")) {
-            context!.nested!.push({ text: removePrefix(text, "- "), cost })
-        }
-    }
-    return found;
-}
-function parseOptionsLine(line: string) {
-    const actionTokens = ["may take", "must take", "may have", "must have", "may replace", "may purchase", "may be", "may upgrade"]
-    const amountTokens = ["one of the following", "any of the following", "up to a total of", "up to", "for every two", "for every three"]
-    const scopeTokens = ["any unit", "any model", "entire unit"]
-    const costTokens = ["purchase"]
-    const whatTokens = ["on a", "a", "an", "its"]
-    if (line.startsWith("• A ")) {
-        const idx = line.search(/may|must/)
-
-    }
 }
 
 
@@ -579,17 +533,25 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
 
 
     if (existing?.id) entry.id = existing.id;
-    $store.add_child("sharedSelectionEntries", cat, entry)
+    const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
     if (unit.Subheadings["Options:"]) {
-        parseOptions(unit.Subheadings["Options:"])
+        const parsedOptionLines = []
+        for (const line of unit.Subheadings["Options:"].split('\n')) {
+            parsedOptionLines.push(parseOptionsLine(line))
+        }
     }
-    // const existingLink = findRootUnit(cat, name)
-    // if (existingLink) {
-    //     $store.del_child(existingLink);
-    // }
-    // $store.add_child({
-
-    // })
+    const existingLink = findRootUnit(cat, name)
+    if (existingLink) {
+        $store.del_child(existingLink);
+    }
+    const addedLink = $store.add_child("entryLinks", cat, {
+        import: true,
+        name: name,
+        hidden: false,
+        id: hashFnv32a(`${name}/root`),
+        type: "selectionEntry",
+        targetId: addedUnit.id
+      });
     // console.log(unit, parsedText)
 
 }
@@ -635,19 +597,11 @@ $catalogue.manager.loadAll().then(async () => {
             console.warn(`Couldn't find catalogue for ${catalogueName}(${catalogue})`)
             continue;
         }
-        console.log("BEGINNING", catalogueName)
+        console.log(" --- BEGINNING", catalogueName)
         updateSharedProfiles(existing, pages)
         updateSpecialRules(existing, pages)
         updateWeapons(existing, pages)
         createUnits(existing, pages)
-        console.log("DONE", catalogueName);
-        const result = []
-        for (const line of all) {
-            const [_, text, costs] = line.match(/([^.]*)(?:[.]{2,})?([^.]*)?/) as [unknown, string, string];
-            result.push(text)
-        }
-        // console.log(result.join('\n')) 
-
-
+        console.log(" --- DONE", catalogueName); 
     }
 });

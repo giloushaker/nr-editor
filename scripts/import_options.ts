@@ -1,4 +1,3 @@
-
 function removeSuffix(from: string, suffix: string): string {
     if (from.endsWith(suffix)) {
         return from.substring(0, from.length - suffix.length);
@@ -11,11 +10,13 @@ function removePrefix(from: string, prefix: string): string {
     }
     return from;
 }
-
+interface ParsedToken {
+    "text": string; 
+    "type": "token" | "text";
+}
 class Parser {
     text: string;
-    parsed = [] as string[];
-    parsed_tokens = [] as string[]
+    parsed = [] as Array<ParsedToken>;
     constructor(text: string) {
         this.text = text;
     }
@@ -30,19 +31,16 @@ class Parser {
         this.text = this.text.substring(idx + token.length).trim()
         const cleanedText = this.clean_text(found)
         if (cleanedText) {
-            this.parsed.push(cleanedText)
-            this.parsed_tokens.push("text")
+            this.parsed.push({text: cleanedText, type: "text"})
         }
-        this.parsed.push(token)
-        this.parsed_tokens.push(token)
+        this.parsed.push({text: token, type: "token"})
         return token
     }
     next_token<T extends string>(tokens: readonly T[], space = false): T | null {
         if (!this.text) return null
         for (const token of tokens) {
             if (this.text.toLowerCase().startsWith(space ? token + " " : token)) {
-                this.parsed.push(token)
-                this.parsed_tokens.push(token)
+                this.parsed.push({text: token, type: "token"})
                 this.text = this.text.substring(token.length).trim()
                 return token
             }
@@ -62,24 +60,27 @@ class Parser {
         if (!this.text) return null
         const text = this.clean_text(this.text)
         if (!text) return null;
-        this.parsed.push(text)
-        this.parsed_tokens.push("text")
+        this.parsed.push({text, type: "text"})
         this.text = "";
         return text
     }
 }
 
-function parseOptionsLine(line: string) {
+interface ParsedOptionsLine {
+    tokens: ParsedToken[],
+    cost: string,
+}
+function parseOptionsLine(line: string): ParsedOptionsLine {
     if (line.includes("unless")) {
         throw "cant parse 'unless' options"
     }
+    const [_, text, cost] = line.match(/([^.]*)(?:[.]{2,})?([^.]*)?/) as [unknown, string, string];
     const actionTokens = ["may be mounted on", "may take:", "may take", "must take", "must be mounted on", "may have", "must have", "may be upgraded to", "may replace", "may purchase", "may be:", "may be", "may upgrade", "may:"] as const
     const amountTokens = ["one of the following:", "any of the following:", "up to a total of", "up to", "for every two", "for every three", "worth up to"] as const
     const whatTokens = ["any unit of", "any unit", "any model in the unit", "the entire unit", "one model", "0-1 unit", "on a", "its", "an", "a", "the", "any"] as const
     const dashTokens = ["be a", "purchase", "be mounted on a", "upgrade one model to", "have", "a", "include one", "upgrade one", "may purchase", "replace", "be", "add", "magic items", "take"] as const
     const begin = ["•", "-"] as const
-    const parser = new Parser(line)
-
+    const parser = new Parser(text)
     switch (parser.next_token(begin)) {
         case "•":
             {
@@ -186,6 +187,29 @@ function parseOptionsLine(line: string) {
             break;
     }
     // console.log(parser.parsed)
-    return parser
+    return {tokens: parser.parsed, cost};
+}
 
+interface ParsedOption extends ParsedOptionsLine {
+    childs: ParsedOptionsLine[];
+}
+
+function parseOptions(options: string) {
+    const lines = options.split('\n')
+    const parsedLines = lines.map(o => parseOptionsLine(o) as ParsedOption)
+  
+
+    let lastBullet = null as ParsedOption | null;
+    const bullets = []
+    for (const line of parsedLines) {
+        if (line.tokens[0].text === "•") {
+            line.childs = []
+            lastBullet = line;
+            bullets.push(line)
+        } else {
+            lastBullet!.childs.push(line)
+        }
+        line.tokens.shift()
+    }
+    return bullets
 }
