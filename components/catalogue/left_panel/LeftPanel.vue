@@ -156,6 +156,7 @@ export default defineComponent({
     },
     should_capture_copy(e: Event) {
       // check if a popup is open
+      if ((document?.activeElement as HTMLSpanElement)?.isContentEditable) return false;
       if (document.getElementsByClassName('veil').length) return false;
       if (getSelection()?.toString()) return false;
       return true;
@@ -165,7 +166,10 @@ export default defineComponent({
       if (document.getElementsByClassName('veil').length) return false;
       const TAGNAME = ((e.target as HTMLDivElement)?.tagName || "").toLowerCase();
       if (["input"].includes(TAGNAME)) return false;
+      const ACTIVETAGNAME = ((document?.activeElement as HTMLDivElement)?.tagName || "").toLowerCase();
+      if (["input"].includes(ACTIVETAGNAME)) return false;
       if ((e.target as HTMLSpanElement)?.isContentEditable) return false;
+      if ((document?.activeElement as HTMLSpanElement)?.isContentEditable) return false;
       if (this.$route.name !== "catalogue") return false;
       return true;
     },
