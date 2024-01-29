@@ -17,10 +17,10 @@
       <tr>
         <td>Child:</td>
         <td>
-          <UtilAutocomplete v-model="child" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
+          <UtilAutocomplete v-model="childId" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
             filterField="name" @change="changed" :default="child" lazy>
             <template #option="opt">
-              <div v-if="opt.option" style="white-space: nowrap" @click.middle="debug(opt)">
+              <div v-if="opt.option" style="white-space: nowrap">
                 <template v-if="opt.option.indent >= 1 && !opt.selected">
                   <span v-for="n of opt.option.indent">&nbsp;&nbsp;&nbsp;</span>
                 </template>
@@ -136,9 +136,6 @@ export default {
     getNameExtra,
     changed() {
       this.$emit("catalogueChanged");
-    },
-    debug(o) {
-      console.log(o)
     },
 
     showCatalogue(opt: EditorSearchItem): boolean {
