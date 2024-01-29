@@ -6,13 +6,8 @@
         <td>Profile Type: </td>
 
         <td>
-          <UtilAutocomplete
-            :options="profileTypes"
-            :filterField="(o) => o.getName()"
-            valueField="id"
-            v-model="item.typeId"
-            @change="changedType"
-          >
+          <UtilAutocomplete :options="profileTypes" :filterField="(o) => o.getName()" valueField="id"
+            v-model="item.typeId" @change="changedType">
             <template #option="{ option }">
               <div class="flex align-items flex-row" style="white-space: nowrap">
                 <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -27,7 +22,9 @@
     <table class="editorTable">
       <tr v-for="char of charactacteristics">
         <td>{{ char.name }}: </td>
-        <td><UtilEditableDiv v-model="char.$text" @change="changed" /></td>
+        <td>
+          <UtilEditableDiv v-model="char.$text" @change="changed" />
+        </td>
       </tr>
     </table>
   </fieldset>

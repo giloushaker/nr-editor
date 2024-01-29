@@ -29,6 +29,7 @@
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared) </span>
+                <span v-if="getToplevelEntry(opt.option) === getToplevelEntry(item)"> (shares a parent)</span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
@@ -149,6 +150,12 @@ export default {
     availableTargets() {
       return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
     },
+    getToplevelEntry(entry: EditorBase | Catalogue) {
+      while (!entry.isCatalogue() && entry.parent) {
+        entry = entry.parent
+      }
+      return entry;
+    }
   },
 
   watch: {
