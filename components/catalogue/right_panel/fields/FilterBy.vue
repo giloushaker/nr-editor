@@ -151,7 +151,7 @@ export default {
       return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
     },
     getToplevelEntry(entry?: EditorBase) {
-      while (!entry?.isCatalogue() && entry?.parent) {
+      while (entry?.parent && !entry.isCatalogue && entry.isCatalogue()) {
         entry = entry.parent
       }
       return entry;
