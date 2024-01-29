@@ -1,5 +1,6 @@
 <template>
   <div class="h-full">
+
     <Head>
       <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
     </Head>
@@ -25,17 +26,11 @@
     <Teleport to="#titlebar-content" v-if="cat && route_is_catalogue">
       <span class="ml-10px">
         Editing
-        <img
-          class="inline"
-          style="vertical-align: -2px"
-          v-if="self_or_imports_changed"
-          title="This file or one of it's dependencies was changed by another program. 
-You may want to reload the system through the Systems tab"
-          src="/assets/icons/warning_sign.png"
-        />
+        <img class="inline" style="vertical-align: -2px" v-if="self_or_imports_changed" title="This file or one of it's dependencies was changed by another program. 
+You may want to reload the system through the Systems tab" src="/assets/icons/warning_sign.png" />
         {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
-      <template v-if="store.unsavedCount">
+      <template v-if="has_unsaved_changes">
         <button class="bouton save ml-10px" @click="save_all"> Save All </button>
       </template>
       <template v-else-if="failed">
@@ -45,8 +40,7 @@ You may want to reload the system through the Systems tab"
         <span class="status mx-2">saved</span>
       </template>
       <template v-if="systemFiles && !systemFiles.allLoaded">
-        <button class="bouton load ml-10px" @click="load_all"
-          >Load all
+        <button class="bouton load ml-10px" @click="load_all">Load all
           <span v-if="loading_all">({{ loading_progress }} / {{ loading_progress_max }})</span>
         </button>
       </template>
@@ -122,6 +116,15 @@ export default defineComponent({
   },
 
   computed: {
+    has_unsaved_changes() {
+      const changes = this.store.unsavedChanges
+      for (const key in changes) {
+        const val = changes[key]
+        if (this.cat && !key.includes(this.cat?.getSystemId())) continue;
+        if (val.unsaved) return true;
+      }
+      return false;
+    },
     self_or_imports_changed() {
       return this.file_changed(this.cat as Catalogue) || this.cat?.imports?.find((o) => this.file_changed(o));
     },
@@ -299,6 +302,7 @@ export default defineComponent({
 .save {
   width: 100px;
 }
+
 .load {
   width: 150px;
 }
