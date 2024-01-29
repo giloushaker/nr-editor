@@ -92,7 +92,7 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
         return { tokens: [], source: text, details: details }
     }
     const actionTokens = ["may be mounted on a:", "may be mounted on", "may take:", "may take", "must take", "must be mounted on", "may have", "must have", "may be upgraded to", "may replace", "may purchase", "may be:", "may be", "may upgrade", "may:"] as const
-    const amountTokens = ["one of the following:", "0-2 of the following", "one of the following", "any of the following:", "up to a total of", "up to", "for every two", "for every three", "worth up to"] as const
+    const amountTokens = ["one of the following:", "0-2 of the following", "one of the following", "any of the following:", "up to a total of", "up to", "for every two", "for every three", "worth up to", "a single"] as const
     const whatTokens = ["any unit of", "any unit", "any model in the unit", "the entire unit", "one model", "0-1 unit", "on a", "its", "an", "a:", "a", "the", "any"] as const
     const dashTokens = ["be a", "purchase", "be mounted on a", "upgrade one model to", "have", "a", "include one", "upgrade one", "may purchase", "replace", "be", "add", "magic items", "take"] as const
     const begin = ["•", "-"] as const

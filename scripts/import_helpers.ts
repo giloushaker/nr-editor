@@ -9,7 +9,10 @@ export function hashFnv32a(str: string, seed = 198209835) {
     hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
   }
 
-  return `${hval >>> 0}`;
+  return (hval >>> 0).toString(16)
+}
+export function id(str: string) {
+  return `${hashFnv32a(str)}-${hashFnv32a(str + "------")}`
 }
 export function removeTextInParentheses(str: string) {
   return str.replace(/\([^()]*\)/g, '');

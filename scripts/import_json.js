@@ -10,7 +10,10 @@
             hval ^= str.charCodeAt(i);
             hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
         }
-        return `${hval >>> 0}`;
+        return (hval >>> 0).toString(16);
+    }
+    function id(str) {
+        return `${hashFnv32a(str)}-${hashFnv32a(str + "------")}`;
     }
     function extractTextAndDetails(str) {
         const result = [];
@@ -188,7 +191,7 @@
             typeId: "2878-9a1f-dd74-48e3",
             typeName: "Unit",
             hidden: false,
-            id: hashFnv32a(`${unitName}/unit/profile`)
+            id: id(`${unitName}/unit/profile`)
         };
         return result;
     }
@@ -196,7 +199,7 @@
         return {
             name: name,
             hidden: false,
-            id: hashFnv32a(`${name}/weapon/${weapon}/profile`),
+            id: id(`${name}/weapon/${weapon}/profile`),
             typeId: "a378-c633-912d-11ce",
             typeName: "Weapon",
             characteristics: [
@@ -212,7 +215,7 @@
         const specialRuleLink = {
             name: entry.getName(),
             hidden: false,
-            id: hashFnv32a(`${unitName}/${entry.typeName || "profile"}/${entry.getName()}`),
+            id: id(`${unitName}/${entry.typeName || "profile"}/${entry.getName()}`),
             type: "profile",
             targetId: entry.id,
             modifiers: []
@@ -222,27 +225,28 @@
     function toEquipment(itemName, hash, targetId) {
         return {
             name: itemName,
-            id: hashFnv32a(`${hash}/equipment/${itemName}`),
+            id: id(`${hash}/equipment/${itemName}`),
             hidden: false,
             type: "selectionEntry",
             targetId: targetId ?? itemName,
+            modifiers: [],
             constraints: [
                 {
                     type: "min", value: 1, scope: "parent", shared: false, field: "selections",
-                    id: hashFnv32a(`${hash}/equipment/${itemName}/min`)
+                    id: id(`${hash}/equipment/${itemName}/min`)
                 },
                 {
                     type: "max", value: 1, scope: "parent", shared: false, field: "selections",
-                    id: hashFnv32a(`${hash}/equipment/${itemName}/max`)
+                    id: id(`${hash}/equipment/${itemName}/max`)
                 },
-            ]
+            ],
         };
     }
     function toGroup(name, hash) {
         return {
             name: name,
             hidden: false,
-            id: hashFnv32a(`${hash}/${name}`),
+            id: id(`${hash}/${name}`),
             selectionEntries: [],
             entryLinks: [],
             constraints: [],
@@ -279,7 +283,7 @@
             throw new Error("Cannot create entry with no name.");
         const result = {
             name: name,
-            id: hashFnv32a(`${hash}/${name}`),
+            id: id(`${hash}/${name}`),
             costs: [],
             infoLinks: [],
             profiles: [],
@@ -301,7 +305,7 @@
             name: name,
             hidden: false,
             type: "profile",
-            id: hashFnv32a(`${hash}/${name}`),
+            id: id(`${hash}/${name}`),
             targetId: targetId
         };
     }
@@ -312,7 +316,7 @@
             import: true,
             name: name,
             hidden: false,
-            id: hashFnv32a(`${hash}/${name}`),
+            id: id(`${hash}/${name}`),
             type: "selectionEntry",
             targetId: targetId ?? name,
             costs: [],
@@ -328,7 +332,7 @@
             import: true,
             name: name,
             hidden: false,
-            id: hashFnv32a(`${hash}/${name}`),
+            id: id(`${hash}/${name}`),
             type: "selectionEntryGroup",
             targetId: targetId ?? name,
             costs: [],
@@ -344,7 +348,7 @@
             field: "selections",
             scope: "parent",
             shared: false,
-            id: hashFnv32a(`${hash}/min`)
+            id: id(`${hash}/min`)
         };
     }
     function toMaxConstraint(max, hash, scope = "parent") {
@@ -354,14 +358,14 @@
             field: "selections",
             scope: scope,
             shared: false,
-            id: hashFnv32a(`${hash}/max`)
+            id: id(`${hash}/max`)
         };
     }
     function toSpecialRuleLink(ruleName, hash, targetId, param) {
         const specialRuleLink = {
             name: ruleName,
             hidden: false,
-            id: hashFnv32a(`${hash}/rule/${ruleName}`),
+            id: id(`${hash}/rule/${ruleName}`),
             type: "profile",
             targetId: targetId ?? ruleName,
             modifiers: []
@@ -370,6 +374,25 @@
             specialRuleLink.modifiers.push({ type: "append", value: `(${param})`, field: "name" });
         }
         return specialRuleLink;
+    }
+    function getPerModelCostModifier(details, hash) {
+        const perModelCostModifier = {
+            comment: "per model",
+            type: "increment", value: parseDetails(details), field: "points",
+            repeats: [
+                {
+                    value: 1,
+                    repeats: 1,
+                    field: "selections",
+                    scope: "parent",
+                    childId: "model",
+                    shared: true,
+                    roundUp: false,
+                    id: id(`${hash}/per model cost`)
+                }
+            ]
+        };
+        return perModelCostModifier;
     }
 
     function removePrefix$1(from, prefix) {
@@ -454,7 +477,7 @@
             return { tokens: [], source: text, details: details };
         }
         const actionTokens = ["may be mounted on a:", "may be mounted on", "may take:", "may take", "must take", "must be mounted on", "may have", "must have", "may be upgraded to", "may replace", "may purchase", "may be:", "may be", "may upgrade", "may:"];
-        const amountTokens = ["one of the following:", "0-2 of the following", "one of the following", "any of the following:", "up to a total of", "up to", "for every two", "for every three", "worth up to"];
+        const amountTokens = ["one of the following:", "0-2 of the following", "one of the following", "any of the following:", "up to a total of", "up to", "for every two", "for every three", "worth up to", "a single"];
         const whatTokens = ["any unit of", "any unit", "any model in the unit", "the entire unit", "one model", "0-1 unit", "on a", "its", "an", "a:", "a", "the", "any"];
         const dashTokens = ["be a", "purchase", "be mounted on a", "upgrade one model to", "have", "a", "include one", "upgrade one", "may purchase", "replace", "be", "add", "magic items", "take"];
         const begin = ["•", "-"];
@@ -1033,7 +1056,7 @@
             infoLinks: [],
             name: "Special Rules",
             hidden: false,
-            id: hashFnv32a(`${hash}/specialRules`),
+            id: id(`${hash}/specialRules`),
         };
         if (unit["Subheadings"]['Special Rules:']) {
             const found = parseUnitField(unit["Subheadings"]['Special Rules:']);
@@ -1060,7 +1083,7 @@
         const result = {
             name: "Armour Value",
             hidden: false,
-            id: hashFnv32a(`${name}/armourValue`),
+            id: id(`${name}/armourValue`),
             type: "profile",
             targetId: armourProfile.id,
             modifiers: [{ type: "append", value: `: ${armourValue}`, field: "name" }]
@@ -1166,14 +1189,14 @@
             type: "model",
             subType: profileName.includes('Crew') ? "crew" : undefined,
             name: profileName,
-            id: hashFnv32a(hash),
+            id: id(hash),
             hidden: false,
             infoLinks: [
                 {
                     name: profileName,
                     hidden: false,
                     type: "profile",
-                    id: hashFnv32a(`${hash}/profile`),
+                    id: id(`${hash}/profile`),
                     targetId: sharedProfile.id
                 },
             ],
@@ -1196,7 +1219,7 @@
                 name: "Base",
                 hidden: false,
                 type: "profile",
-                id: hashFnv32a(`${name}/${profileName}/base`),
+                id: id(`${name}/${profileName}/base`),
                 targetId: base.id,
                 // modifiers: [{ type: "set", value: "Base", field: "name" }]
             });
@@ -1223,7 +1246,7 @@
                 field: "selections",
                 scope: "parent",
                 shared: true,
-                id: hashFnv32a(`${parentName}/min`)
+                id: id(`${parentName}/min`)
             };
         }
         function getMax(max) {
@@ -1233,7 +1256,7 @@
                 field: "selections",
                 scope: "parent",
                 shared: true,
-                id: hashFnv32a(`${parentName}/max`)
+                id: id(`${parentName}/max`)
             };
         }
         const result = [
@@ -1334,7 +1357,7 @@
                     const sharedProfile = updateProfile(cat, profile);
                     $store.add_child("sharedSelectionEntries", cat, {
                         name: sharedProfile.name,
-                        id: hashFnv32a(`${cat.name}/weapon/${wep.Name}`),
+                        id: id(`${cat.name}/weapon/${wep.Name}`),
                         hidden: false,
                         import: true,
                         type: "upgrade",
@@ -1387,6 +1410,8 @@
                 return "Daemonic Gifts";
             case "vampiric Powers":
                 return "Vampiric Powers";
+            case "big name":
+                return "Big Name";
             default:
                 if (what.includes("special rule") || token?.includes("special rule")) {
                     return "Special Rules";
@@ -1429,7 +1454,8 @@
             entryLinks: [],
             costs: [],
             constraints: [],
-            id: hashFnv32a(`${unitName}/unit`)
+            id: id(`${unitName}/unit`),
+            collective: false,
         };
         if (existing?.id)
             entry.id = existing.id;
@@ -1521,7 +1547,9 @@
         }
         if (unit.Subheadings["Options:"]) {
             const parsedOptions = optionsToGroups(unit.Subheadings["Options:"]);
-            function getScope(scope, amount) {
+            function getScope(scope, type) {
+                if (type === "replace")
+                    return modelEntries;
                 if (scope === "self") {
                     return [modelEntries[0]];
                 }
@@ -1531,22 +1559,21 @@
                 const foundModel = findModel(modelEntries, scope);
                 return foundModel ? [foundModel] : modelEntries;
             }
-            if (unitName === "Grave Guard") {
-                console.error(parsedOptions);
-            }
             for (const parsedGroup of parsedOptions.groups) {
                 const groupName = `Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`;
                 for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
                     const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
                     const group = toGroup(groupName, groupHash);
                     for (const parsedEntry of parsedGroup.entries) {
-                        if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')) {
-                            console.error("UNIT & PER MODEL COST", parsedEntry);
-                        }
+                        const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model');
+                        const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0;
                         const text = parsedEntry.what;
                         let ruleText = parsedEntry.what.replace(/special rule(s)?/, "").replace(/^The /, "");
                         const { ruleName, param } = parseSpecialRule(ruleText);
-                        const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, parsedGroup.details);
+                        const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, baseCost);
+                        if (perModelCost) {
+                            ruleEntry.modifiers.push(getPerModelCostModifier(parsedEntry.details, `${groupHash}/${text}`));
+                        }
                         ruleEntry.constraints = [toMaxConstraint(1, `${groupHash}/${text}`)];
                         const profile = findImportedProfile(cat, ruleName, "Special Rule");
                         if (profile) {
@@ -1558,7 +1585,13 @@
                         if (!profile2) {
                             console.log("Couldn't import profile", unitName, "/", text);
                         }
-                        group.entryLinks?.push(toEquipment(text, `${groupHash}/${text}`, profile2?.id));
+                        const equipmentLink = toEquipment(text, `${groupHash}/${text}`, profile2?.id);
+                        group.entryLinks?.push(equipmentLink);
+                        equipmentLink.costs = [toCost(baseCost)];
+                        equipmentLink.constraints = [];
+                        if (perModelCost) {
+                            equipmentLink.modifiers.push(getPerModelCostModifier(parsedEntry.details, `${groupHash}/${text}`));
+                        }
                     }
                     const [min, max] = parsedGroup.groupAmount.split('-');
                     group.constraints = [toMinConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)];
@@ -1571,28 +1604,7 @@
             for (const parsedEntry of parsedOptions.entries) {
                 const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model');
                 const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0;
-                function getPerModelCostModifier(hash) {
-                    const perModelCostModifier = {
-                        type: "increment", value: parseDetails(parsedEntry.details), field: "points",
-                        repeats: [
-                            {
-                                value: 1,
-                                repeats: 1,
-                                field: "selections",
-                                scope: "parent",
-                                childId: "model",
-                                shared: true,
-                                roundUp: false,
-                                id: hashFnv32a(`${hash}/per model cost`)
-                            }
-                        ]
-                    };
-                    return perModelCostModifier;
-                }
                 if (parsedEntry.type === "upgrade") {
-                    if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')) {
-                        console.error("UNIT & PER MODEL COST", parsedEntry);
-                    }
                     // Find and remove the model
                     const modelName = parsedEntry.to.replace(" (champion)", "");
                     const model = findModel(modelEntries, modelName);
@@ -1636,7 +1648,7 @@
                     getGroup(entry, "Command", unitName).selectionEntries.push(model);
                 }
                 else if (parsedEntry.type === "replace") {
-                    for (const model of getScope(parsedEntry.scope, parsedEntry.amount)) {
+                    for (const model of getScope(parsedEntry.scope, parsedEntry.type)) {
                         // Find the weapon to replace and remove it
                         const weaponName = parsedEntry.what;
                         const toReplace = model.entryLinks.find(o => cmpItems(o.name, weaponName));
@@ -1654,10 +1666,16 @@
                         const replaceWithLink = toEquipment(replaceWithEntry?.name ?? replaceWith, `${unitName}/${model.name}`, replaceWithEntry?.id);
                         // Remove constraints as we rely on the group
                         toReplace.constraints = [];
+                        if (parsedEntry.scope === "unit") {
+                            toReplace.collective = true;
+                            replaceWithLink.collective = true;
+                            newGroup.collective = true;
+                            model.collective = true;
+                        }
                         replaceWithLink.constraints = [];
                         replaceWithLink.costs = [toCost(baseCost)];
                         if (perModelCost) {
-                            replaceWithLink.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${replaceWith}`));
+                            replaceWithLink.modifiers?.push(getPerModelCostModifier(parsedEntry.details, `${unitName}/${model.name}/${replaceWith}`));
                         }
                         if (parsedEntry.amount !== "*") {
                             replaceWithLink.constraints.push(toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/equipment/${parsedEntry.scope}`, "roster"));
@@ -1675,9 +1693,6 @@
                         continue;
                     }
                     const commonGroup = commonGroups(upgradeName, parsedEntry.token);
-                    if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model') && !["Special Rules", "Equipment"].includes(commonGroup)) {
-                        console.error("UNIT & PER MODEL COST", commonGroup, parsedEntry);
-                    }
                     for (const model of getScope(parsedEntry.scope, parsedEntry.amount)) {
                         switch (commonGroup) {
                             case "Equipment":
@@ -1690,7 +1705,7 @@
                                 equipment.costs = [toCost(baseCost)];
                                 equipment.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}`)];
                                 if (perModelCost) {
-                                    equipment.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${upgradeName}`));
+                                    equipment.modifiers?.push(getPerModelCostModifier(parsedEntry.details, `${unitName}/${model.name}/${upgradeName}`));
                                 }
                                 if (parsedEntry.amount !== "*") {
                                     equipment.constraints.push(toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}/roster`, "roster"));
@@ -1700,11 +1715,13 @@
                             case "Magic Items":
                             case "Vampiric Powers":
                             case "Daemonic Icons":
+                            case "Big Name":
                             case "Daemonic Gifts":
                                 const Ids = {
                                     "Magic Items": "1539-fd78-88f-badd",
                                     "Daemonic Icons": "e5a3-889f-31ed-d42f",
                                     "Daemonic Gifts": "ce0c-2efd-59ad-f802",
+                                    "Big Name": "b8ce-a2e-453d-d59e",
                                     "Vampiric Powers": "a88c-1e61-583f-2bab",
                                 };
                                 const link = toGroupLink(commonGroup, `${unitName}/${model.name}`, Ids[commonGroup]);
@@ -1715,7 +1732,7 @@
                                         field: "points",
                                         scope: "parent",
                                         shared: false,
-                                        id: hashFnv32a(`${unitName}/${model.name}/${commonGroup}/max`)
+                                        id: id(`${unitName}/${model.name}/${commonGroup}/max`)
                                     });
                                 }
                                 model.entryLinks.push(link);
@@ -1747,7 +1764,7 @@
                                 const ruleEntry = toEntry(ruleText, `${unitName}/${model.name}`, baseCost);
                                 ruleEntry.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${ruleName}`)];
                                 if (perModelCost) {
-                                    ruleEntry.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${ruleName}`));
+                                    ruleEntry.modifiers?.push(getPerModelCostModifier(parsedEntry.details, `${unitName}/${model.name}/${ruleName}`));
                                 }
                                 if (parsedEntry.amount !== "*") {
                                     if (parsedEntry.amount === "per 1,000 points") {
@@ -1766,7 +1783,7 @@
                                                     childId: "any",
                                                     shared: true,
                                                     roundUp: false,
-                                                    id: hashFnv32a(`${unitName}/${model.name}/${ruleName}/repeat`)
+                                                    id: id(`${unitName}/${model.name}/${ruleName}/repeat`)
                                                 }
                                             ]
                                         };
@@ -1801,9 +1818,9 @@
                         field: "points",
                         scope: "parent",
                         shared: false,
-                        id: hashFnv32a(`${unitName}/command/magic standard/max`)
+                        id: id(`${unitName}/command/magic standard/max`)
                     }];
-                if (parsedEntry.amount !== "per 1,000 points") {
+                if (parsedEntry.amount === "per 1,000 points") {
                     bearer.entryLinks.push(toEntryLink("Magic Standard per 1,000 points", `${unitName}/command/standard/bug`));
                 }
                 bearer.entryLinks.push(magicLink);
@@ -1847,7 +1864,7 @@
             import: true,
             name: unitName,
             hidden: false,
-            id: hashFnv32a(`${unitName}/root`),
+            id: id(`${unitName}/root`),
             type: "selectionEntry",
             targetId: addedUnit.id
         });
