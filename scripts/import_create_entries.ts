@@ -141,15 +141,13 @@ export function toGroup(name: string, hash: string): BSISelectionEntryGroup {
     selectionEntries: [],
     entryLinks: [],
     constraints: [],
+    modifiers: [],
   }
 }
 export function getGroup(entry: BSISelectionEntry, name: string, hash: string): BSISelectionEntryGroup {
   if (!entry.selectionEntryGroups) entry.selectionEntryGroups = []
   const found = entry.selectionEntryGroups.find(o => o.name === name)
   if (found) {
-    if (!["Command", "Wizard Level", "Special Rules"].includes(name)) {
-      console.log(entry.name, "getGroup already has a", name, "group; may be error prone.")
-    }
     return found
   }
   const created = toGroup(name, hash)

@@ -487,8 +487,14 @@ function commonGroups(what: string, token?: string) {
             return "Magic Items"
         case "magic standard":
             return "Magic Standard"
+        case "daemonic icon":
+            return "Daemonic Icon"
+        case "daemonic gifts":
+            return "Daemonic Gifts"
+        case "vampiric Powers":
+            return "Vampiric Powers"
         default:
-            if (what.includes("special rule")) {
+            if (what.includes("special rule") || token?.includes("special rule")) {
                 return "Special Rules"
             }
             if (what.includes("level")) {
@@ -497,12 +503,19 @@ function commonGroups(what: string, token?: string) {
             if (what.includes("mount") || token?.includes("mount")) {
                 return "Mount"
             }
+            if (what.includes("daemon") && what.includes("of")) {
+                return "Special Rules"
+            }
             return "Equipment"
 
     }
 }
 function findModel(models: BSISelectionEntry[], model: string) {
     const foundModel = models.find(o => cmpModel(o.name, model)) ?? models.find(o => cmpModel2(o.name, model))
+    return foundModel
+}
+function findModels(models: BSISelectionEntry[], model: string) {
+    const foundModel = models.filter(o => cmpModel(o.name, model)) ?? models.filter(o => cmpModel2(o.name, model))
     return foundModel
 }
 function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
@@ -595,7 +608,12 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 "Every Grey Seer knows spells from one of the following Lores of Magic:"
                 const match = line.match(/^(?:A|Every) (.*?) (?:that is a Wizard knows spells|knows spells|knows a spell) from(?: the)? (.*)? Lores? of Magic:?$/i)
                 if (match) {
-                    loresToAdd.push({ wizardModel: match[1], knowsFrom: knowsFrom.length ? knowsFrom : [match[2]] })
+                    loresToAdd.push({
+                        wizardModel: match[1],
+                        knowsFrom: knowsFrom.length ? knowsFrom : [match[2]],
+                        requiresWizard: line.includes('that is a Wizard'),
+                        isWizard: line.includes("Every")
+                    })
                 }
                 continue;
             }
@@ -609,7 +627,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     const wizardText = `Wizard Level ${level}`;
                     const wizardEntry = findImportedEntry(cat, wizardText, "upgrade")
                     const wizardGroup = getGroup(model, "Wizard Level", `${unitName}/${model.name}`)
-                    wizardGroup.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel/max`)]
+                    wizardGroup.constraints = [toMinConstraint(1, `${unitName}/${model.name}/wizardlevel`), toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel`)]
                     const link = toEntryLink(wizardText, `${unitName}/${model.name}`, wizardEntry?.id)
                     wizardGroup.entryLinks!.push(link)
                     wizardGroup.defaultSelectionEntryId = link.id;
@@ -617,9 +635,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     console.log([matchWizard[1], matchWizard[2]], "no model")
                 }
             }
-            // if (line.match(/AN? (.*) is a (.*)/i)) 
         }
-        console.log()
 
     }
     if (unit.Subheadings["Options:"]) {
@@ -656,7 +672,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
 
                 }
                 const [min, max] = parsedGroup.groupAmount.split('-');
-                group.constraints = [toMaxConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)]
+                group.constraints = [toMinConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)]
                 model.selectionEntryGroups!.push(group)
             }
             // console.error(parsedEntry)
@@ -678,6 +694,8 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                         musician.comment = `upgrades: ${modelEntries[0].id}`
                         musician.infoLinks!.push(toProfileLink("Musician", `${unitName}/command/profile`, MUSICIAN_ID))
                         musician.constraints = [toMaxConstraint(1, `${unitName}/command/musician`)]
+                        musician.subType = "crew"
+                        musician.type = "model"
                         group.selectionEntries!.push(musician);
                     }
                     else if (modelName.includes('standard bearer')) {
@@ -687,6 +705,8 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                         bearer.infoLinks!.push(toProfileLink("Standard Bearer", `${unitName}/command/profile`, STANDARD_BEARER_ID))
                         bearer.comment = `upgrades: ${modelEntries[0].id}`
                         bearer.constraints = [toMaxConstraint(1, `${unitName}/command/standard bearer`)]
+                        bearer.type = "model"
+                        bearer.subType = "crew"
                         group.selectionEntries!.push(bearer);
                     } else {
                         console.log(`Couldn't find model to upgrade ${unitName}/${modelName}`)
@@ -757,16 +777,28 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                             group.entryLinks?.push(equipment)
                             break;
                         case "Magic Items":
+                        case "Vampiric Powers":
+                        case "Daemonic Icon":
+                        case "Daemonic Gifts":
                             const MAGIC_ITEMS_ID = "1539-fd78-88f-badd"
-                            const link = toGroupLink("Magic Items", `${unitName}/${model.name}`, MAGIC_ITEMS_ID)
-                            link.constraints!.push({
-                                type: "max",
-                                value: parseDetails(parsedEntry.details!),
-                                field: "points",
-                                scope: "parent",
-                                shared: false,
-                                id: hashFnv32a(`${unitName}/${model.name}/magic items/max`)
-                            })
+                            const Ids = {
+                                "Magic Items": "1539-fd78-88f-badd",
+                                "Daemonic Icon": "e5a3-889f-31ed-d42f",
+                                "Daemonic Gifts": "ce0c-2efd-59ad-f802",
+                                "Vampiric Powers": "a88c-1e61-583f-2bab",
+
+                            }
+                            const link = toGroupLink(commonGroup, `${unitName}/${model.name}`, Ids[commonGroup])
+                            if (parseDetails(parsedEntry.details!)) {
+                                link.constraints!.push({
+                                    type: "max",
+                                    value: parseDetails(parsedEntry.details!),
+                                    field: "points",
+                                    scope: "parent",
+                                    shared: false,
+                                    id: hashFnv32a(`${unitName}/${model.name}/${commonGroup}/max`)
+                                })
+                            }
                             model.entryLinks!.push(link)
                             break;
                         case "Wizard Level":
@@ -776,7 +808,9 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                             const wizardEntry = findImportedEntry(cat, wizardLevelName, "upgrade");
                             const wizardLink = toEntryLink(wizardLevelName, `${unitName}/${model.name}`, wizardEntry?.id)
                             wizardLink.costs = [toCost(parsedEntry.details)];
-                            wizardLevel.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel/max`)]
+                            if (!wizardLevel.constraints) {
+                                wizardLevel.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel`)]
+                            }
                             wizardLevel.entryLinks!.push(wizardLink)
                             break;
                         case "Magic Standard":
@@ -853,9 +887,9 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             bearer.entryLinks!.push(magicLink)
         }
         if (loresToAdd.length) {
-            for (const { wizardModel, knowsFrom } of loresToAdd) {
-                const foundModel = findModel(modelEntries, wizardModel);
-                const models = foundModel ? [foundModel] : modelEntries
+            for (const { wizardModel, knowsFrom, requiresWizard } of loresToAdd) {
+                const foundModel = findModels(modelEntries, wizardModel);
+                const models = foundModel.length ? foundModel : modelEntries
                 for (const wantsLore of models) {
                     const group = getGroup(wantsLore, "Lores of Magic", `${unitName}/${wantsLore?.name}`);
                     group.constraints = [toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)]
@@ -863,6 +897,21 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                         const found = findImportedEntry(cat, magicBranch, "upgrade")!
                         const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id)
                         group.entryLinks!.push(link);
+                    }
+                    if (requiresWizard || true) {
+                        group.modifiers!.push({
+                            comment: "Hide if not a wizard",
+                            type: "set",
+                            value: true,
+                            field: "hidden",
+                            "conditions": [
+                                { type: "equalTo", value: 0, field: "selections", scope: "parent", childId: "7d84-39e9-a5f-947e", shared: true },
+                                { type: "equalTo", value: 0, field: "selections", scope: "parent", childId: "8e47-73e8-f7f9-808", shared: true },
+                                { type: "equalTo", value: 0, field: "selections", scope: "parent", childId: "59f1-ac46-8123-3f8d", shared: true },
+                                { type: "equalTo", value: 0, field: "selections", scope: "parent", childId: "50bd-b918-574a-60c3", shared: true }
+                            ],
+                        })
+
                     }
                 }
             }
