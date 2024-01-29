@@ -1,9 +1,10 @@
 import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { NoId, Profile, Unit, Weapon } from "./import_types";
-import { hashFnv32a } from "./import_helpers";
+import { hashFnv32a, parseSpecialRule } from "./import_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 
 export function toModelProfile(data: Profile, parentName?: string) {
+  const { ruleName, param } = parseSpecialRule(data.Name) // Same format as a special rule   
   const stats = data.Stats;
   const result: NoId<BSIProfile> = {
     "characteristics": [
@@ -17,13 +18,13 @@ export function toModelProfile(data: Profile, parentName?: string) {
       { name: "A", typeId: "dddc-9fbd-b0fd-a480", $text: stats.A ?? "-" },
       { name: "Ld", typeId: "c435-6b14-f77e-3c72", $text: stats.Ld ?? "-" }
     ],
-    name: data.Name,
+    name: ruleName!,
     hidden: false,
     typeId: "b070-143a-73f-2772",
     typeName: "Model"
   }
   if (parentName) {
-    result.comment = `${parentName}/${data.Name}`
+    result.comment = `${parentName}/${ruleName!}`
   }
   return result;
 }
@@ -176,7 +177,7 @@ export function toEntry(name: string | undefined, hash: string, cost?: string | 
     costs: [],
     infoLinks: [],
     profiles: [],
-    modifers: [],
+    modifiers: [],
     entryLinks: [],
     type: "upgrade",
     import: true,
@@ -207,7 +208,7 @@ export function toEntryLink(name: string, hash: string, targetId?: string) {
     type: "selectionEntry",
     targetId: targetId ?? name,
     costs: [],
-    modifers: [],
+    modifiers: [],
     constraints: []
   }
   return link;
@@ -222,7 +223,7 @@ export function toGroupLink(name: string, hash: string, targetId?: string) {
     type: "selectionEntryGroup",
     targetId: targetId ?? name,
     costs: [],
-    modifers: [],
+    modifiers: [],
     constraints: [],
   }
   return link;

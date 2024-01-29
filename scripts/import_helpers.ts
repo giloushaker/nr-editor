@@ -120,3 +120,33 @@ export function replaceNewlineWithSpace(text: string) {
   // Replace `\n` preceded by `,` with just a space.
   return text.replace(/,\s*\n\s*/g, ', ');
 }
+
+export function parseSpecialRule(rule: string) {
+  const pattern = /^([^(]+?)([*]*)(?:\s*[(]([^)]+)[)])?([*]*)$/;
+  const match = rule.trim().match(pattern);
+  if (!match) {
+    console.warn("Couldn't parse rule " + rule);
+    return {}
+  }
+  let ruleName = match[1].trim();
+  let param = null;
+  let specification = null;
+  let asterisks = match[2].length + match[4].length
+  if (match[3]) {
+    const pieces = match[3].split(", ")
+    param = pieces[0]
+    if (pieces.length === 1) {
+      specification = pieces[1]
+    }
+    if (pieces.length > 2) {
+      console.log(`${rule} has more text within parentheses that is not handled.`)
+    }
+  }
+
+  ruleName = ruleName.replace("\u0007 ", "");
+  ruleName = ruleName.replace("\u0007", "");
+  if (ruleName.startsWith('Poisoned Attacks') && ruleName.includes('*Note')) {
+    ruleName = "Poisoned Attacks"
+  }
+  return { ruleName, param, specification, asterisks };
+}

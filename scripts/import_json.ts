@@ -1,10 +1,10 @@
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, SpecialRule, Unit, Weapon } from "./import_types"
-import { hashFnv32a, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix } from "./import_helpers"
+import { hashFnv32a, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix, parseSpecialRule } from "./import_helpers"
 import { getGroup, parseDetails, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { optionsToGroups } from "./import_options";
+import { OptionsEntry, optionsToGroups } from "./import_options";
 
 function cmpItems(a: string, b: string) {
     return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "")
@@ -76,35 +76,7 @@ function findRootUnit(cat: Catalogue & EditorBase, name: string) {
     return cat.entryLinks?.find(o => o.name === name && o.getType() === "unit")
 }
 
-function parseSpecialRule(rule: string) {
-    const pattern = /^([^(]+?)([*]*)(?:\s*[(]([^)]+)[)])?([*]*)$/;
-    const match = rule.match(pattern);
-    if (!match) {
-        console.warn("Couldn't parse rule " + rule);
-        return {}
-    }
-    let ruleName = match[1].trim();
-    let param = null;
-    let specification = null;
-    let asterisks = match[2].length + match[4].length
-    if (match[3]) {
-        const pieces = match[3].split(", ")
-        param = pieces[0]
-        if (pieces.length === 1) {
-            specification = pieces[1]
-        }
-        if (pieces.length > 2) {
-            console.log(`${rule} has more text within parentheses that is not handled.`)
-        }
-    }
 
-    ruleName = ruleName.replace("\u0007 ", "");
-    ruleName = ruleName.replace("\u0007", "");
-    if (ruleName.startsWith('Poisoned Attacks') && ruleName.includes('*Note')) {
-        ruleName = "Poisoned Attacks"
-    }
-    return { ruleName, param, specification, asterisks };
-}
 function splitSpecialRules(str: string) {
     let result = [];
     let start = 0;
@@ -258,7 +230,8 @@ function getEquipment(cat: Catalogue & EditorBase, name: string, profileName: st
     return result;
 }
 function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profile, unit: Unit) {
-    const profileName = profile.Name
+    const { ruleName, param } = parseSpecialRule(profile.Name) // Same format as a speciel rule
+    const profileName = ruleName!
     const sharedProfile = findUnitProfile(cat, name, profileName, "Model")
     if (!sharedProfile) {
         console.error(`Couldn't find shared profile for ${name}/${profileName}`)
@@ -268,18 +241,20 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
     if (isNaN(cost)) {
         console.log(`[MODEL] got a NaN cost in ${name}/${profileName}`)
     }
+
+    const hash = `${name}/model/${profileName}`
     const model: BSISelectionEntry = {
         type: "model",
         subType: profileName.includes('Crew') ? "crew" : undefined,
         name: profileName,
-        id: hashFnv32a(`${name}/model/${profileName}`),
+        id: hashFnv32a(hash),
         hidden: false,
         infoLinks: [
             {
                 name: profileName,
                 hidden: false,
                 type: "profile",
-                id: hashFnv32a(`${name}/model/${profileName}/profile`),
+                id: hashFnv32a(`${hash}/profile`),
                 targetId: sharedProfile.id
             },
         ],
@@ -291,7 +266,10 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
         selectionEntryGroups: [] as BSISelectionEntryGroup[],
         constraints: [] as BSIConstraint[],
     }
-
+    if (param) {
+        const value = parseInt(param.replace(/x/, ""));
+        model.constraints!.push(toMinConstraint(value, hash), toMaxConstraint(value, hash))
+    }
     const baseSizes = unit["Subheadings"]["Base Size:"]?.split(', ') || []
     const base = getBase(cat, baseSizes, profile);
     if (base) {
@@ -301,7 +279,7 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
             type: "profile",
             id: hashFnv32a(`${name}/${profileName}/base`),
             targetId: base.id,
-            modifiers: [{ type: "set", value: "Base", field: "name" }]
+            // modifiers: [{ type: "set", value: "Base", field: "name" }]
         })
     } else {
         const error = `[BASE] Couldn't get Base`;
@@ -395,15 +373,16 @@ function updateSharedProfiles(cat: Catalogue & EditorBase, pages: Page[]) {
     for (const page of pages) {
         for (const unit of page.Units || []) {
             for (const profile of unit.Profiles || []) {
-                profile.Name = profile.Name.trim()
-                counts[profile.Name] = (counts[profile.Name] || 0) + 1;
+                const { ruleName, param } = parseSpecialRule(profile.Name) // Same format as a special rule 
+                counts[ruleName!] = (counts[ruleName!] || 0) + 1;
             }
         }
     }
     for (const page of pages) {
         for (const unit of page.Units || []) {
             for (const profile of unit.Profiles || []) {
-                const hasDuplicateWithSameName = counts[profile.Name] > 1
+                const { ruleName, param } = parseSpecialRule(profile.Name) // Same format as a special rule  
+                const hasDuplicateWithSameName = counts[ruleName!] > 1
                 const parsed = hasDuplicateWithSameName ? toModelProfile(profile, unit.Name) : toModelProfile(profile)
                 updateProfile(cat, parsed)
             }
@@ -488,7 +467,7 @@ function commonGroups(what: string, token?: string) {
         case "magic standard":
             return "Magic Standard"
         case "daemonic icon":
-            return "Daemonic Icon"
+            return "Daemonic Icons"
         case "daemonic gifts":
             return "Daemonic Gifts"
         case "vampiric Powers":
@@ -640,19 +619,30 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
     }
     if (unit.Subheadings["Options:"]) {
         const parsedOptions = optionsToGroups(unit.Subheadings["Options:"])
-        function getScope(scope: string) {
+        function getScope(scope: string, amount: string) {
             if (scope === "self") {
                 return [modelEntries[0]];
             }
+            if (scope === "unit") {
+                return [entry] as BSISelectionEntry[];
+            }
             const foundModel = findModel(modelEntries, scope)
             return foundModel ? [foundModel] : modelEntries
+
+        }
+        if (unitName === "Grave Guard") {
+            console.error(parsedOptions)
         }
         for (const parsedGroup of parsedOptions.groups) {
-            for (const model of getScope(parsedGroup.scope)) {
+            const groupName = `Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`
+            for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
                 const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
-                const group = toGroup(`Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`, groupHash)
+                const group = toGroup(groupName, groupHash)
 
                 for (const parsedEntry of parsedGroup.entries) {
+                    if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')) {
+                        console.error("UNIT & PER MODEL COST", parsedEntry);
+                    }
                     const text = parsedEntry.what!
                     let ruleText = parsedEntry.what!.replace(/special rule(s)?/, "").replace(/^The /, "")
                     const { ruleName, param } = parseSpecialRule(ruleText);
@@ -666,7 +656,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     }
                     const profile2 = findImportedEntry(cat, text, "upgrade")
                     if (!profile2) {
-                        console.error("Couldn't import profile", unitName, "/", text)
+                        console.log("Couldn't import profile", unitName, "/", text)
                     }
                     group.entryLinks?.push(toEquipment(text, `${groupHash}/${text}`, profile2?.id))
 
@@ -680,7 +670,31 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         }
         const magicStandard = []
         for (const parsedEntry of parsedOptions.entries) {
+            const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')
+            const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0
+            function getPerModelCostModifier(hash: string) {
+                const perModelCostModifier = {
+                    type: "increment", value: parseDetails(parsedEntry.details!), field: "points",
+                    repeats: [
+                        {
+                            value: 1,
+                            repeats: 1,
+                            field: "selections",
+                            scope: "parent",
+                            childId: "model",
+                            shared: true,
+                            roundUp: false,
+                            id: hashFnv32a(`${hash}/per model cost`)
+                        }
+                    ]
+                } as BSIModifier;
+                return perModelCostModifier
+            }
+
             if (parsedEntry.type === "upgrade") {
+                if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')) {
+                    console.error("UNIT & PER MODEL COST", parsedEntry);
+                }
                 // Find and remove the model
                 const modelName = parsedEntry.to!.replace(" (champion)", "");
                 const model = findModel(modelEntries, modelName)
@@ -723,7 +737,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 // Add the model to command
                 getGroup(entry, "Command", unitName).selectionEntries!.push(model);
             } else if (parsedEntry.type === "replace") {
-                for (const model of getScope(parsedEntry.scope)) {
+                for (const model of getScope(parsedEntry.scope, parsedEntry.amount)) {
                     // Find the weapon to replace and remove it
                     const weaponName = parsedEntry.what!
                     const toReplace = model.entryLinks!.find(o => cmpItems(o.name, weaponName))
@@ -742,7 +756,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     // Remove constraints as we rely on the group
                     toReplace.constraints = []
                     replaceWithLink.constraints = []
-                    replaceWithLink.costs = [toCost(parsedEntry.details!)]
+                    replaceWithLink.costs = [toCost(baseCost)]
+                    if (perModelCost) {
+                        replaceWithLink.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${replaceWith}`))
+                    }
                     if (parsedEntry.amount !== "*") {
                         replaceWithLink.constraints.push(toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/equipment/${parsedEntry.scope}`, "roster"))
                     }
@@ -760,17 +777,23 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     continue;
                 }
                 const commonGroup = commonGroups(upgradeName, parsedEntry.token)
-                for (const model of getScope(parsedEntry.scope)) {
+                if (parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model') && !["Special Rules", "Equipment"].includes(commonGroup)) {
+                    console.error("UNIT & PER MODEL COST", commonGroup, parsedEntry);
+                }
+                for (const model of getScope(parsedEntry.scope, parsedEntry.amount)) {
                     switch (commonGroup) {
                         case "Equipment":
                             const group = getGroup(model, commonGroup, `${unitName}/${model.name}`)
                             const equipmentEntry = findImportedEntry(cat, upgradeName, "upgrade")
                             if (!equipmentEntry) {
-                                console.error("Couldn't import profile", unitName, "/", upgradeName, parsedEntry.token, parsedEntry)
+                                console.log("Couldn't import profile", unitName, "/", upgradeName, parsedEntry.token, parsedEntry)
                             }
                             const equipment = toEquipment(equipmentEntry?.name ?? upgradeName, `${unitName}/${model.name}`, equipmentEntry?.id)
-                            equipment.costs = [toCost(parsedEntry.details)]
+                            equipment.costs = [toCost(baseCost)]
                             equipment.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}`)]
+                            if (perModelCost) {
+                                equipment.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${upgradeName}`))
+                            }
                             if (parsedEntry.amount !== "*") {
                                 equipment.constraints.push(toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}/roster`, "roster"))
                             }
@@ -778,12 +801,11 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                             break;
                         case "Magic Items":
                         case "Vampiric Powers":
-                        case "Daemonic Icon":
+                        case "Daemonic Icons":
                         case "Daemonic Gifts":
-                            const MAGIC_ITEMS_ID = "1539-fd78-88f-badd"
                             const Ids = {
                                 "Magic Items": "1539-fd78-88f-badd",
-                                "Daemonic Icon": "e5a3-889f-31ed-d42f",
+                                "Daemonic Icons": "e5a3-889f-31ed-d42f",
                                 "Daemonic Gifts": "ce0c-2efd-59ad-f802",
                                 "Vampiric Powers": "a88c-1e61-583f-2bab",
 
@@ -825,8 +847,11 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                             ruleText = ruleText.replace("\u0007 ", "");
                             ruleText = ruleText.replace("\u0007", "");
                             const { ruleName, param } = parseSpecialRule(ruleText);
-                            const ruleEntry = toEntry(ruleText, `${unitName}/${model.name}`, parsedEntry.details)
+                            const ruleEntry = toEntry(ruleText, `${unitName}/${model.name}`, baseCost)
                             ruleEntry.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${ruleName}`)]
+                            if (perModelCost) {
+                                ruleEntry.modifiers?.push(getPerModelCostModifier(`${unitName}/${model.name}/${ruleName}`))
+                            }
                             if (parsedEntry.amount !== "*") {
                                 if (parsedEntry.amount === "per 1,000 points") {
                                     const rosterMax = toMaxConstraint(0, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
@@ -848,7 +873,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                                             }
                                         ]
                                     } as BSIModifier;
-                                    ruleEntry.modifers!.push(modifier)
+                                    ruleEntry.modifiers!.push(modifier)
                                 } else {
                                     const rosterMax = toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
                                     ruleEntry.constraints.push(rosterMax)
@@ -884,6 +909,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 shared: false,
                 id: hashFnv32a(`${unitName}/command/magic standard/max`)
             }]
+            if (parsedEntry.amount !== "per 1,000 points") {
+                bearer.entryLinks!.push(toEntryLink("Magic Standard per 1,000 points", `${unitName}/command/standard/bug`))
+            }
+
             bearer.entryLinks!.push(magicLink)
         }
         if (loresToAdd.length) {
