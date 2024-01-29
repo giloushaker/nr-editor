@@ -631,8 +631,36 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             const foundModel = findModel(modelEntries, scope)
             return foundModel ? [foundModel] : modelEntries
         }
-        for (const parsedEntry of parsedOptions.groups) {
-            console.error(parsedEntry)
+        for (const parsedGroup of parsedOptions.groups) {
+            for (const model of getScope(parsedGroup.scope)) {
+                const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
+                const group = toGroup(`Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`, groupHash)
+
+                for (const parsedEntry of parsedGroup.entries) {
+                    const text = parsedEntry.what!
+                    let ruleText = parsedEntry.what!.replace(/special rule(s)?/, "").replace(/^The /, "")
+                    const { ruleName, param } = parseSpecialRule(ruleText);
+                    const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, parsedGroup.details)
+                    ruleEntry.constraints = [toMaxConstraint(1, `${groupHash}/${text}`)]
+                    const profile = findImportedProfile(cat, ruleName!, "Special Rule")
+                    if (profile) {
+                        ruleEntry.infoLinks!.push(toSpecialRuleLink(ruleName!, `${groupHash}/${text}/link`, profile?.id, param))
+                        group.selectionEntries!.push(ruleEntry);
+                        continue;
+                    }
+                    const profile2 = findImportedEntry(cat, text, "upgrade")
+                    if (!profile2) {
+                        console.error("Couldn't import profile", unitName, "/", text)
+                    }
+                    group.entryLinks?.push(toEquipment(text, `${groupHash}/${text}`, profile2?.id))
+
+                }
+                const [min, max] = parsedGroup.groupAmount.split('-');
+                group.constraints = [toMaxConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)]
+                model.selectionEntryGroups!.push(group)
+            }
+            // console.error(parsedEntry)
+            // console.warn(parsedEntry.groupAmount)
         }
         const magicStandard = []
         for (const parsedEntry of parsedOptions.entries) {
@@ -717,6 +745,9 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                         case "Equipment":
                             const group = getGroup(model, commonGroup, `${unitName}/${model.name}`)
                             const equipmentEntry = findImportedEntry(cat, upgradeName, "upgrade")
+                            if (!equipmentEntry) {
+                                console.error("Couldn't import profile", unitName, "/", upgradeName, parsedEntry.token, parsedEntry)
+                            }
                             const equipment = toEquipment(equipmentEntry?.name ?? upgradeName, `${unitName}/${model.name}`, equipmentEntry?.id)
                             equipment.costs = [toCost(parsedEntry.details)]
                             equipment.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}`)]
