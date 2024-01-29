@@ -17,8 +17,8 @@
       <tr>
         <td>Child:</td>
         <td>
-          <UtilAutocomplete v-model="childId" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
-            filterField="name" @change="changed" :default="child" lazy>
+          <UtilAutocomplete v-model="childgetToplevelEntryId" :placeholder="`Search Child...`" :options="availableTargets"
+            valueField="id" filterField="name" @change="changed" :default="child" lazy>
             <template #option="opt">
               <div v-if="opt.option" style="white-space: nowrap">
                 <template v-if="opt.option.indent >= 1 && !opt.selected">
@@ -150,8 +150,8 @@ export default {
     availableTargets() {
       return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
     },
-    getToplevelEntry(entry: EditorBase | Catalogue) {
-      while (!entry.isCatalogue() && entry.parent) {
+    getToplevelEntry(entry?: EditorBase) {
+      while (!entry?.isCatalogue() && entry?.parent) {
         entry = entry.parent
       }
       return entry;
