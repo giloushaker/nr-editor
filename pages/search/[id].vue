@@ -14,9 +14,7 @@
     <button class="inputstyle w-28px" @click="page = Math.max(0, page - 1)"> &lt; </button>
     <button class="inputstyle w-28px" @click="page = Math.min(last_page, page + 1)"> &gt; </button>
     Page {{ page + 1 }} / {{ last_page + 1 }} <input type="checkbox" id="show-fullpath" v-model="showFullPath" /><label
-      for="show-fullpath"
-      >Show Full Path</label
-    >
+      for="show-fullpath">Show Full Path</label>
     <div></div>
     <!-- Results -->
     <div v-if="results" class="pb-50px">
@@ -25,12 +23,8 @@
         <div class="ml-8px">
           <div class="hover-darken cursor-pointer" v-for="item in items" @click="store.goto(item)">
             <template v-if="showFullPath && path(item).length">
-              <NodePath
-                :path="path(item)"
-                @click="store.goto(item)"
-                class="inline hover-darken cursor-pointer p-1px"
-                end-arrow
-              />
+              <NodePath :path="path(item)" @click="store.goto(item)" class="inline hover-darken cursor-pointer p-1px"
+                end-arrow />
             </template>
 
             <span>
@@ -190,20 +184,25 @@ export default defineComponent({
       }
     },
     costs(item: EditorBase) {
-      const result = [] as ICost[];
-      const catalogue = item.getCatalogue();
-      const costs = item.getCosts();
-      for (const cost of costs) {
-        const name = catalogue.findOptionById(cost.typeId)?.name || cost.name || cost.typeId;
-        if (name) {
-          result.push({
-            name: name,
-            value: cost.value,
-            typeId: cost.typeId,
-          });
+      try {
+
+        const result = [] as ICost[];
+        const catalogue = item.getCatalogue();
+        const costs = item.getCosts();
+        for (const cost of costs) {
+          const name = catalogue.findOptionById(cost.typeId)?.name || cost.name || cost.typeId;
+          if (name) {
+            result.push({
+              name: name,
+              value: cost.value,
+              typeId: cost.typeId,
+            });
+          }
         }
+        return formatCosts(result);
+      } catch (e) {
+        return ""
       }
-      return formatCosts(result);
     },
   },
   components: { NodePath },
