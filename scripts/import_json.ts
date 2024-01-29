@@ -303,6 +303,9 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
             targetId: base.id,
             modifiers: [{ type: "set", value: "Base", field: "name" }]
         })
+    } else {
+        const error = `[BASE] Couldn't get Base`;
+        model.entryLinks!.push(toEntryLink(error, `${model.name}/bug/base`, error))
     }
     const equipment = getEquipment(cat, name, profileName, unit);
     if (equipment.length) {
@@ -337,11 +340,6 @@ function getConstraints(cat: Catalogue & EditorBase, parentName: string, unitSiz
             id: hashFnv32a(`${parentName}/max`)
         } as BSIConstraint;
     }
-
-    unitSize = unitSize.trim();
-    if (!unitSize.match('^[0-9]+[+]?$') && !unitSize.match(/([0-9])+[-]([0-9])+/)) {
-        console.warn(`[UNIT SIZE] Unparsed value in ${parentName}:`, unitSize);
-    }
     const result = [
         getMin(parseInt(unitSize))
     ];
@@ -371,9 +369,6 @@ function getBase(cat: Catalogue & EditorBase, baseSizes: string[], profile: Prof
         }
         if (baseSizeString === "N/A") return null;
         const found = findImportedProfile(cat, `Base (${extractSize(baseSizeString)})`, "Base")
-        if (!found) {
-            console.log(`[MODEL] Couldn't get Base for ${profile.Name}`)
-        }
         return found;
     }
 }
@@ -502,9 +497,6 @@ function commonGroups(what: string, token?: string) {
             if (what.includes("mount") || token?.includes("mount")) {
                 return "Mount"
             }
-            if (what.includes("daemonic gifts")) {
-                return "Daemonic Gifts"
-            }
             return "Equipment"
 
     }
@@ -528,6 +520,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         selectionEntries: [] as BSISelectionEntry[],
         selectionEntryGroups: [] as BSISelectionEntryGroup[],
         infoGroups: [] as BSIInfoGroup[],
+        entryLinks: [] as BSIEntryLink[],
         costs: [] as BSICost[],
         constraints: [] as BSIConstraint[],
         id: hashFnv32a(`${unitName}/unit`)
@@ -569,7 +562,13 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
 
     if (unit.Subheadings["Unit Size:"]) {
         const firstEntry = entry.selectionEntries![0];
-        const constraints = getConstraints(cat, `${unitName}/${firstEntry.name}`, unit.Subheadings["Unit Size:"])
+        const unitSize = unit.Subheadings["Unit Size:"].trim()
+        if (!unitSize.match('^[0-9]+[+]?$') && !unitSize.match(/([0-9])+[-]([0-9])+/)) {
+            // console.warn(`[UNIT SIZE] Unparsed value in ${unitName}:`, unitSize);
+            const error = `[UNIT SIZE] Unparsed value: ${unitSize}`
+            entry.entryLinks!.push(toEntryLink(error, `${unitName}/bug`, error))
+        }
+        const constraints = getConstraints(cat, `${unitName}/${firstEntry.name}`, unitSize)
         firstEntry.constraints = constraints
     } else {
         console.log(`[UNIT] ${unitName} has no Unit Size`)
@@ -583,8 +582,45 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         }
     }
 
+
+    const loresToAdd = []
     if (unit.Subheadings["Magic:"]) {
-        console.log(unit.Subheadings["Magic:"])
+        const magicText = unit.Subheadings["Magic:"]
+        const knowsFrom = magicText.split('\n').map(o => o.trim()).filter(o => o.startsWith("•")).map(o => removePrefix(o, "• "))
+        const otherText = magicText.split('\n').filter(o => !o.includes("•")).map(o => o.trim()).join(" ");
+
+        for (const line of otherText.split('.').map(o => o.trim())) {
+            if (line.includes("knows")) {
+                "A Warlock Engineer that is a Wizard knows spells from one of the following Lores of Magic:"
+                "Every Grey Seer knows spells from one of the following Lores of Magic:"
+                const match = line.match(/^(?:A|Every) (.*?) (?:that is a Wizard knows spells|knows spells|knows a spell) from(?: the)? (.*)? Lores? of Magic:?$/i)
+                if (match) {
+                    loresToAdd.push({ wizardModel: match[1], knowsFrom: knowsFrom.length ? knowsFrom : [match[2]] })
+                }
+                continue;
+            }
+            const matchWizard = line.match(/^AN? (.*) is a (.*)$/i)
+            if (matchWizard) {
+                const [_, wizardName, wizardLevelText] = matchWizard
+                const level = wizardLevelText.match(/\d+/)![0]
+
+                const model = findModel(modelEntries, wizardName)
+                if (model) {
+                    const wizardText = `Wizard Level ${level}`;
+                    const wizardEntry = findImportedEntry(cat, wizardText, "upgrade")
+                    const wizardGroup = getGroup(model, "Wizard Level", `${unitName}/${model.name}`)
+                    wizardGroup.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel/max`)]
+                    const link = toEntryLink(wizardText, `${unitName}/${model.name}`, wizardEntry?.id)
+                    wizardGroup.entryLinks!.push(link)
+                    wizardGroup.defaultSelectionEntryId = link.id;
+                } else {
+                    console.log([matchWizard[1], matchWizard[2]], "no model")
+                }
+            }
+            // if (line.match(/AN? (.*) is a (.*)/i)) 
+        }
+        console.log()
+
     }
     if (unit.Subheadings["Options:"]) {
         const parsedOptions = optionsToGroups(unit.Subheadings["Options:"])
@@ -595,6 +631,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             const foundModel = findModel(modelEntries, scope)
             return foundModel ? [foundModel] : modelEntries
         }
+        for (const parsedEntry of parsedOptions.groups) {
+            console.error(parsedEntry)
+        }
+        const magicStandard = []
         for (const parsedEntry of parsedOptions.entries) {
             if (parsedEntry.type === "upgrade") {
                 // Find and remove the model
@@ -603,8 +643,25 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 if (model) {
                     entry.selectionEntries = entry.selectionEntries.filter(o => o !== model)
                 } else {
-                    if (!modelName.includes('musician') && !modelName.includes('standard bearer')) {
-                        console.error("Couldn't find model to upgrade", unitName, modelName)
+                    if (modelName.includes("musician")) {
+                        const MUSICIAN_ID = "40f2-dd77-f0ca-3663"
+                        const group = getGroup(entry, "Command", unitName)
+                        const musician = toEntry("Musician", `${unitName}/command`, parsedEntry.details)
+                        musician.comment = `upgrades: ${modelEntries[0].id}`
+                        musician.infoLinks!.push(toProfileLink("Musician", `${unitName}/command/profile`, MUSICIAN_ID))
+                        musician.constraints = [toMaxConstraint(1, `${unitName}/command/musician`)]
+                        group.selectionEntries!.push(musician);
+                    }
+                    else if (modelName.includes('standard bearer')) {
+                        const STANDARD_BEARER_ID = "bcf8-d942-102e-b155"
+                        const group = getGroup(entry, "Command", unitName)
+                        const bearer = toEntry("Standard Bearer", `${unitName}/command`, parsedEntry.details)
+                        bearer.infoLinks!.push(toProfileLink("Standard Bearer", `${unitName}/command/profile`, STANDARD_BEARER_ID))
+                        bearer.comment = `upgrades: ${modelEntries[0].id}`
+                        bearer.constraints = [toMaxConstraint(1, `${unitName}/command/standard bearer`)]
+                        group.selectionEntries!.push(bearer);
+                    } else {
+                        console.log(`Couldn't find model to upgrade ${unitName}/${modelName}`)
                     }
                     continue;
                 }
@@ -616,7 +673,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
 
 
                 // Add the model to command
-                getGroup(model, "Command", unitName).selectionEntries!.push(model);
+                getGroup(entry, "Command", unitName).selectionEntries!.push(model);
             } else if (parsedEntry.type === "replace") {
                 for (const model of getScope(parsedEntry.scope)) {
                     // Find the weapon to replace and remove it
@@ -654,8 +711,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     console.error(unitName, parsedEntry, "no name")
                     continue;
                 }
-                const foundModel = findModel(modelEntries, parsedEntry.scope)
-                const commonGroup = foundModel ? "Model" : commonGroups(upgradeName, parsedEntry.token)
+                const commonGroup = commonGroups(upgradeName, parsedEntry.token)
                 for (const model of getScope(parsedEntry.scope)) {
                     switch (commonGroup) {
                         case "Equipment":
@@ -668,8 +724,6 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                                 equipment.constraints.push(toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}/roster`, "roster"))
                             }
                             group.entryLinks?.push(equipment)
-                            break;
-                        case "Daemonic Gifts":
                             break;
                         case "Magic Items":
                             const MAGIC_ITEMS_ID = "1539-fd78-88f-badd"
@@ -684,23 +738,34 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                             })
                             model.entryLinks!.push(link)
                             break;
-
-
+                        case "Wizard Level":
+                            const wizardLevel = getGroup(model, commonGroup, `${unitName}/${model.name}`)
+                            const match = parsedEntry.what!.match(/\d+/)
+                            const wizardLevelName = `Wizard Level ${match![0]}`
+                            const wizardEntry = findImportedEntry(cat, wizardLevelName, "upgrade");
+                            const wizardLink = toEntryLink(wizardLevelName, `${unitName}/${model.name}`, wizardEntry?.id)
+                            wizardLink.costs = [toCost(parsedEntry.details)];
+                            wizardLevel.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/wizardlevel/max`)]
+                            wizardLevel.entryLinks!.push(wizardLink)
+                            break;
                         case "Magic Standard":
-                        case "Model":
+                            magicStandard.push(parsedEntry);
+                            break;
                         case "Mount":
+                            model.entryLinks?.push(toEntryLink(`${parsedEntry.token} ${parsedEntry.what}`, `${unitName}/${model.name}`, `${parsedEntry.token} ${parsedEntry.what}`))
                             break;
                         case "Special Rules":
-                            console.error(parsedEntry)
                             const rules = getGroup(model, commonGroup, `${unitName}/${model.name}`)
-                            const ruleText = parsedEntry.what!.replace(/special rule(s)?/, "")
+                            let ruleText = parsedEntry.what!.replace(/special rule(s)?/, "")
+                            ruleText = ruleText.replace("\u0007 ", "");
+                            ruleText = ruleText.replace("\u0007", "");
                             const { ruleName, param } = parseSpecialRule(ruleText);
-                            const entry = toEntry(ruleText, `${unitName}/${model.name}`, parsedEntry.details)
-                            entry.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${ruleName}`)]
+                            const ruleEntry = toEntry(ruleText, `${unitName}/${model.name}`, parsedEntry.details)
+                            ruleEntry.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${ruleName}`)]
                             if (parsedEntry.amount !== "*") {
                                 if (parsedEntry.amount === "per 1,000 points") {
                                     const rosterMax = toMaxConstraint(0, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
-                                    entry.constraints.push(rosterMax)
+                                    ruleEntry.constraints.push(rosterMax)
                                     const modifier = {
                                         type: "increment",
                                         value: 1,
@@ -718,10 +783,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                                             }
                                         ]
                                     } as BSIModifier;
-                                    entry.modifers!.push(modifier)
+                                    ruleEntry.modifers!.push(modifier)
                                 } else {
                                     const rosterMax = toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
-                                    entry.constraints.push(rosterMax)
+                                    ruleEntry.constraints.push(rosterMax)
                                 }
                             }
                             const profile = findImportedProfile(cat, ruleName!, "Special Rule")
@@ -729,15 +794,47 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                                 console.log(`[SPECIAL RULES] Couldn't find Special Rule: ${ruleName}`)
                                 continue;
                             }
-                            entry.infoLinks!.push(toSpecialRuleLink(ruleName!, `${unitName}/${model.name}`, profile.id, param))
-                            rules.selectionEntries!.push(entry);
+                            ruleEntry.infoLinks!.push(toSpecialRuleLink(ruleName!, `${unitName}/${model.name}`, profile.id, param))
+                            rules.selectionEntries!.push(ruleEntry);
                             break;
-                        case "Wizard Level":
-                            break;
+
                     }
                 }
             }
 
+        }
+
+
+        if (magicStandard.length) {
+            const MAGIC_STANDARD_ID = "6bbe-8054-19b7-e5d6"
+            const parsedEntry = magicStandard[0]
+            const command = getGroup(entry, "Command", `${unitName}/command`)
+            const bearer = command.selectionEntries?.find(o => o.name === "Standard Bearer")!;
+            const magicLink = toGroupLink("Magic Standard", `${unitName}/command`, MAGIC_STANDARD_ID)
+            magicLink.constraints = [{
+                type: "max",
+                value: parseDetails(parsedEntry.details!),
+                field: "points",
+                scope: "parent",
+                shared: false,
+                id: hashFnv32a(`${unitName}/command/magic standard/max`)
+            }]
+            bearer.entryLinks!.push(magicLink)
+        }
+        if (loresToAdd.length) {
+            for (const { wizardModel, knowsFrom } of loresToAdd) {
+                const foundModel = findModel(modelEntries, wizardModel);
+                const models = foundModel ? [foundModel] : modelEntries
+                for (const wantsLore of models) {
+                    const group = getGroup(wantsLore, "Lores of Magic", `${unitName}/${wantsLore?.name}`);
+                    group.constraints = [toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)]
+                    for (const magicBranch of knowsFrom) {
+                        const found = findImportedEntry(cat, magicBranch, "upgrade")!
+                        const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id)
+                        group.entryLinks!.push(link);
+                    }
+                }
+            }
         }
     }
 
@@ -785,7 +882,7 @@ $catalogue.manager.loadAll().then(async () => {
         return replaceSlashes(path).split("/").slice(0, -1).join("/");
     }
     const systemPath = dirname($catalogue.fullFilePath)
-    const fileName = "processed_6.json"
+    const fileName = "processed_7.json"
     const jsonPath = `${systemPath}/json/${fileName}`
     const file = await $node.readFile(jsonPath)
     if (!file) return;

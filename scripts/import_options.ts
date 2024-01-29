@@ -363,10 +363,10 @@ function getGroupAmount(it: TokenIterator) {
     switch (text) {
         case "may:":
         case "may take:":
+        case "may be":
+        case "may be:":
             return "*"
-        case "may be:": // daemon chaos god factions
-            return "*"
-        case "must take": // daemon chaos god factions
+        case "must take":
             const mustTakeWhat = it.nextAlways().text
             if (mustTakeWhat === "one of the following:") return "1";
             if (mustTakeWhat === "one of the following") return "1";
@@ -382,11 +382,7 @@ function getGroupAmount(it: TokenIterator) {
             console.warn(`unparsed group (${text}) amount`, mayTakeWhat)
             return "*";
         }
-        case "may be": {
-            let mayBeWhat = it.nextAlways().text
-            if (mayBeWhat === "a:") return "0-1"
-            return "*";
-        }
+
         case "may replace":
             return "1"
         case "must be mounted on":
@@ -487,11 +483,12 @@ export function optionsToGroups(options: string) {
         for (const dashLine of bulletLine.childs) {
             const dashIt = new TokenIterator(dashLine.tokens)
             const firstToken = toToken(dashIt.nextAlways())
-            const obj = { scope, amount, details: dashLine.details, source: dashLine.source }
+            const obj = { scope, amount, details: dashLine.details, source: dashLine.source, parentSource: bulletLine.source }
             switch (firstToken) {
                 case "text":
-                    local.push({
-                        what: dashIt.lastText(),
+                    group.entries.push({
+                        ...obj,
+                        what: dashIt.lastText()!,
                         details: dashLine.details,
                         token: firstToken
                     })
@@ -583,6 +580,7 @@ export function optionsToGroups(options: string) {
                 console.error(`didnt finish parsing (remaining ${it.remaining()} tokens)`, bulletLine.source)
             }
         }
+        // if (group.source === "• May be mounted on a:") debugger;
         group.entries = group.entries.map(o => removeUndefineds(o))
         if (group.groupAmount === "*") {
             entries.push(...group.entries)

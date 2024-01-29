@@ -147,7 +147,7 @@ export function getGroup(entry: BSISelectionEntry, name: string, hash: string): 
   if (!entry.selectionEntryGroups) entry.selectionEntryGroups = []
   const found = entry.selectionEntryGroups.find(o => o.name === name)
   if (found) {
-    if (name !== "Command") {
+    if (!["Command", "Wizard Level", "Special Rules"].includes(name)) {
       console.log(entry.name, "getGroup already has a", name, "group; may be error prone.")
     }
     return found
@@ -179,6 +179,7 @@ export function toEntry(name: string | undefined, hash: string, cost?: string | 
     infoLinks: [],
     profiles: [],
     modifers: [],
+    entryLinks: [],
     type: "upgrade",
     import: true,
     hidden: false,
@@ -198,7 +199,7 @@ export function toProfileLink(name: string | undefined, hash: string, targetId: 
     targetId: targetId
   }
 }
-export function toEntryLink(name: string, hash: string, targetId: string) {
+export function toEntryLink(name: string, hash: string, targetId?: string) {
   if (!name) throw new Error("Cannot create profile link with no name.")
   const link: BSIEntryLink = {
     import: true,
@@ -206,14 +207,14 @@ export function toEntryLink(name: string, hash: string, targetId: string) {
     hidden: false,
     id: hashFnv32a(`${hash}/${name}`),
     type: "selectionEntry",
-    targetId: targetId,
+    targetId: targetId ?? name,
     costs: [],
     modifers: [],
     constraints: []
   }
   return link;
 }
-export function toGroupLink(name: string, hash: string, targetId: string) {
+export function toGroupLink(name: string, hash: string, targetId?: string) {
   if (!name) throw new Error("Cannot create profile link with no name.")
   const link: BSIEntryLink = {
     import: true,
@@ -221,10 +222,10 @@ export function toGroupLink(name: string, hash: string, targetId: string) {
     hidden: false,
     id: hashFnv32a(`${hash}/${name}`),
     type: "selectionEntryGroup",
-    targetId: targetId,
+    targetId: targetId ?? name,
     costs: [],
     modifers: [],
-    constraints: [];
+    constraints: [],
   }
   return link;
 }
