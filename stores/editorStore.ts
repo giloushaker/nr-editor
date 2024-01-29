@@ -1211,12 +1211,18 @@ export const useEditorStore = defineStore("editor", {
       return obj;
     },
     del_child(entry: Base) {
-      const catalogue = entry.catalogue;
-      const manager = catalogue.manager;
-      const path = getEntryPath(entry as EditorBase);
-      const removed = popAtEntryPath(catalogue, path);
-      onRemoveEntry(removed, manager);
-      this.set_catalogue_changed(catalogue);
+      try {
+        const catalogue = entry.catalogue;
+        const manager = catalogue.manager;
+        const path = getEntryPath(entry as EditorBase);
+        const removed = popAtEntryPath(catalogue, path);
+        onRemoveEntry(removed, manager);
+      } catch (e) {
+        console.error("Failed to delete", entry);
+      }
+      if (entry.catalogue) {
+        this.set_catalogue_changed(entry.catalogue);
+      }
     },
     can_move(obj: EditorBase) {
       if (obj.isLink()) return false;
@@ -1225,7 +1231,7 @@ export const useEditorStore = defineStore("editor", {
     edit_child(entry: EditorBase, data?: Object) {
       const obj = JSON.parse(entry.toJson())
       Object.assign(obj, data);
-      setPrototypeRecursive({[entry.parentKey]: obj})
+      setPrototypeRecursive({ [entry.parentKey]: obj })
       Object.assign(entry, obj);
       this.set_catalogue_changed(entry.catalogue);
     },

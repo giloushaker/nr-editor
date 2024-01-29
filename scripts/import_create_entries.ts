@@ -1,4 +1,4 @@
-import type { BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { NoId, Profile, Unit, Weapon } from "./import_types";
 import { hashFnv32a } from "./import_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
@@ -82,6 +82,8 @@ export function toWeaponProfile(name: string, weapon: Weapon) {
     ]
   }
 }
+
+
 export function toInfoLink(unitName: string, entry: Base) {
   const specialRuleLink: BSIInfoLink = {
     name: entry.getName(),
@@ -93,22 +95,21 @@ export function toInfoLink(unitName: string, entry: Base) {
   }
   return specialRuleLink;
 }
-export function toEquipment(name: string, profileName: string, itemName: string, targetId: string) {
-  if (name === "Skeletal hooves") debugger;
+export function toEquipment(itemName: string, hash: string, targetId?: string) {
   return {
-    name: name,
-    id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}`),
+    name: itemName,
+    id: hashFnv32a(`${hash}/equipment/${itemName}`),
     hidden: false,
     type: "selectionEntry",
-    targetId: targetId,
+    targetId: targetId ?? itemName,
     constraints: [
       {
         type: "min", value: 1, scope: "parent", shared: false, field: "selections",
-        id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}/min`)
+        id: hashFnv32a(`${hash}/equipment/${itemName}/min`)
       },
       {
         type: "max", value: 1, scope: "parent", shared: false, field: "selections",
-        id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}/max`)
+        id: hashFnv32a(`${hash}/equipment/${itemName}/max`)
       },
     ]
   } as BSIEntryLink;
@@ -131,4 +132,133 @@ export function loreOfMagicConstraint() {
     "value": 2,
     "field": "3e22-b735-4400-3d21"
   }
+}
+export function toGroup(name: string, hash: string): BSISelectionEntryGroup {
+  return {
+    name: name,
+    hidden: false,
+    id: hashFnv32a(`${hash}/${name}`),
+    selectionEntries: [],
+    entryLinks: [],
+    constraints: [],
+  }
+}
+export function getGroup(entry: BSISelectionEntry, name: string, hash: string): BSISelectionEntryGroup {
+  if (!entry.selectionEntryGroups) entry.selectionEntryGroups = []
+  const found = entry.selectionEntryGroups.find(o => o.name === name)
+  if (found) {
+    if (name !== "Command") {
+      console.log(entry.name, "getGroup already has a", name, "group; may be error prone.")
+    }
+    return found
+  }
+  const created = toGroup(name, hash)
+  entry.selectionEntryGroups.push(created);
+  return created;
+}
+
+export function parseDetails(details: string) {
+  const parsed = parseInt(details)
+  return isNaN(parsed) ? 0 : parsed;
+}
+export function toCost(pts: number | string | undefined) {
+  if (!pts) pts = 0;
+  const parsed = typeof pts === "string" ? parseInt(pts) : pts
+  return {
+    name: "pts",
+    typeId: "points",
+    value: isNaN(parsed) ? 0 : parsed
+  } as BSICost
+}
+export function toEntry(name: string | undefined, hash: string, cost?: string | number): BSISelectionEntry {
+  if (!name) throw new Error("Cannot create entry with no name.")
+  const result: BSISelectionEntry = {
+    name: name,
+    id: hashFnv32a(`${hash}/${name}`),
+    costs: [],
+    infoLinks: [],
+    profiles: [],
+    modifers: [],
+    type: "upgrade",
+    import: true,
+    hidden: false,
+  }
+  if (cost) {
+    result.costs.push(toCost(cost))
+  }
+  return result;
+}
+export function toProfileLink(name: string | undefined, hash: string, targetId: string): BSIInfoLink {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  return {
+    name: name,
+    hidden: false,
+    type: "profile",
+    id: hashFnv32a(`${hash}/${name}`),
+    targetId: targetId
+  }
+}
+export function toEntryLink(name: string, hash: string, targetId: string) {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  const link: BSIEntryLink = {
+    import: true,
+    name: name,
+    hidden: false,
+    id: hashFnv32a(`${hash}/${name}`),
+    type: "selectionEntry",
+    targetId: targetId,
+    costs: [],
+    modifers: [],
+    constraints: []
+  }
+  return link;
+}
+export function toGroupLink(name: string, hash: string, targetId: string) {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  const link: BSIEntryLink = {
+    import: true,
+    name: name,
+    hidden: false,
+    id: hashFnv32a(`${hash}/${name}`),
+    type: "selectionEntryGroup",
+    targetId: targetId,
+    costs: [],
+    modifers: [],
+    constraints: [];
+  }
+  return link;
+}
+export function toMinConstraint(min: string | number, hash: string) {
+  return {
+    type: "min",
+    value: min,
+    field: "selections",
+    scope: "parent",
+    shared: false,
+    id: hashFnv32a(`${hash}/min`)
+  } as BSIConstraint;
+}
+export function toMaxConstraint(max: string | number, hash: string, scope = "parent") {
+  return {
+    type: "max",
+    value: max,
+    field: "selections",
+    scope: scope,
+    shared: false,
+    id: hashFnv32a(`${hash}/max`)
+  } as BSIConstraint;
+}
+export function toSpecialRuleLink(ruleName: string, hash: string, targetId?: string, param?: string | null) {
+  const specialRuleLink: BSIInfoLink = {
+    name: ruleName,
+    hidden: false,
+    id: hashFnv32a(`${hash}/rule/${ruleName}`),
+    type: "profile",
+    targetId: targetId ?? ruleName,
+    modifiers: [] as BSIModifier[]
+  }
+  if (param) {
+    specialRuleLink.modifiers!.push({ type: "append", value: `(${param})`, field: "name" })
+  }
+  return specialRuleLink;
 }

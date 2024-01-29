@@ -1,12 +1,14 @@
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, SpecialRule, Unit, Weapon } from "./import_types"
 import { hashFnv32a, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix } from "./import_helpers"
-import { toEquipment, toInfoLink, toModelProfile, toSpecialRule, toUnitProfile, toWeaponProfile } from "./import_create_entries";
+import { getGroup, parseDetails, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { parseOptionsLine } from "./import_options";
+import { optionsToGroups } from "./import_options";
 
-
+function cmpItems(a: string, b: string) {
+    return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "")
+}
 function findProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
     if (profile.comment) {
         return cat.sharedProfiles?.find(o => o.comment === profile.comment && o.typeName === profile.typeName)
@@ -18,6 +20,7 @@ function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, t
     const lower = profileName.trim().toLowerCase()
     for (const imported of [cat, ...cat.imports]) {
         for (const profile of imported.sharedProfiles || []) {
+            if (!profile.getName()) continue;
             const found = removeSuffix(profile.getName().trim().toLowerCase(), " (x)")
             if (lower === found && profile.typeName === typeName) {
                 return profile
@@ -77,7 +80,7 @@ function parseSpecialRule(rule: string) {
     const pattern = /^([^(]+?)([*]*)(?:\s*[(]([^)]+)[)])?([*]*)$/;
     const match = rule.match(pattern);
     if (!match) {
-        console.error("Couldn't parse rule " + rule);
+        console.warn("Couldn't parse rule " + rule);
         return {}
     }
     let ruleName = match[1].trim();
@@ -146,21 +149,10 @@ function getSpecialRules(cat: Catalogue & EditorBase, name: string, unit: Unit, 
                 const { ruleName, param } = parseSpecialRule(rule);
                 const profile = findImportedProfile(cat, ruleName!, "Special Rule")
                 if (!profile) {
-                    console.warn(`[SPECIAL RULES] Couldn't find Special Rule from ${hash}: ${ruleName}`)
+                    console.log(`[SPECIAL RULES] Couldn't find Special Rule from ${hash}: ${ruleName}`)
                     continue;
                 }
-                const specialRuleLink: BSIInfoLink = {
-                    name: rule,
-                    hidden: false,
-                    id: hashFnv32a(`${hash}/rule/${ruleName}`),
-                    type: "profile",
-                    targetId: profile.id,
-                    modifiers: [] as BSIModifier[]
-                }
-                if (param) {
-                    specialRuleLink.modifiers!.push({ type: "append", value: `(${param})`, field: "name" })
-                }
-                group.infoLinks!.push(specialRuleLink)
+                group.infoLinks!.push(toSpecialRuleLink(rule, hash, profile.id, param))
             }
         }
 
@@ -183,26 +175,45 @@ function getArmourValueProfile(cat: Catalogue & EditorBase, name: string, armour
     return result;
 }
 
-const specifityMap = {
 
+function cmpModel(a: string, b: string) {
+    a = a.toLowerCase()
+    a = a.replace(/ie$/, "y")
+    a = a.replace(/men$/, "man")
+    a = a.replace(/s/, "")
+    b = b.toLowerCase()
+    b = b.replace(/ie$/, "y")
+    b = b.replace(/men$/, "man")
+    b = b.replace(/s/, "")
+    return a === b
 }
-
+function cmpModel2(a: string, b: string) {
+    a = a.toLowerCase()
+    a = a.replace(/ie$/, "y")
+    a = a.replace(/men$/, "man")
+    a = a.replace(/s/, "")
+    b = b.toLowerCase()
+    b = b.replace(/ie$/, "y")
+    b = b.replace(/men$/, "man")
+    b = b.replace(/s/, "")
+    return a.includes(b) || b.includes(a)
+}
 function getSpecific(parsedField: ReturnType<typeof parseUnitField>, model: string) {
     const initialModel = model;
     if (parsedField[model]) {
-        if(parsedField[model]) {
+        if (parsedField[model]) {
             return parsedField[model]
         }
         model = model.replace(/ie$/, "y")
         model = model.replace(/men$/, "man")
-        if(parsedField[model]) {
+        if (parsedField[model]) {
             return parsedField[model]
         }
-        
+
     } else {
         const noS = initialModel.replace(/s/g, "")
         for (const key in parsedField) {
-            const keyNoS =  key.replace(/s/g, "")
+            const keyNoS = key.replace(/s/g, "")
             if (key !== "all" && (keyNoS.includes(noS) || noS.includes(keyNoS))) {
                 return parsedField[key]
             }
@@ -229,18 +240,18 @@ function getEquipment(cat: Catalogue & EditorBase, name: string, profileName: st
                 let target = findImportedEntry(cat, item, "upgrade")
                 if (!target) {
                     if (!equipment.details) {
-                        console.error(`[EQUIPMENT] Couldn't find Entry ${item}`)
+                        console.log(`[EQUIPMENT] Couldn't find Entry ${item}`)
                     } else continue;
                 }
-                result.push(toEquipment(target?.name ?? item, profileName, item, target?.id ?? item))
+                result.push(toEquipment(item, `${name}/${profileName}`, target?.id ?? item))
             }
             if (!equipment.details) continue;
             for (const item of splitAnd(equipment.details)) {
                 let target = findImportedEntry(cat, item, "upgrade")
                 if (!target) {
-                    console.error(`[EQUIPMENT] Couldn't find Entry(${item}) From: ${equipment.text}/${equipment.details} ${item}`)
+                    console.log(`[EQUIPMENT] Couldn't find Entry(${item}) From: ${equipment.text}/${equipment.details} ${item}`)
                 }
-                result.push(toEquipment(target?.name ?? item, profileName, item, target?.id ?? item))
+                result.push(toEquipment(target?.name ?? item, `${name}/${profileName}`, target?.id ?? item))
             }
         }
     }
@@ -275,6 +286,10 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
         costs: [{ name: "pts", typeId: "points", value: cost }],
         entryLinks: [],
         infoGroups: [],
+        profiles: [] as BSIProfile[],
+        selectionEntries: [] as BSISelectionEntry[],
+        selectionEntryGroups: [] as BSISelectionEntryGroup[],
+        constraints: [] as BSIConstraint[],
     }
 
     const baseSizes = unit["Subheadings"]["Base Size:"]?.split(', ') || []
@@ -311,7 +326,7 @@ function getConstraints(cat: Catalogue & EditorBase, parentName: string, unitSiz
             shared: true,
             id: hashFnv32a(`${parentName}/min`)
         } as BSIConstraint;
-    } 
+    }
     function getMax(max: string | number) {
         return {
             type: "max",
@@ -327,11 +342,10 @@ function getConstraints(cat: Catalogue & EditorBase, parentName: string, unitSiz
     if (!unitSize.match('^[0-9]+[+]?$') && !unitSize.match(/([0-9])+[-]([0-9])+/)) {
         console.warn(`[UNIT SIZE] Unparsed value in ${parentName}:`, unitSize);
     }
-
     const result = [
         getMin(parseInt(unitSize))
     ];
-    const minMax = unitSize.match(/([0-9])+[-]([0-9])+/)
+    const minMax = unitSize.match(/([0-9]+)[-]([0-9]+)/)
     if (minMax) {
         result.push(getMax(minMax[2]))
     }
@@ -375,11 +389,9 @@ function updateProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
     if (existing) {
         if (!isSameCharacteristics(existing.characteristics, profile.characteristics)) {
             existing.characteristics = profile.characteristics;
-            console.log("updated", profile.name, profile.typeName)
         }
         return existing;
     } else {
-        console.log("created", profile.name, profile.typeName)
         return $store.add_child("sharedProfiles", cat, profile)
     }
 }
@@ -425,10 +437,15 @@ function updateWeapons(cat: Catalogue & EditorBase, pages: Page[]) {
         for (const wep of page.Weapons || []) {
             const found = findImportedEntry(cat, wep.Name, "upgrade")
             const profile = toWeaponProfile(wep.Name, wep)
-            if (!found || found.catalogue === cat) {
-                if (found) {
-                    findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_child(o))
-                }
+            let create = false;
+            if (!found?.profiles?.length) {
+                create = true;
+            }
+            if (found?.profiles?.length && !isSameCharacteristics(found.profiles[0].characteristics, profile.characteristics)) {
+                create = true;
+            }
+            if (create) {
+                findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_child(o))
                 const sharedProfile = updateProfile(cat, profile)
                 $store.add_child("sharedSelectionEntries", cat, {
                     name: sharedProfile.name,
@@ -439,12 +456,7 @@ function updateWeapons(cat: Catalogue & EditorBase, pages: Page[]) {
                     infoLinks: [toInfoLink(wep.Name, sharedProfile)]
                 })
             } else {
-                if (!found.profiles?.length ) {
-                    console.log("Characteristic mismatch with existing:", wep.Name, wep.Stats, "(no profile on existing)")
-                }
-                if (found.profiles?.length && !isSameCharacteristics(found.profiles[0].characteristics, profile.characteristics)) {
-                    console.log("Characteristic mismatch with existing:", wep.Name, wep.Stats, found.profiles[0].characteristics.map(o => ({name: o.name, text: o.$text})))
-                }
+
             }
         }
     }
@@ -473,86 +485,277 @@ function parseEquipment(field: string): Equipment[] {
     return parsed;
 }
 
+function commonGroups(what: string, token?: string) {
+    what = what.toLowerCase()
+    switch (what) {
+        case "magic items":
+            return "Magic Items"
+        case "magic standard":
+            return "Magic Standard"
+        default:
+            if (what.includes("special rule")) {
+                return "Special Rules"
+            }
+            if (what.includes("level")) {
+                return "Wizard Level"
+            }
+            if (what.includes("mount") || token?.includes("mount")) {
+                return "Mount"
+            }
+            if (what.includes("daemonic gifts")) {
+                return "Daemonic Gifts"
+            }
+            return "Equipment"
 
+    }
+}
+function findModel(models: BSISelectionEntry[], model: string) {
+    const foundModel = models.find(o => cmpModel(o.name, model)) ?? models.find(o => cmpModel2(o.name, model))
+    return foundModel
+}
 function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
-    const name = unit.Name
-    const existing = findUnit(cat, name)
+    const unitName = unit.Name
+    const existing = findUnit(cat, unitName)
     if (existing) {
         $store.del_child(existing);
     }
-    const entry: BSISelectionEntry = {
+    const entry = {
         type: "unit",
         import: true,
-        name: name,
+        name: unitName,
         hidden: false,
-        profiles: [],
-        selectionEntries: [],
-        infoGroups: [],
+        profiles: [] as BSIProfile[],
+        selectionEntries: [] as BSISelectionEntry[],
+        selectionEntryGroups: [] as BSISelectionEntryGroup[],
+        infoGroups: [] as BSIInfoGroup[],
         costs: [] as BSICost[],
-        id: hashFnv32a(`${name}/unit`)
-    }
+        constraints: [] as BSIConstraint[],
+        id: hashFnv32a(`${unitName}/unit`)
+    } satisfies BSISelectionEntry;
+    if (existing?.id) entry.id = existing.id;
 
     if (unit['Points']) {
         const unitCost = parseInt(unit['Points'])
         if (isNaN(unitCost)) {
-            console.log(`[UNIT] got a NaN cost in Unit ${name}`)
+            console.log(`[UNIT] got a NaN cost in Unit ${unitName}`)
         }
         entry.costs.push({ name: "pts", typeId: "points", value: unitCost });
     }
 
-    const group = getSpecialRules(cat, name, unit)
+    const group = getSpecialRules(cat, unitName, unit)
     if (group.infoLinks!.length) {
         entry.infoGroups!.push(group)
     }
 
 
-    const unitProfile = toUnitProfile(name, unit)
+    const unitProfile = toUnitProfile(unitName, unit)
     if (unitProfile) {
         entry.profiles!.push(unitProfile);
     }
 
     if (!unit.Profiles.length) {
-        console.log(`[UNIT] ${name} has no profiles`)
+        console.log(`[UNIT] ${unitName} has no profiles`)
         return;
     }
 
+    const modelEntries = [] as BSISelectionEntry[]
     for (const profile of unit.Profiles || []) {
-        const modelEntry = getModelEntry(cat, name, profile, unit)
+        const modelEntry = getModelEntry(cat, unitName, profile, unit)
         if (modelEntry) {
-            entry.selectionEntries!.push(modelEntry);
+            entry.selectionEntries.push(modelEntry);
+            modelEntries.push(modelEntry)
         }
     }
 
     if (unit.Subheadings["Unit Size:"]) {
         const firstEntry = entry.selectionEntries![0];
-        const constraints = getConstraints(cat, `${name}/${firstEntry.name}`, unit.Subheadings["Unit Size:"])
+        const constraints = getConstraints(cat, `${unitName}/${firstEntry.name}`, unit.Subheadings["Unit Size:"])
         firstEntry.constraints = constraints
     } else {
-        console.log(`[UNIT] ${name} has no Unit Size`)
+        console.log(`[UNIT] ${unitName} has no Unit Size`)
     }
 
-
-    if (existing?.id) entry.id = existing.id;
-    const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
-    if (unit.Subheadings["Options:"]) {
-        const parsedOptionLines = []
-        for (const line of unit.Subheadings["Options:"].split('\n')) {
-            parsedOptionLines.push(parseOptionsLine(line))
+    if (unit.Subheadings["Troop Type:"]) {
+        if (unit.Subheadings["Troop Type:"].toLowerCase().includes('character')) {
+            const model = modelEntries[0]
+            const GENERAL_ID = "7d76-b1a1-1535-a04c"
+            getGroup(model, "Command", unitName).entryLinks!.push(toEntryLink("General", `${unitName}/${model.name}`, GENERAL_ID));
         }
     }
-    const existingLink = findRootUnit(cat, name)
+
+    if (unit.Subheadings["Magic:"]) {
+        console.log(unit.Subheadings["Magic:"])
+    }
+    if (unit.Subheadings["Options:"]) {
+        const parsedOptions = optionsToGroups(unit.Subheadings["Options:"])
+        function getScope(scope: string) {
+            if (scope === "self") {
+                return [modelEntries[0]];
+            }
+            const foundModel = findModel(modelEntries, scope)
+            return foundModel ? [foundModel] : modelEntries
+        }
+        for (const parsedEntry of parsedOptions.entries) {
+            if (parsedEntry.type === "upgrade") {
+                // Find and remove the model
+                const modelName = parsedEntry.to!.replace(" (champion)", "");
+                const model = findModel(modelEntries, modelName)
+                if (model) {
+                    entry.selectionEntries = entry.selectionEntries.filter(o => o !== model)
+                } else {
+                    if (!modelName.includes('musician') && !modelName.includes('standard bearer')) {
+                        console.error("Couldn't find model to upgrade", unitName, modelName)
+                    }
+                    continue;
+                }
+                // Make the model a champion
+                model.subType = "crew"
+                model.infoLinks!.push(toProfileLink("Champion", `${unitName}/command`, "5f1c-fd04-b0d5-d5e"))
+                model.constraints!.push(toMaxConstraint(1, `${unitName}/${model.name}/champion`))
+                model.comment = `upgrades: ${modelEntries[0].id}`;
+
+
+                // Add the model to command
+                getGroup(model, "Command", unitName).selectionEntries!.push(model);
+            } else if (parsedEntry.type === "replace") {
+                for (const model of getScope(parsedEntry.scope)) {
+                    // Find the weapon to replace and remove it
+                    const weaponName = parsedEntry.what!
+                    const toReplace = model.entryLinks!.find(o => cmpItems(o.name, weaponName))
+                    if (toReplace) {
+                        model.entryLinks = model.entryLinks!.filter(o => o !== toReplace)
+                    } else {
+                        console.warn("Couldn't find weapon to replace", unitName, model.name, weaponName, "with", parsedEntry.with)
+                        continue;
+                    }
+                    // Create a Equipment group and its entries
+                    const newGroup = getGroup(model, "Equipment", `${unitName}/${model.name}`)
+                    const replaceWith = parsedEntry.with!
+                    const replaceWithEntry = findImportedEntry(cat, replaceWith, "upgrade")
+                    const replaceWithLink = toEquipment(replaceWithEntry?.name ?? replaceWith, `${unitName}/${model.name}`, replaceWithEntry?.id)
+
+                    // Remove constraints as we rely on the group
+                    toReplace.constraints = []
+                    replaceWithLink.constraints = []
+                    replaceWithLink.costs = [toCost(parsedEntry.details!)]
+                    if (parsedEntry.amount !== "*") {
+                        replaceWithLink.constraints.push(toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/equipment/${parsedEntry.scope}`, "roster"))
+                    }
+
+                    newGroup.defaultSelectionEntryId = toReplace.id
+                    newGroup.entryLinks!.push(toReplace)
+                    newGroup.entryLinks!.push(replaceWithLink)
+                    newGroup.constraints = [toMinConstraint(1, `${unitName}/${model.name}/equipment`), toMaxConstraint(1, `${unitName}/${model.name}/equipment`)]
+                }
+
+            } else {
+                const upgradeName = parsedEntry.what!
+                if (!upgradeName) {
+                    console.error(unitName, parsedEntry, "no name")
+                    continue;
+                }
+                const foundModel = findModel(modelEntries, parsedEntry.scope)
+                const commonGroup = foundModel ? "Model" : commonGroups(upgradeName, parsedEntry.token)
+                for (const model of getScope(parsedEntry.scope)) {
+                    switch (commonGroup) {
+                        case "Equipment":
+                            const group = getGroup(model, commonGroup, `${unitName}/${model.name}`)
+                            const equipmentEntry = findImportedEntry(cat, upgradeName, "upgrade")
+                            const equipment = toEquipment(equipmentEntry?.name ?? upgradeName, `${unitName}/${model.name}`, equipmentEntry?.id)
+                            equipment.costs = [toCost(parsedEntry.details)]
+                            equipment.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}`)]
+                            if (parsedEntry.amount !== "*") {
+                                equipment.constraints.push(toMaxConstraint(1, `${unitName}/${model.name}/${upgradeName}/roster`, "roster"))
+                            }
+                            group.entryLinks?.push(equipment)
+                            break;
+                        case "Daemonic Gifts":
+                            break;
+                        case "Magic Items":
+                            const MAGIC_ITEMS_ID = "1539-fd78-88f-badd"
+                            const link = toGroupLink("Magic Items", `${unitName}/${model.name}`, MAGIC_ITEMS_ID)
+                            link.constraints!.push({
+                                type: "max",
+                                value: parseDetails(parsedEntry.details!),
+                                field: "points",
+                                scope: "parent",
+                                shared: false,
+                                id: hashFnv32a(`${unitName}/${model.name}/magic items/max`)
+                            })
+                            model.entryLinks!.push(link)
+                            break;
+
+
+                        case "Magic Standard":
+                        case "Model":
+                        case "Mount":
+                            break;
+                        case "Special Rules":
+                            console.error(parsedEntry)
+                            const rules = getGroup(model, commonGroup, `${unitName}/${model.name}`)
+                            const ruleText = parsedEntry.what!.replace(/special rule(s)?/, "")
+                            const { ruleName, param } = parseSpecialRule(ruleText);
+                            const entry = toEntry(ruleText, `${unitName}/${model.name}`, parsedEntry.details)
+                            entry.constraints = [toMaxConstraint(1, `${unitName}/${model.name}/${ruleName}`)]
+                            if (parsedEntry.amount !== "*") {
+                                if (parsedEntry.amount === "per 1,000 points") {
+                                    const rosterMax = toMaxConstraint(0, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
+                                    entry.constraints.push(rosterMax)
+                                    const modifier = {
+                                        type: "increment",
+                                        value: 1,
+                                        field: rosterMax.id,
+                                        repeats: [
+                                            {
+                                                value: 1000,
+                                                repeats: 1,
+                                                field: "limit::points",
+                                                scope: "roster",
+                                                childId: "any",
+                                                shared: true,
+                                                roundUp: false,
+                                                id: hashFnv32a(`${unitName}/${model.name}/${ruleName}/repeat`)
+                                            }
+                                        ]
+                                    } as BSIModifier;
+                                    entry.modifers!.push(modifier)
+                                } else {
+                                    const rosterMax = toMaxConstraint(parsedEntry.amount, `${unitName}/${model.name}/${ruleName}/roster`, "roster")
+                                    entry.constraints.push(rosterMax)
+                                }
+                            }
+                            const profile = findImportedProfile(cat, ruleName!, "Special Rule")
+                            if (!profile) {
+                                console.log(`[SPECIAL RULES] Couldn't find Special Rule: ${ruleName}`)
+                                continue;
+                            }
+                            entry.infoLinks!.push(toSpecialRuleLink(ruleName!, `${unitName}/${model.name}`, profile.id, param))
+                            rules.selectionEntries!.push(entry);
+                            break;
+                        case "Wizard Level":
+                            break;
+                    }
+                }
+            }
+
+        }
+    }
+
+    const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
+    const existingLink = findRootUnit(cat, unitName)
     if (existingLink) {
         $store.del_child(existingLink);
     }
+
+
     const addedLink = $store.add_child("entryLinks", cat, {
         import: true,
-        name: name,
+        name: unitName,
         hidden: false,
-        id: hashFnv32a(`${name}/root`),
+        id: hashFnv32a(`${unitName}/root`),
         type: "selectionEntry",
         targetId: addedUnit.id
-      });
-    // console.log(unit, parsedText)
+    });
 
 }
 function createUnits(cat: Catalogue & EditorBase, pages: Page[]) {
@@ -602,6 +805,6 @@ $catalogue.manager.loadAll().then(async () => {
         updateSpecialRules(existing, pages)
         updateWeapons(existing, pages)
         createUnits(existing, pages)
-        console.log(" --- DONE", catalogueName); 
+        console.log(" --- DONE", catalogueName);
     }
 });
