@@ -17,10 +17,10 @@
       <tr>
         <td>Child:</td>
         <td>
-          <UtilAutocomplete v-model="childgetToplevelEntryId" :placeholder="`Search Child...`" :options="availableTargets"
-            valueField="id" filterField="name" @change="changed" :default="child" lazy>
+          <UtilAutocomplete v-model="child" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
+            filterField="name" @change="changed" :default="child" lazy>
             <template #option="opt">
-              <div v-if="opt.option" style="white-space: nowrap">
+              <div v-if="opt.option" style="white-space: nowrap" @click.middle="debug(opt)">
                 <template v-if="opt.option.indent >= 1 && !opt.selected">
                   <span v-for="n of opt.option.indent">&nbsp;&nbsp;&nbsp;</span>
                 </template>
@@ -29,7 +29,7 @@
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared) </span>
-                <span v-if="getToplevelEntry(opt.option) === getToplevelEntry(item)"> (shares a parent)</span>
+                <span class="gray" v-if="opt.option.rootId === rootId"> (same ancestor)</span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
@@ -137,6 +137,9 @@ export default {
     changed() {
       this.$emit("catalogueChanged");
     },
+    debug(o) {
+      console.log(o)
+    },
 
     showCatalogue(opt: EditorSearchItem): boolean {
       if (!opt.catalogue) {
@@ -148,14 +151,10 @@ export default {
       return true;
     },
     availableTargets() {
-      return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
+      const result = [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
+      return result;
     },
-    getToplevelEntry(entry?: EditorBase) {
-      while (entry?.parent && !entry.isCatalogue && entry.isCatalogue()) {
-        entry = entry.parent
-      }
-      return entry;
-    }
+
   },
 
   watch: {
@@ -199,7 +198,14 @@ export default {
       }
       return getFilterSelections(this.item, this.catalogue);
     },
-
+    rootId() {
+      let item = this.item as any;
+      if (!item?.parent) return;
+      while (item?.parent && !item.parent.isCatalogue()) {
+        item = item.parent
+      }
+      return item.id;
+    },
     allCategories(): EditorSearchItem[] {
       if (!this.includeCategories) {
         return [];
