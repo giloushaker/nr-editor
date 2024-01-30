@@ -334,23 +334,31 @@ export const useEditorStore = defineStore("editor", {
 
       const allowed = files.filter((o) => isAllowedExtension(o.name));
       for (const file of allowed) {
-        progress && (await progress(result_files.length, allowed.length, file.path));
-        const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
-        const systemId = json?.gameSystem?.id;
-        const catalogueId = json?.catalogue?.id;
-        const obj = getDataObject(json);
-        obj.fullFilePath = file.path.replaceAll("\\", "/");
-        if (systemId) {
-          const systemFiles = this.get_system(systemId);
-          systemFiles.setSystem(markRaw(json));
-          systems.push(systemFiles);
-          result_system_ids.push(systemId);
+        try {
+
+          progress && (await progress(result_files.length, allowed.length, file.path));
+          const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
+          const systemId = json?.gameSystem?.id;
+          const catalogueId = json?.catalogue?.id;
+          if (!json.catalogue && !json.gameSystemId) {
+            continue;
+          };
+          const obj = getDataObject(json);
+          obj.fullFilePath = file.path.replaceAll("\\", "/");
+          if (systemId) {
+            const systemFiles = this.get_system(systemId);
+            systemFiles.setSystem(markRaw(json));
+            systems.push(systemFiles);
+            result_system_ids.push(systemId);
+          }
+          if (catalogueId) {
+            const systemFiles = this.get_system(json.catalogue.gameSystemId);
+            systemFiles.catalogueFiles[catalogueId] = markRaw(json);
+          }
+          result_files.push(json);
+        } catch (e) {
+          console.error(`Error loading ${file.name}`, e)
         }
-        if (catalogueId) {
-          const systemFiles = this.get_system(json.catalogue.gameSystemId);
-          systemFiles.catalogueFiles[catalogueId] = markRaw(json);
-        }
-        result_files.push(json);
       }
       progress && (await progress(result_files.length, allowed.length));
 
