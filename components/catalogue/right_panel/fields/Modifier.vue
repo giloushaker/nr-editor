@@ -18,34 +18,45 @@
         </template>
       </UtilIconSelect>
 
-      <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
-      <UtilNumberInput @change="changed" v-if="inputType === 'number'" v-model="(item.value as number)" />
-      <select @change="changed" v-if="inputType == 'boolean'" v-model="item.value">
-        <option :value="true">True</option>
-        <option :value="false">False</option>
-      </select>
-      <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
+      <template v-if="selectedOperation?.id == 'replace'">
+        <div>
 
-      <UtilAutocomplete v-if="inputType == 'category'" :options="allCategories" :filterField="(o) => o.getName()"
-        valueField="id" v-model="item.value" @change="changed">
-        <template #option="{ option }">
-          <div class="flex align-items flex-row" style="white-space: nowrap">
-            <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
-              {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
-            </span>
-          </div>
-        </template>
-      </UtilAutocomplete>
-      <UtilAutocomplete v-if="inputType == 'defaultSelectionEntryId'" :options="allGroupEntries"
-        :filterField="(o) => o.getName()" valueField="id" v-model="item.value" @change="changed">
-        <template #option="{ option }">
-          <div class="flex align-items flex-row" style="white-space: nowrap">
-            <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
-              {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
-            </span>
-          </div>
-        </template>
-      </UtilAutocomplete>
+          <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
+          <span v-if="selectedOperation" class="mx-5px"> {{ selectedOperation.word }} </span>
+          <input @change="changed" type="text" v-model="item.value" />
+        </div>
+      </template>
+      <template v-else>
+
+        <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
+        <UtilNumberInput @change="changed" v-if="inputType === 'number'" v-model="(item.value as number)" />
+        <select @change="changed" v-if="inputType == 'boolean'" v-model="item.value">
+          <option :value="true">True</option>
+          <option :value="false">False</option>
+        </select>
+        <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
+
+        <UtilAutocomplete v-if="inputType == 'category'" :options="allCategories" :filterField="(o) => o.getName()"
+          valueField="id" v-model="item.value" @change="changed">
+          <template #option="{ option }">
+            <div class="flex align-items flex-row" style="white-space: nowrap">
+              <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+                {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+              </span>
+            </div>
+          </template>
+        </UtilAutocomplete>
+        <UtilAutocomplete v-if="inputType == 'defaultSelectionEntryId'" :options="allGroupEntries"
+          :filterField="(o) => o.getName()" valueField="id" v-model="item.value" @change="changed">
+          <template #option="{ option }">
+            <div class="flex align-items flex-row" style="white-space: nowrap">
+              <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+                {{ getName(option) }} <span class="grey">{{ getNameExtra(option) }}</span>
+              </span>
+            </div>
+          </template>
+        </UtilAutocomplete>
+      </template>
     </div>
     <div v-for="error in errors" class="mt-8px flex items-center">
       <img src="/assets/icons/error_exclamation.png" />
@@ -276,6 +287,11 @@ export default {
             name: "Prepend",
             word: "with",
           },
+          {
+            id: "replace",
+            name: "Replace",
+            word: "with",
+          },
         ],
         "string-or-number": [
           {
@@ -292,6 +308,11 @@ export default {
             id: "prepend",
             name: "Prepend",
             word: "to",
+          },
+          {
+            id: "replace",
+            name: "Replace",
+            word: "with",
           },
           {
             id: "increment",
