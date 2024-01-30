@@ -1,6 +1,6 @@
 <template>
   <fieldset>
-    <legend>Characteristics</legend>
+    <legend>Characteristics<template v-if="link"><span class="gray"> (from target)</span></template></legend>
     <table class="editorTable">
       <tr>
         <td>Profile Type: </td>
@@ -46,6 +46,9 @@ export default {
       type: Object as PropType<Profile>,
       required: true,
     },
+    link: {
+      type: Boolean,
+    }
   },
   methods: {
     getName,
