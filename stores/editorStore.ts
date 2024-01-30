@@ -335,16 +335,15 @@ export const useEditorStore = defineStore("editor", {
       const allowed = files.filter((o) => isAllowedExtension(o.name));
       for (const file of allowed) {
         try {
-
           progress && (await progress(result_files.length, allowed.length, file.path));
           const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
-          const systemId = json?.gameSystem?.id;
-          const catalogueId = json?.catalogue?.id;
-          if (!json.catalogue && !json.gameSystemId) {
+          if (!json.catalogue && !json.gameSystem) {
             continue;
           };
           const obj = getDataObject(json);
           obj.fullFilePath = file.path.replaceAll("\\", "/");
+          const systemId = json?.gameSystem?.id;
+          const catalogueId = json?.catalogue?.id;
           if (systemId) {
             const systemFiles = this.get_system(systemId);
             systemFiles.setSystem(markRaw(json));
