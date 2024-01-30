@@ -51,7 +51,7 @@
         :collapsible="mixedChildren && mixedChildren.length > 0" :empty="!mixedChildren || mixedChildren.length == 0"
         :group="group || []" :payload="item" :class="[item.parentKey, `depth-${depth}`]" :defcollapsed="!open" nobox>
         <template #title>
-          <CatalogueLeftPanelEntry :item="item" :imported="imported" />
+          <CatalogueLeftPanelEntry :item="item" :imported="imported" :highlight="item.highlight" />
           <!-- 
 
             <span>
