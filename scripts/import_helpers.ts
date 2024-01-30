@@ -153,3 +153,9 @@ export function parseSpecialRule(rule: string) {
   }
   return { ruleName, param, specification, asterisks };
 }
+
+export function toTitleCase(text: string) {
+  return text.split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }).join(' ');
+}

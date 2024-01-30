@@ -131,6 +131,11 @@
         }
         return { ruleName, param, specification, asterisks };
     }
+    function toTitleCase(text) {
+        return text.split(' ').map(word => {
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ');
+    }
 
     function toModelProfile(data, parentName) {
         const { ruleName, param } = parseSpecialRule(data.Name); // Same format as a special rule   
@@ -358,7 +363,8 @@
             field: "selections",
             scope: scope,
             shared: false,
-            id: id(`${hash}/max`)
+            id: id(`${hash}/max`),
+            includeChildSelections: scope === "parent" ? false : true
         };
     }
     function toSpecialRuleLink(ruleName, hash, targetId, param) {
@@ -393,6 +399,15 @@
             ]
         };
         return perModelCostModifier;
+    }
+    function toCategoryLink(category, hash) {
+        return {
+            name: category.name,
+            hidden: false,
+            id: id(`${hash}/${category.name}`),
+            targetId: category.id,
+            primary: false
+        };
     }
 
     function removePrefix$1(from, prefix) {
@@ -524,6 +539,7 @@
                             case "may be":
                             case "must take":
                                 parser.next_token(amountTokens);
+                                parser.text_upto_token(amountTokens);
                                 parser.remainder();
                                 break;
                             case "may be":
@@ -558,7 +574,10 @@
                     case "have":
                     case "be":
                     case "add":
+                        parser.remainder();
+                        break;
                     default:
+                        parser.text_upto_token(amountTokens);
                         parser.remainder();
                         break;
                     case "take":
@@ -794,6 +813,7 @@
                     case "may be upgraded to":
                     case "may be mounted on":
                         entries.push({ ...obj, what: it.nextText().text, token: firstToken });
+                        it.next();
                         break;
                     case "may purchase":
                         entries.push({ ...obj, what: it.nextText().text, token: firstToken });
@@ -978,6 +998,18 @@
             // }
         }
     }
+    function findImportedCategory(cat, categoryName) {
+        if (!categoryName)
+            return;
+        const lower = categoryName.trim().toLowerCase();
+        for (const imported of [cat, ...cat.imports]) {
+            for (const category of imported.categoryEntries || []) {
+                if (lower === category.name.toLowerCase()) {
+                    return category;
+                }
+            }
+        }
+    }
     function findImportedEntry(cat, entryName, type) {
         const lower = removeSuffix(entryName.trim().toLowerCase(), "s");
         if (!lower)
@@ -1021,7 +1053,7 @@
         return cat.sharedSelectionEntries?.find(o => o.name === name && o.getType() === "unit");
     }
     function findRootUnit(cat, name) {
-        return cat.entryLinks?.find(o => o.name === name && o.getType() === "unit");
+        return cat.entryLinks?.find(o => o.name === name);
     }
     function splitSpecialRules(str) {
         let result = [];
@@ -1207,6 +1239,7 @@
             selectionEntries: [],
             selectionEntryGroups: [],
             constraints: [],
+            categoryLinks: [],
         };
         if (param) {
             const value = parseInt(param.replace(/x/, ""));
@@ -1408,7 +1441,7 @@
                 return "Daemonic Icons";
             case "daemonic gifts":
                 return "Daemonic Gifts";
-            case "vampiric Powers":
+            case "vampiric powers":
                 return "Vampiric Powers";
             case "big name":
                 return "Big Name";
@@ -1438,6 +1471,10 @@
     }
     function createUnit(cat, unit) {
         const unitName = unit.Name;
+        const existingUnitLink = findRootUnit(cat, unitName);
+        if (existingUnitLink) {
+            $store.del_child(existingUnitLink);
+        }
         const existing = findUnit(cat, unitName);
         if (existing) {
             $store.del_child(existing);
@@ -1454,11 +1491,10 @@
             entryLinks: [],
             costs: [],
             constraints: [],
+            categoryLinks: [],
             id: id(`${unitName}/unit`),
             collective: false,
         };
-        if (existing?.id)
-            entry.id = existing.id;
         if (unit['Points']) {
             const unitCost = parseInt(unit['Points']);
             if (isNaN(unitCost)) {
@@ -1505,6 +1541,17 @@
                 const model = modelEntries[0];
                 const GENERAL_ID = "7d76-b1a1-1535-a04c";
                 getGroup(model, "Command", unitName).entryLinks.push(toEntryLink("General", `${unitName}/${model.name}`, GENERAL_ID));
+            }
+            if (unit.Subheadings["Troop Type:"].toLowerCase().includes('chariot')) {
+                for (const model of modelEntries.slice(1)) {
+                    const category = findImportedCategory(cat, "CHARIOT CREW");
+                    if (category) {
+                        model.categoryLinks.push(toCategoryLink(category, `${unitName}/${model.name}`));
+                    }
+                    else {
+                        console.error(`Couldn't find imported category ${category}`);
+                    }
+                }
             }
         }
         const loresToAdd = [];
@@ -1560,10 +1607,10 @@
                 return foundModel ? [foundModel] : modelEntries;
             }
             for (const parsedGroup of parsedOptions.groups) {
-                const groupName = `Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`;
                 for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
                     const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
-                    const group = toGroup(groupName, groupHash);
+                    const group = toGroup("Options", groupHash);
+                    const types = new Set();
                     for (const parsedEntry of parsedGroup.entries) {
                         const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model');
                         const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0;
@@ -1577,6 +1624,7 @@
                         ruleEntry.constraints = [toMaxConstraint(1, `${groupHash}/${text}`)];
                         const profile = findImportedProfile(cat, ruleName, "Special Rule");
                         if (profile) {
+                            types.add("Special Rule");
                             ruleEntry.infoLinks.push(toSpecialRuleLink(ruleName, `${groupHash}/${text}/link`, profile?.id, param));
                             group.selectionEntries.push(ruleEntry);
                             continue;
@@ -1584,6 +1632,16 @@
                         const profile2 = findImportedEntry(cat, text, "upgrade");
                         if (!profile2) {
                             console.log("Couldn't import profile", unitName, "/", text);
+                        }
+                        else {
+                            for (const p of profile2?.profiles || []) {
+                                if (p.typeName)
+                                    types.add(p.typeName);
+                            }
+                            for (const l of profile2?.infoLinks || []) {
+                                if (l.target?.typeName)
+                                    types.add(l.target.typeName);
+                            }
                         }
                         const equipmentLink = toEquipment(text, `${groupHash}/${text}`, profile2?.id);
                         group.entryLinks?.push(equipmentLink);
@@ -1596,6 +1654,20 @@
                     const [min, max] = parsedGroup.groupAmount.split('-');
                     group.constraints = [toMinConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)];
                     model.selectionEntryGroups.push(group);
+                    if (parsedGroup.specification) {
+                        group.name = toTitleCase(parsedGroup.specification).replace(":", "");
+                    }
+                    else {
+                        console.error(unitName, types);
+                        if (types.size === 1 && types.has("Weapon"))
+                            group.name = "Weapons";
+                        if (types.size === 1 && types.has("Armour"))
+                            group.name = "Armour";
+                        if (types.size === 2 && types.has("Weapon") && types.has("Armour"))
+                            group.name = "Equipment";
+                        if (types.size === 1 && types.has("Special Rule"))
+                            group.name = "Special Rules";
+                    }
                 }
                 // console.error(parsedEntry)
                 // console.warn(parsedEntry.groupAmount)
@@ -1640,6 +1712,8 @@
                         continue;
                     }
                     // Make the model a champion
+                    model.entryLinks = model.entryLinks.filter(o => o.type !== "selectionEntry");
+                    model.selectionEntryGroups = [];
                     model.subType = "crew";
                     model.infoLinks.push(toProfileLink("Champion", `${unitName}/command`, "5f1c-fd04-b0d5-d5e"));
                     model.constraints.push(toMaxConstraint(1, `${unitName}/${model.name}/champion`));
@@ -1673,7 +1747,7 @@
                             model.collective = true;
                         }
                         replaceWithLink.constraints = [];
-                        replaceWithLink.costs = [toCost(baseCost)];
+                        replaceWithLink.costs = [toCost(parsedEntry.details)];
                         if (perModelCost) {
                             replaceWithLink.modifiers?.push(getPerModelCostModifier(parsedEntry.details, `${unitName}/${model.name}/${replaceWith}`));
                         }
@@ -1831,7 +1905,7 @@
                     const models = foundModel.length ? foundModel : modelEntries;
                     for (const wantsLore of models) {
                         const group = getGroup(wantsLore, "Lores of Magic", `${unitName}/${wantsLore?.name}`);
-                        group.constraints = [toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)];
+                        group.constraints = [toMinConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`), toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)];
                         for (const magicBranch of knowsFrom) {
                             const found = findImportedEntry(cat, magicBranch, "upgrade");
                             const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id);
@@ -1855,19 +1929,71 @@
                 }
             }
         }
-        const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry);
-        const existingLink = findRootUnit(cat, unitName);
-        if (existingLink) {
-            $store.del_child(existingLink);
+        const entriesToAdd = [];
+        if (unit.Subheadings["Troop Type:"]?.includes("character")) {
+            for (const model of modelEntries) {
+                const newEntry = {
+                    ...entry,
+                    name: model.name,
+                    id: id(`character/${model.name}`),
+                    profiles: [],
+                    selectionEntries: [],
+                    infoGroups: []
+                };
+                const modelChild = entry.selectionEntries.find(o => o.name === model.name);
+                newEntry.selectionEntries.push(modelChild);
+                if (entry.selectionEntries.length > modelEntries.length) {
+                    console.error("CHARACTER BUG", unitName);
+                }
+                for (const infoGroup of entry.infoGroups) {
+                    const copy = JSON.parse(JSON.stringify(infoGroup));
+                    copy.id += `/${model.name}`;
+                    for (const infoLink of copy.infoLinks) {
+                        infoLink.id += `/${model.name}`;
+                    }
+                    newEntry.infoGroups.push(copy);
+                }
+                const modelUnitProfile = toUnitProfile(model.name, unit);
+                if (modelUnitProfile) {
+                    newEntry.profiles.push(modelUnitProfile);
+                }
+                entriesToAdd.push(newEntry);
+            }
         }
-        $store.add_child("entryLinks", cat, {
-            import: true,
-            name: unitName,
-            hidden: false,
-            id: id(`${unitName}/root`),
-            type: "selectionEntry",
-            targetId: addedUnit.id
-        });
+        else {
+            entriesToAdd.push(entry);
+        }
+        for (const entry of entriesToAdd) {
+            const existing = findUnit(cat, entry.name);
+            if (existing) {
+                $store.del_child(existing);
+            }
+            const existingLink = findRootUnit(cat, entry.name);
+            if (existingLink) {
+                $store.del_child(existingLink);
+            }
+            const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry);
+            const link = {
+                import: true,
+                name: entry.name,
+                hidden: false,
+                id: id(`${entry.name}/root`),
+                type: "selectionEntry",
+                targetId: addedUnit.id,
+                categoryLinks: [],
+            };
+            if (unit.Subheadings["Troop Type:"]) {
+                const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim();
+                const importedCategory = findImportedCategory(cat, category);
+                if (importedCategory) {
+                    link.categoryLinks.push(toCategoryLink(importedCategory, `${unitName}`));
+                }
+                else {
+                    console.error(`Couldn't find imported category ${category}`);
+                }
+            }
+            $store.add_child("entryLinks", cat, link);
+        }
     }
     function createUnits(cat, pages) {
         for (const page of pages) {

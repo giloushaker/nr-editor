@@ -85,6 +85,7 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
     if (line.includes("unless")) {
         throw "cant parse 'unless' options"
     }
+
     line = line.replace("may have may have", "may have");
     const [_, text, details] = line.trim().match(/([^.]*)(?:[.]{2,})?([^.]*)?/) as [unknown, string, string];
     if (!text.startsWith('•') && !text.startsWith('-')) {
@@ -142,6 +143,7 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
                         case "may be":
                         case "must take":
                             parser.next_token(amountTokens)
+                            parser.text_upto_token(amountTokens)
                             parser.remainder()
                             break;
                         case "may be":
@@ -175,7 +177,10 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
                 case "have":
                 case "be":
                 case "add":
+                    parser.remainder();
+                    break;
                 default:
+                    parser.text_upto_token(amountTokens);
                     parser.remainder();
                     break;
                 case "take":
@@ -202,7 +207,6 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
                     parser.text_upto_token(["with"])
                     parser.remainder()
                     break;
-
             }
             break;
     }
@@ -442,6 +446,7 @@ export function optionsToGroups(options: string) {
                 case "may be upgraded to":
                 case "may be mounted on":
                     entries.push({ ...obj, what: it.nextText().text, token: firstToken })
+                    it.next();
                     break;
                 case "may purchase":
                     entries.push({ ...obj, what: it.nextText().text, token: firstToken })

@@ -1,10 +1,11 @@
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICategoryLink, BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, SpecialRule, Unit, Weapon } from "./import_types"
-import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix, parseSpecialRule } from "./import_helpers"
-import { getGroup, getPerModelCostModifier, parseDetails, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
+import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix, parseSpecialRule, toTitleCase } from "./import_helpers"
+import { getGroup, getPerModelCostModifier, parseDetails, toCategoryLink, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { OptionsEntry, optionsToGroups } from "./import_options";
+import { InfoGroup } from "~/assets/shared/battlescribe/bs_main";
 
 function cmpItems(a: string, b: string) {
     return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "")
@@ -32,6 +33,17 @@ function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, t
         //         return profile
         //     }
         // }
+    }
+}
+function findImportedCategory(cat: Catalogue & EditorBase, categoryName: string) {
+    if (!categoryName) return
+    const lower = categoryName.trim().toLowerCase()
+    for (const imported of [cat, ...cat.imports]) {
+        for (const category of imported.categoryEntries || []) {
+            if (lower === category.name.toLowerCase()) {
+                return category
+            }
+        }
     }
 }
 function findImportedEntry(cat: Catalogue & EditorBase, entryName: string, type: string) {
@@ -73,7 +85,7 @@ function findUnit(cat: Catalogue & EditorBase, name: string) {
     return cat.sharedSelectionEntries?.find(o => o.name === name && o.getType() === "unit")
 }
 function findRootUnit(cat: Catalogue & EditorBase, name: string) {
-    return cat.entryLinks?.find(o => o.name === name && o.getType() === "unit")
+    return cat.entryLinks?.find(o => o.name === name)
 }
 
 
@@ -265,6 +277,7 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
         selectionEntries: [] as BSISelectionEntry[],
         selectionEntryGroups: [] as BSISelectionEntryGroup[],
         constraints: [] as BSIConstraint[],
+        categoryLinks: [] as BSICategoryLink[],
     }
     if (param) {
         const value = parseInt(param.replace(/x/, ""));
@@ -470,7 +483,7 @@ function commonGroups(what: string, token?: string) {
             return "Daemonic Icons"
         case "daemonic gifts":
             return "Daemonic Gifts"
-        case "vampiric Powers":
+        case "vampiric powers":
             return "Vampiric Powers"
         case "big name":
             return "Big Name"
@@ -501,6 +514,10 @@ function findModels(models: BSISelectionEntry[], model: string) {
 }
 function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
     const unitName = unit.Name
+    const existingUnitLink = findRootUnit(cat, unitName)
+    if (existingUnitLink) {
+        $store.del_child(existingUnitLink);
+    }
     const existing = findUnit(cat, unitName)
     if (existing) {
         $store.del_child(existing);
@@ -517,10 +534,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         entryLinks: [] as BSIEntryLink[],
         costs: [] as BSICost[],
         constraints: [] as BSIConstraint[],
+        categoryLinks: [] as BSICategoryLink[],
         id: id(`${unitName}/unit`),
         collective: false as boolean,
     } satisfies BSISelectionEntry;
-    if (existing?.id) entry.id = existing.id;
 
     if (unit['Points']) {
         const unitCost = parseInt(unit['Points'])
@@ -574,6 +591,16 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             const model = modelEntries[0]
             const GENERAL_ID = "7d76-b1a1-1535-a04c"
             getGroup(model, "Command", unitName).entryLinks!.push(toEntryLink("General", `${unitName}/${model.name}`, GENERAL_ID));
+        }
+        if (unit.Subheadings["Troop Type:"].toLowerCase().includes('chariot')) {
+            for (const model of modelEntries.slice(1)) {
+                const category = findImportedCategory(cat, "CHARIOT CREW")
+                if (category) {
+                    model.categoryLinks!.push(toCategoryLink(category, `${unitName}/${model.name}`))
+                } else {
+                    console.error(`Couldn't find imported category ${category}`);
+                }
+            }
         }
     }
 
@@ -636,10 +663,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         }
         for (const parsedGroup of parsedOptions.groups) {
 
-            const groupName = `Choose ${parsedGroup.groupAmount} ${parsedGroup.specification || "options"}`
             for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
                 const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
-                const group = toGroup(groupName, groupHash)
+                const group = toGroup("Options", groupHash)
+                const types = new Set<string>()
 
                 for (const parsedEntry of parsedGroup.entries) {
                     const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model')
@@ -656,6 +683,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     ruleEntry.constraints = [toMaxConstraint(1, `${groupHash}/${text}`)]
                     const profile = findImportedProfile(cat, ruleName!, "Special Rule")
                     if (profile) {
+                        types.add("Special Rule")
                         ruleEntry.infoLinks!.push(toSpecialRuleLink(ruleName!, `${groupHash}/${text}/link`, profile?.id, param))
                         group.selectionEntries!.push(ruleEntry);
                         continue;
@@ -663,6 +691,13 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     const profile2 = findImportedEntry(cat, text, "upgrade")
                     if (!profile2) {
                         console.log("Couldn't import profile", unitName, "/", text)
+                    } else {
+                        for (const p of profile2?.profiles || []) {
+                            if (p.typeName) types.add(p.typeName)
+                        }
+                        for (const l of profile2?.infoLinks || []) {
+                            if (l.target?.typeName) types.add(l.target.typeName)
+                        }
                     }
                     const equipmentLink = toEquipment(text, `${groupHash}/${text}`, profile2?.id)
                     group.entryLinks?.push(equipmentLink)
@@ -677,6 +712,17 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 const [min, max] = parsedGroup.groupAmount.split('-');
                 group.constraints = [toMinConstraint(min, `${groupHash}`), toMaxConstraint(max, `${groupHash}`)]
                 model.selectionEntryGroups!.push(group)
+
+                if (parsedGroup.specification) {
+                    group.name = toTitleCase(parsedGroup.specification).replace(":", "")
+                } else {
+                    console.error(unitName, types)
+
+                    if (types.size === 1 && types.has("Weapon")) group.name = "Weapons"
+                    if (types.size === 1 && types.has("Armour")) group.name = "Armour"
+                    if (types.size === 2 && types.has("Weapon") && types.has("Armour")) group.name = "Equipment"
+                    if (types.size === 1 && types.has("Special Rule")) group.name = "Special Rules"
+                }
             }
             // console.error(parsedEntry)
             // console.warn(parsedEntry.groupAmount)
@@ -721,6 +767,8 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     continue;
                 }
                 // Make the model a champion
+                model.entryLinks = [] = model.entryLinks!.filter(o => o.type !== "selectionEntry")
+                model.selectionEntryGroups = []
                 model.subType = "crew"
                 model.infoLinks!.push(toProfileLink("Champion", `${unitName}/command`, "5f1c-fd04-b0d5-d5e"))
                 model.constraints!.push(toMaxConstraint(1, `${unitName}/${model.name}/champion`))
@@ -755,7 +803,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                         model.collective = true;
                     }
                     replaceWithLink.constraints = []
-                    replaceWithLink.costs = [toCost(baseCost)]
+                    replaceWithLink.costs = [toCost(parsedEntry.details)]
                     if (perModelCost) {
                         replaceWithLink.modifiers?.push(getPerModelCostModifier(parsedEntry.details!, `${unitName}/${model.name}/${replaceWith}`))
                     }
@@ -919,7 +967,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 const models = foundModel.length ? foundModel : modelEntries
                 for (const wantsLore of models) {
                     const group = getGroup(wantsLore, "Lores of Magic", `${unitName}/${wantsLore?.name}`);
-                    group.constraints = [toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)]
+                    group.constraints = [toMinConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`), toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)]
                     for (const magicBranch of knowsFrom) {
                         const found = findImportedEntry(cat, magicBranch, "upgrade")!
                         const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id)
@@ -945,21 +993,72 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         }
     }
 
-    const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
-    const existingLink = findRootUnit(cat, unitName)
-    if (existingLink) {
-        $store.del_child(existingLink);
+    const entriesToAdd = []
+    if (unit.Subheadings["Troop Type:"]?.includes("character")) {
+        for (const model of modelEntries) {
+            const newEntry = {
+                ...entry,
+                name: model.name,
+                id: id(`character/${model.name}`),
+                profiles: [] as BSIProfile[],
+                selectionEntries: [] as BSISelectionEntry[],
+                infoGroups: [] as BSIInfoGroup[]
+
+            }
+            const modelChild = entry.selectionEntries.find(o => o.name === model.name)!
+            newEntry.selectionEntries.push(modelChild)
+            if (entry.selectionEntries.length > modelEntries.length) {
+                console.error("CHARACTER BUG", unitName)
+            }
+            for (const infoGroup of entry.infoGroups) {
+                const copy = JSON.parse(JSON.stringify(infoGroup))
+                copy.id += `/${model.name}`
+                for (const infoLink of copy.infoLinks!) {
+                    infoLink.id += `/${model.name}`
+                }
+                newEntry.infoGroups.push(copy)
+            }
+            const modelUnitProfile = toUnitProfile(model.name, unit)
+            if (modelUnitProfile) {
+                newEntry.profiles.push(modelUnitProfile);
+            }
+            entriesToAdd.push(newEntry)
+        }
+    } else {
+        entriesToAdd.push(entry)
     }
 
+    for (const entry of entriesToAdd) {
+        const existing = findUnit(cat, entry.name)
+        if (existing) {
+            $store.del_child(existing);
+        }
+        const existingLink = findRootUnit(cat, entry.name)
+        if (existingLink) {
+            $store.del_child(existingLink);
+        }
 
-    const addedLink = $store.add_child("entryLinks", cat, {
-        import: true,
-        name: unitName,
-        hidden: false,
-        id: id(`${unitName}/root`),
-        type: "selectionEntry",
-        targetId: addedUnit.id
-    });
+        const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
+        const link = {
+            import: true,
+            name: entry.name,
+            hidden: false,
+            id: id(`${entry.name}/root`),
+            type: "selectionEntry",
+            targetId: addedUnit.id,
+            categoryLinks: [] as BSICategoryLink[],
+        };
+        if (unit.Subheadings["Troop Type:"]) {
+            const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim()
+            const importedCategory = findImportedCategory(cat, category)
+            if (importedCategory) {
+                link.categoryLinks.push(toCategoryLink(importedCategory, `${unitName}`))
+            } else {
+                console.error(`Couldn't find imported category ${category}`);
+            }
+        }
+        const addedLink = $store.add_child("entryLinks", cat, link)
+    }
 
 }
 function createUnits(cat: Catalogue & EditorBase, pages: Page[]) {
