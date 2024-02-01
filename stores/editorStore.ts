@@ -1405,9 +1405,14 @@ export const useEditorStore = defineStore("editor", {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
 
-        const child = node.parentKey.startsWith("label-")
-          ? childs[0]
-          : [...childs].find((o) => get_base_from_vue_el(get_ctx(o)) === node);
+        let child: Element | undefined;
+        if (node.parentKey.startsWith("label-")) {
+          child = childs[0]
+        }
+        else {
+          child = [...childs].find((o) => $toRaw(get_base_from_vue_el(get_ctx(o))) === $toRaw(node));
+        }
+
         if (!child) {
           if (noLog !== true) {
             console.error("Couldn't find path to", obj.getName(), obj, "parent:", obj.parent?.getName());
