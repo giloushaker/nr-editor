@@ -29,20 +29,13 @@
                 <img class="w-24px h-24px align-bottom icon" src="assets/icons/search.png" title="Search" />
               </NuxtLink>
               <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
-                <img
-                  class="w-24px h-24px ml-5px align-bottom"
+                <img class="w-24px h-24px ml-5px align-bottom"
                   :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
-                  :title="githubHoverTitle(gst.github)"
-                />
+                  :title="githubHoverTitle(gst.github)" />
               </a>
             </legend>
-            <IconContainer
-              :items="systemAndCatalogues(gst)"
-              @itemClicked="itemClicked"
-              @itemDoubleClicked="itemDoubleClicked"
-              @new="newCatalogue(gst)"
-              v-model="selectedItem"
-            />
+            <IconContainer :items="systemAndCatalogues(gst)" @itemClicked="itemClicked"
+              @itemDoubleClicked="itemDoubleClicked" @new="newCatalogue(gst)" v-model="selectedItem" />
           </fieldset>
         </div>
       </template>
@@ -57,8 +50,8 @@
         </div>
       </template>
     </SplitView>
-    <Teleport to="#titlebar-content" v-if="store.unsavedCount && $route.name == 'index'">
-      <template v-if="store.unsavedCount">
+    <Teleport to="#titlebar-content" v-if="has_unsaved_changes && $route.name == 'index'">
+      <template v-if="has_unsaved_changes">
         <button class="bouton save ml-10px !w-100px" @click="saveAll">Save All</button>
       </template>
       <template v-else-if="failed">
@@ -132,6 +125,14 @@ export default defineComponent({
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   computed: {
+    has_unsaved_changes() {
+      const changes = this.store.unsavedChanges
+      for (const key in changes) {
+        const val = changes[key]
+        if (val.unsaved) return true;
+      }
+      return false;
+    },
     electron() {
       return Boolean(globalThis.electron);
     },

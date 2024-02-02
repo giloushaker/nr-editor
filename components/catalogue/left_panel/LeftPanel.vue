@@ -19,7 +19,8 @@
         class="bold p-4px unselectable ml-4px w-24px h-24px icon" @click="store.redo" title="Redo"
         src="/assets/icons/redo.svg" />
 
-      <div class="absolute right-30px">
+
+      <div class="absolute right-60px">
         Sort
         <select class="h-24px p-2px !text-sm" v-model="settings.sort">
           <option value="none">No Sorting </option>
@@ -28,6 +29,9 @@
           <option value="type">Type</option>
         </select>
       </div>
+      <img @click="store.goto(store.get_selected())"
+        class="align-middle absolute h-20px p-2px hover-darken cursor-pointer icon right-30px" title="Goto Selected"
+        src="/assets/icons/vertical-alignment-24.png" />
       <img @click="uistate.collapse_all" class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
         title="Collapse All" src="/assets/icons/collapse-all.svg" />
       <ErrorIcon :errors="catalogue.errors" showNumber clickable class="z-1" />

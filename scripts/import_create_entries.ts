@@ -1,9 +1,10 @@
-import type { BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { NoId, Profile, Unit, Weapon } from "./import_types";
-import { hashFnv32a } from "./import_helpers";
+import { id, parseSpecialRule } from "./import_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 
 export function toModelProfile(data: Profile, parentName?: string) {
+  const { ruleName, param } = parseSpecialRule(data.Name) // Same format as a special rule   
   const stats = data.Stats;
   const result: NoId<BSIProfile> = {
     "characteristics": [
@@ -17,13 +18,13 @@ export function toModelProfile(data: Profile, parentName?: string) {
       { name: "A", typeId: "dddc-9fbd-b0fd-a480", $text: stats.A ?? "-" },
       { name: "Ld", typeId: "c435-6b14-f77e-3c72", $text: stats.Ld ?? "-" }
     ],
-    name: data.Name,
+    name: ruleName!,
     hidden: false,
     typeId: "b070-143a-73f-2772",
     typeName: "Model"
   }
   if (parentName) {
-    result.comment = `${parentName}/${data.Name}`
+    result.comment = `${parentName}/${ruleName!}`
   }
   return result;
 }
@@ -61,7 +62,7 @@ export function toUnitProfile(unitName: string, unit: Unit) {
     typeId: "2878-9a1f-dd74-48e3",
     typeName: "Unit",
     hidden: false,
-    id: hashFnv32a(`${unitName}/unit/profile`)
+    id: id(`${unitName}/unit/profile`)
   }
   return result;
 
@@ -70,7 +71,7 @@ export function toWeaponProfile(name: string, weapon: Weapon) {
   return {
     name: name,
     hidden: false,
-    id: hashFnv32a(`${name}/weapon/${weapon}/profile`),
+    id: id(`${name}/weapon/${weapon}/profile`),
     typeId: "a378-c633-912d-11ce",
     typeName: "Weapon",
     characteristics: [
@@ -82,35 +83,37 @@ export function toWeaponProfile(name: string, weapon: Weapon) {
     ]
   }
 }
+
+
 export function toInfoLink(unitName: string, entry: Base) {
   const specialRuleLink: BSIInfoLink = {
     name: entry.getName(),
     hidden: false,
-    id: hashFnv32a(`${unitName}/${entry.typeName || "profile"}/${entry.getName()}`),
+    id: id(`${unitName}/${entry.typeName || "profile"}/${entry.getName()}`),
     type: "profile",
     targetId: entry.id,
     modifiers: [] as BSIModifier[]
   }
   return specialRuleLink;
 }
-export function toEquipment(name: string, profileName: string, itemName: string, targetId: string) {
-  if (name === "Skeletal hooves") debugger;
+export function toEquipment(itemName: string, hash: string, targetId?: string) {
   return {
-    name: name,
-    id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}`),
+    name: itemName,
+    id: id(`${hash}/equipment/${itemName}`),
     hidden: false,
     type: "selectionEntry",
-    targetId: targetId,
+    targetId: targetId ?? itemName,
+    modifiers: [] as BSIModifier[],
     constraints: [
       {
         type: "min", value: 1, scope: "parent", shared: false, field: "selections",
-        id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}/min`)
+        id: id(`${hash}/equipment/${itemName}/min`)
       },
       {
         type: "max", value: 1, scope: "parent", shared: false, field: "selections",
-        id: hashFnv32a(`${name}/${profileName}/equipment/${itemName}/max`)
+        id: id(`${hash}/equipment/${itemName}/max`)
       },
-    ]
+    ],
   } as BSIEntryLink;
 }
 export function loreOfMagicConstraint() {
@@ -131,4 +134,151 @@ export function loreOfMagicConstraint() {
     "value": 2,
     "field": "3e22-b735-4400-3d21"
   }
+}
+export function toGroup(name: string, hash: string): BSISelectionEntryGroup {
+  return {
+    name: name,
+    hidden: false,
+    id: id(`${hash}/${name}`),
+    selectionEntries: [],
+    entryLinks: [],
+    constraints: [],
+    modifiers: [],
+  }
+}
+export function getGroup(entry: BSISelectionEntry, name: string, hash: string): BSISelectionEntryGroup {
+  if (!entry.selectionEntryGroups) entry.selectionEntryGroups = []
+  const found = entry.selectionEntryGroups.find(o => o.name === name)
+  if (found) {
+    return found
+  }
+  const created = toGroup(name, hash)
+  entry.selectionEntryGroups.push(created);
+  return created;
+}
+
+export function parseDetails(details: string) {
+  const parsed = parseInt(details)
+  return isNaN(parsed) ? 0 : parsed;
+}
+export function toCost(pts: number | string | undefined) {
+  if (!pts) pts = 0;
+  const parsed = typeof pts === "string" ? parseInt(pts) : pts
+  return {
+    name: "pts",
+    typeId: "points",
+    value: isNaN(parsed) ? 0 : parsed
+  } as BSICost
+}
+export function toEntry(name: string | undefined, hash: string, cost?: string | number): BSISelectionEntry {
+  if (!name) throw new Error("Cannot create entry with no name.")
+  const result: BSISelectionEntry = {
+    name: name,
+    id: id(`${hash}/${name}`),
+    costs: [],
+    infoLinks: [],
+    profiles: [],
+    modifiers: [],
+    entryLinks: [],
+    type: "upgrade",
+    import: true,
+    hidden: false,
+  }
+  if (cost) {
+    result.costs.push(toCost(cost))
+  }
+  return result;
+}
+export function toProfileLink(name: string | undefined, hash: string, targetId: string): BSIInfoLink {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  return {
+    name: name,
+    hidden: false,
+    type: "profile",
+    id: id(`${hash}/${name}`),
+    targetId: targetId
+  }
+}
+export function toEntryLink(name: string, hash: string, targetId?: string) {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  const link: BSIEntryLink = {
+    import: true,
+    name: name,
+    hidden: false,
+    id: id(`${hash}/${name}`),
+    type: "selectionEntry",
+    targetId: targetId ?? name,
+    costs: [],
+    modifiers: [],
+    constraints: []
+  }
+  return link;
+}
+export function toGroupLink(name: string, hash: string, targetId?: string) {
+  if (!name) throw new Error("Cannot create profile link with no name.")
+  const link: BSIEntryLink = {
+    import: true,
+    name: name,
+    hidden: false,
+    id: id(`${hash}/${name}`),
+    type: "selectionEntryGroup",
+    targetId: targetId ?? name,
+    costs: [],
+    modifiers: [],
+    constraints: [],
+  }
+  return link;
+}
+export function toMinConstraint(min: string | number, hash: string) {
+  return {
+    type: "min",
+    value: min,
+    field: "selections",
+    scope: "parent",
+    shared: false,
+    id: id(`${hash}/min`)
+  } as BSIConstraint;
+}
+export function toMaxConstraint(max: string | number, hash: string, scope = "parent") {
+  return {
+    type: "max",
+    value: max,
+    field: "selections",
+    scope: scope,
+    shared: false,
+    id: id(`${hash}/max`)
+  } as BSIConstraint;
+}
+export function toSpecialRuleLink(ruleName: string, hash: string, targetId?: string, param?: string | null) {
+  const specialRuleLink: BSIInfoLink = {
+    name: ruleName,
+    hidden: false,
+    id: id(`${hash}/rule/${ruleName}`),
+    type: "profile",
+    targetId: targetId ?? ruleName,
+    modifiers: [] as BSIModifier[]
+  }
+  if (param) {
+    specialRuleLink.modifiers!.push({ type: "append", value: `(${param})`, field: "name" })
+  }
+  return specialRuleLink;
+}
+export function getPerModelCostModifier(details: string, hash: string) {
+  const perModelCostModifier = {
+    comment: "per model",
+    type: "increment", value: parseDetails(details), field: "points",
+    repeats: [
+      {
+        value: 1,
+        repeats: 1,
+        field: "selections",
+        scope: "parent",
+        childId: "model",
+        shared: true,
+        roundUp: false,
+        id: id(`${hash}/per model cost`)
+      }
+    ]
+  } as BSIModifier;
+  return perModelCostModifier
 }

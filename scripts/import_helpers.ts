@@ -9,7 +9,10 @@ export function hashFnv32a(str: string, seed = 198209835) {
     hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
   }
 
-  return `${hval >>> 0}`;
+  return (hval >>> 0).toString(16)
+}
+export function id(str: string) {
+  return `${hashFnv32a(str)}-${hashFnv32a(str + "------")}`
 }
 export function removeTextInParentheses(str: string) {
   return str.replace(/\([^()]*\)/g, '');
@@ -26,7 +29,7 @@ export function getOnlyTextInParentheses(str: string) {
 export function extractTextAndDetails(str: string) {
   const result = []
   let inDetails = false
-  let current = {text: "", details: "" as string | null}
+  let current = { text: "", details: "" as string | null }
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
     if (char === "(") {
@@ -34,7 +37,7 @@ export function extractTextAndDetails(str: string) {
       continue;
     } else if (char === ")") {
       inDetails = false;
-      result.push({...current})
+      result.push({ ...current })
       current.text = "";
       current.details = ""
       continue;
@@ -57,8 +60,8 @@ export function extractTextAndDetails(str: string) {
   }
   return result;
 }
-export interface Sortable {   toString: () => string; }
-export function sortByAscending<T>(array: T[], getKey: (item: T) => Sortable): T[] {   return [...array].sort((a,b) => (getKey(a) ?? "").toString().localeCompare((getKey(b) ?? "").toString(), undefined, { numeric: true })) }
+export interface Sortable { toString: () => string; }
+export function sortByAscending<T>(array: T[], getKey: (item: T) => Sortable): T[] { return [...array].sort((a, b) => (getKey(a) ?? "").toString().localeCompare((getKey(b) ?? "").toString(), undefined, { numeric: true })) }
 export function isSameCharacteristics(a: any[], b: any[]) {
   const hashA = sortByAscending(a, (o) => o.name).map(o => o.$text).join('::')
   const hashB = sortByAscending(b, (o) => o.name).map(o => o.$text).join('::')
@@ -79,7 +82,9 @@ export function splitByCenterDot(str: string) {
     const [key, ...valueParts] = item.split(':');
     const value = valueParts.join(':').trim(); // Re-join in case there are multiple colons
     const fixedKey = replaceSuffix(removeSuffix(key.trim(), "s"), "ve", "f");
-    result[fixedKey] = value;
+    for (const modelKey of fixedKey.split('/').map(o => o.trim())) {
+      result[modelKey] = value;
+    }
   });
 
   return result;
@@ -96,7 +101,7 @@ export function removePrefix(from: string, prefix: string): string {
   }
   return from;
 }
-export function replaceSuffix(str: string , suffix: string, replace: string) {
+export function replaceSuffix(str: string, suffix: string, replace: string) {
   // Check if the string ends with the specified suffix
   if (str.endsWith(suffix)) {
     // Remove the suffix from the end of the string and append the replacement
@@ -117,4 +122,34 @@ export function splitAnd(str: string) {
 export function replaceNewlineWithSpace(text: string) {
   // Replace `\n` preceded by `,` with just a space.
   return text.replace(/,\s*\n\s*/g, ', ');
+}
+
+export function parseSpecialRule(rule: string) {
+  const pattern = /^([^(]+?)([*]*)(?:\s*[(]([^)]+)[)])?([*]*)$/;
+  const match = rule.trim().match(pattern);
+  if (!match) {
+    console.warn("Couldn't parse rule " + rule);
+    return {}
+  }
+  let ruleName = match[1].trim();
+  let param = null;
+  let specification = null;
+  let asterisks = match[2].length + match[4].length
+  if (match[3]) {
+    const pieces = match[3].split(", ")
+    param = pieces[0]
+    if (pieces.length === 1) {
+      specification = pieces[1]
+    }
+    if (pieces.length > 2) {
+      console.log(`${rule} has more text within parentheses that is not handled.`)
+    }
+  }
+
+  ruleName = ruleName.replace("\u0007 ", "");
+  ruleName = ruleName.replace("\u0007", "");
+  if (ruleName.startsWith('Poisoned Attacks') && ruleName.includes('*Note')) {
+    ruleName = "Poisoned Attacks"
+  }
+  return { ruleName, param, specification, asterisks };
 }

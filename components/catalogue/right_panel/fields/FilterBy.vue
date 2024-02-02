@@ -29,6 +29,7 @@
                 {{ opt.option.name }}
                 <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
                 <span class="shared" v-if="opt.option.shared"> (shared) </span>
+                <span class="gray" v-if="opt.option.rootId === rootId"> (same ancestor)</span>
                 <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
               </div>
             </template>
@@ -147,8 +148,10 @@ export default {
       return true;
     },
     availableTargets() {
-      return [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
+      const result = [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
+      return result;
     },
+
   },
 
   watch: {
@@ -192,7 +195,14 @@ export default {
       }
       return getFilterSelections(this.item, this.catalogue);
     },
-
+    rootId() {
+      let item = this.item as any;
+      if (!item?.parent) return;
+      while (item?.parent && !item.parent.isCatalogue()) {
+        item = item.parent
+      }
+      return item.id;
+    },
     allCategories(): EditorSearchItem[] {
       if (!this.includeCategories) {
         return [];

@@ -163,7 +163,7 @@
   - Burning Chariot of Tzeentch //  See page 23
   - Upgrade one model to an Iridescent Horror (champion) //  +6 points per unit
 • Any unit may upgrade one model to an // undefined
-  Ectoplasmic Horror (champion) //  +6 points per unit
+  - Ectoplasmic Horror (champion) //  +6 points per unit
 • Any unit may upgrade one model to a Pyroclaster (champion) //  +7 points per unit
 • A Pyroclaster may be upgraded to an Exalted Flamer (champion) // +40 points
 • An Exalted Flamer may be a: // undefined

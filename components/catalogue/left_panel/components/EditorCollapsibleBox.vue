@@ -1,7 +1,7 @@
 <template>
   <div :class="{ box, nobox, nocollapse, collapsed, opened }" class="collapsible-box"
     @contextmenu="do_rightcllick_select">
-    <h3 v-if="!notitle" class="title hover-darken" :class="{
+    <h3 v-if="!notitle" class="title" :class="{
       selected,
       arrowTitle: collapsible,
       normalTitle: !collapsible,
@@ -289,8 +289,31 @@ h3 {
   padding-left: 20px;
 }
 
-.selected {
-  background-color: rgba(125, 125, 125, 0.3);
+.title {
+  position: relative;
+}
+
+.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  /* extend far to the left */
+  right: 0;
+  bottom: 0;
+  background: rgba(125, 125, 125, 0.3);
+  z-index: -1;
+}
+
+.title:hover::before {
+  background-color: var(--hover-darken-color, rgba(0, 0, 0, 0.15));
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
 }
 
 .hide {

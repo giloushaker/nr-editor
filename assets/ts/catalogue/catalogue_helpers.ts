@@ -12,9 +12,17 @@ export interface EditorSearchItem {
   indent: number;
   catalogue: string | null;
   shared: boolean;
+  rootId?: string;
 }
 function getCatalogueName(obj: Base) {
   return obj.catalogue?.getName() ?? null;
+}
+function getRootId(entry?: EditorBase) {
+  if (!entry?.parent) return;
+  while (entry?.parent && !entry.parent.isCatalogue()) {
+    entry = entry.parent
+  }
+  return entry.id;
 }
 function recursive(current: Catalogue | EditorBase, iterator: string, result: EditorSearchItem[], indent = 0) {
   for (const child of (current as any)[iterator]()) {
@@ -24,7 +32,8 @@ function recursive(current: Catalogue | EditorBase, iterator: string, result: Ed
       id: child.id,
       indent: indent,
       catalogue: getCatalogueName(child),
-      shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
+      rootId: getRootId(child),
+      shared: child.parentKey?.includes("shared") || false,
     });
     recursive(child, iterator, result, indent + 1);
   }
@@ -43,8 +52,9 @@ function recursiveWithFilter(
       editorTypeName: child.editorTypeName,
       id: child.id,
       indent: indent,
+      rootId: getRootId(child),
       catalogue: getCatalogueName(child),
-      shared: getFirstAncestor(child)?.parentKey?.includes("shared") || false,
+      shared: child.parentKey?.includes("shared") || false,
     });
     recursive(child, iterator, result, indent + 1);
   }
@@ -143,6 +153,7 @@ export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
         id: parent.id,
         editorTypeName: parent.editorTypeName,
         indent: i,
+        rootId: getRootId(parent),
         catalogue: getCatalogueName(parent),
         shared: getFirstAncestor(parent)?.parentKey?.includes("shared") || false,
       });

@@ -25,6 +25,7 @@ export interface Unit {
         "Unit Size:"?: string,
         "Base Size:"?: string,
         "Troop Type:"?: string
+        "Magic:"?: string
     },
     // "Unit Text": string
 }

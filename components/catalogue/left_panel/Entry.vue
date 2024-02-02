@@ -1,5 +1,5 @@
 <template>
-    <span>
+    <span :class="{ highlight }">
         <span class="typeIcon-wrapper">
             <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
         </span>
@@ -49,6 +49,7 @@ export default defineComponent({
         item: { type: Object as PropType<EditorBase>, required: true },
         noSortIndex: Boolean,
         imported: Boolean,
+        highlight: Boolean,
     },
     setup() {
         return { settings: useSettingsStore() }
@@ -90,5 +91,9 @@ export default defineComponent({
 
 .imported {
     color: rgb(128, 145, 183);
+}
+
+.highlight {
+    background-color: rgba(40, 110, 255, 0.30);
 }
 </style>

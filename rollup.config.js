@@ -7,7 +7,7 @@ export default {
   watch: true,
   output: {
     file: './scripts/import_json.js', // Output bundle file
-    format: 'iife', // Output format (iife for browser, cjs for Node, etc.)
+    format: 'umd', // Output format (iife for browser, cjs for Node, etc.)
   },
   plugins: [
     nodeResolve(), // Resolves node modules

@@ -19,6 +19,9 @@
   <CatalogueRightPanelFieldsCategories v-if="isEntryOrGroup" :item="item" :catalogue="catalogue"
     @catalogueChanged="changed" class="section" />
 
+
+  <CatalogueRightPanelFieldsCharacteristics class="mt-10px" v-if="item.target?.isProfile()"
+    :item="(item.target as EditorBase & Profile)" :catalogue="item.target.catalogue" link />
   <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="false"
     class="section" v-if="type == 'entry' || type == 'category'" />
 
@@ -28,7 +31,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Link, Profile } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
