@@ -27,7 +27,7 @@
     <table class="editorTable">
       <tr v-for="char of charactacteristics">
         <td>{{ char.name }}: </td>
-        <td><UtilEditableDiv v-model="char.$text" @change="changed" /></td>
+        <td><UtilEditableDiv v-model="char.$text" @change="changed" :beforePaste="fixEndlines" /></td>
       </tr>
     </table>
   </fieldset>
@@ -64,10 +64,27 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
+
     changed() {
       this.$emit("catalogueChanged");
     },
+
+    fixEndlines(updatedDescription: string): string {
+      console.log("Fixing");
+      updatedDescription = updatedDescription.replace(/([^.:])\n/g, "$1 ");
+
+      updatedDescription = updatedDescription.replace(/([.:]\n)/g, "$1\n");
+
+      // Add newline before dashes not preceded by newline
+      updatedDescription = updatedDescription.replace(/([^\n])•(?=[^\n])/g, "$1\n• ");
+
+      // Ensure there are no more than two consecutive newline characters
+      updatedDescription = updatedDescription.replace(/\n\n\n*/g, "\n\n");
+
+      return updatedDescription.replace(/ +/g, " ");
+    },
   },
+
   computed: {
     profileTypes() {
       return [...this.catalogue.iterateProfileTypes()];
