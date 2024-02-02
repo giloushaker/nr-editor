@@ -80,6 +80,7 @@ export default {
         type: type,
         value: value,
         childId: "any",
+        includeChildSelections: ["roster"].includes(scope) ? true : false
       });
     },
   },

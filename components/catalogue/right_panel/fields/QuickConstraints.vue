@@ -80,6 +80,7 @@ export default {
         scope: scope,
         value: 1,
         select: false,
+        includeChildSelections: ["roster"].includes(scope) ? true : false
       });
     },
   },
@@ -93,16 +94,18 @@ export default {
   flex-wrap: wrap;
   gap: 10px;
 }
+
 .column {
   flex: 1;
   flex-wrap: wrap;
 }
+
 .bouton {
   width: 100%;
   font-size: 15px !important;
   text-align: left !important;
 }
+
 .text {
   margin-left: 28px;
-}
-</style>
+}</style>
