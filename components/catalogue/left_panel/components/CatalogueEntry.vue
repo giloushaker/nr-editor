@@ -477,6 +477,7 @@ export default {
       console.log(this.item.name, this.item.editorTypeName, toRaw(this.item));
       (globalThis as any).$debugOption = this.item;
       (globalThis as any).$debugElement = this;
+      (globalThis as any).$debugGroup = this.$parent;
     },
     hasRootLink(catalogue: Catalogue, item: Base) {
       return catalogue.entryLinks?.find((o) => o.targetId === item.id);

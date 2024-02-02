@@ -1363,9 +1363,9 @@ export const useEditorStore = defineStore("editor", {
         return;
       }
 
-      this.show(obj)
-      const open_el = async (el: any) => {
+      async function open_el(el: any) {
         const context = get_ctx(el);
+        get_base_from_vue_el(context).showInEditor = true;
         context.open();
         await context.$nextTick();
       }
@@ -1386,6 +1386,7 @@ export const useEditorStore = defineStore("editor", {
         }
         return;
       }
+      await this.show(obj)
       await open_el(current);
       const nodes = [] as EditorBase[];
       forEachParent(obj, (parent) => {
