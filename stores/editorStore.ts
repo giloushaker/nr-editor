@@ -746,7 +746,7 @@ export const useEditorStore = defineStore("editor", {
     async set_clipboard(data: EditorBase[], event?: ClipboardEvent) {
       if (this.clipboardmode === "json") {
         //@ts-ignore
-        const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o })) as EditorBase[];
+        const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o, sortIndex: undefined })) as EditorBase[];
         const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false, formatted: true });
         if (event?.clipboardData) {
           event.clipboardData.setData("text/plain", json);
@@ -1218,6 +1218,9 @@ export const useEditorStore = defineStore("editor", {
       return obj;
     },
     del_child(entry: Base) {
+      if (entry.catalogue) {
+        this.set_catalogue_changed(entry.catalogue);
+      }
       try {
         const catalogue = entry.catalogue;
         const manager = catalogue.manager;
@@ -1226,9 +1229,6 @@ export const useEditorStore = defineStore("editor", {
         onRemoveEntry(removed, manager);
       } catch (e) {
         console.error("Failed to delete", entry);
-      }
-      if (entry.catalogue) {
-        this.set_catalogue_changed(entry.catalogue);
       }
     },
     can_move(obj: EditorBase) {
