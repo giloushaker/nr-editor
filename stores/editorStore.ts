@@ -1363,7 +1363,8 @@ export const useEditorStore = defineStore("editor", {
         return;
       }
 
-      async function open_el(el: any) {
+      this.show(obj)
+      const open_el = async (el: any) => {
         const context = get_ctx(el);
         context.open();
         await context.$nextTick();
