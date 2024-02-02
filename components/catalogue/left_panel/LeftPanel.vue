@@ -245,55 +245,7 @@ export default defineComponent({
       }
     },
     async update(data: { filter: string; ignoreProfilesRules: boolean }) {
-      const { filter, ignoreProfilesRules } = data;
-      const prev = this.store.filtered as EditorBase[];
-      for (const p of prev) {
-        delete p.showInEditor;
-        delete p.showChildsInEditor;
-        delete p.highlight;
-        forEachParent(p as EditorBase, (parent) => {
-          delete parent.showInEditor;
-          delete p.showChildsInEditor;
-        });
-      }
-      if (filter.length > 1) {
-        this.store.set_filter(filter);
-        // let t1 = Date.now();
-        this.store.filtered = this.catalogue.findOptionsByText(filter) as EditorBase[];
-        if (ignoreProfilesRules) {
-          this.store.filtered = this.store.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
-        }
-        // let t2 = Date.now();
-        for (const p of this.store.filtered) {
-          this.store.show(p);
-        }
-        // let t3 = Date.now();
-        await nextTick();
-        // let t4 = Date.now();
-
-        if (this.store.filtered.length < 300) {
-          for (const p of this.store.filtered) {
-            if (!p.parent) continue;
-            try {
-              await this.store.open(p as EditorBase, false, true);
-            } catch (e) {
-              continue;
-            }
-          }
-        }
-        // let t5 = Date.now();
-        // this.$nextTick(() => {
-        //   let t6 = Date.now();
-        //   console.log("search", t2 - t1);
-        //   console.log("set display status", t3 - t2);
-        //   console.log("render1", t4 - t3);
-        //   console.log("open", t5 - t4);
-        //   console.log("render2", t6 - t5);
-        // });
-      } else {
-        this.store.set_filter("");
-        this.store.filtered = [];
-      }
+      return this.store.update_catalogue_search(this.catalogue, data);
     },
   },
   computed: {
