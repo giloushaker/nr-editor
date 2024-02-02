@@ -29,7 +29,12 @@
     <table class="editorTable">
       <tr v-for="char of charactacteristics">
         <td>{{ char.name }}: </td>
-        <td><UtilEditableDiv v-model="char.$text" @change="changed" :beforePaste="fixEndlines" /></td>
+        <td
+          ><UtilEditableDiv
+            v-model="char.$text"
+            @change="changed"
+            :beforePaste="settings.autoFormatCharacteristics ? fixEndlines : undefined"
+        /></td>
       </tr>
     </table>
   </fieldset>
@@ -40,6 +45,8 @@ import { PropType } from "vue";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useSettingsStore } from "~/stores/settingsState";
+
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -54,6 +61,9 @@ export default {
     link: {
       type: Boolean,
     },
+  },
+  setup() {
+    return { settings: useSettingsStore() };
   },
   methods: {
     getName,

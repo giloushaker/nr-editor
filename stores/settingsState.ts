@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/shared/appearance";
 import { AppearanceTheme } from "~/assets/shared/types/appearance";
-import merge from "lodash.merge"
+import merge from "lodash.merge";
 export interface RGB {
   r: number;
   g: number;
@@ -231,7 +231,7 @@ type:group & name:/options/i
 type:group
 cost:pts
 cost:points
-name` 
+name`;
 
 const defaultState = {
   systemsFolder: "" as string | undefined,
@@ -242,29 +242,31 @@ const defaultState = {
   theme: "" as "" | "dark" | "light",
   githubAutoIncrement: true,
   autosort: {
-    config: defaultSortConfiguration
+    config: defaultSortConfiguration,
   },
-  display: {          
+  display: {
     sortIndex: true,
     references: true,
     costs: true,
-  }
-}
+  },
+  autoFormatCharacteristics: false,
+  autoRenameInfoLinkParent: false,
+};
 export const useSettingsStore = defineStore("settings", {
-  state: () => ({...defaultState}),
+  state: () => ({ ...defaultState }),
 
   persist: {
     storage: globalThis.localStorage,
     deserialize(text: string) {
-      const parsed = JSON.parse(text)
-      return merge(parsed, defaultState)
+      const parsed = JSON.parse(text);
+      return merge(parsed, defaultState);
     },
-    serialize: JSON.stringify
+    serialize: JSON.stringify,
   } as any, // It makes an error without any but it works fine so idc.
   getters: {
-      isDarkTheme(): boolean{
-        return this.theme === "dark"
-      }
+    isDarkTheme(): boolean {
+      return this.theme === "dark";
+    },
   },
   actions: {
     getDefaultAppareance(): AppearanceTheme {
@@ -302,14 +304,14 @@ export const useSettingsStore = defineStore("settings", {
     refreshAppearance() {
       updateCssVars(this.getDefaultAppareance(), {});
     },
-    init(){
-      if(!this.display){
+    init() {
+      if (!this.display) {
         this.display = {
           sortIndex: true,
           references: true,
           costs: true,
-        }
+        };
       }
-    }
+    },
   },
 });
