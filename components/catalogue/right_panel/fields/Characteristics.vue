@@ -1,13 +1,20 @@
 <template>
   <fieldset>
-    <legend>Characteristics<template v-if="link"><span class="gray"> (from target)</span></template></legend>
+    <legend
+      >Characteristics<template v-if="link"><span class="gray"> (from target)</span></template></legend
+    >
     <table class="editorTable">
       <tr>
         <td>Profile Type: </td>
 
         <td>
-          <UtilAutocomplete :options="profileTypes" :filterField="(o) => o.getName()" valueField="id"
-            v-model="item.typeId" @change="changedType">
+          <UtilAutocomplete
+            :options="profileTypes"
+            :filterField="(o: any) => o.getName()"
+            valueField="id"
+            v-model="item.typeId"
+            @change="changedType"
+          >
             <template #option="{ option }">
               <div class="flex align-items flex-row" style="white-space: nowrap">
                 <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -22,9 +29,12 @@
     <table class="editorTable">
       <tr v-for="char of charactacteristics">
         <td>{{ char.name }}: </td>
-        <td>
-          <UtilEditableDiv v-model="char.$text" @change="changed" />
-        </td>
+        <td
+          ><UtilEditableDiv
+            v-model="char.$text"
+            @change="changed"
+            :beforePaste="settings.autoFormatCharacteristics ? fixEndlines : undefined"
+        /></td>
       </tr>
     </table>
   </fieldset>
@@ -35,6 +45,8 @@ import { PropType } from "vue";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useSettingsStore } from "~/stores/settingsState";
+
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -48,7 +60,10 @@ export default {
     },
     link: {
       type: Boolean,
-    }
+    },
+  },
+  setup() {
+    return { settings: useSettingsStore() };
   },
   methods: {
     getName,
@@ -64,10 +79,27 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
+
     changed() {
       this.$emit("catalogueChanged");
     },
+
+    fixEndlines(updatedDescription: string): string {
+      console.log("Fixing");
+      updatedDescription = updatedDescription.replace(/([^.:])\n/g, "$1 ");
+
+      updatedDescription = updatedDescription.replace(/([.:]\n)/g, "$1\n");
+
+      // Add newline before dashes not preceded by newline
+      updatedDescription = updatedDescription.replace(/([^\n])•(?=[^\n])/g, "$1\n• ");
+
+      // Ensure there are no more than two consecutive newline characters
+      updatedDescription = updatedDescription.replace(/\n\n\n*/g, "\n\n");
+
+      return updatedDescription.replace(/ +/g, " ");
+    },
   },
+
   computed: {
     profileTypes() {
       return [...this.catalogue.iterateProfileTypes()];
