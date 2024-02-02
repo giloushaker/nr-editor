@@ -42,8 +42,14 @@
       <tr>
         <td>Target:</td>
         <td>
-          <UtilAutocomplete v-model="item.targetId" :placeholder="`Search Target...`" :options="availableTargets"
-            valueField="id" filterField="name" @change="targetIdChanged">
+          <UtilAutocomplete
+            v-model="item.targetId"
+            :placeholder="`Search Target...`"
+            :options="availableTargets"
+            valueField="id"
+            filterField="name"
+            @change="targetIdChanged"
+          >
             <template #option="opt">
               <div style="white-space: nowrap">
                 <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
@@ -79,7 +85,8 @@ export default {
   setup() {
     return { store: useEditorStore() };
   },
-  emits: ["catalogueChanged"],
+
+  emits: ["catalogueChanged", "targetChanged"],
 
   data() {
     return {
@@ -121,9 +128,11 @@ export default {
       if (this.type === "catalogue") {
         const id = this.catalogue.gameSystemId || this.catalogue.id;
         const values = Object.values(this.store.get_system(id).catalogueFiles);
-        const catalogues = values.map((elt) => {
-          return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLink" };
-        }).filter(o => o.id !== this.catalogue.id);
+        const catalogues = values
+          .map((elt) => {
+            return { id: elt.catalogue.id, name: elt.catalogue.name, editorTypeName: "catalogueLink" };
+          })
+          .filter((o) => o.id !== this.catalogue.id);
         return catalogues;
       }
       const all = [];
@@ -134,7 +143,7 @@ export default {
       }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-    typeChanged() { },
+    typeChanged() {},
 
     targetIdChanged() {
       this.updateLink();
@@ -154,6 +163,7 @@ export default {
         this.item.name = target?.name || "Unknown";
         this.item.type = (target?.editorTypeName || this.item.type) as any;
       }
+      this.$emit("targetChanged");
     },
     changedImportRootEntries() {
       this.changed();

@@ -5,7 +5,7 @@
 
 <script lang="ts">
 export default {
-  emits: ["change", "update:modelValue"],
+  emits: ["change", "update:modelValue", "paste"],
   props: {
     modelValue: {
       type: [String, Number, Array],
@@ -14,6 +14,7 @@ export default {
       type: String,
       default: "",
     },
+    beforePaste: Function,
   },
 
   methods: {
@@ -37,6 +38,9 @@ export default {
     onpaste(e: ClipboardEvent) {
       e.preventDefault();
       var text = this.decodeHtml(e.clipboardData?.getData("text/plain") ?? "");
+      if (this.beforePaste) {
+        text = this.beforePaste(text);
+      }
       document.execCommand("insertText", false, text);
       this.$emit("update:modelValue", this.get().innerText);
       this.$emit("change");
