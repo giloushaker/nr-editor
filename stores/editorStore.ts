@@ -1287,7 +1287,13 @@ export const useEditorStore = defineStore("editor", {
         case "rule":
           return "rules";
         case "profile":
-          return "profiles";
+          return "";
+        case "category":
+          return "categoryEntries"
+        case "profileType":
+          return "profileTypes"
+        case "costType":
+          return "costTypes"
         case "selectionEntry":
           return "selectionEntries";
         case "selectionEntryGroup":
@@ -1664,31 +1670,30 @@ export const useEditorStore = defineStore("editor", {
           delete p.showChildsInEditor;
         });
       }
-      if (this.filter.length <= 1) {
-        this.set_filter("");
-        this.filtered = [];
-        return;
-      }
-
-      this.set_filter(filter);
-      this.filtered = catalogue.findOptionsByText(filter) as EditorBase[];
-      if (ignoreProfilesRules) {
-        this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
-      }
-      for (const p of this.filtered) {
-        this.show(p);
-      }
-      await nextTick();
-
-      if (this.filtered.length < 300) {
+      if (filter.length > 1) {
+        this.set_filter(filter);
+        this.filtered = catalogue.findOptionsByText(filter) as EditorBase[];
+        if (ignoreProfilesRules) {
+          this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+        }
         for (const p of this.filtered) {
-          if (!p.parent) continue;
-          try {
-            await this.open(p as EditorBase, false, true);
-          } catch (e) {
-            continue;
+          this.show(p);
+        }
+        await nextTick();
+
+        if (this.filtered.length < 300) {
+          for (const p of this.filtered) {
+            if (!p.parent) continue;
+            try {
+              await this.open(p as EditorBase, false, true);
+            } catch (e) {
+              continue;
+            }
           }
         }
+      } else {
+        this.set_filter("");
+        this.filtered = [];
       }
     },
     async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
