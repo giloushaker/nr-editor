@@ -1,4 +1,4 @@
-import{u as e}from"./editorStore.682693c3.js";import{e as t,a as s,b as o,o as r,i as n}from"./entry.20ab1991.js";const a=t({setup(){return{store:e()}},data(){return{}},computed:{async system(){return await this.store.get_or_load_system(this.$route.params.id)}},methods:{}}),i={class:"ml-20px mt-10px h-full overflow-y-auto"},c=n("pre",null,`This tab is used to run scripts:
+import{u as e}from"./editorStore.bd876df7.js";import{e as t,a as s,b as o,o as r,i as n}from"./entry.6df6229c.js";const a=t({setup(){return{store:e()}},data(){return{}},computed:{async system(){return await this.store.get_or_load_system(this.$route.params.id)}},methods:{}}),i={class:"ml-20px mt-10px h-full overflow-y-auto"},c=n("pre",null,`This tab is used to run scripts:
 Scripts will be able to export certain methods:
 
 // Returns the entries that the script should select, allowing the user to preview what would be changed by modify()
@@ -21,4 +21,4 @@ check(catalogues, entries)
 // export an object as \`docs\` with the key:value pairs corresponding to a function (such as \`select\`, \`modify\`,
 \`check\`)
         `,-1),d=[c];function u(p,h,l,m,f,_){return r(),o("div",i,d)}const b=s(a,[["render",u]]);export{b as default};
-//# sourceMappingURL=_id_.2b4f7829.js.map
+//# sourceMappingURL=_id_.9d9b0965.js.map
