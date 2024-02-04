@@ -1514,7 +1514,6 @@ export const useEditorStore = defineStore("editor", {
             el.scrollIntoView({
               behavior: "instant",
               block: "center",
-              inline: "center",
             });
           }
         }, 50);
