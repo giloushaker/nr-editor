@@ -53,7 +53,7 @@ export default defineNuxtConfig({
       ? [
         {
           mode: "client",
-          src: "electron/renderer.js",
+          src: "electron/renderer.ts",
         },
       ]
       : []),
@@ -68,16 +68,16 @@ export default defineNuxtConfig({
         vite: {
           resolve: {
             alias: {
-              
-                "~": dirname(__filename),
-                "@": dirname(__filename),
-                "~~": dirname(__filename),
-                "@@": dirname(__filename),
-                "assets": `${dirname(__filename)}/assets`,
-                "public": `${dirname(__filename)}/public`
-              
+
+              "~": dirname(__filename),
+              "@": dirname(__filename),
+              "~~": dirname(__filename),
+              "@@": dirname(__filename),
+              "assets": `${dirname(__filename)}/assets`,
+              "public": `${dirname(__filename)}/public`
+
             }
-          },  
+          },
           build: {
             sourcemap: true,
             rollupOptions: {

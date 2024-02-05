@@ -43,7 +43,7 @@
       /> -->
     </div>
     <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
-      <CatalogueLeftPanelComponentsCatalogueEntry class="mb-40px" :item="catalogue" grouped id="editor-entries"
+      <CatalogueLeftPanelComponentsCatalogueEntry class="mb-40px w-max" :item="catalogue" grouped id="editor-entries"
         :showImported="showImported" />
     </div>
     <div class="bottom static">

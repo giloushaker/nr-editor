@@ -1,9 +1,9 @@
-import { NotificationsOptions } from "@kyvg/vue3-notification";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { useEditorStore } from "~/stores/editorStore";
-import * as nodeHelpers from "~/electron/node_helpers";
-import * as bsHelpers from "~/assets/shared/battlescribe/bs_helpers";
+import type { NotificationsOptions } from "@kyvg/vue3-notification";
+import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import type { useEditorStore } from "~/stores/editorStore";
+import type * as nodeHelpers from "~/electron/node_helpers";
+import type * as bsHelpers from "~/assets/shared/battlescribe/bs_helpers";
 declare global {
   var isEditor: true;
   var _closeWindow: boolean | undefined;

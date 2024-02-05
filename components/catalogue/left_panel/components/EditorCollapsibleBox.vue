@@ -299,7 +299,7 @@ h3 {
   top: 0;
   left: -9999px;
   /* extend far to the left */
-  right: -9999px;
+  right: 0;
   bottom: 0;
   background: rgba(125, 125, 125, 0.3);
   z-index: -1;
@@ -311,7 +311,7 @@ h3 {
   position: absolute;
   top: 0;
   left: -9999px;
-  right: -9999px;
+  right: 0;
   bottom: 0;
   z-index: -1;
 }
