@@ -2,25 +2,153 @@ const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = requir
 const path = require("path");
 const simpleGit = require("simple-git");
 const { autoUpdater } = require("electron-updater");
+import * as globals from "../types/global";
+import * as node_helpers from "./node_helpers";
+import * as bs_helpers from "assets/shared/battlescribe/bs_helpers";
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles } from "./files";
 import { entry, options } from "./entry";
-import { ProtocolRequest } from "electron";
+import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
+import { stripHtml } from "./electron_helpers";
+import { useEditorStore } from "~/stores/editorStore";
+import { createPinia, setActivePinia } from "pinia";
 
-export function stripHtml(originalString: string): string {
-  if (originalString == null) {
-    return "";
+export function init_globals() {
+  const map = {} as Record<string, Function>
+  init_handlers((key: string, cb: Function) => {
+    map[key] = cb
+  })
+  globalThis.$node = node_helpers
+  globalThis.$helpers = bs_helpers
+  globalThis.isEditor = true;
+  globalThis.notify = (...args) => console.log(...args);
+  globalThis.electron = {
+    async send(channel, ...args) {
+      return map[channel](null, ...args)
+    },
+    receive(channel, listener) {
+      map[channel] = listener
+    },
+    async invoke(channel, ...args) {
+      return await map[channel](null, ...args)
+    },
+    on(channel, listener) {
+      map[channel] = listener
+    }
   }
-
-  let res = originalString.replace(/<br ?[/]?>/g, "\n");
-  res = res.replace(/(<([^>]+)>)/gi, "");
-  res = res.replace(/&bull;/g, "•");
-  res = res.replace(/[&][^;]*;/g, "");
-  res = res.replace(/\n */g, "\n");
-  res = res.replace(/\n\n*/g, "\n");
-  res = res.replace(/−/g, "-");
-  return res;
 }
+type ListenerCallback = (event: IpcMainInvokeEvent, ...args: any[]) => (Promise<void>) | (any)
+export function init_handlers(handle: (channel: string, listener: ListenerCallback) => unknown) {
+  // Expose all node functions to invoke
+  const fs = require("fs");
+  const promiseFunctions = new Set(Object.keys(fs.promises));
+  for (const [key, val] of Object.entries(fs)) {
+    if (promiseFunctions.has(key)) continue;
+    if (typeof val === "function") {
+      handle(key, (event: null | any, ...args: any) => {
+        return val(...args);
+      });
+    }
+  }
+  for (const [key, val] of Object.entries(fs.promises)) {
+    if (typeof val === "function") {
+      handle(key, async (event: null | any, ...args: any) => {
+        return await val(...args);
+      });
+    }
+  }
+  handle("isDirectory", async (event: null | any, ...args: any) => {
+    const stats = fs.statSync(...args);
+    return stats.isDirectory();
+  });
+  handle("isFile", async (event: null | any, ...args: any) => {
+    const stats = fs.statSync(...args);
+    return stats.isFile();
+  });
+  handle("showOpenDialog", async (event: null | { sender: Electron.WebContents; }, ...args: any[]) => {
+    if (event) {
+      const wnd = BrowserWindow.fromWebContents(event.sender);
+      //@ts-ignore
+      return await dialog.showOpenDialog(wnd, ...args);
+    }
+  });
+  handle("showMessageBoxSync", async (event: null | { sender: Electron.WebContents; }, ...args: any[]) => {
+    if (event) {
+      const wnd = BrowserWindow.fromWebContents(event.sender);
+      //@ts-ignore
+      return dialog.showMessageBoxSync(wnd, ...args);
+    }
+  });
+  handle("getPath", async (event: null | any, ...args: any) => {
+    //@ts-ignore
+    return await app.getPath(...args);
+  });
+  handle("closeWindow", async (event: null | { sender: Electron.WebContents; }, ...args: any) => {
+    if (event) {
+      const wnd = BrowserWindow.fromWebContents(event.sender);
+      if (wnd) {
+        //@ts-ignore
+        return await wnd.close(...args);
+      }
+    }
+  });
+  handle("getFolderFiles", async (event: null | any, path: any) => {
+    return await getFolderFiles(path);
+  });
+  handle("getFile", async (event: null | any, path: any) => {
+    return await getFile(path);
+  });
+  handle("chokidarWatchFile", async (event: null | { sender: Electron.WebContents; }, path: string) => {
+    if (event) {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win) {
+        add_watcher(path, win.id, (_path, stats) => {
+          win.webContents.send("fileChanged", path, stats);
+        });
+      }
+    }
+  });
+  handle("getFolderRemote", async (event: null | any, path: any) => {
+    try {
+      const git = simpleGit({
+        baseDir: path,
+      });
+
+      return await git.listRemote(["--get-url", "origin"]);
+    } catch (e) {
+      return null;
+    }
+  });
+  handle("chokidarUnwatchFile", async (event: null | { sender: Electron.WebContents; }, path: string) => {
+    if (event) {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win) {
+        remove_watcher(path, win.id);
+      }
+    }
+  });
+}
+
+// Initialize handlers so that browser functions can be run from node
+init_globals()
+init_handlers(ipcMain.handle)
+
+
+
+async function test() {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const store = useEditorStore()
+  await store.load_systems_from_folder("C:/Users/Nathan/BattleScribe/data/Warhammer-The-Old-World",
+    (c, m, msg) => console.log(`${c}/${m}: ${msg}`)
+  )
+  const { system, catalogue } = await store.open_catalogue("sys-31d1-bf57-53ea-ad55")
+  const search = await store.system_search(system, { filter: "gun" })
+  const found = await store.update_catalogue_search(catalogue, { filter: "gun", ignoreProfilesRules: false })
+  // console.log("Found", search?.all.length, "results", search?.all.map(o => o.toString()));
+  console.log("Found", found.length, "results", found.map(o => o.toString()));
+}
+test()
 let mainWindow: {
   webContents: { executeJavaScript: (arg0: string) => void };
   setProgressBar: (arg0: number) => void;
@@ -135,81 +263,6 @@ const createMainWindow = () => {
       callback(request);
     }
   );
-
-  // Expose all node functions to invoke
-  const fs = require("fs");
-  const promiseFunctions = new Set(Object.keys(fs.promises));
-  for (const [key, val] of Object.entries(fs)) {
-    if (promiseFunctions.has(key)) continue;
-    if (typeof val === "function") {
-      ipcMain.handle(key, (event: any, ...args: any) => {
-        return val(...args);
-      });
-    }
-  }
-  for (const [key, val] of Object.entries(fs.promises)) {
-    if (typeof val === "function") {
-      ipcMain.handle(key, async (event: any, ...args: any) => {
-        return await val(...args);
-      });
-    }
-  }
-  ipcMain.handle("isDirectory", async (event: any, ...args: any) => {
-    const stats = fs.statSync(...args);
-    return stats.isDirectory();
-  });
-  ipcMain.handle("isFile", async (event: any, ...args: any) => {
-    const stats = fs.statSync(...args);
-    return stats.isFile();
-  });
-  ipcMain.handle("showOpenDialog", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await dialog.showOpenDialog(wnd, ...args);
-  });
-  ipcMain.handle("showMessageBoxSync", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    return await dialog.showMessageBoxSync(wnd, ...args);
-  });
-  ipcMain.handle("getPath", async (event: any, ...args: any) => {
-    return await app.getPath(...args);
-  });
-  ipcMain.handle("closeWindow", async (event: { sender: any }, ...args: any) => {
-    const wnd = BrowserWindow.fromWebContents(event.sender);
-    if (wnd) {
-      return await wnd.close(...args);
-    }
-  });
-  ipcMain.handle("getFolderFiles", async (event: any, path: string) => {
-    return await getFolderFiles(path);
-  });
-  ipcMain.handle("getFile", async (event: any, path: string) => {
-    return await getFile(path);
-  });
-  ipcMain.handle("chokidarWatchFile", async (event: { sender: any }, path: string) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
-      add_watcher(path, win.id, (_path, stats) => {
-        win.webContents.send("fileChanged", path, stats);
-      });
-    }
-  });
-  ipcMain.handle("getFolderRemote", async (event: { sender: any }, path: string) => {
-    try {
-      const git = simpleGit({
-        baseDir: path,
-      });
-
-      return await git.listRemote(["--get-url", "origin"]);
-    } catch (e) {
-      return null;
-    }
-  });
-  ipcMain.handle("chokidarUnwatchFile", async (event: { sender: any }, path: string) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
-      remove_watcher(path, win.id);
-    }
-  });
 
   // Bypass cors
   const filter = { urls: ["https://*/*"] };
