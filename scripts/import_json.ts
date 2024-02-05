@@ -5,7 +5,7 @@ import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCe
 import { getGroup, getPerModelCostModifier, parseDetails, toCategoryLink, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { OptionsEntry, optionsToGroups } from "./import_options";
-import { InfoGroup } from "~/assets/shared/battlescribe/bs_main";
+import { Entry, InfoGroup } from "~/assets/shared/battlescribe/bs_main";
 
 function cmpItems(a: string, b: string) {
     return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "")
@@ -66,7 +66,7 @@ function findImportedEntry(cat: Catalogue & EditorBase, entryName: string, type:
 }
 function findSharedEntries(cat: Catalogue & EditorBase, entryName: string, type: string) {
     const lower = removeSuffix(entryName.trim().toLowerCase(), "s")
-    const result = [];
+    const result: Entry[] = [];
     if (!lower) return result;
     for (const entry of cat.sharedSelectionEntries || []) {
         if (entry.getType() !== type) continue;
@@ -378,7 +378,7 @@ function updateProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
         }
         return existing;
     } else {
-        return $store.add_child("sharedProfiles", cat, profile)
+        return $store.add_node("sharedProfiles", cat, profile)
     }
 }
 function updateSharedProfiles(cat: Catalogue & EditorBase, pages: Page[]) {
@@ -432,9 +432,9 @@ function updateWeapons(cat: Catalogue & EditorBase, pages: Page[]) {
                 create = true;
             }
             if (create) {
-                findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_child(o))
+                findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_node(o))
                 const sharedProfile = updateProfile(cat, profile)
-                $store.add_child("sharedSelectionEntries", cat, {
+                $store.add_node("sharedSelectionEntries", cat, {
                     name: sharedProfile.name,
                     id: id(`${cat.name}/weapon/${wep.Name}`),
                     hidden: false,
@@ -516,11 +516,11 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
     const unitName = unit.Name
     const existingUnitLink = findRootUnit(cat, unitName)
     if (existingUnitLink) {
-        $store.del_child(existingUnitLink);
+        $store.del_node(existingUnitLink);
     }
     const existing = findUnit(cat, unitName)
     if (existing) {
-        $store.del_child(existing);
+        $store.del_node(existing);
     }
     const entry = {
         type: "unit",
@@ -915,7 +915,6 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                                                 childId: "any",
                                                 shared: true,
                                                 roundUp: false,
-                                                id: id(`${unitName}/${model.name}/${ruleName}/repeat`)
                                             }
                                         ]
                                     } as BSIModifier;
@@ -1031,14 +1030,14 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
     for (const entry of entriesToAdd) {
         const existing = findUnit(cat, entry.name)
         if (existing) {
-            $store.del_child(existing);
+            $store.del_node(existing);
         }
         const existingLink = findRootUnit(cat, entry.name)
         if (existingLink) {
-            $store.del_child(existingLink);
+            $store.del_node(existingLink);
         }
 
-        const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry)
+        const addedUnit = $store.add_node("sharedSelectionEntries", cat, entry)
         const link = {
             import: true,
             name: entry.name,
@@ -1057,7 +1056,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                 console.error(`Couldn't find imported category ${category}`);
             }
         }
-        const addedLink = $store.add_child("entryLinks", cat, link)
+        const addedLink = $store.add_node("entryLinks", cat, link)
     }
 
 }

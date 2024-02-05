@@ -185,7 +185,7 @@ export function toEntry(name: string | undefined, hash: string, cost?: string | 
     hidden: false,
   }
   if (cost) {
-    result.costs.push(toCost(cost))
+    result.costs!.push(toCost(cost))
   }
   return result;
 }
@@ -277,7 +277,6 @@ export function getPerModelCostModifier(details: string, hash: string) {
         childId: "model",
         shared: true,
         roundUp: false,
-        id: id(`${hash}/per model cost`)
       }
     ]
   } as BSIModifier;

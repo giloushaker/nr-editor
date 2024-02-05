@@ -12,9 +12,9 @@ function removePrefix(from: string, prefix: string): string {
     }
     return from;
 }
-function removeUndefineds(object: Object) {
+function removeUndefineds<T extends Object>(object: T): T {
     for (const key in object) {
-        if (object[key] === undefined) delete object[key]
+        if ((object)[key as keyof typeof object] === undefined) delete object[key as keyof typeof object]
     }
     return object;
 }
@@ -483,7 +483,7 @@ export function optionsToGroups(options: string) {
             specification: groupSpecification,
             entries: [] as OptionsEntry[],
             source: bulletLine.source,
-        }
+        } as OptionsGroup
         // if groupAmount is a * (meaning any), its entries can be taken out of the group.
         for (const dashLine of bulletLine.childs) {
             const dashIt = new TokenIterator(dashLine.tokens)

@@ -17,7 +17,6 @@
 
 <script lang="ts">
 import TitleBar from "./components/TitleBar.vue";
-import { notify } from "@kyvg/vue3-notification";
 import { useSettingsStore } from "./stores/settingsState";
 
 export default defineComponent({
@@ -45,13 +44,6 @@ export default defineComponent({
   },
   async created() {
     this.settings.refreshAppearance();
-    globalThis.isEditor = true;
-    globalThis.notify = notify;
-
-    if (!globalThis.electron) {
-      // Prevent errors when accessing undeclare global var
-      (globalThis as any).electron = null;
-    }
   },
   watch: {
     "settings.theme"() {
@@ -74,10 +66,8 @@ export default defineComponent({
 
 html {
   font-family: sans-serif;
-  background-image: linear-gradient(
-    rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a)),
-    rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a))
-  );
+  background-image: linear-gradient(rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a)),
+      rgba(var(--bg-r), var(--bg-g), var(--bg-b), var(--bg-a)));
   background-size: var(--backgroundSize);
   background-color: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
   filter: var(--global-filter);
@@ -299,6 +289,7 @@ button.bouton[disabled] {
 
 @media screen and (min-width: $large_mode) {
   html {
+
     /* Handle */
     ::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.3);

@@ -49,7 +49,7 @@ You may want to reload the system through the Systems tab" src="/assets/icons/wa
 </template>
 
 <script lang="ts">
-import LeftPanel, { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanel.vue";
+import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
@@ -58,6 +58,7 @@ import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 
 export default defineComponent({
   components: { LeftPanel },
@@ -273,21 +274,11 @@ export default defineComponent({
           await new Promise((resolve) => setTimeout(resolve, 10));
           this.initial = false;
         }
-        const system = await this.store.get_or_load_system(systemId);
-        let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
-        if (!loaded) {
-          loaded = await system.loadCatalogue({
-            targetId: catalogueId || systemId,
-          });
-        }
-        loaded.processForEditor();
-        for (const imported of loaded.imports) {
-          imported.processForEditor();
-        }
+        const { system, catalogue } = await this.store.open_catalogue(systemId, catalogueId);
         this.systemFiles = system;
-        this.cat = loaded;
-        if (loaded) {
-          const data = this.uistate.get_data(loaded.id);
+        this.cat = catalogue;
+        if (catalogue) {
+          const data = this.uistate.get_data(catalogue.id);
           this.load_state(data);
         }
       } finally {

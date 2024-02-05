@@ -12,10 +12,10 @@ function hexToRgb(hex: string): RGB | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
     : null;
 }
 
@@ -27,7 +27,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
 
     if (bgRgb != null) {
       for (const field in bgRgb) {
-        document.documentElement.style.setProperty(`--bg-${field}`, bgRgb[field]);
+        document.documentElement.style.setProperty(`--bg-${field}`, `${bgRgb[field as keyof typeof bgRgb]}`);
       }
     }
   }
@@ -36,7 +36,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
     const titleRgb = hexToRgb(appearence.title);
     if (titleRgb != null) {
       for (const field in titleRgb) {
-        document.documentElement.style.setProperty(`--title-${field}`, titleRgb[field]);
+        document.documentElement.style.setProperty(`--title-${field}`, `${titleRgb[field as keyof typeof titleRgb]}`);
       }
     }
   }
@@ -51,7 +51,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
     const titleRgb = hexToRgb(appearence.highlight);
     if (titleRgb != null) {
       for (const field in titleRgb) {
-        document.documentElement.style.setProperty(`--highlight-${field}`, titleRgb[field]);
+        document.documentElement.style.setProperty(`--highlight-${field}`, `${titleRgb[field as keyof typeof titleRgb]}`);
       }
     }
   }
@@ -83,7 +83,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
     document.documentElement.style.setProperty(`--bg-texture`, appearence.backgroundTexture);
   }
 
-  if (appearence.backgroundTexture) {
+  if (appearence.backgroundSize) {
     document.documentElement.style.setProperty(`--backgroundSize`, appearence.backgroundSize);
   }
 
@@ -130,15 +130,15 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
   }
 
   if (appearence.bga) {
-    let fontColor = appearence.bga;
+    let fontColor = Number(appearence.bga);
     if (fontColor > 1) {
       fontColor /= 100;
     }
-    document.documentElement.style.setProperty(`--bg-a`, fontColor);
+    document.documentElement.style.setProperty(`--bg-a`, `${fontColor}`);
   }
 
   if (appearence.invertImagesBrightness) {
-    const deg = 180 * (appearence.invertImagesBrightness / 100);
+    const deg = 180 * (Number(appearence.invertImagesBrightness) / 100);
     document.documentElement.style.setProperty(
       `--image-filter`,
       `invert(${appearence.invertImagesBrightness}%) hue-rotate(${deg}deg)`
@@ -197,7 +197,7 @@ export const defaultAppearence: AppearanceTheme = {
   costsLeft: false,
   invertColors: false,
   invertImages: false,
-  invertImagesBrightness: "0",
+  invertImagesBrightness: 0,
 
   font: "sans-serif",
   fontSize: 16,
@@ -216,6 +216,9 @@ export const defaultAppearence: AppearanceTheme = {
   colorLightblue: "#009cbd",
   costColor: "#284781",
   titleBarColor: "#708090",
+  unitsBackground: "",
+  fitBackground: false,
+  hoverColor: ""
 };
 const defaultSortConfiguration = `type:model
 type:mount
@@ -286,7 +289,6 @@ export const useSettingsStore = defineStore("settings", {
           inputHighlights: "#add8e6",
           invertImagesBrightness: "85",
           titleBarColor: "#525252",
-          lightblue: "#009cbd",
           title: "#333333",
           dark: true,
           // font: "Bahnschrift",

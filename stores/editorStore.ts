@@ -80,6 +80,7 @@ import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
 import * as $node from "~/electron/node_helpers";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
+type MaybePromise<T> = T | Promise<T>
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
   selectionsParent?: Object | null;
@@ -203,7 +204,6 @@ export const useEditorStore = defineStore("editor", {
       const id = `sys-${generateBattlescribeId()}`;
       const files = this.get_system(id);
       const folder = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}` : "";
-
       if (electron) {
         if (!folder) {
           throw new Error("No folder specified");
@@ -319,7 +319,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async load_systems_from_folder(
       folder: string,
-      progress?: (current: number, max: number, msg?: string) => Promise<unknown>
+      progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>
     ) {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
@@ -327,7 +327,7 @@ export const useEditorStore = defineStore("editor", {
       const files = await getFolderFiles(folder);
       if (!files?.length) return;
 
-      console.log("Loading", files.length, "files", files);
+      console.log("Loading", files.length, "files");
       const result_system_ids = [] as string[];
       const result_files = [];
       const systems = [] as GameSystemFiles[];
@@ -346,13 +346,13 @@ export const useEditorStore = defineStore("editor", {
           const catalogueId = json?.catalogue?.id;
           if (systemId) {
             const systemFiles = this.get_system(systemId);
-            systemFiles.setSystem(markRaw(json));
+            systemFiles.setSystem(globalThis.$markRaw ? globalThis.$markRaw(json) : json);
             systems.push(systemFiles);
             result_system_ids.push(systemId);
           }
           if (catalogueId) {
             const systemFiles = this.get_system(json.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = markRaw(json);
+            systemFiles.catalogueFiles[catalogueId] = globalThis.$markRaw ? globalThis.$markRaw(json) : json;
           }
           result_files.push(json);
         } catch (e) {
@@ -610,10 +610,7 @@ export const useEditorStore = defineStore("editor", {
      */
     init(component: any) {
       this.catalogueComponent = component as CatalogueComponentT;
-      (globalThis as any).$store = this;
-      (globalThis as any).$node = $node;
-      (globalThis as any).$search = (q: string) =>
-        this.system_search(this.catalogueComponent?.systemFiles!, { filter: q });
+      globalThis.$store = this;
     },
     /**
      * Force the left panel to re-render, used for setting its state by having it reload the saved state
@@ -1115,6 +1112,7 @@ export const useEditorStore = defineStore("editor", {
             typeName: profileType?.name,
             hidden: false,
             id: generateBattlescribeId(),
+            characteristics: [],
           } as BSIProfile;
         case "catalogueLinks":
           return {
@@ -1141,6 +1139,9 @@ export const useEditorStore = defineStore("editor", {
     },
     /**
      * Creates child entries in the current selection
+     * Will select the added child if possible.
+     * Supports undo & redo
+     * May cause problems if used in scripts
      * @param key the key of the child (eg: `selectionEntries`)
      * @param data data to use when creating the child entry
      */
@@ -1158,6 +1159,7 @@ export const useEditorStore = defineStore("editor", {
      * Creates child entries in the provided parent after a user action
      * Will select the added child if possible.
      * Supports undo & redo
+     * May cause problems if used in scripts
      * @param key the key of the child (eg: `selectionEntries`)
      * @param parent the parent to add the child in
      * @param data data to use when creating the child entry
@@ -1182,7 +1184,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_child(_key: string & keyof Base, parent: EditorBase, data?: Object) {
+    add_node(_key: string & keyof Base, parent: EditorBase, data?: Object) {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1217,7 +1219,7 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(catalogue);
       return obj;
     },
-    del_child(entry: Base) {
+    del_node(entry: Base) {
       if (entry.catalogue) {
         this.set_catalogue_changed(entry.catalogue);
       }
@@ -1235,7 +1237,7 @@ export const useEditorStore = defineStore("editor", {
       if (obj.isLink()) return false;
       return true;
     },
-    edit_child(entry: EditorBase, data?: Object) {
+    edit_node(entry: EditorBase, data?: Object) {
       const obj = JSON.parse(entry.toJson())
       Object.assign(obj, data);
       setPrototypeRecursive({ [entry.parentKey]: obj })
@@ -1412,13 +1414,16 @@ export const useEditorStore = defineStore("editor", {
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-
         let child: Element | undefined;
         if (node.parentKey.startsWith("label-")) {
           child = childs[0]
         }
         else {
-          child = [...childs].find((o) => $toRaw(get_base_from_vue_el(get_ctx(o))) === $toRaw(node));
+          const arr = []
+          for (let i = 0; i < childs.length; i++) {
+            arr.push(childs[i])
+          }
+          child = arr.find((o) => $toRaw(get_base_from_vue_el(get_ctx(o))) === $toRaw(node));
         }
 
         if (!child) {
@@ -1501,6 +1506,7 @@ export const useEditorStore = defineStore("editor", {
         const context = get_ctx(el);
         this.do_select(null, context, context);
         el.scrollIntoView({
+          // @ts-ignore
           behavior: "instant",
           block: "center",
           inline: "center",
@@ -1512,6 +1518,7 @@ export const useEditorStore = defineStore("editor", {
             const context = get_ctx(el);
             this.do_select(null, context, context);
             el.scrollIntoView({
+              //@ts-ignore
               behavior: "instant",
               block: "center",
             });
@@ -1556,7 +1563,8 @@ export const useEditorStore = defineStore("editor", {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (!results?.length) return;
-        for (const cur of results) {
+        for (var i = 0; i < results.length; i++) {
+          const cur = results[i];
           const item = get_base_from_vue_el(get_ctx(cur));
           const key = item.parentKey;
           const parent = item.parent;
@@ -1569,7 +1577,12 @@ export const useEditorStore = defineStore("editor", {
             if (!(index in obj[key])) obj[key][index] = {};
             find_open_recursive(cur, obj[key][index], depth + 1);
           } else {
-            const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o) || o.startsWith("label-"));
+            const arr = []
+            for (var i = 0; i < cur.classList.length; i++) {
+              const cur_class = cur.classList[i];
+              arr.push(cur_class)
+            }
+            const keys = arr.filter((o) => goodJsonKeys.has(o) || o.startsWith("label-"));
             for (const key of keys) {
               obj[key] = {};
               obj[key][0] = {};
@@ -1678,7 +1691,7 @@ export const useEditorStore = defineStore("editor", {
         for (const p of this.filtered) {
           this.show(p);
         }
-        await nextTick();
+        await (globalThis.$nextTick && globalThis.$nextTick())
 
         if (this.filtered.length < 300) {
           for (const p of this.filtered) {
@@ -1694,6 +1707,7 @@ export const useEditorStore = defineStore("editor", {
         this.set_filter("");
         this.filtered = [];
       }
+      return this.filtered
     },
     async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
       const result = [] as Base[];
@@ -1743,5 +1757,21 @@ export const useEditorStore = defineStore("editor", {
       }
       return { grouped, all: result, more };
     },
+    async open_catalogue(systemId: string, catalogueId?: string) {
+      const system = await this.get_or_load_system(systemId);
+      let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
+      if (!loaded) {
+        loaded = await system.loadCatalogue({
+          targetId: catalogueId || systemId,
+        });
+      }
+      globalThis.$catalogue = loaded as any;
+      loaded.processForEditor();
+      for (const imported of loaded.imports) {
+        imported.processForEditor();
+      }
+
+      return { system, catalogue: loaded };
+    }
   },
 });

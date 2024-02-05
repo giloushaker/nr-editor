@@ -30,7 +30,8 @@ export const useEditorUIState = defineStore("editor-ui", {
         const deepestCls = `depth-${depth} collapsible-box opened`;
         const results = document.documentElement.getElementsByClassName(deepestCls);
         if (results?.length) {
-          for (const cur of results) {
+          for (var i = 0; i < results.length; i++) {
+            const cur = results[i];
             get_ctx(cur)?.close();
           }
         }
@@ -45,7 +46,8 @@ export const useEditorUIState = defineStore("editor-ui", {
       const results = document.documentElement.getElementsByClassName(cls);
       let maxDepth = -1;
       if (results?.length) {
-        for (const cur of results) {
+        for (var i = 0; i < results.length; i++) {
+          const cur = results[i];
           cur.classList.forEach((val) => {
             if (val.startsWith("depth-")) {
               maxDepth = Math.max(maxDepth, parseInt(val.split("-")[1]));
@@ -61,7 +63,8 @@ export const useEditorUIState = defineStore("editor-ui", {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (results?.length) {
-          for (const cur of results) {
+          for (var i = 0; i < results.length; i++) {
+            const cur = results[i];
             const item = get_base_from_vue_el(get_ctx(cur));
             const key = item.parentKey;
             const parent = item.parent;
@@ -76,7 +79,11 @@ export const useEditorUIState = defineStore("editor-ui", {
               if (!(index in obj_arr)) obj_arr[index] = {};
               next = obj_arr[index];
             } else {
-              const keys = [...cur.classList].filter((o) => goodJsonKeys.has(o));
+              const arr = []
+              for (let i = 0; i < cur.classList.length; i++) {
+                arr.push(cur.classList[i])
+              }
+              const keys = arr.filter((o) => goodJsonKeys.has(o));
               for (const key of keys) {
                 obj[key] = {};
                 obj[key][0] = {};
