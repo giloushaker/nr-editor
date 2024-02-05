@@ -1,28 +1,31 @@
-import type { VueElement } from "vue";
 import { NotificationsOptions } from "@kyvg/vue3-notification";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { useEditorStore } from "~/stores/editorStore";
-import type * as nodeHelpers from "~/electron/node_helpers";
+import * as nodeHelpers from "~/electron/node_helpers";
+import * as bsHelpers from "~/assets/shared/battlescribe/bs_helpers";
 declare global {
-  var isEditor: boolean | undefined;
+  var isEditor: true;
   var _closeWindow: boolean | undefined;
   var notify: (arg: NotificationsOptions | string) => unknown;
-  var $set: (o, k, v) => unknown;
-  var $delete: (o, k) => unknown;
-  var $catalogue: Catalogue & {manager: GameSystemFiles, fullFilePath: string};
+  var $set: (o: any, k: any, v: any) => unknown;
+  var $delete: (o: any, k: any) => unknown;
+  var $catalogue: Catalogue & { manager: GameSystemFiles, fullFilePath: string };
   var $store: ReturnType<typeof useEditorStore>;
   var $node: typeof nodeHelpers;
-  var $toRaw: (o: T) => T;
-  var customPrompt: (data: string | {html: string, accept?: string, cancel?: string, id?: string}) => boolean;
+  var $helpers: typeof bsHelpers;
+  function $toRaw<T>(o: T): T;
+  function $markRaw<T>(o: T): T;
+  function $nextTick(): Promise<unknown>
+  var customPrompt: (data: string | { html: string, accept?: string, cancel?: string, id?: string }) => boolean;
   var electron:
     | undefined
     | {
-        send: (channel, ...args) => unknown;
-        receive: (channel, listener) => unknown;
-        invoke: (channel, ...args) => unknown;
-        on: (channel, ...args) => unknown;
-      };
+      send: (channel: string, ...args: any) => unknown;
+      receive: (channel: string, listener: any) => unknown;
+      invoke: (channel: string, ...args: any) => unknown;
+      on: (channel: string, ...args: any) => unknown;
+    };
 }
 
-
+console.log($store)

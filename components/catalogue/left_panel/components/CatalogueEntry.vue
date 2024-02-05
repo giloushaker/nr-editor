@@ -104,10 +104,10 @@
               &nbsp;[{{ child.getCatalogue().getName() }}]
             </span>
           </div>
-          <div v-if="item.links?.length || item.other_links?.length" @click="store.mode = 'references'">
-            References ({{ item.links ? item.links.length : 0 }})
+          <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
+            References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
           </div>
-          <Separator v-if="item.isLink() || item.links || imported" />
+          <Separator v-if="item.isLink() || item.refs || imported" />
         </template>
         <template v-if="payload">
           <div @click="store.create(payload)">
@@ -461,7 +461,7 @@ export default {
       switch (item.editorTypeName) {
         case "category":
         default:
-          return item.links?.length;
+          return item.refs?.length;
       }
     },
     async onctrlclick() {
@@ -469,7 +469,7 @@ export default {
         await this.store.follow(this.item as EditorBase & Link);
       } else if (this.imported) {
         await this.store.goto(this.item);
-      } else if (this.item.links || this.item.other_links) {
+      } else if (this.item.refs || this.item.other_refs) {
         this.store.mode = "references";
       }
     },

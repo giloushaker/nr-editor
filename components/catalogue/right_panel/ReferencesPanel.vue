@@ -89,10 +89,10 @@ export default {
       return false;
     },
     links() {
-      return sortByAscending(this.item?.links || [], (o) => o.catalogue?.name);
+      return sortByAscending(this.item?.refs || [], (o) => o.catalogue?.name);
     },
     other_links() {
-      return sortByAscending(this.item?.other_links || [], (o) => o.catalogue?.name);
+      return sortByAscending(this.item?.other_refs || [], (o) => o.catalogue?.name);
     },
     label() {
       return getName(this.item);

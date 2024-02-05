@@ -21,14 +21,8 @@
           No Primary
         </div>
 
-        <Category
-          v-for="cat of categories"
-          :category="cat"
-          :item="item"
-          :key="cat.id"
-          @primaryChanged="primaryChanged"
-          @secondaryChanged="secondaryChanged"
-        />
+        <Category v-for="cat of categories" :category="cat" :item="item" :key="cat.id" @primaryChanged="primaryChanged"
+          @secondaryChanged="secondaryChanged" />
 
         <div v-for="lnk of badLinks" class="category" :key="lnk.id">
           <div>
@@ -36,17 +30,10 @@
             Primary?
           </div>
           <div>
-            <input
-              :id="`bad${lnk.id}`"
-              type="checkbox"
-              :checked="true"
-              @change="removeLink(item.categoryLinks!, lnk)"
-            />
+            <input :id="`bad${lnk.id}`" type="checkbox" :checked="true" @change="removeLink(item.categoryLinks!, lnk)" />
             <label :for="`bad${lnk.id}`">{{ lnk.name }}</label>
-            <ErrorIcon
-              class="ml-5px inline"
-              :errors="[{ msg: `Couldn't find category with id: ${lnk.targetId}`, severity: 'error' }]"
-            />
+            <ErrorIcon class="ml-5px inline"
+              :errors="[{ msg: `Couldn't find category with id: ${lnk.targetId}`, severity: 'error' }]" />
           </div>
         </div>
       </div>
@@ -128,7 +115,7 @@ export default {
       if (idx !== -1) {
         const [cl] = links.splice(idx, 1);
         this.catalogue.removeFromIndex(cl as CategoryLink & EditorBase);
-        const targetLinks = (cl.target as Category & EditorBase).links as Base[];
+        const targetLinks = (cl.target as Category & EditorBase).refs as Base[];
         if (targetLinks) {
           const targetIdx = targetLinks?.findIndex((o) => o === cl);
           if (targetIdx !== -1) {
@@ -155,10 +142,10 @@ export default {
       links.push(cl);
       this.catalogue.addToIndex(cl);
       const target = cat as Category & EditorBase;
-      if (!target.links) {
-        target.links = [];
+      if (!target.refs) {
+        target.refs = [];
       }
-      target.links?.push(cl as CategoryLink & EditorBase);
+      target.refs?.push(cl as CategoryLink & EditorBase);
       return cl;
     },
     changed() {

@@ -114,7 +114,7 @@ export default {
         name: "New Characteristic Type",
       };
       this.item.characteristicTypes.push(type);
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs) {
         for (const profile of ref.profilesIterator()) {
           if (profile.typeId === this.item.id) {
@@ -137,7 +137,7 @@ export default {
           }
         }
       }
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs) {
         for (const profile of ref.profilesIterator()) {
           if (profile.typeId === this.item.id) {
@@ -150,7 +150,7 @@ export default {
       this.$emit("catalogueChanged");
     },
     characteristicIdChanged(type: BSICharacteristicType) {
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeId === this.item.id) {
           for (const char of ref.characteristics || []) {
@@ -164,7 +164,7 @@ export default {
       this.$emit("catalogueChanged");
     },
     characteristicNameChanged(type: BSICharacteristicType) {
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeId === this.item.id) {
           for (const char of ref.characteristics || []) {

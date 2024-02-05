@@ -1,12 +1,7 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-    @namechanged="profileNameChanged"
-    @idchanged="profileIdChanged"
-  />
+  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section"
+    @namechanged="profileNameChanged" @idchanged="profileIdChanged" />
   <CatalogueRightPanelFieldsProfileType class="section" :item="item" @catalogueChanged="changed" />
 </template>
 
@@ -32,7 +27,7 @@ export default {
       this.$emit("catalogueChanged");
     },
     profileNameChanged() {
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeId === this.item.id) {
           ref.typeName = this.item.name;
@@ -42,7 +37,7 @@ export default {
       this.$emit("catalogueChanged");
     },
     profileIdChanged() {
-      const refs = (this.item as BSIProfileType & EditorBase).links || [];
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeName === this.item.name) {
           ref.typeId = this.item.id;

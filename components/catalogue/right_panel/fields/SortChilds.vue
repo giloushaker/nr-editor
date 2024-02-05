@@ -4,7 +4,7 @@
         <SortOrder :items="get_sort_items" :get="get" :set="set" :del="del" :parent="item">
             <template #item="{ item }">
                 <Entry :item="item" noSortIndex />
-                <template v-if="item.links?.length > 1">>1 refs</template>
+                <template v-if="item.refs?.length > 1">>1 refs</template>
             </template>
         </SortOrder>
     </fieldset>
