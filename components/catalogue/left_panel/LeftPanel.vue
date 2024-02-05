@@ -138,10 +138,16 @@ export default defineComponent({
     },
     async set_scroll(scroll: number) {
       const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
-      if (scrollable_el) scrollable_el.scrollTop = scroll;
+      if (scrollable_el) {
+        scrollable_el.scrollTop = scroll;
+        scrollable_el.scrollLeft = 0;
+      }
       this.$nextTick(async () => {
         const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
-        if (scrollable_el) scrollable_el.scrollTop = scroll;
+        if (scrollable_el) {
+          scrollable_el.scrollTop = scroll;
+          scrollable_el.scrollLeft = 0;
+        }
       });
       // setTimeout(() => {
       //   const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
