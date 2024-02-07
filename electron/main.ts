@@ -2,9 +2,9 @@ const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = requir
 const path = require("path");
 const simpleGit = require("simple-git");
 const { autoUpdater } = require("electron-updater");
-import * as globals from "../types/global";
+const os = require("os")
 import * as node_helpers from "./node_helpers";
-import * as bs_helpers from "assets/shared/battlescribe/bs_helpers";
+import * as bs_helpers from "../assets/shared/battlescribe/bs_helpers";
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles } from "./files";
 import { entry, options } from "./entry";
@@ -12,6 +12,8 @@ import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
 import { stripHtml } from "./electron_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 import { createPinia, setActivePinia } from "pinia";
+import { WriteFileOptions, writeFileSync } from "fs";
+
 
 export function init_globals() {
   const map = {} as Record<string, Function>
@@ -98,6 +100,12 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
   handle("getFile", async (event: null | any, path: any) => {
     return await getFile(path);
   });
+  handle("saveFile", async (event: null | any, path: any, data: any, options?: WriteFileOptions) => {
+    if (typeof data === "string" && os.platform.includes('win')) {
+      data = data.replace(/\n/g, "\r\n")
+    }
+    return await writeFileSync(path, data, options);
+  });
   handle("chokidarWatchFile", async (event: null | { sender: Electron.WebContents; }, path: string) => {
     if (event) {
       const win = BrowserWindow.fromWebContents(event.sender);
@@ -135,20 +143,20 @@ init_handlers(ipcMain.handle)
 
 
 
-async function test() {
-  const pinia = createPinia()
-  setActivePinia(pinia)
-  const store = useEditorStore()
-  await store.load_systems_from_folder("C:/Users/Nathan/BattleScribe/data/Warhammer-The-Old-World",
-    (c, m, msg) => console.log(`${c}/${m}: ${msg}`)
-  )
-  const { system, catalogue } = await store.open_catalogue("sys-31d1-bf57-53ea-ad55")
-  const search = await store.system_search(system, { filter: "gun" })
-  const found = await store.update_catalogue_search(catalogue, { filter: "gun", ignoreProfilesRules: false })
-  // console.log("Found", search?.all.length, "results", search?.all.map(o => o.toString()));
-  console.log("Found", found.length, "results", found.map(o => o.toString()));
-}
-test()
+// async function test() {
+//   const pinia = createPinia()
+//   setActivePinia(pinia)
+//   const store = useEditorStore()
+//   await store.load_systems_from_folder("C:/Users/Nathan/BattleScribe/data/Warhammer-The-Old-World",
+//     (c, m, msg) => console.log(`${c}/${m}: ${msg}`)
+//   )
+//   const { system, catalogue } = await store.open_catalogue("sys-31d1-bf57-53ea-ad55")
+//   const search = await store.system_search(system, { filter: "gun" })
+//   const found = await store.update_catalogue_search(catalogue, { filter: "gun", ignoreProfilesRules: false })
+//   // console.log("Found", search?.all.length, "results", search?.all.map(o => o.toString()));
+//   console.log("Found", found.length, "results", found.map(o => o.toString()));
+// }
+// test()
 let mainWindow: {
   webContents: { executeJavaScript: (arg0: string) => void };
   setProgressBar: (arg0: number) => void;

@@ -90,7 +90,7 @@ export async function writeFile(filePath: string, data: string | Blob | Buffer |
   if (!electron) return;
   const dirPath = dirname(filePath);
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
-  await electron.invoke("writeFileSync", filePath, data);
+  await electron.invoke("saveFile", filePath, data);
 }
 export async function deleteFile(filePath: string) {
   if (!electron) return;
