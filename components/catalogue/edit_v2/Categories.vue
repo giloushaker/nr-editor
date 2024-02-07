@@ -170,13 +170,13 @@ export default defineComponent({
       }
     },
     removeLink(parent: EditorBase, link: Link) {
-      this.store.del_child(link)
+      this.store.del_node(link)
     },
     addLink(parent: EditorBase, cat: Category, primary = false) {
       if (!cat.isCategory()) {
         throw Error("Invalid argument, target must be a category");
       }
-      const added = this.store.add_child("categoryLinks", parent, {
+      const added = this.store.add_node("categoryLinks", parent, {
         targetId: cat.id,
         id: this.item.catalogue.generateNonConflictingId(),
         primary: primary,
