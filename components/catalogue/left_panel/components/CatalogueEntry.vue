@@ -537,10 +537,18 @@ export default {
           const desc = sortByDescending(items, (o) => o.item.getName() || "");
           return desc;
         case "type":
-          const type = sortByAscending(items, (o) => {
-            return (o.item.isProfile() ? o.item.getTypeName() : o.item.getType()) || "";
-          });
-          return type;
+          const type_asc = sortByAscending(items, (o) => o.item.getName() || "");
+          sortByAscendingInplace(type_asc, (o) => (o.item.isProfile() ? o.item.getTypeName() : o.item.getType()) || "");
+          if (this.settings.display.primaryCategory) {
+            sortByAscendingInplace(type_asc, (o) => {
+              const item = o.item;
+              if (item.parent?.isCatalogue() && ['selectionEntries', 'entryLinks'].includes(item.parentKey)) {
+                return o.item.getPrimaryCategoryLink()?.target?.name || ""
+              }
+              return ""
+            });
+          }
+          return type_asc;
       }
     },
     grouped(items: CatalogueEntryItem[]) {
