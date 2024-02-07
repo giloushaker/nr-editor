@@ -251,6 +251,7 @@ const defaultState = {
     sortIndex: true,
     references: true,
     costs: true,
+    primaryCategory: false,
   },
   autoFormatCharacteristics: false,
   autoRenameInfoLinkParent: false,

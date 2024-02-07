@@ -13,9 +13,8 @@
     </div>
     <div class="row">
       <input type="checkbox" id="github-auto-increment" v-model="settings.githubAutoIncrement" />
-      <label for="github-auto-increment"
-        >Auto increment revision when saving (requires github integration & internet)</label
-      >
+      <label for="github-auto-increment">Auto increment revision when saving (requires github integration &
+        internet)</label>
     </div>
     <div class="row">
       <input type="checkbox" id="revision-popup" v-model="noRevisionPopup" />
@@ -46,6 +45,10 @@
       <div class="row">
         <input type="checkbox" id="costs" v-model="settings.display.costs" />
         <label for="">Costs</label>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="costs" v-model="settings.display.primaryCategory" />
+        <label for="">Primary Category</label>
       </div>
     </fieldset>
   </div>

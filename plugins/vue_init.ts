@@ -23,7 +23,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   globalThis.isEditor = true;
   globalThis.$nextTick = nextTick
   if (typeof globalThis.electron === "undefined") {
-    globalThis.electron = null
+    (globalThis as any).electron = null
   }
   const settings = useSettingsStore()
   settings.init()

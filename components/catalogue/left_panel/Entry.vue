@@ -4,6 +4,9 @@
             <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />
         </span>
         <ErrorIcon :errors="item.errors" />
+        <span class="primary"
+            v-if="settings.display.primaryCategory && item.parent?.isCatalogue() && item.parentKey === 'selectionEntries'">[{{
+                item.getPrimaryCategoryLink()?.target?.name ?? "Uncategorized" }}] </span>
         <span v-if="item.sortIndex && !noSortIndex && settings.display.sortIndex" class="gray">
             [{{ item.sortIndex }}]
         </span>
@@ -95,5 +98,9 @@ export default defineComponent({
 
 .highlight {
     background-color: rgba(40, 110, 255, 0.30);
+}
+
+.primary {
+    color: rgb(170, 45, 0);
 }
 </style>

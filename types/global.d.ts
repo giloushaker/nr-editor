@@ -14,8 +14,8 @@ declare global {
   var $store: ReturnType<typeof useEditorStore>;
   var $node: typeof nodeHelpers;
   var $helpers: typeof bsHelpers;
-  function $toRaw<T>(o: T): T;
-  function $markRaw<T>(o: T): T;
+  function $toRaw<T extends Object>(o: T): T;
+  function $markRaw<T extends Object>(o: T): T;
   function $nextTick(): Promise<unknown>
   var customPrompt: (data: string | { html: string, accept?: string, cancel?: string, id?: string }) => boolean;
   var electron:

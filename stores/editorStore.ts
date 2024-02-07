@@ -1394,7 +1394,7 @@ export const useEditorStore = defineStore("editor", {
         }
         return;
       }
-      await this.show(obj)
+      await this.show(obj, false)
       await open_el(current);
       const nodes = [] as EditorBase[];
       forEachParent(obj, (parent) => {
