@@ -5,7 +5,7 @@
         </span>
         <ErrorIcon :errors="item.errors" />
         <span class="primary"
-            v-if="settings.display.primaryCategory && item.parent?.isCatalogue() && item.parentKey === 'selectionEntries'">[{{
+            v-if="settings.display.primaryCategory && item.parent?.isCatalogue() && ['selectionEntries', 'entryLinks'].includes(item.parentKey)">[{{
                 item.getPrimaryCategoryLink()?.target?.name ?? "Uncategorized" }}] </span>
         <span v-if="item.sortIndex && !noSortIndex && settings.display.sortIndex" class="gray">
             [{{ item.sortIndex }}]

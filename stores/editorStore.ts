@@ -1170,8 +1170,9 @@ export const useEditorStore = defineStore("editor", {
         select: true,
         ...data,
       };
-      await this.add(obj, key, parent);
+      const result = await this.add(obj, key, parent);
       this.open_selected();
+      return result;
     },
     /**
      * Synchronous version of create_child for use by scripts
