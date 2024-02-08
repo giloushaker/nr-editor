@@ -101,7 +101,7 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
     return await getFile(path);
   });
   handle("saveFile", async (event: null | any, path: any, data: any, options?: WriteFileOptions) => {
-    if (typeof data === "string" && os.platform.includes('win')) {
+    if (typeof data === "string" && os.platform().includes('win')) {
       data = data.replace(/\n/g, "\r\n")
     }
     return await writeFileSync(path, data, options);
