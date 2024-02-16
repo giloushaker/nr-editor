@@ -55,7 +55,7 @@
       <span v-for="category in targetCategories" class="label" @contextmenu.stop="linked_context($event, category)">
         <span class="name">{{ category.getName() }} </span>&nbsp;<span
           class="cursor-pointer hover-darken px-3px rounded-2px"
-          @click="removeCategory((item as EditorBase & Link), category)">&times;</span>
+          @click="removeCategory((item as EditorBase & Link).target, category)">&times;</span>
       </span>
     </div>
     <ContextMenu v-if="contextmenuopen && selectedCategory && selectedCategoryParent" v-model="contextmenuopen"

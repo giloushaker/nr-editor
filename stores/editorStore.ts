@@ -1203,7 +1203,7 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
-        ...this.fix_object(key, parent),
+        ...this.fix_object(key, data),
         ...data,
       };
 
@@ -1526,7 +1526,7 @@ export const useEditorStore = defineStore("editor", {
         return null;
       }
       const scrollableParent = getScrollableParent(el) as HTMLElement;
-      if (scrollableParent) {
+      if (scrollableParent && scrollableParent.getBoundingClientRect) {
         const elementTop = el.getBoundingClientRect().top;
         const parentTop = scrollableParent.getBoundingClientRect().top;
         const scrollPosition = elementTop - parentTop + scrollableParent.scrollTop - (scrollableParent.clientTop || 0);
