@@ -239,7 +239,7 @@ export default defineComponent({
       await this.createCategory(name, true);
     },
     gotoCategory(category: EditorBase & CategoryLink) {
-      const entry = this.catalogue.findOptionById(category.id);
+      const entry = this.catalogue.findOptionById(category.targetId ?? category.id);
       if (entry) {
         this.store.goto(entry as EditorBase);
       }
