@@ -37,6 +37,7 @@ import {
   getDataObject,
   getDataDbId,
   BaseChildsT,
+  goodJsonArrayKeys,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
 import { useCataloguesStore } from "./cataloguesState";
@@ -946,7 +947,7 @@ export const useEditorStore = defineStore("editor", {
         addeds = [];
         for (const selection of parentsWithPayload) {
           const item = selection.obj;
-          const selectedCatalogueKey = selection.payload;
+          const selectedCatalogueKey = selection.payload as BaseChildsT | "";
           await this.open(item, true);
           const toAdd = [];
           for (const entry of entries as Record<string, any>[]) {
@@ -1137,6 +1138,20 @@ export const useEditorStore = defineStore("editor", {
           };
       }
     },
+    // Recursively merges objects with their default created object so that they are correct.
+    fix_object(key: string & BaseChildsT, data?: any) {
+      const obj = {
+        ...this.get_initial_object(key),
+        ...data,
+      }
+      for (const nested_key in obj) {
+        const val = obj[nested_key]
+        if (Array.isArray(val) && (goodJsonArrayKeys as Set<string>).has(nested_key)) {
+          obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o))
+        }
+      }
+      return obj;
+    },
     /**
      * Creates child entries in the current selection
      * Will select the added child if possible.
@@ -1146,11 +1161,8 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create(key: string & BaseChildsT, data?: any) {
-      const obj = {
-        ...this.get_initial_object(key),
-        select: true,
-        ...data,
-      };
+      const obj = this.fix_object(key);
+      obj.select = true;
       const added = await this.add(obj, key);
       this.open_selected();
       return added;
@@ -1165,11 +1177,8 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create_child(key: string & BaseChildsT, parent: EditorBase, data?: any) {
-      const obj = {
-        ...this.get_initial_object(key, parent),
-        select: true,
-        ...data,
-      };
+      const obj = this.fix_object(key, parent)
+      obj.select = true
       const result = await this.add(obj, key, parent);
       this.open_selected();
       return result;
@@ -1185,7 +1194,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & keyof Base, parent: EditorBase, data?: Object) {
+    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: Object) {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1194,8 +1203,7 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
-        ...this.get_initial_object(key as string, parent),
-        id: generateBattlescribeId(),
+        ...this.fix_object(key, parent),
         ...data,
       };
 
@@ -1773,6 +1781,12 @@ export const useEditorStore = defineStore("editor", {
       }
 
       return { system, catalogue: loaded };
-    }
+    },
+    // Backwards dependency
+    //@ts-ignore
+    add_child(...args: any[]) { return this.add_node(...args) },
+    //@ts-ignore
+    del_child(...args: any[]) { return this.del_node(...args) }
   },
+
 });
