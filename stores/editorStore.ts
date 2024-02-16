@@ -1161,7 +1161,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create(key: string & BaseChildsT, data?: any) {
-      const obj = this.fix_object(key);
+      const obj = this.fix_object(key, data);
       obj.select = true;
       const added = await this.add(obj, key);
       this.open_selected();
@@ -1177,7 +1177,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create_child(key: string & BaseChildsT, parent: EditorBase, data?: any) {
-      const obj = this.fix_object(key, parent)
+      const obj = this.fix_object(key, data)
       obj.select = true
       const result = await this.add(obj, key, parent);
       this.open_selected();
