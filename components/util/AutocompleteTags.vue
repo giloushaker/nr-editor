@@ -136,14 +136,14 @@ export default {
       this.selected = this.fix(this.selected - 1);
       this.$nextTick(() => {
         const el = (this.$refs.suggestions as HTMLDivElement)!.getElementsByClassName("selected")[0];
-        el?.scrollIntoView({ block: "nearest", inline: "center" });
+        el?.scrollIntoView({ block: "nearest", inline: "nearest" });
       });
     },
     onDown() {
       this.selected = this.fix(this.selected + 1);
       this.$nextTick(() => {
         const el = (this.$refs.suggestions as HTMLDivElement)!.getElementsByClassName("selected")[0];
-        el?.scrollIntoView({ block: "nearest", inline: "center" });
+        el?.scrollIntoView({ block: "nearest", inline: "nearest" });
       });
     },
     onEnter() {

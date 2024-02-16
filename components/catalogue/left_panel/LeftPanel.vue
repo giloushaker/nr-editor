@@ -149,20 +149,12 @@ export default defineComponent({
           scrollable_el.scrollLeft = 0;
         }
       });
-      // setTimeout(() => {
-      //   const scrollable_el = this.$refs.scrollable as HTMLDivElement | undefined;
-      //   if (scrollable_el) scrollable_el.scrollTop = scroll;
-      // }, 50);
     },
-    async scroll_to(elt: Element) {
-      elt.scrollIntoView({ block: "nearest", inline: "center" });
-
+    async scroll_to(elt: HTMLElement) {
+      this.store.scroll_to_el(elt)
       this.$nextTick(async () => {
-        elt.scrollIntoView({ block: "nearest", inline: "center" });
+        this.store.scroll_to_el(elt)
       });
-      // setTimeout(() => {
-      //   elt.scrollIntoView({ block: "nearest", inline: "center" });
-      // }, 50);
     },
     should_capture_copy(e: Event) {
       // check if a popup is open

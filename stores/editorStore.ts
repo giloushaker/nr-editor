@@ -1375,7 +1375,7 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(to, true);
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
-      let current = document.getElementById("editor-entries") as Element;
+      let current = document.getElementById("editor-entries") as HTMLElement;
       if (!current) {
         return;
       }
@@ -1423,7 +1423,7 @@ export const useEditorStore = defineStore("editor", {
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-        let child: Element | undefined;
+        let child: HTMLElement | undefined;
         if (node.parentKey.startsWith("label-")) {
           child = childs[0]
         }
@@ -1509,28 +1509,43 @@ export const useEditorStore = defineStore("editor", {
       this.show(obj, false);
       await this.scrollto(obj);
     },
+    async scroll_to_el(el: HTMLElement) {
+      function getScrollableParent(element: HTMLElement) {
+        let parent = element.parentNode as HTMLElement;
+        while (parent) {
+          if (parent === document.body) {
+            return window;
+          }
+          const overflowY = window.getComputedStyle(parent).overflowY;
+          const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden';
+          if (isScrollable && parent.scrollHeight > parent.clientHeight) {
+            return parent;
+          }
+          parent = parent.parentNode as HTMLElement;
+        }
+        return null;
+      }
+      const scrollableParent = getScrollableParent(el) as HTMLElement;
+      if (scrollableParent) {
+        const elementTop = el.getBoundingClientRect().top;
+        const parentTop = scrollableParent.getBoundingClientRect().top;
+        const scrollPosition = elementTop - parentTop + scrollableParent.scrollTop - (scrollableParent.clientTop || 0);
+        scrollableParent.scrollTo({ top: scrollPosition, behavior: 'instant' });
+      }
+    },
     async scrollto(obj: EditorBase) {
       const el = await this.open(obj as EditorBase);
       if (el) {
         const context = get_ctx(el);
         this.do_select(null, context, context);
-        el.scrollIntoView({
-          // @ts-ignore
-          behavior: "instant",
-          block: "center",
-          inline: "center",
-        });
+        this.scroll_to_el(el);
       } else {
         setTimeout(async () => {
           const el = await this.open(obj as EditorBase);
           if (el) {
             const context = get_ctx(el);
             this.do_select(null, context, context);
-            el.scrollIntoView({
-              //@ts-ignore
-              behavior: "instant",
-              block: "center",
-            });
+            this.scroll_to_el(el);
           }
         }, 50);
       }
@@ -1568,7 +1583,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     get_leftpanel_open_collapsible_boxes() {
-      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
+      function find_open_recursive(elt: HTMLElement, obj: Record<string, any>, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (!results?.length) return;
@@ -1786,7 +1801,9 @@ export const useEditorStore = defineStore("editor", {
     //@ts-ignore
     add_child(...args: any[]) { return this.add_node(...args) },
     //@ts-ignore
-    del_child(...args: any[]) { return this.del_node(...args) }
+    del_child(...args: any[]) { return this.del_node(...args) },
+    //@ts-ignore
+    edit_child(...args: any[]) { return this.edit_node(...args) },
   },
 
 });

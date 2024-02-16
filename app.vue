@@ -287,29 +287,52 @@ button.bouton[disabled] {
   }
 }
 
-@media screen and (min-width: $large_mode) {
-  html {
 
-    /* Handle */
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 5px;
-    }
+html {
 
-    /* Handle on hover */
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.4);
-    }
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+  }
 
-    /* Handle on mouse */
-    ::-webkit-scrollbar-thumb:active {
-      background: rgba(0, 0, 0, 0.5);
-    }
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
 
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
+  /* Handle on mouse */
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+html.dark {
+
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+  }
+
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Handle on mouse */
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 }
 

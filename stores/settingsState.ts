@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/shared/appearance";
 import { AppearanceTheme } from "~/assets/shared/types/appearance";
 import merge from "lodash.merge";
+import { app } from "electron";
 export interface RGB {
   r: number;
   g: number;
@@ -20,6 +21,14 @@ function hexToRgb(hex: string): RGB | null {
 }
 
 export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any }) {
+  const htmlElement = document.documentElement;
+
+  if (appearence.dark) {
+    htmlElement.classList.add('dark');
+  } else {
+    htmlElement.classList.remove('dark');
+  }
+
   if (appearence.background) {
     const bgRgb = hexToRgb(appearence.background);
     document.documentElement.style.setProperty(`--bg`, appearence.background);
