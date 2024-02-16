@@ -107,6 +107,9 @@
           <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
             References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
           </div>
+          <div v-if="store.filter && !item.showChildsInEditor" @click="item.showChildsInEditor = true">
+            Show All Childs<span class="gray absolute right-5px">Space</span>
+          </div>
           <Separator v-if="item.isLink() || item.refs || imported" />
         </template>
         <template v-if="payload">

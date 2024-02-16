@@ -718,6 +718,19 @@ export const useEditorStore = defineStore("editor", {
       const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries];
       this.selectedEntries = arr.map((o) => ({ obj: o, onunselected: () => null }));
     },
+    toggle_selections() {
+      const bases = this.get_selections()
+      if (this.filter && bases.find(o => !o.showChildsInEditor)) {
+        bases.forEach(o => o.showChildsInEditor = true);
+      } else {
+        const boxes = this.selections.map(o => o.obj)
+        if (boxes.find(o => o.collapsed === true)) {
+          boxes.filter(o => o.collapsed === true).forEach(o => o.open())
+        } else {
+          boxes.filter(o => o.collapsed === false).forEach(o => o.close())
+        }
+      }
+    },
     async do_action(type: string, undo: () => void | Promise<void>, redo: () => any | Promise<any>) {
       let result;
       try {

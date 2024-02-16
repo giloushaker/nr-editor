@@ -207,6 +207,11 @@ export default defineComponent({
         this.store.filter = "";
         this.store.update_catalogue_search(this.catalogue, this.filterData);
       }
+      if (key === " ") /** Space */ {
+        e.preventDefault();
+        this.store.toggle_selections()
+      }
+
       if (tagName === "body") {
         if (e.ctrlKey && key === "z") {
           e.preventDefault();
