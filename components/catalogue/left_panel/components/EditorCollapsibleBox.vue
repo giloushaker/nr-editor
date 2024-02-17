@@ -8,7 +8,8 @@
       collapsed: collapsible && collapsed,
       alt: alt && altclickable,
     }" @click.stop="do_select" @click.ctrl.stop="$emit('ctrlclick')" @click.alt.stop="$emit('altclick')"
-      @dblclick="collapseSwitch($event.shiftKey)" @paste="paste" @copy="paste" @cut="paste">
+      @dblclick="collapseSwitch($event.shiftKey)" @paste="paste" @copy="paste" @cut="paste"
+      :style="{ 'padding-left': `${(depth) * 20}px` }">
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
@@ -72,6 +73,10 @@ export default {
     vshow: {
       default: false,
       type: Boolean
+    },
+    depth: {
+      default: 0,
+      type: Number,
     }
   },
 
@@ -285,9 +290,6 @@ h3 {
 }
 
 // indent
-.nobox>.content {
-  padding-left: 20px;
-}
 
 .title {
   position: relative;

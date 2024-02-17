@@ -2,7 +2,7 @@
   <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
       <div class="head">
-        <EditorCollapsibleBox :payload="catalogue" nobox :group="[]" :collapsible="false">
+        <EditorCollapsibleBox depth="0" :payload="catalogue" nobox :group="[]" :collapsible="false">
           <template #title><img src="/assets/bsicons/catalogue.png" />
             {{ catalogue.name }}
             <span v-if="getNameExtra(catalogue)" class="gray">&nbsp;{{ getNameExtra(catalogue) }} </span>
@@ -12,7 +12,7 @@
       </div>
 
       <template v-for="category of groupedCategories" :key="category.type">
-        <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+        <EditorCollapsibleBox :depth="depth" :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
           :collapsible="category.items.length > 0" :group="get_group('entries')" :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
           :class="[category.type, category.links, `depth-${depth}`]" nobox :defcollapsed="!should_be_open(category.type)"
@@ -47,7 +47,7 @@
       </template>
     </template>
     <template v-else>
-      <EditorCollapsibleBox :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
+      <EditorCollapsibleBox :depth="depth" :altclickable="store.can_follow(item) || imported" @altclick="onctrlclick"
         :collapsible="mixedChildren && mixedChildren.length > 0" :empty="!mixedChildren || mixedChildren.length == 0"
         :group="group || []" :payload="item" :class="[item.parentKey, `depth-${depth}`]" :defcollapsed="!open" nobox>
         <template #title>
@@ -107,7 +107,7 @@
           <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
             References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
           </div>
-          <div v-if="store.filter && !item.showChildsInEditor" @click="item.showChildsInEditor = true">
+          <div v-if="store.filter && !item.showChildsInEditor" @click="store.show(item, false)">
             Show All Childs<span class="gray absolute right-5px">Space</span>
           </div>
           <Separator v-if="item.isLink() || item.refs || imported" />
