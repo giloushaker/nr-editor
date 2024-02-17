@@ -721,7 +721,7 @@ export const useEditorStore = defineStore("editor", {
     toggle_selections() {
       const bases = this.get_selections()
       if (this.filter && bases.find(o => !o.showChildsInEditor)) {
-        bases.forEach(o => o.showChildsInEditor = true);
+        bases.forEach(o => this.show(o, false));
       } else {
         const boxes = this.selections.map(o => o.obj)
         if (boxes.find(o => o.collapsed === true)) {
@@ -1523,28 +1523,8 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: HTMLElement) {
-      function getScrollableParent(element: HTMLElement) {
-        let parent = element.parentNode as HTMLElement;
-        while (parent) {
-          if (parent === document.body) {
-            return window;
-          }
-          const overflowY = window.getComputedStyle(parent).overflowY;
-          const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden';
-          if (isScrollable && parent.scrollHeight > parent.clientHeight) {
-            return parent;
-          }
-          parent = parent.parentNode as HTMLElement;
-        }
-        return null;
-      }
-      const scrollableParent = getScrollableParent(el) as HTMLElement;
-      if (scrollableParent && scrollableParent.getBoundingClientRect) {
-        const elementTop = el.getBoundingClientRect().top;
-        const parentTop = scrollableParent.getBoundingClientRect().top;
-        const scrollPosition = elementTop - parentTop + scrollableParent.scrollTop - (scrollableParent.clientTop || 0);
-        scrollableParent.scrollTo({ top: scrollPosition, behavior: 'instant' });
-      }
+      el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
+
     },
     async scrollto(obj: EditorBase) {
       const el = await this.open(obj as EditorBase);

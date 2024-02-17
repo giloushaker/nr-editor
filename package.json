@@ -16,7 +16,8 @@
     "preview": "electron dist",
     "postinstall": "nuxt prepare",
     "electron": "npx nuxi generate --electron && npx electron dist",
-    "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true"
+    "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
+    "version": "git stash && npm version patch && git push && git stash pop"
   },
   "build": {
     "appId": "nr-editor",
