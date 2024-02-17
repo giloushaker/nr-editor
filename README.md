@@ -33,4 +33,46 @@ Save your changes.
 
 Enjoy playing with your updated data file!
 
-## [Source Code](https://github.com/vflam/nr-editor)
+## Development
+
+## Setup
+
+Make sure to install the dependencies:
+
+```bash
+# yarn
+yarn install
+
+# npm
+npm install
+
+# pnpm
+pnpm install
+```
+
+Initialize the submobules (code shared with newrecruit.eu)
+```bash
+git submodule update --init --recursive
+```
+
+## Development Server
+
+Start the development server on `http://localhost:3005`
+
+```bash
+npm run dev
+```
+
+## Production
+
+Build the application for production:
+
+```bash
+npm run build
+```
+
+Locally preview production build:
+
+```bash
+npm run preview
+```
