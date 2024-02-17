@@ -1,0 +1,38 @@
+name: macOS Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env: 
+      GH_TOKEN:  ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Setup env
+        run: |
+          git config --global credential.helper store
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with: 
+          repository: vflam/nr-editor
+          submodules: true
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 1
+          
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.16.0
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Create release
+        run: npx electron-builder --mac --publish=always

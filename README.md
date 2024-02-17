@@ -1,47 +1,42 @@
-# Nuxt 3 Minimal Starter
+# NewRecruit Data Editor
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## Description
 
-## Setup
+NewRecruit Data Editor is a desktop application built with Electron, designed to provide a user-friendly and up-to-date editor for data files used in tabletop wargames. Inspired by the popular Battlescribe's data editor, our app aims to be a reliable alternative that continues to receive regular updates.
 
-Make sure to install the dependencies:
+## Motivation
 
-```bash
-# yarn
-yarn install
+The motivation behind creating NewRecruit Data Editor stems from the frustration many tabletop wargaming enthusiasts have experienced due to the lack of updates and the negative behavior of the developer behind Battlescribe. Our goal is to provide a viable solution that not only offers an intuitive user interface but also ensures ongoing development and community involvement.
 
-# npm
-npm install
+## Key Features
 
-# pnpm
-pnpm install
-```
+Continuous updates and improvements: We are committed to regularly updating and improving NewRecruit Data Editor to ensure it remains relevant and up-to-date with the latest tabletop wargaming requirements.
 
-Initialize the submobules (code shared with newrecruit.eu)
-```bash
-git submodules init
-```
+Community-driven development: We welcome and value the feedback and suggestions from our community. Your input plays a crucial role in shaping the future direction of NewRecruit Data Editor.
 
-## Development Server
+## Installation
 
-Start the development server on `http://localhost:3005`
+To install NewRecruit Data Editor, follow these steps:
 
-```bash
-npm run dev
-```
+Download the latest release from the [Releases](https://github.com/giloushaker/nr-editor/releases)
+page.
 
-## Production
+Choose the appropriate installer for your operating system (Windows, macOS, Linux).
 
-Build the application for production:
+Run the installer and follow the on-screen instructions to complete the installation process.
 
-```bash
-npm run build
-```
+Once installed, launch the NewRecruit Data Editor application on your desktop.
 
-Locally preview production build:
+## Usage
 
-```bash
-npm run preview
-```
+Launch the NewRecruit Data Editor application.
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Select the system you want to edit, or create a new one.
+
+Open an existing data file or create a new one.
+
+Save your changes.
+
+Enjoy playing with your updated data file!
+
+## [Source Code](https://github.com/vflam/nr-editor)
