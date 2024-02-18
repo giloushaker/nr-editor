@@ -69,6 +69,11 @@ Start the development server on `http://localhost:3005`
 npm run dev
 ```
 
+Start the Electron Application (No hot reload)
+```bash
+npm run electron
+```
+
 ## Production
 
 Build the application for production:
