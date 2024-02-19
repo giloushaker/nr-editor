@@ -23,6 +23,7 @@ import {
   forEachParent,
   addObj,
   type MaybeArray,
+  isObject,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
@@ -1159,8 +1160,13 @@ export const useEditorStore = defineStore("editor", {
       }
       for (const nested_key in obj) {
         const val = obj[nested_key]
-        if (Array.isArray(val) && (goodJsonArrayKeys as Set<string>).has(nested_key)) {
-          obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o))
+        if ((goodJsonArrayKeys as Set<string>).has(nested_key) && isObject(val)) {
+          if (Array.isArray(val)) {
+            obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o))
+          } else {
+            obj[nested_key] = [this.fix_object(nested_key as BaseChildsT, val)]
+
+          }
         }
       }
       return obj;
