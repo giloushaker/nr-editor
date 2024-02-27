@@ -947,12 +947,12 @@ export const useEditorStore = defineStore("editor", {
         console.error("Couldn't add: no selection or parent(s) provided");
         return;
       }
-      const entries = (Array.isArray(data) ? data : [data]) as Array<EditorBase | Record<string, any> | string>;
+      const entries = (Array.isArray(data) ? data : [data])
       if (!entries.length) {
         console.error("Couldn't add: no data provided");
         return;
       }
-
+      const fixedEntries = entries.map(o => this.fix_object(childKey || o.parentKey, o));
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const sysId = catalogue.getSystemId();
 
@@ -964,11 +964,13 @@ export const useEditorStore = defineStore("editor", {
           const selectedCatalogueKey = selection.payload as BaseChildsT | "";
           await this.open(item, true);
           const toAdd = [];
-          for (const entry of entries as Record<string, any>[]) {
+          for (const entry of fixedEntries) {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
             if (!key) {
-              console.warn("Couldn't create", childKey || entry.parentKey, "in", selectedCatalogueKey);
+              const text = `Couldn't create ${childKey || entry.parentKey} in ${selectedCatalogueKey}`
+              notify({ type: "error", text })
+              console.warn(text);
               continue;
             }
             if (!item[key as keyof Base]) {
@@ -978,7 +980,9 @@ export const useEditorStore = defineStore("editor", {
             if (!Array.isArray(arr)) continue;
 
             if (!allowed_children(item, item.parentKey)?.has(key as string)) {
-              console.warn("Couldn't add", key, "to a", item.parentKey, "because it is not allowed");
+              const text = `Couldn't add ${key} to a ${item.parentKey}`
+              notify({ type: "error", text })
+              console.warn(text);
               continue;
             }
             // Copy to not affect existing
@@ -1153,7 +1157,11 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     // Recursively merges objects with their default created object so that they are correct.
-    fix_object(key: string & BaseChildsT, data?: any) {
+    fix_object<T>(key: string & BaseChildsT, data?: T): T extends [] ? T[] : T {
+      if (Array.isArray(data)) {
+        //@ts-ignore
+        return data.map(o => this.fix_object(key, o)) as T;
+      }
       const obj = {
         ...this.get_initial_object(key),
         ...data,
@@ -1213,7 +1221,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: Object) {
+    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: any) {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1226,14 +1234,15 @@ export const useEditorStore = defineStore("editor", {
         ...data,
       };
 
-      // Ensure there is array to put the childs in
-      if (!parent[key as keyof Base]) (parent as any)[key] = [];
-      const arr = parent[key as keyof Base];
-      if (!Array.isArray(arr)) return;
       if (!allowed_children(parent, parent.parentKey)?.has(key as string)) {
         console.warn("Couldn't add", key, "to a", parent.parentKey, "because it is not allowed");
         return;
       }
+
+      // Ensure there is array to put the childs in
+      if (!parent[key as keyof Base]) (parent as any)[key] = [];
+      const arr = parent[key as keyof Base];
+      if (!Array.isArray(arr)) return;
 
       clean(obj, key as string);
       delete obj.parentKey;
@@ -1394,7 +1403,7 @@ export const useEditorStore = defineStore("editor", {
       this.set_catalogue_changed(to, true);
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
-      let current = document.getElementById("editor-entries") as HTMLElement;
+      let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
       }
@@ -1442,7 +1451,7 @@ export const useEditorStore = defineStore("editor", {
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-        let child: HTMLElement | undefined;
+        let child: Element | undefined;
         if (node.parentKey.startsWith("label-")) {
           child = childs[0]
         }
@@ -1528,7 +1537,7 @@ export const useEditorStore = defineStore("editor", {
       this.show(obj, false);
       await this.scrollto(obj);
     },
-    async scroll_to_el(el: HTMLElement) {
+    async scroll_to_el(el: Element) {
       el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
 
     },
@@ -1582,7 +1591,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     get_leftpanel_open_collapsible_boxes() {
-      function find_open_recursive(elt: HTMLElement, obj: Record<string, any>, depth = 0) {
+      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (!results?.length) return;
