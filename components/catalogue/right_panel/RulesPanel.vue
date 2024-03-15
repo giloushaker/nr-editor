@@ -1,6 +1,6 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" aliases />
   <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
   <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
     Constraints

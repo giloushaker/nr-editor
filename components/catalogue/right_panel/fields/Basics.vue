@@ -17,8 +17,13 @@
         <td>Name:</td>
         <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
-      <tr>
-        <td>Aliases:</td>
+      <tr v-if="aliases">
+        <td
+          title="Additional Aliases for in-text reference matching (NewRecruit only), case insensitive.
+one per line"
+        >
+          Aliases:
+        </td>
         <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
       </tr>
     </table>
@@ -38,6 +43,10 @@ export default {
     item: {
       type: Object as PropType<BSIOption & BSINamed & Partial<BSIAliasable>>,
       required: true,
+    },
+    aliases: {
+      type: Boolean,
+      default: false,
     },
   },
 
