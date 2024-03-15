@@ -15,8 +15,8 @@ export default defineComponent({
   watch: {
     modelValue: {
       immediate: true,
-      handler(v) {
-        this._value = v ? v.join("\n") : "";
+      handler(newVal) {
+        this._value = newVal ? newVal.join("\n") : "";
       },
     },
   },
