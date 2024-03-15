@@ -19,6 +19,7 @@
       </tr>
       <tr v-if="aliases">
         <td
+          class="hastooltip"
           title="Additional Aliases for in-text reference matching (NewRecruit only), case insensitive.
 one per line"
         >
