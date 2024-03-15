@@ -17,6 +17,10 @@
         <td>Name:</td>
         <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
+      <tr>
+        <td>Aliases:</td>
+        <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
+      </tr>
     </table>
   </fieldset>
 </template>
@@ -24,13 +28,15 @@
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIOption, BSINamed } from "~/assets/shared/battlescribe/bs_types";
+import { BSIOption, BSINamed, BSIAliasable } from "~/assets/shared/battlescribe/bs_types";
+import InputStringArray from "./InputStringArray.vue";
 
 export default {
-  emits: ["catalogueChanged", "namechanged", "idchanged"],
+  components: { InputStringArray },
+  emits: ["catalogueChanged", "namechanged", "idchanged", "aliaschanged"],
   props: {
     item: {
-      type: Object as PropType<BSIOption & BSINamed>,
+      type: Object as PropType<BSIOption & BSINamed & Partial<BSIAliasable>>,
       required: true,
     },
   },
@@ -42,6 +48,10 @@ export default {
     },
     namechanged() {
       this.$emit("namechanged");
+      this.$emit("catalogueChanged");
+    },
+    aliaschanged() {
+      this.$emit("aliaschanged");
       this.$emit("catalogueChanged");
     },
 
