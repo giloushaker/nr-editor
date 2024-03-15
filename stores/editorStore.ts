@@ -498,6 +498,9 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = changedState;
       }
     },
+    changed(node: EditorBase | Catalogue) {
+      this.set_catalogue_changed(node.getCatalogue())
+    },
     /**
      * Returns true if the revision was incremented
      */
