@@ -19,7 +19,7 @@ function findProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
 function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, typeName: string) {
     if (!profileName) return
     const lower = profileName.trim().toLowerCase()
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const profile of imported.sharedProfiles || []) {
             if (!profile.getName()) continue;
             const found = removeSuffix(profile.getName().trim().toLowerCase(), " (x)")
@@ -38,7 +38,7 @@ function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, t
 function findImportedCategory(cat: Catalogue & EditorBase, categoryName: string) {
     if (!categoryName) return
     const lower = categoryName.trim().toLowerCase()
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const category of imported.categoryEntries || []) {
             if (lower === category.name.toLowerCase()) {
                 return category
@@ -49,7 +49,7 @@ function findImportedCategory(cat: Catalogue & EditorBase, categoryName: string)
 function findImportedEntry(cat: Catalogue & EditorBase, entryName: string, type: string) {
     const lower = removeSuffix(entryName.trim().toLowerCase(), "s")
     if (!lower) return;
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const entry of imported.sharedSelectionEntries || []) {
             if (entry.getType() !== type) continue;
             if (entry.name.trim().toLowerCase() === lower) {
