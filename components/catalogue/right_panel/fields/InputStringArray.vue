@@ -7,7 +7,7 @@ export default defineComponent({
   components: { EditableDiv },
   emits: ["update:modelValue"],
   props: {
-    modelValue: { type: String },
+    modelValue: { type: Array<String> },
   },
   data() {
     return { _value: "" };
