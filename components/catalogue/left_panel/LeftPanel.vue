@@ -221,6 +221,11 @@ export default defineComponent({
           e.preventDefault();
           await this.store.redo();
         }
+        if (key === " ") /** Space */ {
+          e.preventDefault();
+          this.store.toggle_selections()
+        }
+
         // if (e.ctrlKey && key === "x") {
         //   e.preventDefault();
         //   await this.store.cut(e as any as ClipboardEvent);

@@ -10,7 +10,7 @@ function isZipExtension(extension_or_file: string) {
   return zipExtensions.includes(extension);
 }
 function replaceSlashes(path: string) {
-  return path.replaceAll("\\", "/");
+  return path.replace(/\\/g, "/");
 }
 function filename(path: string) {
   return replaceSlashes(path).split("/").pop();

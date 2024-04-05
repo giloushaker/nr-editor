@@ -42,12 +42,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
   }
 
   if (appearence.title) {
-    const titleRgb = hexToRgb(appearence.title);
-    if (titleRgb != null) {
-      for (const field in titleRgb) {
-        document.documentElement.style.setProperty(`--title-${field}`, `${titleRgb[field as keyof typeof titleRgb]}`);
-      }
-    }
+    document.documentElement.style.setProperty(`--title`, appearence.title);
   }
   if (appearence.forcesBackground) {
     document.documentElement.style.setProperty(`--forces_background`, appearence.forcesBackground);

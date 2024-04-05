@@ -1,6 +1,5 @@
 <template>
   <div class="h-full">
-
     <Head>
       <Title>{{ loading ? "Loading..." : [cat?.getName(), `NR-Editor`].filter((o) => o).join(" - ") }}</Title>
     </Head>
@@ -26,8 +25,14 @@
     <Teleport to="#titlebar-content" v-if="cat && route_is_catalogue">
       <span class="ml-10px">
         Editing
-        <img class="inline" style="vertical-align: -2px" v-if="self_or_imports_changed" title="This file or one of it's dependencies was changed by another program. 
-You may want to reload the system through the Systems tab" src="/assets/icons/warning_sign.png" />
+        <img
+          class="inline"
+          style="vertical-align: -2px"
+          v-if="self_or_imports_changed"
+          title="This file or one of it's dependencies was changed by another program. 
+You may want to reload the system through the Systems tab"
+          src="/assets/icons/warning_sign.png"
+        />
         {{ cat.name }} <span class="text-slate-300">v{{ cat.revision }}</span>
       </span>
       <template v-if="has_unsaved_changes">
@@ -40,7 +45,8 @@ You may want to reload the system through the Systems tab" src="/assets/icons/wa
         <span class="status mx-2">saved</span>
       </template>
       <template v-if="systemFiles && !systemFiles.allLoaded">
-        <button class="bouton load ml-10px" @click="load_all">Load all
+        <button class="bouton load ml-10px" @click="load_all"
+          >Load all
           <span v-if="loading_all">({{ loading_progress }} / {{ loading_progress_max }})</span>
         </button>
       </template>
@@ -118,9 +124,9 @@ export default defineComponent({
 
   computed: {
     has_unsaved_changes() {
-      const changes = this.store.unsavedChanges
+      const changes = this.store.unsavedChanges;
       for (const key in changes) {
-        const val = changes[key]
+        const val = changes[key];
         if (this.cat && !key.includes(this.cat?.getSystemId())) continue;
         if (val.unsaved) return true;
       }
@@ -278,6 +284,7 @@ export default defineComponent({
         this.systemFiles = system;
         this.cat = catalogue;
         if (catalogue) {
+          (catalogue as any).opened = true;
           const data = this.uistate.get_data(catalogue.id);
           this.load_state(data);
         }

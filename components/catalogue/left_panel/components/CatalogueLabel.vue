@@ -1,7 +1,15 @@
 <template>
   <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
-    <EditorCollapsibleBox nobox :group="[]" :collapsible="true" :class="[`depth-${depth}`, `label-${label}`]" vshow>
-      <template #title><img src="/assets/bsicons/profileType.png" />
+    <EditorCollapsibleBox
+      nobox
+      :group="[]"
+      :depth="depth"
+      :collapsible="true"
+      :class="[`depth-${depth}`, `label-${label}`]"
+      vshow
+    >
+      <template #title
+        ><img src="/assets/bsicons/profileType.png" />
         <span class="gray"> {{ label }}</span>
       </template>
       <template #content>
@@ -11,20 +19,22 @@
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
       <template #default="{ payload }">
         <template v-if="typeItem">
-          <div v-if="typeItem" @click="store.goto(typeItem)">
-            Goto ({{ typeItem.getName() }}
-          </div>
+          <div v-if="typeItem" @click="store.goto(typeItem)"> Goto ({{ typeItem.getName() }} </div>
           <Separator />
           <div
-            @click="store.create_child('sharedProfiles', catalogue as EditorBase, { typeName: typeItem?.getName(), typeId: typeItem?.getId() })">
+            @click="
+              store.create_child('sharedProfiles', catalogue as EditorBase, {
+                typeName: typeItem?.getName(),
+                typeId: typeItem?.getId(),
+              })
+            "
+          >
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile <span class="gray">&nbsp;({{ typeItem?.getName() }})</span>
           </div>
         </template>
         <template v-else>
-          <div>
-            Nothing
-          </div>
+          <div> Nothing </div>
         </template>
       </template>
     </ContextMenu>
@@ -56,18 +66,18 @@ export default {
     },
     label: {
       type: String,
-      required: true
+      required: true,
     },
     catalogue: {
       type: Object,
-      required: true
+      required: true,
     },
     path: {
-      type: Array
+      type: Array,
     },
     typeItem: {
       type: Object as PropType<EditorBase>,
-    }
+    },
   },
   data() {
     return {
@@ -99,10 +109,13 @@ export default {
       };
     },
     should_be_open() {
-      const fullPath = [...(this.path || []), {
-        key: `label-${this.label}`,
-        index: 0,
-      }] as EntryPathEntry[];
+      const fullPath = [
+        ...(this.path || []),
+        {
+          key: `label-${this.label}`,
+          index: 0,
+        },
+      ] as EntryPathEntry[];
       this.open = this.state.get(this.catalogue.id, fullPath);
     },
     debug() {

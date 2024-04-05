@@ -18,6 +18,7 @@
       <!-- <span class="gray" v-if="i < path.length - 1"> >&nbsp;</span> -->
       <span class="gray" v-if="endArrow || i < path.length - 1">&nbsp;> </span>
     </div>
+    <span v-if="text" class="gray inline-block ml-20px text-sm">{{ text }}</span>
   </div>
 </template>
 <script lang="ts">
@@ -28,6 +29,7 @@ export default defineComponent({
     path: { type: Array<EntryPathEntryExtended>, required: true },
     maxLength: { type: Number, default: 80, required: false },
     endArrow: { type: Boolean, default: false },
+    text: { type: String },
   },
 });
 </script>

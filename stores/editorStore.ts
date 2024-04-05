@@ -80,7 +80,7 @@ import { toRaw } from "vue";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
-import * as $node from "~/electron/node_helpers";
+import { useScriptsStore } from "./scriptsStore";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>
 const enableGithubIntegrationWithGitFolder = false;
@@ -114,6 +114,8 @@ export interface IEditorStore {
   catalogueComponent?: CatalogueComponentT;
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
+
+  scripts: ReturnType<typeof useScriptsStore>
 }
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
@@ -198,6 +200,7 @@ export const useEditorStore = defineStore("editor", {
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
+    scripts: useScriptsStore()
   }),
 
   actions: {
@@ -499,7 +502,16 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     changed(node: EditorBase | Catalogue) {
-      this.set_catalogue_changed(node.getCatalogue())
+      const catalogue = node.getCatalogue()
+      if (catalogue) {
+        this.set_catalogue_changed(catalogue)
+      }
+    },
+    removed(node: EditorBase | Catalogue) {
+      const catalogue = node.getCatalogue()
+      if (catalogue) {
+        this.set_catalogue_changed(catalogue)
+      }
     },
     /**
      * Returns true if the revision was incremented
@@ -815,8 +827,9 @@ export const useEditorStore = defineStore("editor", {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent) {
-      await this.set_clipboard(this.get_selections(), event);
+    async copy(event: ClipboardEvent, selections?: MaybeArray<EditorBase>) {
+      const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections()
+      await this.set_clipboard(toCopy, event);
     },
     async paste(event: ClipboardEvent) {
       this.add(await this.get_clipboard(event));
@@ -870,16 +883,17 @@ export const useEditorStore = defineStore("editor", {
           arr.push(copy);
           onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           addeds.push(copy);
+          this.changed(copy);
         }
       };
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          this.removed(entry)
           onRemoveEntry(entry);
         }
       };
       await this.do_action("dupe", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
     },
     /**
      * Remove the current selections.
@@ -913,6 +927,7 @@ export const useEditorStore = defineStore("editor", {
           const removed = popAtEntryPath(catalogue, path);
           removeds.push(removed);
           paths.push(path);
+          this.removed(removed);
           onRemoveEntry(removed, manager);
         }
         removeds.reverse();
@@ -922,10 +937,10 @@ export const useEditorStore = defineStore("editor", {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
           const parent = addAtEntryPath(catalogue, path, entry);
           onAddEntry(entry, catalogue, parent, this.get_system(sysId));
+          this.changed(entry);
         }
       };
       this.do_action("remove", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
     /**
@@ -1021,6 +1036,7 @@ export const useEditorStore = defineStore("editor", {
             // Add it to its parent
             arr.push(entry);
             onAddEntry(entry, catalogue, item, this.get_system(sysId));
+            this.changed(entry)
             addeds.push(entry);
           }
         }
@@ -1029,11 +1045,11 @@ export const useEditorStore = defineStore("editor", {
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          this.removed(entry)
           onRemoveEntry(entry);
         }
       };
       const initial = await this.do_action("add", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
       return initial;
     },
     open_selected() {
@@ -1150,11 +1166,16 @@ export const useEditorStore = defineStore("editor", {
             id: generateBattlescribeId(),
           };
 
+        case "characteristic":
+        case "cost":
+          return {
+
+          }
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
-            hidden: false,
             id: generateBattlescribeId(),
+            hidden: false,
           };
       }
     },
@@ -1255,18 +1276,16 @@ export const useEditorStore = defineStore("editor", {
       // Add it to its parent
       arr.push(obj);
       onAddEntry(obj, catalogue, parent, this.get_system(sysId));
-      this.set_catalogue_changed(catalogue);
+      this.changed(obj);
       return obj;
     },
     del_node(entry: Base) {
-      if (entry.catalogue) {
-        this.set_catalogue_changed(entry.catalogue);
-      }
       try {
         const catalogue = entry.catalogue;
         const manager = catalogue.manager;
         const path = getEntryPath(entry as EditorBase);
         const removed = popAtEntryPath(catalogue, path);
+        this.removed(removed)
         onRemoveEntry(removed, manager);
       } catch (e) {
         console.error("Failed to delete", entry);
@@ -1276,12 +1295,22 @@ export const useEditorStore = defineStore("editor", {
       if (obj.isLink()) return false;
       return true;
     },
-    edit_node(entry: EditorBase, data?: Object) {
+    edit_node(entry: EditorBase, data?: Record<string, any>) {
       const obj = JSON.parse(entry.toJson())
-      Object.assign(obj, data);
-      setPrototypeRecursive({ [entry.parentKey]: obj })
-      Object.assign(entry, obj);
-      this.set_catalogue_changed(entry.catalogue);
+      let changed = false;
+      for (const key in data) {
+        if (obj[key] !== data[key]) {
+          obj[key] = data[key]
+          changed = true;
+        }
+      }
+      const fixed_obj = this.fix_object(entry.parentKey, obj);
+      setPrototypeRecursive({ [entry.parentKey]: fixed_obj })
+      Object.assign(entry, fixed_obj);
+      if (changed) {
+        this.changed(entry);
+      }
+      return changed
     },
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
@@ -1357,6 +1386,7 @@ export const useEditorStore = defineStore("editor", {
         const path = getEntryPath(obj);
 
         removeEntry(obj);
+        this.removed(obj)
         onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
@@ -1365,7 +1395,7 @@ export const useEditorStore = defineStore("editor", {
 
         to[catalogueKey]!.push(copy);
         onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
-
+        this.changed(copy)
         const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
         const canBeLinked = linkableTypes.includes(obj.editorTypeName);
         const shouldMakeLink = !obj.parentKey.startsWith("shared");
@@ -1388,6 +1418,7 @@ export const useEditorStore = defineStore("editor", {
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
           onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
+          this.changed(link)
         }
       };
       function undo() {
@@ -1400,9 +1431,6 @@ export const useEditorStore = defineStore("editor", {
       // Undo is not done at this feature stills needs some iteration
       // await this.do_action("move", undo, redo);
       redo();
-
-      this.set_catalogue_changed(from, true);
-      this.set_catalogue_changed(to, true);
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
@@ -1540,7 +1568,7 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {
-      el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
+      el.scrollIntoView({ block: "nearest", "inline": "start", behavior: "instant" })
 
     },
     async scrollto(obj: EditorBase) {
