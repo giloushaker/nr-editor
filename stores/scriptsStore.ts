@@ -74,7 +74,7 @@ export const useScriptsStore = defineStore("scripts", {
     },
     get_default_scripts() {
       return [
-        fixlinknames, fixprofiles, listrefs, select, listautomaticrefs, fixnewlines
+        fixlinknames, fixprofiles, listrefs, select, listautomaticrefs
       ] as Record<string, any>[]
     }
   }

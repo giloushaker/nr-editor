@@ -3,13 +3,17 @@
     <template v-if="system">
       <div v-for="script in scripts"> <RunScript :script="script" :system="system" /> </div>
     </template>
-    <pre clas="info">
+    <CollapsibleBox>
+      <template #title>Info</template>
+      <template #content>
+        <div class="info">
+          <pre style="margin: 10px">
 Note: this feature is not finished To add a new script: Create a folder named `scripts` in your data folder and
 add a .js file with content like this:
-`
+<code>
 export default {
-  name: "name",
-  description: "description",
+  name: "Display Selected",
+  description: "Returns the currently selected node(s)",
   arguments: [
     {
       name: "catalogues",
@@ -22,24 +26,25 @@ export default {
     },
   ],
   run(catalogues, query) {
-    return [$store.]
+    return [`&lt;span style="font-weight: bold"&gt;Selected nodes:&lt;/span&gt;`,$store.get_selections()]
   }
 }
-`
-Output: 
-one of or an array of: number | error | string | node[] | [node, string][]
-The editor attempts tries to display the output:
-You can return an array to display multiple things
-To display a node, simply return an array of them
-To display text next to a node, return an array containing the node and a string
+</code>
+<span class="bold">Output:</span>
+return one of or an array of: number | error | string | node[] | [node, string][]
 Will render html
 
-Running scripts:
-Currently only supports running scripts manually, but may support running hooks such as on paste, on change, on load, etc
+<span class="bold">Running scripts:</span>
+Currently only supports running scripts manually, but may support running hooks in the future such as on paste, on change, on load, etc
 You may interact with the editor using the store (global variable `$store`, also available in the console)
-Available actions are in https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts
-Example scripts (in typescript but only js is supported for non-default scripts) 
-    </pre>
+Available actions are in <a href="https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts">https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts</a>
+Example scripts (in typescript but only js is supported for non-default scripts): <a href="https://github.com/giloushaker/nr-editor/tree/master/default-scripts">https://github.com/giloushaker/nr-editor/tree/master/default-scripts</a>
+If you want to use imports you have to bundle them into one js file with rollup/webpack
+If you want to read/write local files you can use the functions in the global `$node`
+          </pre>
+        </div>
+      </template>
+    </CollapsibleBox>
   </div>
 </template>
 

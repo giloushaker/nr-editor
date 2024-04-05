@@ -1,4 +1,3 @@
-import type { Base } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 
@@ -327,7 +326,7 @@ export default {
       type: "catalogue[]"
     },
     {
-      name: "query",
+      name: "query (js)",
       type: "string"
     },
   ],
@@ -335,7 +334,8 @@ export default {
     const all = [] as EditorBase[]
     from.forEach(o => o.forEachObjectWhitelist((node: EditorBase) => all.push(node)));
     (globalThis as any).$view = new NodeView(all)
-    const result = eval(`$view.${query}`).iter
+    const evaled = eval(`$view.${query}`).iter
+    const result = Array.isArray(evaled) ? evaled : evaled.iter || evaled;
     $store.set_selections(result);
     return [`Selected ${result.length} nodes: <code>$store.get_selections())</code>`, result]
 
