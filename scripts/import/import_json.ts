@@ -5,7 +5,8 @@ import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCe
 import { getGroup, getPerModelCostModifier, parseDetails, toCategoryLink, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { OptionsEntry, optionsToGroups } from "./import_options";
-import { Entry, InfoGroup } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Entry, InfoGroup } from "~/assets/shared/battlescribe/bs_main";
+import { parseUnitText } from "./import_raw";
 
 function cmpItems(a: string, b: string) {
     return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "")
@@ -19,7 +20,7 @@ function findProfile(cat: Catalogue & EditorBase, profile: NoId<BSIProfile>) {
 function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, typeName: string) {
     if (!profileName) return
     const lower = profileName.trim().toLowerCase()
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const profile of imported.sharedProfiles || []) {
             if (!profile.getName()) continue;
             const found = removeSuffix(profile.getName().trim().toLowerCase(), " (x)")
@@ -38,7 +39,7 @@ function findImportedProfile(cat: Catalogue & EditorBase, profileName: string, t
 function findImportedCategory(cat: Catalogue & EditorBase, categoryName: string) {
     if (!categoryName) return
     const lower = categoryName.trim().toLowerCase()
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const category of imported.categoryEntries || []) {
             if (lower === category.name.toLowerCase()) {
                 return category
@@ -49,7 +50,7 @@ function findImportedCategory(cat: Catalogue & EditorBase, categoryName: string)
 function findImportedEntry(cat: Catalogue & EditorBase, entryName: string, type: string) {
     const lower = removeSuffix(entryName.trim().toLowerCase(), "s")
     if (!lower) return;
-    for (const imported of [cat, ...cat.imports]) {
+    for (const imported of [cat, ...cat._imports]) {
         for (const entry of imported.sharedSelectionEntries || []) {
             if (entry.getType() !== type) continue;
             if (entry.name.trim().toLowerCase() === lower) {
@@ -133,6 +134,7 @@ function getSpecialRules(cat: Catalogue & EditorBase, name: string, unit: Unit, 
                 const { ruleName, param } = parseSpecialRule(rule);
                 const profile = findImportedProfile(cat, ruleName!, "Special Rule")
                 if (!profile) {
+                    group.infoLinks!.push(toSpecialRuleLink(rule, hash, ruleName || "undefined rulename", param))
                     console.log(`[SPECIAL RULES] Couldn't find Special Rule from ${hash}: ${ruleName}`)
                     continue;
                 }
@@ -153,7 +155,7 @@ function getArmourValueProfile(cat: Catalogue & EditorBase, name: string, armour
         hidden: false,
         id: id(`${name}/armourValue`),
         type: "profile",
-        targetId: armourProfile.id,
+        targetId: armourProfile?.id ?? `Armour Value ${armourValue}`,
         modifiers: [{ type: "append", value: `: ${armourValue}`, field: "name" }]
     }
     return result;
@@ -295,7 +297,7 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
             // modifiers: [{ type: "set", value: "Base", field: "name" }]
         })
     } else {
-        const error = `[BASE] Couldn't get Base`;
+        const error = `[BASE] ${baseSizes}`;
         model.entryLinks!.push(toEntryLink(error, `${model.name}/bug/base`, error))
     }
     const equipment = getEquipment(cat, name, profileName, unit);
@@ -307,7 +309,15 @@ function getModelEntry(cat: Catalogue & EditorBase, name: string, profile: Profi
     if (specialRules.infoLinks!.length) {
         model.infoGroups!.push(specialRules)
     }
-
+    if (unit.Subheadings["Troop Type:"]) {
+        const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim()
+        const importedCategory = findImportedCategory(cat, category)
+        if (importedCategory) {
+            model.categoryLinks!.push(toCategoryLink(importedCategory, `${name}/${model.name}`))
+        } else {
+            console.error(`Couldn't find imported category ${category}`);
+        }
+    }
     return model;
 }
 function getConstraints(cat: Catalogue & EditorBase, parentName: string, unitSize: string): BSIConstraint[] {
@@ -512,16 +522,8 @@ function findModels(models: BSISelectionEntry[], model: string) {
     const foundModel = models.filter(o => cmpModel(o.name, model)) ?? models.filter(o => cmpModel2(o.name, model))
     return foundModel
 }
-function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
+async function modifyUnit(cat: Catalogue & EditorBase, unit: Unit, source: EditorBase) {
     const unitName = unit.Name
-    const existingUnitLink = findRootUnit(cat, unitName)
-    if (existingUnitLink) {
-        $store.del_node(existingUnitLink);
-    }
-    const existing = findUnit(cat, unitName)
-    if (existing) {
-        $store.del_node(existing);
-    }
     const entry = {
         type: "unit",
         import: true,
@@ -560,10 +562,27 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
 
     if (!unit.Profiles.length) {
         console.log(`[UNIT] ${unitName} has no profiles`)
-        return;
     }
 
     const modelEntries = [] as BSISelectionEntry[]
+    for (const child of source.localSelectionsIterator()) {
+        if (child.type === "model") {
+            const modelEntry = {
+                costs: [],
+                entryLinks: [],
+                infoGroups: [],
+                profiles: [],
+                selectionEntries: [],
+                selectionEntryGroups: [],
+                constraints: [],
+                categoryLinks: [],
+                infoLinks: [],
+                ...(JSON.parse(child.toJson()))
+            }
+            entry.selectionEntries.push(modelEntry);
+            modelEntries.push(modelEntry);
+        }
+    }
     for (const profile of unit.Profiles || []) {
         const modelEntry = getModelEntry(cat, unitName, profile, unit)
         if (modelEntry) {
@@ -571,7 +590,10 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             modelEntries.push(modelEntry)
         }
     }
-
+    if (!modelEntries.length) {
+        notify({ text: "Add models entries first", type: "error" })
+        return;
+    }
     if (unit.Subheadings["Unit Size:"]) {
         const firstEntry = entry.selectionEntries![0];
         const unitSize = unit.Subheadings["Unit Size:"].trim()
@@ -661,6 +683,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
             return foundModel ? [foundModel] : modelEntries
 
         }
+        console.log('Parsed options', parsedOptions)
         for (const parsedGroup of parsedOptions.groups) {
 
             for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
@@ -969,7 +992,7 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
                     group.constraints = [toMinConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`), toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)]
                     for (const magicBranch of knowsFrom) {
                         const found = findImportedEntry(cat, magicBranch, "upgrade")!
-                        const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id)
+                        const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found?.id ?? magicBranch)
                         group.entryLinks!.push(link);
                     }
                     if (requiresWizard || true) {
@@ -1027,86 +1050,72 @@ function createUnit(cat: Catalogue & EditorBase, unit: Unit) {
         entriesToAdd.push(entry)
     }
 
+    console.log("Adding", entriesToAdd)
+    await $store.remove()
     for (const entry of entriesToAdd) {
-        const existing = findUnit(cat, entry.name)
-        if (existing) {
-            $store.del_node(existing);
-        }
         const existingLink = findRootUnit(cat, entry.name)
         if (existingLink) {
             $store.del_node(existingLink);
         }
 
-        const addedUnit = $store.add_node("sharedSelectionEntries", cat, entry)
+        const addedUnit = await $store.create_child("sharedSelectionEntries", cat, entry)
         const link = {
             import: true,
             name: entry.name,
             hidden: false,
             id: id(`${entry.name}/root`),
             type: "selectionEntry",
-            targetId: addedUnit.id,
+            targetId: addedUnit?.id,
             categoryLinks: [] as BSICategoryLink[],
         };
-        if (unit.Subheadings["Troop Type:"]) {
-            const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim()
-            const importedCategory = findImportedCategory(cat, category)
-            if (importedCategory) {
-                link.categoryLinks.push(toCategoryLink(importedCategory, `${unitName}`))
-            } else {
-                console.error(`Couldn't find imported category ${category}`);
-            }
-        }
+
         const addedLink = $store.add_node("entryLinks", cat, link)
     }
 
 }
-function createUnits(cat: Catalogue & EditorBase, pages: Page[]) {
-    for (const page of pages) {
-        for (const unit of page.Units || []) {
-            createUnit(cat, unit)
-        }
-    }
-}
 
 
-const map = {
-    "Chaos Dwarfs Legacy Army List": "Chaos Dwarfs",
-    "d45e-eeb4-390e-6449": "Skaven",
-    "Daemons of Chaos Legacy Army List": "Daemons of Chaos",
-    "Dark Elves Legacy Army List": "Dark Elves",
-    "Lizardmen Legacy Army List": "Lizardmen",
-    "Ogre Kingdoms Legacy Army List": "Ogre Kingdoms",
-    "Vampire Counts Legacy Army List": "Vampire Counts",
-}
-// ALL
-$catalogue.manager.loadAll().then(async () => {
-    function replaceSlashes(path: string) {
-        return path.replaceAll("\\", "/");
-    }
-    function dirname(path: string) {
-        return replaceSlashes(path).split("/").slice(0, -1).join("/");
-    }
-    const systemPath = dirname($catalogue.fullFilePath)
-    const fileName = "processed_7.json"
-    const jsonPath = `${systemPath}/json/${fileName}`
-    const file = await $node.readFile(jsonPath)
-    if (!file) return;
-    const read = JSON.parse(file.data)
-    const files = $catalogue.manager.getAllLoadedCatalogues();
-    files.map(o => o.processForEditor());
-    for (const catalogue of Object.keys(read)) {
-        const pages = Object.values(read[catalogue]) as Page[];
-        const catalogueName = map[catalogue as keyof typeof map];
-        const existing = files.find(o => o.name === catalogueName) as Catalogue & EditorBase
-        if (!existing) {
-            console.warn(`Couldn't find catalogue for ${catalogueName}(${catalogue})`)
-            continue;
+
+(() => {
+    function get_text(event: any) {
+        if (event?.clipboardData) {
+            const text = event.clipboardData.getData("text/plain");
+            return text;
+        } else {
+            const text = navigator.clipboard.readText();
+            return text;
         }
-        console.log(" --- BEGINNING", catalogueName)
-        updateSharedProfiles(existing, pages)
-        updateSpecialRules(existing, pages)
-        updateWeapons(existing, pages)
-        createUnits(existing, pages)
-        console.log(" --- DONE", catalogueName);
     }
-});
+    console.log('init')
+    if (!($store as any)._paste) {
+        ($store as any)._paste = ($store as any).paste
+    }
+    $store.paste = async (event) => {
+        const text = get_text(event)
+        console.log("intercepted", text)
+        const selected = $store.get_selected()
+        if ((text.includes("Options:") || text.includes('Equipment:') || (text.includes('WS') && text.includes('Points'))) && selected) {
+            if (selected.parentKey !== "sharedSelectionEntries") {
+                notify({ text: "Select a (top-level) sharedSelectionEntry", type: "error" })
+                return;
+            }
+
+            const unit = parseUnitText(text);
+            unit.Name = selected.getName()
+            console.log(unit)
+            for (const rawRule of unit["Special Rules"] || []) {
+                const rule = toSpecialRule(removeSuffix(rawRule.name, " (X)"), rawRule.description)
+                updateProfile(selected.catalogue as Catalogue & EditorBase, rule)
+            }
+            for (const rawProfile of unit["Profiles"] || []) {
+                const { ruleName, param } = parseSpecialRule(rawProfile.Name) // Same format as a special rule  
+                const parsed = toModelProfile(rawProfile, unit.Name)
+                updateProfile(selected.catalogue as Catalogue & EditorBase, parsed)
+            }
+            await modifyUnit(selected.catalogue as Catalogue & EditorBase, unit, selected)
+        } else {
+            return await ($store as any)._paste(event)
+        }
+    }
+})()
+

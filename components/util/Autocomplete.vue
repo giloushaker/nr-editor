@@ -27,6 +27,7 @@
 import { PropType } from "vue";
 
 export default {
+  emits: ["change", "update:modelValue"],
   props: {
     modelValue: String,
     placeholder: {
@@ -49,7 +50,7 @@ export default {
     },
 
     valueField: {
-      type: String,
+      type: [String, Function],
       default: "",
     },
 
@@ -137,11 +138,12 @@ export default {
 
     targetSelected(opt: any) {
       let res = opt.option;
-      if (this.valueField.length) {
+      if (this.valueField) {
         if (this.nullable && !opt.option) {
           res = undefined;
         } else {
-          res = opt.option[this.valueField];
+          const val = typeof this.valueField === "function" ? this.valueField(opt.option) : opt.option[this.valueField];
+          res = val;
         }
       }
       const old = this.selectedOption?.option;
@@ -160,7 +162,7 @@ export default {
         let found = this.computedOptions.find((opt: any) => {
           let item = opt;
           if (this.valueField) {
-            item = opt[this.valueField];
+            item = typeof this.valueField === "function" ? this.valueField(opt) : opt[this.valueField];
           }
           if (item === this.modelValue) {
             return true;
@@ -175,6 +177,8 @@ export default {
         } else {
           this.selectedOption = null;
         }
+      } else if (this.default) {
+        this.selectedOption = { option: this.default, selected: true };
       }
     },
 

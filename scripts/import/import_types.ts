@@ -18,7 +18,7 @@ export interface Unit {
     "Points": null,
     "Profiles": Profile[],
     "Subheadings": {
-        "Armour Value:": string,
+        "Armour Value:"?: string,
         "Special Rules:"?: string,
         "Options:"?: string,
         "Equipment:"?: string,
@@ -27,6 +27,7 @@ export interface Unit {
         "Troop Type:"?: string
         "Magic:"?: string
     },
+    "Special Rules"?: SpecialRule[]
     // "Unit Text": string
 }
 export interface Page {

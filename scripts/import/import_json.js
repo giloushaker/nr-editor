@@ -15,6 +15,9 @@
     function id(str) {
         return `${hashFnv32a(str)}-${hashFnv32a(str + "------")}`;
     }
+    function removeTextInParentheses(str) {
+        return str.replace(/\([^()]*\)/g, '');
+    }
     function extractTextAndDetails(str) {
         const result = [];
         let inDetails = false;
@@ -200,33 +203,6 @@
         };
         return result;
     }
-    function toWeaponProfile(name, weapon) {
-        return {
-            name: name,
-            hidden: false,
-            id: id(`${name}/weapon/${weapon}/profile`),
-            typeId: "a378-c633-912d-11ce",
-            typeName: "Weapon",
-            characteristics: [
-                { "name": "R", "typeId": "2360-c777-5e07-ed58", "$text": weapon.Stats.R },
-                { "name": "S", "typeId": "ac19-f99c-72e9-a1a7", "$text": weapon.Stats.S },
-                { "name": "AP", "typeId": "9429-ffe7-2ce5-e9a5", "$text": weapon.Stats.AP },
-                { "name": "Special Rules", "typeId": "5f83-3633-336b-93b4", "$text": weapon.Stats["Special Rules"] },
-                { "name": "Notes", "typeId": "772a-a7ff-f6b3-df71", "$text": weapon.Stats.Notes }
-            ]
-        };
-    }
-    function toInfoLink(unitName, entry) {
-        const specialRuleLink = {
-            name: entry.getName(),
-            hidden: false,
-            id: id(`${unitName}/${entry.typeName || "profile"}/${entry.getName()}`),
-            type: "profile",
-            targetId: entry.id,
-            modifiers: []
-        };
-        return specialRuleLink;
-    }
     function toEquipment(itemName, hash, targetId) {
         return {
             name: itemName,
@@ -369,7 +345,7 @@
     }
     function toSpecialRuleLink(ruleName, hash, targetId, param) {
         const specialRuleLink = {
-            name: ruleName,
+            name: removeTextInParentheses(ruleName),
             hidden: false,
             id: id(`${hash}/rule/${ruleName}`),
             type: "profile",
@@ -394,7 +370,6 @@
                     childId: "model",
                     shared: true,
                     roundUp: false,
-                    id: id(`${hash}/per model cost`)
                 }
             ]
         };
@@ -418,7 +393,7 @@
     }
     function removeUndefineds(object) {
         for (const key in object) {
-            if (object[key] === undefined)
+            if ((object)[key] === undefined)
                 delete object[key];
         }
         return object;
@@ -968,6 +943,126 @@
         return result;
     }
 
+    function parseUnitText(text) {
+        function lastItem(array) {
+            return array[array.length - 1];
+        }
+        function replaceNewlineWithSpace(text) {
+            // Replace `\n` preceded by `,` with just a space.
+            return text.replace(/,\s*\n\s*/g, ', ');
+        }
+        const fixed = replaceNewlineWithSpace(text.replaceAll("\r", "\n")).split("\n").filter(o => o).join('\n');
+        function findTextAroundTroopType(input) {
+            // Define the regex pattern
+            const pattern = /(.*?)(Troop Type:.*)$/s;
+            // Attempt to match the pattern against the input
+            const match = input.match(pattern);
+            // Check if a match was found
+            if (match) {
+                return [match[1], match[2]];
+            }
+            else {
+                // If no match was found, return null or an appropriate value
+                if (input.includes('Points') && input.includes('WS')) {
+                    return [input, ""];
+                }
+                else {
+                    return ["", input];
+                }
+            }
+        }
+        const [profiles, content] = findTextAroundTroopType(fixed);
+        const result = { Subheadings: {}, Name: "", Profiles: [], Points: null, ProfilesText: profiles };
+        const models = profiles.split('\n').filter(o => !o.includes('Points') && !o.includes('WS'));
+        for (const model of models) {
+            const splitted = model.replace(/\s+/g, " ").trim().split(' ');
+            if (splitted.length < 10) {
+                continue;
+            }
+            result.Profiles.push({
+                Stats: {
+                    Points: splitted.pop(),
+                    Ld: splitted.pop(),
+                    A: splitted.pop(),
+                    I: splitted.pop(),
+                    W: splitted.pop(),
+                    T: splitted.pop(),
+                    S: splitted.pop(),
+                    BS: splitted.pop(),
+                    WS: splitted.pop(),
+                    M: splitted.pop(),
+                },
+                Name: splitted.join(' ')
+            });
+        }
+        // State machine
+        const lines = content.split('\n').filter(o => o);
+        let current = "preSpecialRules";
+        let startSection = content;
+        const weaponTables = [];
+        const specialRuleDefinitions = [];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith("Special Rules:")) {
+                current = "specialRules";
+                continue;
+            }
+            else if (current === "specialRules") {
+                if (line.startsWith('•'))
+                    continue;
+                startSection = lines.slice(0, i).join("\n");
+                current = "afterSpecialRules";
+            }
+            if (current === "preSpecialRules")
+                continue;
+            if (line.includes(" R ") && line.includes(" S ") && line.includes(" AP ")) {
+                current = "weaponsTable";
+                weaponTables.push({ rows: [] });
+                continue;
+            }
+            else if (line.startsWith("Notes:")) {
+                current = "notes";
+            }
+            else if (current === "afterSpecialRules") {
+                current = "specialRuleDefinitions";
+            }
+            if (current === "weaponsTable") {
+                if (line) {
+                    const last = lastItem(weaponTables);
+                    const [name, R, S, AP, specialRules] = line.replace(/\s{2,}/g, "  ").split("  ");
+                    last.rows.push({ Name: name, Stats: { R, S, AP, "Special Rules": specialRules, Notes: "" } });
+                }
+            }
+            if (current === "notes") {
+                const last = lastItem(weaponTables);
+                const lastRow = lastItem(last.rows);
+                if (lastRow.Stats.Notes) {
+                    lastRow.Stats.Notes += line;
+                }
+            }
+            if (current === "specialRuleDefinitions") {
+                if (line.match(/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/)) {
+                    specialRuleDefinitions.push({ name: line, description: "" });
+                }
+                else {
+                    const lastRule = lastItem(specialRuleDefinitions);
+                    lastRule.description = `${lastRule.description} ${line}`.trim();
+                }
+            }
+        }
+        const pattern = /(?:^|\n)([A-Za-z\s]+):\s*(.*?)(?=\n[A-Za-z\s]+:|$)/gs;
+        const matches = [...startSection.matchAll(pattern)];
+        matches.forEach(match => {
+            const key = match[1].trim() + ":";
+            const value = match[2].trim();
+            result.Subheadings[key] = value;
+        });
+        // if (weaponTables.length) result.weaponTables = weaponTables
+        if (specialRuleDefinitions.length)
+            result["Special Rules"] = specialRuleDefinitions;
+        return result;
+    }
+
     function cmpItems(a, b) {
         return a.toLowerCase().replace(/s/g, "") === b.toLowerCase().replace(/s/g, "");
     }
@@ -1031,26 +1126,9 @@
             }
         }
     }
-    function findSharedEntries(cat, entryName, type) {
-        const lower = removeSuffix(entryName.trim().toLowerCase(), "s");
-        const result = [];
-        if (!lower)
-            return result;
-        for (const entry of cat.sharedSelectionEntries || []) {
-            if (entry.getType() !== type)
-                continue;
-            if (removeSuffix(entry.name.trim().toLowerCase(), "s") === lower) {
-                result.push(entry);
-            }
-        }
-        return result;
-    }
     function findUnitProfile(cat, unitName, profileName, typeName) {
         const fullComment = `${unitName}/${profileName}`;
         return cat.sharedProfiles?.find(o => o.comment === fullComment && o.typeName === typeName) ?? cat.sharedProfiles?.find(o => o.name === profileName && o.typeName === typeName);
-    }
-    function findUnit(cat, name) {
-        return cat.sharedSelectionEntries?.find(o => o.name === name && o.getType() === "unit");
     }
     function findRootUnit(cat, name) {
         return cat.entryLinks?.find(o => o.name === name);
@@ -1098,6 +1176,7 @@
                     const { ruleName, param } = parseSpecialRule(rule);
                     const profile = findImportedProfile(cat, ruleName, "Special Rule");
                     if (!profile) {
+                        group.infoLinks.push(toSpecialRuleLink(rule, hash, ruleName || "undefined rulename", param));
                         console.log(`[SPECIAL RULES] Couldn't find Special Rule from ${hash}: ${ruleName}`);
                         continue;
                     }
@@ -1117,7 +1196,7 @@
             hidden: false,
             id: id(`${name}/armourValue`),
             type: "profile",
-            targetId: armourProfile.id,
+            targetId: armourProfile?.id ?? `Armour Value ${armourValue}`,
             modifiers: [{ type: "append", value: `: ${armourValue}`, field: "name" }]
         };
         return result;
@@ -1258,7 +1337,7 @@
             });
         }
         else {
-            const error = `[BASE] Couldn't get Base`;
+            const error = `[BASE] ${baseSizes}`;
             model.entryLinks.push(toEntryLink(error, `${model.name}/bug/base`, error));
         }
         const equipment = getEquipment(cat, name, profileName, unit);
@@ -1268,6 +1347,16 @@
         const specialRules = getSpecialRules(cat, name, unit, profileName);
         if (specialRules.infoLinks.length) {
             model.infoGroups.push(specialRules);
+        }
+        if (unit.Subheadings["Troop Type:"]) {
+            const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim();
+            const importedCategory = findImportedCategory(cat, category);
+            if (importedCategory) {
+                model.categoryLinks.push(toCategoryLink(importedCategory, `${name}/${model.name}`));
+            }
+            else {
+                console.error(`Couldn't find imported category ${category}`);
+            }
         }
         return model;
     }
@@ -1333,71 +1422,7 @@
             return existing;
         }
         else {
-            return $store.add_child("sharedProfiles", cat, profile);
-        }
-    }
-    function updateSharedProfiles(cat, pages) {
-        const counts = {};
-        for (const page of pages) {
-            for (const unit of page.Units || []) {
-                for (const profile of unit.Profiles || []) {
-                    const { ruleName, param } = parseSpecialRule(profile.Name); // Same format as a special rule 
-                    counts[ruleName] = (counts[ruleName] || 0) + 1;
-                }
-            }
-        }
-        for (const page of pages) {
-            for (const unit of page.Units || []) {
-                for (const profile of unit.Profiles || []) {
-                    const { ruleName, param } = parseSpecialRule(profile.Name); // Same format as a special rule  
-                    const hasDuplicateWithSameName = counts[ruleName] > 1;
-                    const parsed = hasDuplicateWithSameName ? toModelProfile(profile, unit.Name) : toModelProfile(profile);
-                    updateProfile(cat, parsed);
-                }
-            }
-        }
-    }
-    function updateSpecialRules(cat, pages) {
-        for (const page of pages) {
-            for (const [name, desc] of Object.entries(page["Special Rules"] || {})) {
-                if (desc) {
-                    const rule = toSpecialRule(removeSuffix(name, " (X)"), desc);
-                    updateProfile(cat, rule);
-                }
-            }
-            for (const [name, description] of Object.entries(page["Special Rules"] || {})) {
-                if (description) {
-                    const rule = toSpecialRule(removeSuffix(name, " (X)"), description);
-                    updateProfile(cat, rule);
-                }
-            }
-        }
-    }
-    function updateWeapons(cat, pages) {
-        for (const page of pages) {
-            for (const wep of page.Weapons || []) {
-                const found = findImportedEntry(cat, wep.Name, "upgrade");
-                const profile = toWeaponProfile(wep.Name, wep);
-                let create = false;
-                if (!found?.profiles?.length) {
-                    create = true;
-                }
-                if (found?.profiles?.length && !isSameCharacteristics(found.profiles[0].characteristics, profile.characteristics)) {
-                    create = true;
-                }
-                if (create) {
-                    findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_child(o));
-                    const sharedProfile = updateProfile(cat, profile);
-                    $store.add_child("sharedSelectionEntries", cat, {
-                        name: sharedProfile.name,
-                        id: id(`${cat.name}/weapon/${wep.Name}`),
-                        hidden: false,
-                        import: true,
-                        type: "upgrade",
-                        infoLinks: [toInfoLink(wep.Name, sharedProfile)]
-                    });
-                }
-            }
+            return $store.add_node("sharedProfiles", cat, profile);
         }
     }
     function parseUnitField(field) {
@@ -1469,16 +1494,8 @@
         const foundModel = models.filter(o => cmpModel(o.name, model)) ?? models.filter(o => cmpModel2(o.name, model));
         return foundModel;
     }
-    function createUnit(cat, unit) {
+    async function modifyUnit(cat, unit, source) {
         const unitName = unit.Name;
-        const existingUnitLink = findRootUnit(cat, unitName);
-        if (existingUnitLink) {
-            $store.del_child(existingUnitLink);
-        }
-        const existing = findUnit(cat, unitName);
-        if (existing) {
-            $store.del_child(existing);
-        }
         const entry = {
             type: "unit",
             import: true,
@@ -1512,15 +1529,36 @@
         }
         if (!unit.Profiles.length) {
             console.log(`[UNIT] ${unitName} has no profiles`);
-            return;
         }
         const modelEntries = [];
+        for (const child of source.localSelectionsIterator()) {
+            if (child.type === "model") {
+                const modelEntry = {
+                    costs: [],
+                    entryLinks: [],
+                    infoGroups: [],
+                    profiles: [],
+                    selectionEntries: [],
+                    selectionEntryGroups: [],
+                    constraints: [],
+                    categoryLinks: [],
+                    infoLinks: [],
+                    ...(JSON.parse(child.toJson()))
+                };
+                entry.selectionEntries.push(modelEntry);
+                modelEntries.push(modelEntry);
+            }
+        }
         for (const profile of unit.Profiles || []) {
             const modelEntry = getModelEntry(cat, unitName, profile, unit);
             if (modelEntry) {
                 entry.selectionEntries.push(modelEntry);
                 modelEntries.push(modelEntry);
             }
+        }
+        if (!modelEntries.length) {
+            notify({ text: "Add models entries first", type: "error" });
+            return;
         }
         if (unit.Subheadings["Unit Size:"]) {
             const firstEntry = entry.selectionEntries[0];
@@ -1606,6 +1644,7 @@
                 const foundModel = findModel(modelEntries, scope);
                 return foundModel ? [foundModel] : modelEntries;
             }
+            console.log('Parsed options', parsedOptions);
             for (const parsedGroup of parsedOptions.groups) {
                 for (const model of getScope(parsedGroup.scope, parsedGroup.amount)) {
                     const groupHash = `${unitName}/${model.name}/${parsedGroup.entries.map(o => o.what).join(',')}`;
@@ -1619,7 +1658,7 @@
                         const { ruleName, param } = parseSpecialRule(ruleText);
                         const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, baseCost);
                         if (perModelCost) {
-                            ruleEntry.modifiers.push(getPerModelCostModifier(parsedEntry.details, `${groupHash}/${text}`));
+                            ruleEntry.modifiers.push(getPerModelCostModifier(parsedEntry.details));
                         }
                         ruleEntry.constraints = [toMaxConstraint(1, `${groupHash}/${text}`)];
                         const profile = findImportedProfile(cat, ruleName, "Special Rule");
@@ -1648,7 +1687,7 @@
                         equipmentLink.costs = [toCost(baseCost)];
                         equipmentLink.constraints = [];
                         if (perModelCost) {
-                            equipmentLink.modifiers.push(getPerModelCostModifier(parsedEntry.details, `${groupHash}/${text}`));
+                            equipmentLink.modifiers.push(getPerModelCostModifier(parsedEntry.details));
                         }
                     }
                     const [min, max] = parsedGroup.groupAmount.split('-');
@@ -1857,7 +1896,6 @@
                                                     childId: "any",
                                                     shared: true,
                                                     roundUp: false,
-                                                    id: id(`${unitName}/${model.name}/${ruleName}/repeat`)
                                                 }
                                             ]
                                         };
@@ -1908,7 +1946,7 @@
                         group.constraints = [toMinConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`), toMaxConstraint(1, `${unitName}/${wantsLore.name}/lores of magic`)];
                         for (const magicBranch of knowsFrom) {
                             const found = findImportedEntry(cat, magicBranch, "upgrade");
-                            const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found.id);
+                            const link = toEntryLink(magicBranch, `${unitName}/${wantsLore?.name}`, found?.id ?? magicBranch);
                             group.entryLinks.push(link);
                         }
                         if (requiresWizard || true) {
@@ -1963,86 +2001,68 @@
         else {
             entriesToAdd.push(entry);
         }
+        console.log("Adding", entriesToAdd);
+        await $store.remove();
         for (const entry of entriesToAdd) {
-            const existing = findUnit(cat, entry.name);
-            if (existing) {
-                $store.del_child(existing);
-            }
             const existingLink = findRootUnit(cat, entry.name);
             if (existingLink) {
-                $store.del_child(existingLink);
+                $store.del_node(existingLink);
             }
-            const addedUnit = $store.add_child("sharedSelectionEntries", cat, entry);
+            const addedUnit = await $store.create_child("sharedSelectionEntries", cat, entry);
             const link = {
                 import: true,
                 name: entry.name,
                 hidden: false,
                 id: id(`${entry.name}/root`),
                 type: "selectionEntry",
-                targetId: addedUnit.id,
+                targetId: addedUnit?.id,
                 categoryLinks: [],
             };
-            if (unit.Subheadings["Troop Type:"]) {
-                const category = unit.Subheadings["Troop Type:"].replace('(champion)', "").replace("(character)", "").trim();
-                const importedCategory = findImportedCategory(cat, category);
-                if (importedCategory) {
-                    link.categoryLinks.push(toCategoryLink(importedCategory, `${unitName}`));
-                }
-                else {
-                    console.error(`Couldn't find imported category ${category}`);
-                }
-            }
-            $store.add_child("entryLinks", cat, link);
+            $store.add_node("entryLinks", cat, link);
         }
     }
-    function createUnits(cat, pages) {
-        for (const page of pages) {
-            for (const unit of page.Units || []) {
-                createUnit(cat, unit);
+    (() => {
+        function get_text(event) {
+            if (event?.clipboardData) {
+                const text = event.clipboardData.getData("text/plain");
+                return text;
+            }
+            else {
+                const text = navigator.clipboard.readText();
+                return text;
             }
         }
-    }
-    const map = {
-        "Chaos Dwarfs Legacy Army List": "Chaos Dwarfs",
-        "d45e-eeb4-390e-6449": "Skaven",
-        "Daemons of Chaos Legacy Army List": "Daemons of Chaos",
-        "Dark Elves Legacy Army List": "Dark Elves",
-        "Lizardmen Legacy Army List": "Lizardmen",
-        "Ogre Kingdoms Legacy Army List": "Ogre Kingdoms",
-        "Vampire Counts Legacy Army List": "Vampire Counts",
-    };
-    // ALL
-    $catalogue.manager.loadAll().then(async () => {
-        function replaceSlashes(path) {
-            return path.replaceAll("\\", "/");
+        console.log('init');
+        if (!$store._paste) {
+            $store._paste = $store.paste;
         }
-        function dirname(path) {
-            return replaceSlashes(path).split("/").slice(0, -1).join("/");
-        }
-        const systemPath = dirname($catalogue.fullFilePath);
-        const fileName = "processed_7.json";
-        const jsonPath = `${systemPath}/json/${fileName}`;
-        const file = await $node.readFile(jsonPath);
-        if (!file)
-            return;
-        const read = JSON.parse(file.data);
-        const files = $catalogue.manager.getAllLoadedCatalogues();
-        files.map(o => o.processForEditor());
-        for (const catalogue of Object.keys(read)) {
-            const pages = Object.values(read[catalogue]);
-            const catalogueName = map[catalogue];
-            const existing = files.find(o => o.name === catalogueName);
-            if (!existing) {
-                console.warn(`Couldn't find catalogue for ${catalogueName}(${catalogue})`);
-                continue;
+        $store.paste = async (event) => {
+            const text = get_text(event);
+            console.log("intercepted", text);
+            const selected = $store.get_selected();
+            if ((text.includes("Options:") || text.includes('Equipment:') || (text.includes('WS') && text.includes('Points'))) && selected) {
+                if (selected.parentKey !== "sharedSelectionEntries") {
+                    notify({ text: "Select a (top-level) sharedSelectionEntry", type: "error" });
+                    return;
+                }
+                const unit = parseUnitText(text);
+                unit.Name = selected.getName();
+                console.log(unit);
+                for (const rawRule of unit["Special Rules"] || []) {
+                    const rule = toSpecialRule(removeSuffix(rawRule.name, " (X)"), rawRule.description);
+                    updateProfile(selected.catalogue, rule);
+                }
+                for (const rawProfile of unit["Profiles"] || []) {
+                    parseSpecialRule(rawProfile.Name); // Same format as a special rule  
+                    const parsed = toModelProfile(rawProfile, unit.Name);
+                    updateProfile(selected.catalogue, parsed);
+                }
+                await modifyUnit(selected.catalogue, unit, selected);
             }
-            console.log(" --- BEGINNING", catalogueName);
-            updateSharedProfiles(existing, pages);
-            updateSpecialRules(existing, pages);
-            updateWeapons(existing, pages);
-            createUnits(existing, pages);
-            console.log(" --- DONE", catalogueName);
-        }
-    });
+            else {
+                return await $store._paste(event);
+            }
+        };
+    })();
 
 }));

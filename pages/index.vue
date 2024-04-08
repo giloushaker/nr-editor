@@ -26,16 +26,34 @@
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
               <NuxtLink :to="`/search/${gst.getId()}`">
-                <img class="w-24px h-24px align-bottom icon" src="assets/icons/search.png" title="Search" />
+                <img
+                  class="w-24px h-24px align-bottom icon hover-darken"
+                  src="assets/icons/search.png"
+                  title="Search"
+                />
               </NuxtLink>
               <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
-                <img class="w-24px h-24px ml-5px align-bottom"
+                <img
+                  class="w-24px h-24px ml-5px align-bottom hover-darken"
                   :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
-                  :title="githubHoverTitle(gst.github)" />
+                  :title="githubHoverTitle(gst.github)"
+                />
               </a>
+              <NuxtLink :to="`/scripts/${gst.getId()}`">
+                <img
+                  class="w-24px h-24px align-bottom icon hover-darken"
+                  src="assets/icons/right2.png"
+                  title="Scripts"
+                />
+              </NuxtLink>
             </legend>
-            <IconContainer :items="systemAndCatalogues(gst)" @itemClicked="itemClicked"
-              @itemDoubleClicked="itemDoubleClicked" @new="newCatalogue(gst)" v-model="selectedItem" />
+            <IconContainer
+              :items="systemAndCatalogues(gst)"
+              @itemClicked="itemClicked"
+              @itemDoubleClicked="itemDoubleClicked"
+              @new="newCatalogue(gst)"
+              v-model="selectedItem"
+            />
           </fieldset>
         </div>
       </template>
@@ -126,9 +144,9 @@ export default defineComponent({
   },
   computed: {
     has_unsaved_changes() {
-      const changes = this.store.unsavedChanges
+      const changes = this.store.unsavedChanges;
       for (const key in changes) {
-        const val = changes[key]
+        const val = changes[key];
         if (val.unsaved) return true;
       }
       return false;
@@ -352,5 +370,9 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 .scrollable {
   height: 100%;
   overflow-y: auto;
+}
+
+.icon {
+  padding: 1px;
 }
 </style>

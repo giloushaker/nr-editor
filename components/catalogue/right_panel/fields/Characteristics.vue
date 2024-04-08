@@ -27,7 +27,7 @@
       </tr>
     </table>
     <table class="editorTable">
-      <tr v-for="char of charactacteristics">
+      <tr v-for="char of characteristics">
         <td>{{ char.name }}: </td>
         <td
           ><UtilEditableDiv
@@ -45,6 +45,7 @@ import { PropType } from "vue";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
@@ -63,12 +64,12 @@ export default {
     },
   },
   setup() {
-    return { settings: useSettingsStore() };
+    return { settings: useSettingsStore(), store: useEditorStore() };
   },
   methods: {
     getName,
     getNameExtra,
-    changedType(newType: ProfileType & EditorBase, oldOption: ProfileType & EditorBase) {
+    changedType(newType: ProfileType & EditorBase, oldOption: ProfileType & EditorBase): void {
       this.item.getCatalogue().refreshErrors(this.item as EditorBase & (Profile | Link<Profile>));
 
       if (oldOption) {
@@ -80,7 +81,9 @@ export default {
       this.$emit("catalogueChanged");
     },
 
-    changed() {
+    changed(): void {
+      const characteristics = this.characteristics;
+      this.store.edit_node(this.item as Profile & EditorBase, { characteristics });
       this.$emit("catalogueChanged");
     },
 
@@ -105,7 +108,7 @@ export default {
       return [...this.catalogue.iterateProfileTypes()];
     },
 
-    charactacteristics() {
+    characteristics() {
       const existing = {} as Record<string, any>;
       for (const c of this.item.characteristics || []) {
         existing[c.name] = c.$text;
@@ -121,7 +124,6 @@ export default {
         typeId: elt.id,
         $text: existing[elt.name] || "",
       }));
-      this.item.characteristics = result;
       return result;
     },
   },

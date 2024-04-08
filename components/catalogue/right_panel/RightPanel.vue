@@ -6,48 +6,134 @@
       <CatalogueRightPanelCostTypesPanel v-else-if="typeName == 'costType'" :item="item" @catalogueChanged="changed">
       </CatalogueRightPanelCostTypesPanel>
 
-      <CatalogueRightPanelProfileTypesPanel v-else-if="typeName == 'profileType'" :item="item"
-        @catalogueChanged="changed">
+      <CatalogueRightPanelProfileTypesPanel
+        v-else-if="typeName == 'profileType'"
+        :item="item"
+        @catalogueChanged="changed"
+      >
       </CatalogueRightPanelProfileTypesPanel>
 
-      <CatalogueRightPanelCategoryEntriesPanel v-else-if="typeName == 'category'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelForceEntriesPanel v-else-if="typeName == 'force'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelProfilesPanel v-else-if="typeName == 'profile'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelRulesPanel v-else-if="typeName == 'rule'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelSelectionEntryPanel v-else-if="typeName == 'selectionEntry'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelLinkPanel v-else-if="links.includes(typeName)" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" :type="'entry'" />
-      <CatalogueRightPanelLinkPanel v-else-if="infoLinks.includes(typeName)" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" :type="'info'" />
-      <CatalogueRightPanelModifierPanel v-else-if="typeName == 'modifier'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelConstraintPanel v-else-if="typeName == 'constraint'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelConditionGroupPanel v-else-if="typeName == 'conditionGroup'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelConditionPanel v-else-if="typeName == 'condition'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'categoryLink'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" type="category" />
-      <CatalogueRightPanelModifierGroupPanel v-else-if="typeName == 'modifierGroup'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelInfoGroupPanel v-else-if="typeName == 'infoGroup'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" />
-      <CatalogueRightPanelSelectionEntryGroupPanel v-else-if="typeName == 'selectionEntryGroup'" :item="item"
-        :catalogue="catalogue" @catalogueChanged="changed" />
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'catalogueLink'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" type="catalogue" />
-      <CatalogueRightPanelCataloguePanel v-else-if="typeName == 'catalogue' || typeName == 'gameSystem'" :item="item"
-        :catalogue="catalogue" @catalogueChanged="changed" type="catalogue" />
-      <CatalogueRightPanelRepeatPanel v-else-if="typeName == 'repeat'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" type="catalogue" />
-      <CatalogueRightPanelAssociationPanel v-else-if="typeName == 'association'" :item="item" :catalogue="catalogue"
-        @catalogueChanged="changed" type="catalogue" />
+      <CatalogueRightPanelCategoryEntriesPanel
+        v-else-if="typeName == 'category'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelForceEntriesPanel
+        v-else-if="typeName == 'force'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelProfilesPanel
+        v-else-if="typeName == 'profile'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelRulesPanel
+        v-else-if="typeName == 'rule'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelSelectionEntryPanel
+        v-else-if="typeName == 'selectionEntry'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="links.includes(typeName)"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        :type="'entry'"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="infoLinks.includes(typeName)"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        :type="'info'"
+      />
+      <CatalogueRightPanelModifierPanel
+        v-else-if="typeName == 'modifier'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelConstraintPanel
+        v-else-if="typeName == 'constraint'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelConditionGroupPanel
+        v-else-if="typeName == 'conditionGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelConditionPanel
+        v-else-if="typeName == 'condition'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="typeName == 'categoryLink'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="category"
+      />
+      <CatalogueRightPanelModifierGroupPanel
+        v-else-if="typeName == 'modifierGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelInfoGroupPanel
+        v-else-if="typeName == 'infoGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelSelectionEntryGroupPanel
+        v-else-if="typeName == 'selectionEntryGroup'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+      />
+      <CatalogueRightPanelLinkPanel
+        v-else-if="typeName == 'catalogueLink'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="catalogue"
+      />
+      <CatalogueRightPanelCataloguePanel
+        v-else-if="typeName == 'catalogue' || typeName == 'gameSystem'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="catalogue"
+      />
+      <CatalogueRightPanelRepeatPanel
+        v-else-if="typeName == 'repeat'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="catalogue"
+      />
+      <CatalogueRightPanelAssociationPanel
+        v-else-if="typeName == 'association'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        type="catalogue"
+      />
 
       <div class="min-h-100px"> </div>
     </template>
@@ -59,7 +145,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
@@ -83,7 +169,7 @@ export default {
 
   methods: {
     changed() {
-      this.store.set_catalogue_changed(this.item?.catalogue || this.catalogue);
+      this.store.changed(this.item || this.catalogue);
     },
   },
 
@@ -99,8 +185,8 @@ export default {
   watch: {
     item() {
       this.key++;
-    }
-  }
+    },
+  },
 };
 </script>
 

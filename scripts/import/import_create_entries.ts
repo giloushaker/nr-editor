@@ -1,6 +1,6 @@
 import type { BSIConstraint, BSICost, BSIEntryLink, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
 import type { NoId, Profile, Unit, Weapon } from "./import_types";
-import { id, parseSpecialRule } from "./import_helpers";
+import { id, parseSpecialRule, removeTextInParentheses } from "./import_helpers";
 import { Base, Category } from "~/assets/shared/battlescribe/bs_main";
 
 export function toModelProfile(data: Profile, parentName?: string) {
@@ -252,7 +252,7 @@ export function toMaxConstraint(max: string | number, hash: string, scope = "par
 }
 export function toSpecialRuleLink(ruleName: string, hash: string, targetId?: string, param?: string | null) {
   const specialRuleLink: BSIInfoLink = {
-    name: ruleName,
+    name: removeTextInParentheses(ruleName),
     hidden: false,
     id: id(`${hash}/rule/${ruleName}`),
     type: "profile",

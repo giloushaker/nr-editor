@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.1.119",
+  "version": "1.1.125",
   "main": "main.js",
   "scripts": {
     "build": "nuxt generate --electron",
@@ -17,7 +17,7 @@
     "postinstall": "nuxt prepare",
     "electron": "npx nuxi generate --electron && npx electron dist",
     "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
-    "version": "npm version patch --force"
+    "increment-version": "npm version patch --force"
   },
   "build": {
     "appId": "nr-editor",

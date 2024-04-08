@@ -3,9 +3,10 @@
     <div
       v-for="item of sortedItems"
       class="relative item unselectable"
-      :class="{ edited: edited(item), selected: item === modelValue }"
+      :class="{ highlight: opened(item), selected: item === modelValue }"
       @click="elementClicked(item)"
       @dblclick="elementDoubleClicked(item)"
+      @click.middle="debug(item)"
     >
       <img class="icon" :src="getType(item).icon" />
       <div>{{ name(item) }}</div>
@@ -51,6 +52,9 @@ export default {
     },
   },
   methods: {
+    debug(item) {
+      console.log(item);
+    },
     getDataObject,
     getType(item: BSIData) {
       if (item.gameSystem) {
@@ -109,8 +113,8 @@ export default {
       }
       return result;
     },
-    edited(data: BSIData) {
-      return this.cataloguesStore.getEdited(getDataDbId(data));
+    opened(data: BSIData) {
+      return (getDataObject(data) as any).opened;
     },
     name(data: BSIData) {
       return getDataObject(data).name;
@@ -175,7 +179,7 @@ export default {
   padding: 2px;
 }
 
-.edited {
+.highlight {
   background-color: rgba(40, 120, 250, 0.15);
 }
 .add {

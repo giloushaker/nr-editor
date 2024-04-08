@@ -23,6 +23,7 @@ import {
   forEachParent,
   addObj,
   type MaybeArray,
+  isObject,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
@@ -79,7 +80,7 @@ import { toRaw } from "vue";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
-import * as $node from "~/electron/node_helpers";
+import { useScriptsStore } from "./scriptsStore";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>
 const enableGithubIntegrationWithGitFolder = false;
@@ -113,6 +114,8 @@ export interface IEditorStore {
   catalogueComponent?: CatalogueComponentT;
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
+
+  scripts: ReturnType<typeof useScriptsStore>
 }
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
@@ -197,6 +200,7 @@ export const useEditorStore = defineStore("editor", {
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
+    scripts: useScriptsStore()
   }),
 
   actions: {
@@ -497,6 +501,18 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = changedState;
       }
     },
+    changed(node: EditorBase | Catalogue) {
+      const catalogue = node.getCatalogue()
+      if (catalogue) {
+        this.set_catalogue_changed(catalogue)
+      }
+    },
+    removed(node: EditorBase | Catalogue) {
+      const catalogue = node.getCatalogue()
+      if (catalogue) {
+        this.set_catalogue_changed(catalogue)
+      }
+    },
     /**
      * Returns true if the revision was incremented
      */
@@ -777,10 +793,18 @@ export const useEditorStore = defineStore("editor", {
         if (event?.clipboardData) {
           const text = event.clipboardData.getData("text/plain");
           if (!text) return [];
-          return JSON.parse(text);
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return text
+          }
         } else {
           const text = await navigator.clipboard.readText();
-          return JSON.parse(text);
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return text
+          }
         }
       }
       return this.clipboard;
@@ -811,11 +835,16 @@ export const useEditorStore = defineStore("editor", {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent) {
-      await this.set_clipboard(this.get_selections(), event);
+    async copy(event: ClipboardEvent, selections?: MaybeArray<EditorBase>) {
+      const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections()
+      await this.set_clipboard(toCopy, event);
     },
     async paste(event: ClipboardEvent) {
-      this.add(await this.get_clipboard(event));
+      const clip = await this.get_clipboard(event);
+      const script_result = await this.scripts.run_hooks("paste", {}, clip)
+      if (script_result) {
+        this.add(script_result);
+      }
     },
     async pasteLink() {
       const obj = await this.get_clipboard();
@@ -866,16 +895,17 @@ export const useEditorStore = defineStore("editor", {
           arr.push(copy);
           onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
           addeds.push(copy);
+          this.changed(copy);
         }
       };
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          this.removed(entry)
           onRemoveEntry(entry);
         }
       };
       await this.do_action("dupe", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
     },
     /**
      * Remove the current selections.
@@ -909,6 +939,7 @@ export const useEditorStore = defineStore("editor", {
           const removed = popAtEntryPath(catalogue, path);
           removeds.push(removed);
           paths.push(path);
+          this.removed(removed);
           onRemoveEntry(removed, manager);
         }
         removeds.reverse();
@@ -918,10 +949,10 @@ export const useEditorStore = defineStore("editor", {
         for (const [path, entry] of enumerate_zip(paths, removeds)) {
           const parent = addAtEntryPath(catalogue, path, entry);
           onAddEntry(entry, catalogue, parent, this.get_system(sysId));
+          this.changed(entry);
         }
       };
       this.do_action("remove", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
       this.unselect();
     },
     /**
@@ -946,12 +977,12 @@ export const useEditorStore = defineStore("editor", {
         console.error("Couldn't add: no selection or parent(s) provided");
         return;
       }
-      const entries = (Array.isArray(data) ? data : [data]) as Array<EditorBase | Record<string, any> | string>;
+      const entries = (Array.isArray(data) ? data : [data])
       if (!entries.length) {
         console.error("Couldn't add: no data provided");
         return;
       }
-
+      const fixedEntries = entries.map(o => this.fix_object(childKey || o.parentKey, o));
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const sysId = catalogue.getSystemId();
 
@@ -963,11 +994,13 @@ export const useEditorStore = defineStore("editor", {
           const selectedCatalogueKey = selection.payload as BaseChildsT | "";
           await this.open(item, true);
           const toAdd = [];
-          for (const entry of entries as Record<string, any>[]) {
+          for (const entry of fixedEntries) {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
             if (!key) {
-              console.warn("Couldn't create", childKey || entry.parentKey, "in", selectedCatalogueKey);
+              const text = `Couldn't create ${childKey || entry.parentKey} in ${selectedCatalogueKey}`
+              notify({ type: "error", text })
+              console.warn(text);
               continue;
             }
             if (!item[key as keyof Base]) {
@@ -977,7 +1010,9 @@ export const useEditorStore = defineStore("editor", {
             if (!Array.isArray(arr)) continue;
 
             if (!allowed_children(item, item.parentKey)?.has(key as string)) {
-              console.warn("Couldn't add", key, "to a", item.parentKey, "because it is not allowed");
+              const text = `Couldn't add ${key} to a ${item.parentKey}`
+              notify({ type: "error", text })
+              console.warn(text);
               continue;
             }
             // Copy to not affect existing
@@ -1013,6 +1048,7 @@ export const useEditorStore = defineStore("editor", {
             // Add it to its parent
             arr.push(entry);
             onAddEntry(entry, catalogue, item, this.get_system(sysId));
+            this.changed(entry)
             addeds.push(entry);
           }
         }
@@ -1021,11 +1057,11 @@ export const useEditorStore = defineStore("editor", {
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
+          this.removed(entry)
           onRemoveEntry(entry);
         }
       };
       const initial = await this.do_action("add", undo, redo);
-      this.set_catalogue_changed(catalogue, true);
       return initial;
     },
     open_selected() {
@@ -1055,7 +1091,6 @@ export const useEditorStore = defineStore("editor", {
             childId: "any",
             shared: true,
             roundUp: false,
-            id: generateBattlescribeId(),
           };
         case "constraints": {
           const isAssociation = parent?.parentKey === "associations";
@@ -1143,24 +1178,38 @@ export const useEditorStore = defineStore("editor", {
             id: generateBattlescribeId(),
           };
 
+        case "characteristic":
+        case "cost":
+          return {
+
+          }
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
-            hidden: false,
             id: generateBattlescribeId(),
+            hidden: false,
           };
       }
     },
     // Recursively merges objects with their default created object so that they are correct.
-    fix_object(key: string & BaseChildsT, data?: any) {
+    fix_object<T>(key: string & BaseChildsT, data?: T): T extends [] ? T[] : T {
+      if (Array.isArray(data)) {
+        //@ts-ignore
+        return data.map(o => this.fix_object(key, o)) as T;
+      }
       const obj = {
         ...this.get_initial_object(key),
         ...data,
       }
       for (const nested_key in obj) {
         const val = obj[nested_key]
-        if (Array.isArray(val) && (goodJsonArrayKeys as Set<string>).has(nested_key)) {
-          obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o))
+        if ((goodJsonArrayKeys as Set<string>).has(nested_key) && isObject(val)) {
+          if (Array.isArray(val)) {
+            obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o))
+          } else {
+            obj[nested_key] = [this.fix_object(nested_key as BaseChildsT, val)]
+
+          }
         }
       }
       return obj;
@@ -1207,7 +1256,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: Object) {
+    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: any) {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1220,14 +1269,15 @@ export const useEditorStore = defineStore("editor", {
         ...data,
       };
 
-      // Ensure there is array to put the childs in
-      if (!parent[key as keyof Base]) (parent as any)[key] = [];
-      const arr = parent[key as keyof Base];
-      if (!Array.isArray(arr)) return;
       if (!allowed_children(parent, parent.parentKey)?.has(key as string)) {
         console.warn("Couldn't add", key, "to a", parent.parentKey, "because it is not allowed");
         return;
       }
+
+      // Ensure there is array to put the childs in
+      if (!parent[key as keyof Base]) (parent as any)[key] = [];
+      const arr = parent[key as keyof Base];
+      if (!Array.isArray(arr)) return;
 
       clean(obj, key as string);
       delete obj.parentKey;
@@ -1238,18 +1288,16 @@ export const useEditorStore = defineStore("editor", {
       // Add it to its parent
       arr.push(obj);
       onAddEntry(obj, catalogue, parent, this.get_system(sysId));
-      this.set_catalogue_changed(catalogue);
+      this.changed(obj);
       return obj;
     },
     del_node(entry: Base) {
-      if (entry.catalogue) {
-        this.set_catalogue_changed(entry.catalogue);
-      }
       try {
         const catalogue = entry.catalogue;
         const manager = catalogue.manager;
         const path = getEntryPath(entry as EditorBase);
         const removed = popAtEntryPath(catalogue, path);
+        this.removed(removed)
         onRemoveEntry(removed, manager);
       } catch (e) {
         console.error("Failed to delete", entry);
@@ -1259,12 +1307,22 @@ export const useEditorStore = defineStore("editor", {
       if (obj.isLink()) return false;
       return true;
     },
-    edit_node(entry: EditorBase, data?: Object) {
+    edit_node(entry: EditorBase, data?: Record<string, any>) {
       const obj = JSON.parse(entry.toJson())
-      Object.assign(obj, data);
-      setPrototypeRecursive({ [entry.parentKey]: obj })
-      Object.assign(entry, obj);
-      this.set_catalogue_changed(entry.catalogue);
+      let changed = false;
+      for (const key in data) {
+        if (obj[key] !== data[key]) {
+          obj[key] = data[key]
+          changed = true;
+        }
+      }
+      const fixed_obj = this.fix_object(entry.parentKey, obj);
+      setPrototypeRecursive({ [entry.parentKey]: fixed_obj })
+      Object.assign(entry, fixed_obj);
+      if (changed) {
+        this.changed(entry);
+      }
+      return changed
     },
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
@@ -1340,6 +1398,7 @@ export const useEditorStore = defineStore("editor", {
         const path = getEntryPath(obj);
 
         removeEntry(obj);
+        this.removed(obj)
         onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
@@ -1348,7 +1407,7 @@ export const useEditorStore = defineStore("editor", {
 
         to[catalogueKey]!.push(copy);
         onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
-
+        this.changed(copy)
         const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
         const canBeLinked = linkableTypes.includes(obj.editorTypeName);
         const shouldMakeLink = !obj.parentKey.startsWith("shared");
@@ -1371,6 +1430,7 @@ export const useEditorStore = defineStore("editor", {
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
           onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
+          this.changed(link)
         }
       };
       function undo() {
@@ -1383,12 +1443,9 @@ export const useEditorStore = defineStore("editor", {
       // Undo is not done at this feature stills needs some iteration
       // await this.do_action("move", undo, redo);
       redo();
-
-      this.set_catalogue_changed(from, true);
-      this.set_catalogue_changed(to, true);
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
-      let current = document.getElementById("editor-entries") as HTMLElement;
+      let current = document.getElementById("editor-entries") as Element;
       if (!current) {
         return;
       }
@@ -1436,7 +1493,7 @@ export const useEditorStore = defineStore("editor", {
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
-        let child: HTMLElement | undefined;
+        let child: Element | undefined;
         if (node.parentKey.startsWith("label-")) {
           child = childs[0]
         }
@@ -1522,8 +1579,8 @@ export const useEditorStore = defineStore("editor", {
       this.show(obj, false);
       await this.scrollto(obj);
     },
-    async scroll_to_el(el: HTMLElement) {
-      el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
+    async scroll_to_el(el: Element) {
+      el.scrollIntoView({ block: "nearest", "inline": "start", behavior: "instant" })
 
     },
     async scrollto(obj: EditorBase) {
@@ -1576,7 +1633,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     get_leftpanel_open_collapsible_boxes() {
-      function find_open_recursive(elt: HTMLElement, obj: Record<string, any>, depth = 0) {
+      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
         const results = elt.getElementsByClassName(cls);
         if (!results?.length) return;
