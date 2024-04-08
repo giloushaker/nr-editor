@@ -37,8 +37,8 @@ Will render html
 <span class="bold">Running scripts:</span>
 Currently only supports running scripts manually, but may support running hooks in the future such as on paste, on change, on load, etc
 You may interact with the editor using the store (global variable `$store`, also available in the console)
-Available actions are in <a href="https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts">https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts</a>
-Example scripts (in typescript but only js is supported for non-default scripts): <a href="https://github.com/giloushaker/nr-editor/tree/master/default-scripts">https://github.com/giloushaker/nr-editor/tree/master/default-scripts</a>
+Available actions are in <a target="_blank" href="https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts">https://github.com/giloushaker/nr-editor/blob/master/stores/editorStore.ts</a>
+Example scripts (in typescript but only js is supported for non-default scripts): <a target="_blank" href="https://github.com/giloushaker/nr-editor/tree/master/default-scripts">https://github.com/giloushaker/nr-editor/tree/master/default-scripts</a>
 If you want to use imports you have to bundle them into one js file with rollup/webpack
 If you want to read/write local files you can use the functions in the global `$node`
           </pre>
