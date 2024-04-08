@@ -793,10 +793,18 @@ export const useEditorStore = defineStore("editor", {
         if (event?.clipboardData) {
           const text = event.clipboardData.getData("text/plain");
           if (!text) return [];
-          return JSON.parse(text);
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return text
+          }
         } else {
           const text = await navigator.clipboard.readText();
-          return JSON.parse(text);
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return text
+          }
         }
       }
       return this.clipboard;
@@ -832,7 +840,11 @@ export const useEditorStore = defineStore("editor", {
       await this.set_clipboard(toCopy, event);
     },
     async paste(event: ClipboardEvent) {
-      this.add(await this.get_clipboard(event));
+      const clip = await this.get_clipboard(event);
+      const script_result = await this.scripts.run_hooks("paste", {}, clip)
+      if (script_result) {
+        this.add(script_result);
+      }
     },
     async pasteLink() {
       const obj = await this.get_clipboard();

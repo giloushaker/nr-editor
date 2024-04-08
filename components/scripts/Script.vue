@@ -127,7 +127,14 @@ export default defineComponent({
       await new Promise((resolve) => setTimeout(resolve, 1));
       try {
         const args = this.$refs.args ? await Promise.all((this.$refs.args as any[]).map((o) => o.getArgument())) : [];
-        this.result = await this.script.run(...args);
+        this.store.scripts.add_script_hooks(this.script);
+        if (typeof this.script.run === "function") {
+          this.result = await this.script.run(...args);
+        } else if (this.script.hooks) {
+          this.result = `Added hooks: ${Object.keys(this.script.hooks)}`;
+        } else {
+          this.result = null;
+        }
         console.log(this.script.name, this.result);
       } catch (e) {
         console.error(e);

@@ -10,7 +10,9 @@ import listautomaticrefs from "~/default-scripts/list-automatic-profile-rule-tex
 import fixnewlines from "~/default-scripts/fix-newlines";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_helpers";
-
+import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
+import pasteWeapons from "~/default-scripts/tow/paste-weapons";
+import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 function doimport(str: string) {
   //@ts-ignore
   if (globalThis.URL.createObjectURL) {
@@ -27,7 +29,7 @@ function doimport(str: string) {
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
   state: () => ({
-
+    hooks: {} as Record<string, Record<string, Function>>
   }),
 
   actions: {
@@ -73,9 +75,51 @@ export const useScriptsStore = defineStore("scripts", {
       }
     },
     get_default_scripts() {
+      const testScripts = [] as Record<string, any>[]
+      testScripts.push(pasteSpecialRule)
+      testScripts.push(pasteWeapons)
+      testScripts.push(pasteEquipment)
       return [
-        fixlinknames, fixprofiles, listrefs, select, listautomaticrefs
+        fixlinknames, fixprofiles, listrefs, select, listautomaticrefs, ...(electron ? [] : testScripts)
       ] as Record<string, any>[]
+
+    },
+    async emit(key: string, ...args: any[]) {
+      for (const cb of Object.values(this.hooks[key] || {})) {
+        try {
+          await cb(...args)
+        } catch (e) {
+          continue;
+        }
+      }
+    },
+    async run_hooks(key: string, event: any, arg: any[]) {
+      for (const cb of Object.values(this.hooks[key] || {})) {
+        try {
+          const returned = await cb(event, arg)
+          if (returned) {
+            return returned;
+          } else if (returned === null) {
+            return null;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return arg
+    },
+    add_hook(hook_key: string, func_key: string, func: Function) {
+      if (!this.hooks[hook_key]) {
+        this.hooks[hook_key] = {}
+      }
+      this.hooks[hook_key][func_key] = func;
+    },
+    add_script_hooks(script: { name: string, hooks?: Record<string, Function> }) {
+      for (const [key, func] of Object.entries(script.hooks || {})) {
+        if (typeof func === 'function') {
+          this.add_hook(key, script.name, func)
+        }
+      }
     }
   }
 

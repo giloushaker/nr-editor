@@ -1,24 +1,40 @@
 <template>
   <div class="leftPanel">
     <div class="static sticky flex items-center h-28px z-1">
-      <span :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
-        class="bold p-4px unselectable icon" @click="store.back" title="Back">
+      <span
+        :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
+        class="bold p-4px unselectable icon"
+        @click="store.back"
+        title="Back"
+      >
         🡰
       </span>
-      <span :class="{
-        grey: !store.can_forward(),
-        'cursor-pointer': store.can_forward(),
-        'hover-darken': store.can_forward(),
-      }" class="bold p-4px unselectable ml-4px icon" @click="store.forward" title="Forward">
+      <span
+        :class="{
+          grey: !store.can_forward(),
+          'cursor-pointer': store.can_forward(),
+          'hover-darken': store.can_forward(),
+        }"
+        class="bold p-4px unselectable ml-4px icon"
+        @click="store.forward"
+        title="Forward"
+      >
         🡲
       </span>
-      <img :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
-        class="bold p-4px unselectable ml-5px w-24px h-24px icon" @click="store.undo" title="Undo"
-        src="/assets/icons/undo.svg" />
-      <img :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
-        class="bold p-4px unselectable ml-4px w-24px h-24px icon" @click="store.redo" title="Redo"
-        src="/assets/icons/redo.svg" />
-
+      <img
+        :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
+        class="bold p-4px unselectable ml-5px w-24px h-24px icon"
+        @click="store.undo"
+        title="Undo"
+        src="/assets/icons/undo.svg"
+      />
+      <img
+        :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
+        class="bold p-4px unselectable ml-4px w-24px h-24px icon"
+        @click="store.redo"
+        title="Redo"
+        src="/assets/icons/redo.svg"
+      />
 
       <div class="absolute right-60px">
         Sort
@@ -29,11 +45,18 @@
           <option value="type">Type</option>
         </select>
       </div>
-      <img @click="store.goto(store.get_selected())"
-        class="align-middle absolute h-20px p-2px hover-darken cursor-pointer icon right-30px" title="Goto Selected"
-        src="/assets/icons/vertical-alignment-24.png" />
-      <img @click="uistate.collapse_all" class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
-        title="Collapse All" src="/assets/icons/collapse-all.svg" />
+      <img
+        @click="store.goto(store.get_selected())"
+        class="align-middle absolute h-20px p-2px hover-darken cursor-pointer icon right-30px"
+        title="Goto Selected"
+        src="/assets/icons/vertical-alignment-24.png"
+      />
+      <img
+        @click="uistate.collapse_all"
+        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
+        title="Collapse All"
+        src="/assets/icons/collapse-all.svg"
+      />
       <ErrorIcon :errors="catalogue.errors" showNumber clickable class="z-1" />
       <!-- <img
         @click="uistate.collapse_deepest"
@@ -43,8 +66,13 @@
       /> -->
     </div>
     <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
-      <CatalogueLeftPanelComponentsCatalogueEntry class="mb-40px w-max" :item="catalogue" grouped id="editor-entries"
-        :showImported="showImported" />
+      <CatalogueLeftPanelComponentsCatalogueEntry
+        class="mb-40px w-max"
+        :item="catalogue"
+        grouped
+        id="editor-entries"
+        :showImported="showImported"
+      />
     </div>
     <div class="bottom static">
       <span v-if="!catalogue.isGameSystem()">
@@ -151,21 +179,21 @@ export default defineComponent({
       });
     },
     async scroll_to(elt: HTMLElement) {
-      this.store.scroll_to_el(elt)
+      this.store.scroll_to_el(elt);
       this.$nextTick(async () => {
-        this.store.scroll_to_el(elt)
+        this.store.scroll_to_el(elt);
       });
     },
     should_capture_copy(e: Event) {
       // check if a popup is open
       if ((document?.activeElement as HTMLSpanElement)?.isContentEditable) return false;
-      if (document.getElementsByClassName('veil').length) return false;
+      if (document.getElementsByClassName("veil").length) return false;
       if (getSelection()?.toString()) return false;
       return true;
     },
     should_capture_paste(e: Event) {
       // check if a popup is open
-      if (document.getElementsByClassName('veil').length) return false;
+      if (document.getElementsByClassName("veil").length) return false;
       const TAGNAME = ((e.target as HTMLDivElement)?.tagName || "").toLowerCase();
       if (["input"].includes(TAGNAME)) return false;
       const ACTIVETAGNAME = ((document?.activeElement as HTMLDivElement)?.tagName || "").toLowerCase();
@@ -209,9 +237,9 @@ export default defineComponent({
       }
 
       if (tagName === "body") {
-        if (key === " ") /** Space */ {
-          e.preventDefault();
-          this.store.toggle_selections()
+        if (key === " ") {
+          /** Space */ e.preventDefault();
+          this.store.toggle_selections();
         }
         if (e.ctrlKey && key === "z") {
           e.preventDefault();
@@ -220,10 +248,6 @@ export default defineComponent({
         if (e.ctrlKey && key === "y") {
           e.preventDefault();
           await this.store.redo();
-        }
-        if (key === " ") /** Space */ {
-          e.preventDefault();
-          this.store.toggle_selections()
         }
 
         // if (e.ctrlKey && key === "x") {
