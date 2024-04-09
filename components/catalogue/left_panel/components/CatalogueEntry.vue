@@ -453,28 +453,11 @@ export default {
       return category === "sharedProfiles";
     },
     display_groups(category: string, items: CatalogueEntryItem[]) {
-      const grouped = {} as Record<string, { label: string; type?: EditorBase; items: CatalogueEntryItem[] }>;
-      const leftover = [];
-      for (const entry of items) {
-        const item = entry.item;
-        if (!item.typeId) {
-          leftover.push(entry);
-          continue;
-        }
-        const type = item.catalogue.findOptionById(item.typeId) as EditorBase;
-        if (!type) {
-          leftover.push(entry);
-          continue;
-        }
-        const label = type.name || "Untyped";
-        if (!(label in grouped)) {
-          grouped[label] = { type, label, items: [] };
-        }
-        grouped[label].items.push(entry);
-      }
-      const result = Object.values(grouped);
-      if (leftover.length) {
-        result.push({ label: "Untyped", items: leftover });
+      const result = [];
+      for (const [id, group] of Object.entries(groupBy(items, (o) => o.item.typeId ?? "Untyped"))) {
+        const type = group[0].item.catalogue.findOptionById(id) as EditorBase;
+        const label = type.name ?? id;
+        result.push({ type, label, items: group });
       }
       return result;
     },
