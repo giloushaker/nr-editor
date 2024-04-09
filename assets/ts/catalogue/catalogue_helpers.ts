@@ -65,6 +65,9 @@ export function getSearchElements(
   type: keyof Catalogue | EditorBase
 ): EditorSearchItem[] {
   let res: EditorSearchItem[] = [];
+  for (const imported of (catalogue as Catalogue).imports || []) {
+    recursive(imported, type as string, res);
+  }
   recursive(catalogue, type as string, res);
   return res;
 }
@@ -75,6 +78,9 @@ export function getSearchSelections(
 ): EditorSearchItem[] {
   const res: EditorSearchItem[] = [];
   const iterator = includeRootSelectionEntries ? "iterateSelectionEntriesWithRoot" : "iterateSelectionEntries";
+  for (const imported of (catalogue as Catalogue).imports || []) {
+    recursive(imported, iterator, res);
+  }
   recursive(catalogue, iterator, res);
   return res;
 }
