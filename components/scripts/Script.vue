@@ -4,6 +4,7 @@
       {{ script.name }}
     </template>
     <template #content>
+      <span v-if="script.description">Description:</span><span class="gray">{{ script.description }}</span>
       <div v-for="(arg, i) in script.arguments || []">
         <ScriptArgument :arg="arg" :args="args" :system="system" :index="i" ref="args" />
       </div>
@@ -87,10 +88,12 @@ export default defineComponent({
       type: Object as PropType<{
         name: string;
         run: Function;
+        description?: string;
         arguments?: {
           name: string;
           type: string | string[];
         };
+        hooks: Record<string, Function>;
       }>,
       required: true,
     },

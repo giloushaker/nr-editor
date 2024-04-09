@@ -351,13 +351,13 @@ export const useEditorStore = defineStore("editor", {
           const catalogueId = json?.catalogue?.id;
           if (systemId) {
             const systemFiles = this.get_system(systemId);
-            systemFiles.setSystem(globalThis.$markRaw ? globalThis.$markRaw(json) : json);
+            systemFiles.setSystem(shallowReactive(json));
             systems.push(systemFiles);
             result_system_ids.push(systemId);
           }
           if (catalogueId) {
             const systemFiles = this.get_system(json.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = globalThis.$markRaw ? globalThis.$markRaw(json) : json;
+            systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
           }
           result_files.push(json);
         } catch (e) {
@@ -647,15 +647,19 @@ export const useEditorStore = defineStore("editor", {
           next_selected.push(selection);
         }
       }
+
+      const next_selected_entries = [];
+      const next_unselected_entries = [];
       for (const selection of this.selectedEntries) {
         if (obj === undefined || toRaw(selection.obj) === toRaw(obj)) {
-          next_unselected.push(selection);
+          next_unselected_entries.push(selection);
         } else {
-          next_selected.push(selection);
+          next_selected_entries.push(selection);
         }
       }
       this.selections = next_selected;
-      for (const unselected of next_unselected) {
+      this.selectedEntries = next_selected_entries
+      for (const unselected of [...next_unselected, ...next_unselected_entries]) {
         if (unselected.onunselected) {
           unselected.onunselected();
         }
@@ -680,14 +684,16 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
-    do_select(e: MouseEvent | null, el: VueComponent, group: VueComponent | VueComponent[]) {
-      const entries = Array.isArray(group) ? group : [group];
+    do_select(e: MouseEvent | null, el: VueComponent) {
       const last = this.selectedElementGroup;
       const last_element = this.selectedElement;
       this.selectedElement = el;
-      this.selectedElementGroup = group;
 
-      if (e?.shiftKey && toRaw(group) === toRaw(last)) {
+      if (e?.shiftKey) {
+        const depth = el.depth;
+        const parent = (el.$el as HTMLElement).closest(`.collapsible-box.depth-${depth - 1}`);
+        const nodes = [...parent?.getElementsByClassName(`collapsible-box depth-${depth}`) || []] as unknown as Array<{ vnode: VueComponent }>;
+        const entries = nodes.map(o => o.vnode)
         const a = entries.findIndex((o) => o === toRaw(last_element));
         const b = entries.findIndex((o) => o === toRaw(this.selectedElement));
         const low = Math.min(a, b);
@@ -709,9 +715,9 @@ export const useEditorStore = defineStore("editor", {
         this.mode = "edit";
       }
     },
-    do_rightclick_select(e: MouseEvent, el: VueComponent, group: VueComponent | VueComponent[]) {
+    do_rightclick_select(e: MouseEvent, el: VueComponent) {
       if (this.is_selected(el)) return;
-      this.do_select(e, el, group);
+      this.do_select(e, el);
     },
     clear_selections() {
       this.unselect();

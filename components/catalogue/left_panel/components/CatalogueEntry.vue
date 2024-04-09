@@ -2,7 +2,7 @@
   <div class="item unselectable" @click.middle.stop="debug" @contextmenu.stop="contextmenu.show">
     <template v-if="item.editorTypeName === 'catalogue' || item.editorTypeName === 'gameSystem'">
       <div class="head">
-        <EditorCollapsibleBox :depth="0" :payload="catalogue" nobox :group="[]" :collapsible="false">
+        <EditorCollapsibleBox :depth="0" :payload="catalogue" nobox :collapsible="false">
           <template #title
             ><img src="/assets/bsicons/catalogue.png" />
             {{ catalogue.name }}
@@ -18,7 +18,6 @@
           :altclickable="store.can_follow(item) || imported"
           @altclick="onctrlclick"
           :collapsible="category.items.length > 0"
-          :group="get_group('entries')"
           :payload="category.type"
           @contextmenu.stop="contextmenu.show($event, category.type)"
           :class="[category.type, category.links, `depth-${depth}`]"
@@ -41,7 +40,6 @@
                   <template v-for="entry of items" :key="key(entry.item)">
                     <CatalogueEntry
                       :item="entry.item"
-                      :group="get_group(category.type)"
                       :forceShowRecursive="forceShow"
                       :imported="entry.imported"
                       :depth="depth + 2"
@@ -55,7 +53,6 @@
               <template v-for="entry of category.items" :key="key(entry.item)">
                 <CatalogueEntry
                   :item="entry.item"
-                  :group="get_group(category.type)"
                   :forceShowRecursive="forceShow"
                   :imported="entry.imported"
                   :depth="depth + 1"
@@ -73,7 +70,6 @@
         @altclick="onctrlclick"
         :collapsible="mixedChildren && mixedChildren.length > 0"
         :empty="!mixedChildren || mixedChildren.length == 0"
-        :group="group || []"
         :payload="item"
         :class="[item.parentKey, `depth-${depth}`]"
         :defcollapsed="!open"
@@ -104,7 +100,6 @@
             v-for="child of mixedChildren"
             :key="key(child.item)"
             :item="child.item"
-            :group="get_group('default')"
             :forceShowRecursive="forceShow"
             :imported="imported || child.imported"
             :depth="depth + 1"
@@ -383,9 +378,6 @@ export default {
       type: Object as PropType<EditorBase>,
       required: true,
     },
-    group: {
-      type: Array,
-    },
     forceShowRecursive: {
       type: Boolean,
       default: false,
@@ -407,7 +399,6 @@ export default {
   },
   data() {
     return {
-      groups: {} as Record<string, any>,
       contextmenuopen: false,
       open: false,
       open_categories: undefined as Set<string> | undefined,
@@ -497,12 +488,6 @@ export default {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
       return noSort.has(entry.editorTypeName) === false;
-    },
-    get_group(key: string) {
-      if (!(key in this.groups)) {
-        this.groups[key] = [];
-      }
-      return this.groups[key];
     },
     ref_count(item: EditorBase) {
       switch (item.editorTypeName) {

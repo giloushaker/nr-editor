@@ -1,15 +1,28 @@
 <template>
-  <div :class="{ box, nobox, nocollapse, collapsed, opened }" class="collapsible-box"
-    @contextmenu="do_rightcllick_select">
-    <h3 v-if="!notitle" class="title" :class="{
-      selected,
-      arrowTitle: collapsible,
-      normalTitle: !collapsible,
-      collapsed: collapsible && collapsed,
-      alt: alt && altclickable,
-    }" @click.stop="do_select" @click.ctrl.stop="$emit('ctrlclick')" @click.alt.stop="$emit('altclick')"
-      @dblclick="collapseSwitch($event.shiftKey)" @paste="paste" @copy="paste" @cut="paste"
-      :style="{ 'padding-left': `${(depth) * 20}px` }">
+  <div
+    :class="{ box, nobox, nocollapse, collapsed, opened }"
+    class="collapsible-box"
+    @contextmenu="do_rightcllick_select"
+  >
+    <h3
+      v-if="!notitle"
+      class="title"
+      :class="{
+        selected,
+        arrowTitle: collapsible,
+        normalTitle: !collapsible,
+        collapsed: collapsible && collapsed,
+        alt: alt && altclickable,
+      }"
+      @click.stop="do_select"
+      @click.ctrl.stop="$emit('ctrlclick')"
+      @click.alt.stop="$emit('altclick')"
+      @dblclick="collapseSwitch($event.shiftKey)"
+      @paste="paste"
+      @copy="paste"
+      @cut="paste"
+      :style="{ 'padding-left': `${depth * 20}px` }"
+    >
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
@@ -60,10 +73,6 @@ export default {
       type: Boolean,
       default: true,
     },
-    group: {
-      type: Array as PropType<any[]>,
-      required: true,
-    },
     modelValue: {
       default: true,
     },
@@ -72,12 +81,12 @@ export default {
     },
     vshow: {
       default: false,
-      type: Boolean
+      type: Boolean,
     },
     depth: {
       default: 0,
       type: Number,
-    }
+    },
   },
 
   data() {
@@ -101,7 +110,6 @@ export default {
     addEventListener("keydown", this.handleKeyDown);
     addEventListener("keyup", this.handleKeyUp);
     this.$el.vnode = this;
-    this.group?.push(this);
     this.init(this.payload);
   },
 
@@ -109,14 +117,9 @@ export default {
     this.$el.vnode = this;
   },
   unmounted() {
+    // console.log("unmounted", this.depth);
     removeEventListener("keydown", this.handleKeyDown);
     removeEventListener("keyup", this.handleKeyUp);
-    if (this.group && Array.isArray(this.group)) {
-      const idx = this.group.indexOf(this as any);
-      if (idx !== -1) {
-        this.group?.splice(idx, 1);
-      }
-    }
   },
   watch: {
     payload(data) {
@@ -167,9 +170,9 @@ export default {
     init(data: any) {
       if (data?.select !== undefined) {
         if (data.select) {
-          const parentBox = this.$parent?.$parent as { open?: () => unknown }
-          parentBox.open && parentBox.open()
-          this.store.do_select(null, this as any, this.group);
+          const parentBox = this.$parent?.$parent as { open?: () => unknown };
+          parentBox.open && parentBox.open();
+          this.store.do_select(null, this as any);
           this.store.scrollto(get_base_from_vue_el(this));
         }
         delete data?.select;
@@ -219,11 +222,11 @@ export default {
       this.close();
     },
     do_select(e: MouseEvent) {
-      this.store.do_select(e, this as any, this.group);
+      this.store.do_select(e, this as any);
       this.$el.focus();
     },
     do_rightcllick_select(e: MouseEvent) {
-      this.store.do_rightclick_select(e, this as any, this.group);
+      this.store.do_rightclick_select(e, this as any);
     },
     async collapseSwitch(deep?: boolean) {
       this.collapsed = !this.collapsed;
@@ -296,7 +299,7 @@ h3 {
 }
 
 .selected::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -9999px;
@@ -309,7 +312,7 @@ h3 {
 
 .title:hover::before {
   background-color: var(--hover-darken-color, rgba(0, 0, 0, 0.15));
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -9999px;

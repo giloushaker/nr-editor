@@ -85,6 +85,7 @@ export default defineComponent({
       cat: null as Catalogue | null,
       defaults: {} as Partial<typeof LeftPanelDefaults>,
       key: 1,
+      route: null as { catalogueId: string; gameSystemId: string } | null,
     };
   },
   setup() {
@@ -157,6 +158,8 @@ export default defineComponent({
     query: {
       async handler(newVal) {
         if (!this.route_is_catalogue) return;
+        if (JSON.stringify(newVal) === JSON.stringify(this.route)) return;
+        this.route = newVal;
         const { gameSystemId, catalogueId } = newVal;
         this.id = catalogueId || gameSystemId;
         this.store.unselect();
