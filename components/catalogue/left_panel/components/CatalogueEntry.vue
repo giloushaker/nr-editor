@@ -44,6 +44,7 @@
                       :imported="entry.imported"
                       :depth="depth + 2"
                       noType
+                      grouped
                     />
                   </template>
                 </CatalogueLabel>
@@ -76,7 +77,7 @@
         nobox
       >
         <template #title>
-          <CatalogueLeftPanelEntry :item="item" :imported="imported" :highlight="item.highlight" />
+          <CatalogueLeftPanelEntry :item="item" :imported="imported" :highlight="item.highlight" :grouped="grouped" />
           <!-- 
 
             <span>
@@ -396,6 +397,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    grouped: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -566,7 +571,7 @@ export default {
           return type_asc;
       }
     },
-    grouped(items: CatalogueEntryItem[]) {
+    grouped_items(items: CatalogueEntryItem[]) {
       const result = sortByAscending(
         this.sorted(items),
         (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
@@ -707,9 +712,9 @@ export default {
             }
           }
         }
-        return [...this.grouped(targetChilds), ...this.grouped(childs)];
+        return [...this.grouped_items(targetChilds), ...this.grouped_items(childs)];
       }
-      return this.grouped(childs);
+      return this.grouped_items(childs);
     },
     categories() {
       if (this.item.isCatalogue()) {
@@ -725,7 +730,7 @@ export default {
         if (category.links) this.getTypedArray(this.item as any, category.links, items);
         return {
           ...category,
-          items: this.grouped(items),
+          items: this.grouped_items(items),
         };
       });
     },
