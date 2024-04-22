@@ -270,7 +270,7 @@ export default {
     padding: 5px;
 
     &:hover {
-      background-color: $blue;
+      background-color: $light_blue;
     }
   }
 }
