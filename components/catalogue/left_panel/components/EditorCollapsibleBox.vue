@@ -5,6 +5,7 @@
     @contextmenu="do_rightcllick_select"
   >
     <h3
+      ref="title"
       v-if="!notitle"
       class="title"
       :class="{
@@ -21,7 +22,7 @@
       @paste="paste"
       @copy="paste"
       @cut="paste"
-      :style="{ 'padding-left': `${depth * 20}px` }"
+      :style="{ 'padding-left': `${depth * 20}px`, top: `${depth * 20}px`, left: `0px`, 'z-index': `${100 - depth}` }"
     >
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
@@ -95,6 +96,7 @@ export default {
       initiated: this.vshow,
       selected: false,
       alt: false,
+      sticky: false,
     };
   },
 
@@ -271,7 +273,9 @@ export default {
   vertical-align: middle;
   display: flex;
   align-items: center;
-  // padding-top: 2px;
+  // z-index: 1;
+  position: sticky;
+  background-color: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
 }
 
 h3 {
@@ -293,10 +297,6 @@ h3 {
 }
 
 // indent
-
-.title {
-  position: relative;
-}
 
 .selected::before {
   content: "";
