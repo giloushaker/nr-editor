@@ -3,7 +3,10 @@
     <legend>Creation</legend>
     <table class="editorTable">
       <tr>
-        <td>Default Amount (split by <code style="background-color: #00000020">,</code> for multiple):</td>
+        <td
+          >Default Amount (split by <code style="background-color: #aaaaaa40; border-radius: 3px">,</code> for
+          multiple):</td
+        >
         <td>
           <input
             class="input"
