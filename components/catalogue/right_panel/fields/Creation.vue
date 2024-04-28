@@ -4,9 +4,9 @@
     <table class="editorTable">
       <tr>
         <td
-          >Default Amount (split by <code style="background-color: #aaaaaa40; border-radius: 3px">,</code> for
-          multiple):</td
-        >
+          >Default Amount (split by <code style="background-color: #aaaaaa40; border-radius: 3px">,</code> for multiple
+          stacks):
+        </td>
         <td>
           <input
             class="input"

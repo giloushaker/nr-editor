@@ -460,7 +460,7 @@ export default {
       const result = [];
       for (const [id, group] of Object.entries(groupBy(items, (o) => o.item.typeId ?? "Untyped"))) {
         const type = group[0].item.catalogue.findOptionById(id) as EditorBase;
-        const label = type.name ?? id;
+        const label = type?.name ?? id;
         result.push({ type, label, items: group });
       }
       return result;
