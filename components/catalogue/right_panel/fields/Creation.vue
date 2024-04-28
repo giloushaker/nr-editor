@@ -3,9 +3,16 @@
     <legend>Creation</legend>
     <table class="editorTable">
       <tr>
-        <td>Default Amount: (can be split by , for multiple entries)</td>
+        <td>Default Amount (split by <code style="background-color: #00000020">,</code> for multiple):</td>
         <td>
-          <input class="input" type="text" v-model="item.defaultAmount" @change="changed" :placeholder="placeholder" />
+          <input
+            class="input"
+            type="text"
+            v-model="item.defaultAmount"
+            @change="changed"
+            :placeholder="placeholder"
+            pattern="[0-9,]*"
+          />
         </td>
       </tr>
     </table>
