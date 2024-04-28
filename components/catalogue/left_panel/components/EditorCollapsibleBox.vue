@@ -22,7 +22,11 @@
       @paste="paste"
       @copy="paste"
       @cut="paste"
-      :style="{ 'padding-left': `${depth * 20}px`, top: `${depth * 20}px`, left: `0px`, 'z-index': `${100 - depth}` }"
+      :style="{
+        'padding-left': `${depth * 20}px`,
+        'z-index': `${100 - depth}`,
+        ...(settings.stickyScroll ? { top: `${depth * 20}px`, left: `0px`, position: 'sticky' } : {}),
+      }"
     >
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
@@ -39,6 +43,7 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { get_ctx, get_base_from_vue_el, useEditorStore } from "~/stores/editorStore";
+import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
   name: "EditorCollapsibleBox",
@@ -106,7 +111,7 @@ export default {
     }
   },
   setup() {
-    return { store: useEditorStore() };
+    return { store: useEditorStore(), settings: useSettingsStore() };
   },
   mounted() {
     addEventListener("keydown", this.handleKeyDown);
@@ -273,8 +278,7 @@ export default {
   vertical-align: middle;
   display: flex;
   align-items: center;
-  // z-index: 1;
-  position: sticky;
+  position: relative;
   background-color: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
 }
 

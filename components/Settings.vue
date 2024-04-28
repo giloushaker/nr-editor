@@ -13,8 +13,9 @@
     </div>
     <div class="row">
       <input type="checkbox" id="github-auto-increment" v-model="settings.githubAutoIncrement" />
-      <label for="github-auto-increment">Auto increment revision when saving (requires github integration &
-        internet)</label>
+      <label for="github-auto-increment"
+        >Auto increment revision when saving (requires github integration & internet)</label
+      >
     </div>
     <div class="row">
       <input type="checkbox" id="revision-popup" v-model="noRevisionPopup" />
@@ -25,10 +26,14 @@
       <label for="categories-ui-v2">Use new UI for categories</label>
     </div>
     <div class="row">
+      <input type="checkbox" id="sticky-scroll" v-model="settings.stickyScroll" />
+      <label for="sticky-scroll">Sticky Scroll (show parents even when out of view)</label>
+    </div>
+    <div class="row" v-if="settings.autoFormatCharacteristics">
       <input type="checkbox" id="auto-format" v-model="settings.autoFormatCharacteristics" />
       <label for="auto-format">Automatically format characteristics on paste</label>
     </div>
-    <div class="row">
+    <div class="row" v-if="settings.autoRenameInfoLinkParent">
       <input type="checkbox" id="auto-rename" v-model="settings.autoRenameInfoLinkParent" />
       <label for="auto-rename">Automatically rename parent entry when assigning info links</label>
     </div>

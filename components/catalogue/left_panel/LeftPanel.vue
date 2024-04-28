@@ -67,7 +67,7 @@
     </div>
     <div class="top rightborder scrollable" ref="scrollable" @scroll="onscroll" @keydown.capture="keydown">
       <CatalogueLeftPanelComponentsCatalogueEntry
-        class="mb-40px w-max"
+        class="mb-40px w-full"
         :item="catalogue"
         grouped
         id="editor-entries"

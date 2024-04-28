@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/shared/appearance";
 import { AppearanceTheme } from "~/assets/shared/types/appearance";
 import merge from "lodash.merge";
-import { app } from "electron";
 export interface RGB {
   r: number;
   g: number;
@@ -20,7 +19,7 @@ function hexToRgb(hex: string): RGB | null {
     : null;
 }
 
-export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any }) {
+export async function updateCssVars(appearence: Record<string, any>, algo: { unitColor?: any; armyColor?: any }) {
   const htmlElement = document.documentElement;
 
   if (appearence.dark) {
@@ -181,7 +180,7 @@ export async function updateCssVars(appearence: AppearanceTheme, algo: { unitCol
   }
 }
 
-export const defaultAppearence: AppearanceTheme = {
+export const defaultAppearence = {
   background: "#f0f5ff",
   backgroundTexture: "url(assets/images/no.jpg)",
   backgroundSize: "auto",
@@ -259,6 +258,7 @@ const defaultState = {
   },
   autoFormatCharacteristics: false,
   autoRenameInfoLinkParent: false,
+  stickyScroll: false,
 };
 export const useSettingsStore = defineStore("settings", {
   state: () => ({ ...defaultState }),
