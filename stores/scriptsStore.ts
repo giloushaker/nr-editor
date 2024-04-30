@@ -51,7 +51,7 @@ export const useScriptsStore = defineStore("scripts", {
               try {
                 const updated_file = await readFile(path)
                 if (!updated_file) return
-                const module = await import(file.path + `?v=${count++}`)
+                const module = await import(/* @vite-ignore */ file.path + `?v=${count++}`)
                 for (const key in module.default) {
                   obj[key] = module.default[key]
                 }
