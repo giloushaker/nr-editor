@@ -991,7 +991,7 @@ export const useEditorStore = defineStore("editor", {
         return;
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
-      const fixedEntries = entries.map(o => this.fix_object(childKey || o.parentKey, o, catalogue))
+      const fixedEntries = entries.map(o => this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined))
       const sysId = catalogue.getSystemId();
 
       let addeds = [] as EditorBase[];
@@ -1227,13 +1227,13 @@ export const useEditorStore = defineStore("editor", {
 
     },
     // Recursively merges objects with their default created object so that they are valid.
-    fix_object<T>(key: string & BaseChildsT, data?: T, catalogue?: Catalogue): T extends [] ? T[] : T {
+    fix_object<T>(key: string & BaseChildsT, data?: T, catalogue?: Catalogue, parent?: EditorBase): T extends [] ? T[] : T {
       if (Array.isArray(data)) {
         //@ts-ignore
         return data.map(o => this.fix_object(key, o, catalogue)) as T[];
       }
       const obj = {
-        ...this.get_initial_object(key),
+        ...this.get_initial_object(key, parent),
         ...data,
       }
 
