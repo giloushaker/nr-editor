@@ -63,13 +63,14 @@
 <script lang="ts">
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
   EditorSearchItem,
   getSearchCategories,
   getSearchElements,
   getParentUnitHierarchy,
+  getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
 interface ScopeChoice {
   id: string;
@@ -250,6 +251,10 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
       return getSearchElements(this.catalogue, "forcesIterator");
     },
 
+    allParents(): EditorSearchItem[] {
+      return getParentScopes(this.item);
+    },
+
     allScopes(): ScopeChoice[] {
       let res = [
         {
@@ -360,7 +365,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
         ];
       }
 
-      return res.concat(this.allSelections).concat(this.allCategories).concat(this.allForces);
+      return res.concat(this.allParents).concat(this.allSelections).concat(this.allCategories).concat(this.allForces);
     },
   },
 

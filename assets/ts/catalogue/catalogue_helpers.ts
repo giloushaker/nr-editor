@@ -1,8 +1,9 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { Base, getDataObject } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { findSelfOrParentWhere, sortByAscendingInplace } from "~/assets/shared/battlescribe/bs_helpers";
 
 export interface EditorSearchItem {
   id: string;
@@ -16,13 +17,24 @@ export interface EditorSearchItem {
 function getCatalogueName(obj: Base) {
   return obj.catalogue?.getName() ?? null;
 }
-function getRootId(entry?: EditorBase) {
+function getRoot(entry?: EditorBase) {
   if (!entry?.parent) return;
   while (entry?.parent && !entry.parent.isCatalogue()) {
     entry = entry.parent
   }
-  return entry.id;
+  return entry;
 }
+function getRootIndent(entry?: EditorBase) {
+  let count = 0
+  if (!entry?.parent) return count;
+
+  while (entry?.parent && !entry.parent.isCatalogue()) {
+    entry = entry.parent
+    count++;
+  }
+  return count
+}
+
 function recursive(current: Catalogue | EditorBase, iterator: string, result: EditorSearchItem[], indent = 0) {
   for (const child of (current as any)[iterator]()) {
     result.push({
@@ -31,7 +43,7 @@ function recursive(current: Catalogue | EditorBase, iterator: string, result: Ed
       id: child.id,
       indent: indent,
       catalogue: getCatalogueName(child),
-      rootId: getRootId(child),
+      rootId: getRoot(child)?.id,
       shared: child.parentKey?.includes("shared") || false,
     });
     recursive(child, iterator, result, indent + 1);
@@ -51,7 +63,7 @@ function recursiveWithFilter(
       editorTypeName: child.editorTypeName,
       id: child.id,
       indent: indent,
-      rootId: getRootId(child),
+      rootId: getRoot(child)?.id,
       catalogue: getCatalogueName(child),
       shared: child.parentKey?.includes("shared") || false,
     });
@@ -69,6 +81,30 @@ export function getSearchElements(
   }
   recursive(catalogue, type as string, res);
   return res;
+}
+
+export function getParentScopes(
+  item: EditorBase
+): EditorSearchItem[] {
+  const result = [] as EditorSearchItem[]
+  const entry = findSelfOrParentWhere(getModifierOrConditionParent(item)!, o => !o.isInfoGroup() && !o.isProfile() && !o.isRule())
+  if (!entry) return result;
+  for (const possibleParent of getAllPossibleParents(entry)) {
+    const root = getRoot(possibleParent)
+    result.push({
+      name: possibleParent.name,
+      editorTypeName: possibleParent.editorTypeName,
+      id: possibleParent.id,
+      indent: getRootIndent(possibleParent),
+      catalogue: getCatalogueName(possibleParent),
+      rootId: root?.id,
+      shared: possibleParent.parentKey?.includes("shared") || false,
+    })
+  }
+  for (const entry of result) {
+    console.log("  ".repeat(entry.indent), entry.name, `(${entry.editorTypeName})`)
+  }
+  return result;
 }
 
 export function getSearchSelections(
@@ -158,7 +194,7 @@ export function getParentUnitHierarchy(item: EditorBase): EditorSearchItem[] {
         id: parent.id,
         editorTypeName: parent.editorTypeName,
         indent: i,
-        rootId: getRootId(parent),
+        rootId: getRoot(parent)?.id,
         catalogue: getCatalogueName(parent),
         shared: getFirstAncestor(parent)?.parentKey?.includes("shared") || false,
       });
