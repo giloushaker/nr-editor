@@ -101,9 +101,6 @@ export function getParentScopes(
       shared: possibleParent.parentKey?.includes("shared") || false,
     })
   }
-  for (const entry of result) {
-    console.log("  ".repeat(entry.indent), entry.name, `(${entry.editorTypeName})`)
-  }
   return result;
 }
 
