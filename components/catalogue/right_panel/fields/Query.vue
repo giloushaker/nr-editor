@@ -256,6 +256,48 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     },
 
     allScopes(): ScopeChoice[] {
+      const common = [
+        {
+          id: "force",
+          name: "Force",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "roster",
+          name: "Roster",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "primary-catalogue",
+          name: "Primary Catalogue",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "root-entry",
+          name: "Root Entry",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "unit",
+          name: "Type: Unit",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "model",
+          name: "Type: Model",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "upgrade",
+          name: "Type: Upgrade",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "model-or-unit",
+          name: "Type: Model or Unit",
+          editorTypeName: "bullet",
+        },
+      ];
       let res = [
         {
           id: "force",
@@ -267,6 +309,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
           name: "Roster",
           editorTypeName: "bullet",
         },
+        ...common,
       ];
 
       if (this.item.field != "forces" && ["condition", "association"].includes(this.item.editorTypeName)) {
@@ -292,46 +335,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
             name: "Primary Category",
             editorTypeName: "bullet",
           },
-          {
-            id: "force",
-            name: "Force",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "roster",
-            name: "Roster",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "primary-catalogue",
-            name: "Primary Catalogue",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "root-entry",
-            name: "Root Entry",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "unit",
-            name: "Type: Unit",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "model",
-            name: "Type: Model",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "upgrade",
-            name: "Type: Upgrade",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "model-or-unit",
-            name: "Type: Model or Unit",
-            editorTypeName: "bullet",
-          },
+          ...common,
         ] as ScopeChoice[];
       }
 
@@ -347,21 +351,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
             name: "Parent",
             editorTypeName: "bullet",
           },
-          {
-            id: "force",
-            name: "Force",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "roster",
-            name: "Roster",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "primary-catalogue",
-            name: "Primary Catalogue",
-            editorTypeName: "bullet",
-          },
+          ...common,
         ];
       }
 
