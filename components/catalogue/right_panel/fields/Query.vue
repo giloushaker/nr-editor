@@ -302,6 +302,31 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
             name: "Primary Catalogue",
             editorTypeName: "bullet",
           },
+          {
+            id: "root-entry",
+            name: "Root Entry",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "unit",
+            name: "Type: Unit",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "model",
+            name: "Type: Model",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "upgrade",
+            name: "Type: Upgrade",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "model-or-unit",
+            name: "Type: Model or Unit",
+            editorTypeName: "bullet",
+          },
         ] as ScopeChoice[];
       }
 

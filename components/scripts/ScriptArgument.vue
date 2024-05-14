@@ -43,6 +43,9 @@
       <template v-else-if="type === 'string'">
         <EditableDiv v-model="value" spellcheck="false" style="font-family: monospace" />
       </template>
+      <template v-else-if="type === 'boolean' || type === 'toggle'">
+        <input type="checkbox" v-model="value" />
+      </template>
     </div>
   </div>
 </template>
