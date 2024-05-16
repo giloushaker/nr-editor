@@ -1,5 +1,5 @@
 <template>
-  <input v-model="stringValue" type="number" @change="update" :required="required" :min="min" :max="max" />
+  <input v-model="stringValue" type="number" @change="update" :required="required" :min="min" :max="max" step="any" />
 </template>
 
 <script lang="ts">
