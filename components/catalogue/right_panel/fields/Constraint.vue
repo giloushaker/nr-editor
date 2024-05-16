@@ -17,6 +17,8 @@
       <div>
         <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
         <label for="percent">Percentage?</label>
+        <input id="percent" type="checkbox" v-model="item.negative" @change="changed" />
+        <label for="percent">Negative?</label>
       </div>
     </div>
   </fieldset>
