@@ -13,19 +13,6 @@ import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_he
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
 import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
-function doimport(str: string) {
-  //@ts-ignore
-  if (globalThis.URL.createObjectURL) {
-    const blob = new Blob([str], { type: 'text/javascript' })
-    const url = URL.createObjectURL(blob)
-    const module = import(url)
-    URL.revokeObjectURL(url) // GC objectURLs
-    return module
-  }
-
-  const url = "data:text/javascript;base64," + btoa(str)
-  return import(url)
-}
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
   state: () => ({

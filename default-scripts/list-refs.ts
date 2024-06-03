@@ -11,37 +11,39 @@ export default {
         },
         {
             name: "catalogue (imported)",
-            type: "catalogue"
+            type: "catalogue[]"
         }
     ],
-    run(from: Catalogue, to: Catalogue) {
+    run(from: Catalogue, to: Catalogue[]) {
         const result = [] as Array<[Base | EditorBase, string] | EditorBase>
-        if (!from.imports.find(o => o.name === to.name)) {
-            throw new Error(`${from.name} doesn't import ${to.name}`)
-        }
-        to.forEachObjectWhitelist((node: EditorBase) => {
-            for (const link of node.refs || []) {
-                if (link.catalogue.name === from.name) {
-                    result.push(node)
-                    break;
-                }
+        for (const to_catalogue of to) {
+            if (!from.imports.find(o => o.name === to_catalogue.name) && to.length === 1) {
+                throw new Error(`${from.name} doesn't import ${to_catalogue.name}`)
             }
+            to_catalogue.forEachObjectWhitelist((node: EditorBase) => {
+                for (const link of node.refs || []) {
+                    if (link.catalogue.name === from.name) {
+                        result.push(node)
+                        break;
+                    }
+                }
 
-            for (const cond of node.other_refs || []) {
-                if (cond.catalogue.name === from.name) {
-                    result.push(node)
-                    break;
+                for (const cond of node.other_refs || []) {
+                    if (cond.catalogue.name === from.name) {
+                        result.push(node)
+                        break;
+                    }
                 }
-            }
-        });
-        if (from.importsWithEntries.find(o => o.name === to.name)) {
-            for (const entry of to.selectionEntries || []) {
-                if (entry.import === false) continue;
-                result.push([entry, "root"])
-            }
-            for (const entry of to.entryLinks || []) {
-                if (entry.import === false) continue;
-                result.push([entry, "root"])
+            });
+            if (from.importsWithEntries.find(o => o.name === to_catalogue.name)) {
+                for (const entry of to_catalogue.selectionEntries || []) {
+                    if (entry.import === false) continue;
+                    result.push([entry, "root"])
+                }
+                for (const entry of to_catalogue.entryLinks || []) {
+                    if (entry.import === false) continue;
+                    result.push([entry, "root"])
+                }
             }
         }
         return result;

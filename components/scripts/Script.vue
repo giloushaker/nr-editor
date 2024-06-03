@@ -58,6 +58,9 @@
               @click.middle="debug(piece.editorTypeName, piece)"
             />
           </template>
+          <template v-else-if="isError(piece)">
+            <div class="error">{{ piece }}</div>
+          </template>
           <template v-else="piece">
             <pre>
               {{ JSON.stringify(piece, null, 2) }}
@@ -115,6 +118,9 @@ export default defineComponent({
     isEntry(entry: any) {
       return entry instanceof Base;
     },
+    isError(piece: any) {
+      return piece instanceof Error;
+    },
     isEntryWithDesc(arr: any) {
       return Array.isArray(arr) && arr.length === 2 && this.isEntry(arr[0]);
     },
@@ -141,6 +147,7 @@ export default defineComponent({
         console.log(this.script.name, this.result);
       } catch (e) {
         console.error(e);
+        console.log(typeof e, e instanceof Error);
         this.result = e;
       } finally {
         globalThis.$result = this.result;

@@ -51,7 +51,9 @@ export default {
                                 $text: "",
                             })
                             result.push([obj, `added missing characteristic: ${ct.name}`])
-
+                        }
+                        if (badIndex) {
+                            result.push([obj, `fixed characteristics order`])
                         }
                         for (const c of in_characteristics) {
                             const idx = type.characteristicTypes.findIndex(ct => ct.id === c.typeId)
