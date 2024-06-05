@@ -28,7 +28,7 @@
         ...(settings.stickyScroll ? { top: `${depth * 20}px`, left: `0px`, position: 'sticky' } : {}),
       }"
     >
-      <span class="title-before" :style="{ width: offset_indent }" />
+      <span class="title-before" :style="{ width: offset_indent }" v-if="depth > 0" />
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
