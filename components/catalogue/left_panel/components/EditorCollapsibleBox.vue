@@ -23,11 +23,12 @@
       @copy="paste"
       @cut="paste"
       :style="{
-        'padding-left': `${depth * 20}px`,
+        'padding-left': indent,
         'z-index': `${100 - depth}`,
         ...(settings.stickyScroll ? { top: `${depth * 20}px`, left: `0px`, position: 'sticky' } : {}),
       }"
     >
+      <span class="title-before" :style="{ width: offset_indent }" />
       <div class="arrow-wrap" @click.stop="collapseSwitch($event.shiftKey)">
         <img :class="{ hide }" :src="dropdownSrc" class="arrow icon" />
       </div>
@@ -41,7 +42,6 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
 import { get_ctx, get_base_from_vue_el, useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 
@@ -162,6 +162,13 @@ export default {
     opened() {
       return this.collapsible && !this.collapsed;
     },
+    indent() {
+      return `${this.depth * 20}px`;
+    },
+    offset_indent() {
+      const normal = this.depth * 20;
+      return `${normal}px`;
+    },
   },
 
   methods: {
@@ -281,7 +288,17 @@ export default {
   position: relative;
   background-color: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
 }
-
+.title-before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 11px;
+  // left: 0;
+  bottom: 0;
+  background-image: linear-gradient(to left, transparent 95%, #88888888 5%);
+  background-size: 20px; /* Adjust size to control spacing */
+  // z-index: 1; /* Ensure it stays behind the content */
+}
 h3 {
   font-size: 16px;
   font-weight: normal;
