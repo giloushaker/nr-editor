@@ -334,7 +334,7 @@ export default {
     const all = [] as EditorBase[]
     from.forEach(o => o.forEachObjectWhitelist((node: EditorBase) => all.push(node)));
     (globalThis as any).$view = new NodeView(all)
-    const evaled = eval(`$view.${query}`).iter
+    const evaled = eval(`$view.${query}`)
     const result = Array.isArray(evaled) ? evaled : evaled.iter || evaled;
     $store.set_selections(result);
     return [`Selected ${result.length} nodes: <code>$store.get_selections())</code>`, result]
