@@ -1583,9 +1583,8 @@ export const useEditorStore = defineStore("editor", {
 
         this.$nextTick = new Promise((resolve, reject) => {
           this.$nextTickResolve = resolve;
-        });
-        await this.$nextTick;
-        return true;
+        }).then(() => { delete this.$nextTickResolve });
+        return this.$nextTick;
       }
       return false;
     },
@@ -1610,7 +1609,7 @@ export const useEditorStore = defineStore("editor", {
       uistate.get_data(targetCatalogue.id).selection = getEntryPath(obj);
 
       await this.goto_catalogue(targetCatalogue.id, targetCatalogue.gameSystemId);
-      this.show(obj, false);
+      await this.show(obj, false);
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {

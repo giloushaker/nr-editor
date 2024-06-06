@@ -289,11 +289,9 @@ export default {
   position: absolute;
   top: 0;
   left: 11px;
-  // left: 0;
   bottom: 0;
   background-image: linear-gradient(to left, transparent 95%, #88888888 5%);
-  background-size: 20px; /* Adjust size to control spacing */
-  // z-index: 1; /* Ensure it stays behind the content */
+  background-size: 20px;
 }
 h3 {
   font-size: 16px;

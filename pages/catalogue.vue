@@ -122,7 +122,7 @@ export default defineComponent({
       this.store.save_state();
     }
   },
-
+  beforeRouteEnter() {},
   computed: {
     has_unsaved_changes() {
       const changes = this.store.unsavedChanges;
@@ -158,7 +158,11 @@ export default defineComponent({
     query: {
       async handler(newVal) {
         if (!this.route_is_catalogue) return;
-        if (JSON.stringify(newVal) === JSON.stringify(this.route)) return;
+        if (JSON.stringify(newVal) === JSON.stringify(this.route)) {
+          this.$nextTick(() => {
+            this.store.$nextTickResolve && this.store.$nextTickResolve();
+          });
+        }
         this.route = newVal;
         const { gameSystemId, catalogueId } = newVal;
         this.id = catalogueId || gameSystemId;
