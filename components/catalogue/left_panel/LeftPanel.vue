@@ -1,6 +1,6 @@
 <template>
   <div class="leftPanel">
-    <div class="static sticky flex items-center h-28px z-10000">
+    <div class="static sticky flex items-center h-28px z-1000">
       <span
         :class="{ grey: !store.can_back(), 'cursor-pointer': store.can_back(), 'hover-darken': store.can_back() }"
         class="bold p-4px unselectable icon"

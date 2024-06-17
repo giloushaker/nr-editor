@@ -225,11 +225,20 @@
             <img class="pr-4px" src="assets/bsicons/modifier.png" />
             Modifier
           </div>
+          <div
+            v-if="item.editorTypeName === 'constraint' && item.parent"
+            @click="store.create_child('modifiers', item.parent, { field: item.id, value: 0 })"
+          >
+            <img class="pr-4px" src="assets/bsicons/modifier.png" />
+            Modifier
+          </div>
           <div @click="store.create('modifierGroups')" v-if="allowed('modifierGroups')">
             <img class="pr-4px" src="assets/bsicons/modifierGroup.png" />
             Modifier Group
           </div>
-          <Separator v-if="allowed(['constraints', 'modifiers', 'modifierGroups'])" />
+          <Separator
+            v-if="allowed(['constraints', 'modifiers', 'modifierGroups']) || item.editorTypeName === 'constraint'"
+          />
         </template>
 
         <div @click="store.cut" v-if="!payload">Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
