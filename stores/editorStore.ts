@@ -13,6 +13,8 @@ import {
   getTypeLabel,
   fixKey,
   removeEntry,
+  getName,
+  getNameExtra,
 } from "~/assets/shared/battlescribe/bs_editor";
 import {
   enumerate_zip,
@@ -1361,17 +1363,29 @@ export const useEditorStore = defineStore("editor", {
       return true;
     },
     edit_node(entry: EditorBase, data?: Record<string, any>) {
-      const obj = JSON.parse(entry.toJson())
       let changed = false;
       for (const key in data) {
-        if (obj[key] !== data[key]) {
-          obj[key] = data[key]
+        const val = data[key]
+        // @ts-ignore
+        if (entry[key] !== val) {
+          if (isObject(val)) {
+            const catalogue = entry.getCatalogue()
+            const sysId = catalogue.getSystemId();
+
+            // @ts-ignore
+            const fixed_obj = this.fix_object(key, val, catalogue);
+            setPrototypeRecursive({ [key]: fixed_obj })
+
+            // @ts-ignore
+            entry[key] = fixed_obj
+            onAddEntry(fixed_obj, catalogue, entry, this.get_system(sysId));
+          } else {
+            // @ts-ignore
+            entry[key] = val
+          }
           changed = true;
         }
       }
-      const fixed_obj = this.fix_object(entry.parentKey as BaseChildsT, obj, entry.getCatalogue());
-      setPrototypeRecursive({ [entry.parentKey]: fixed_obj })
-      Object.assign(entry, fixed_obj);
       if (changed) {
         this.changed(entry);
       }
@@ -1632,7 +1646,7 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {
-      el.scrollIntoView({ block: "nearest", "inline": "start", behavior: "instant" })
+      el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
 
     },
     async scrollto(obj: EditorBase) {
@@ -1906,6 +1920,8 @@ export const useEditorStore = defineStore("editor", {
     del_child(...args: any[]) { return this.del_node(...args) },
     //@ts-ignore
     edit_child(...args: any[]) { return this.edit_node(...args) },
+    label(node: EditorBase, extra = false) {
+      return extra ? [getName(node), getNameExtra(node)].filter(o => o).join(' ') : getName(node)
+    }
   },
-
 });
