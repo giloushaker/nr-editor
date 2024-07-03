@@ -5,6 +5,13 @@
     </legend>
     <div class="booleans">
       <div v-for="field of fields.filter((f) => f.status != -1)">
+        <img
+          v-if="!item[field.field] && item.target && item.target[field.field]"
+          :title="`${String(field.field)} is true on target`"
+          style="vertical-align: text-top; margin-left: 4px; margin-top: 1px"
+          class="typeIcon"
+          src="assets/bsicons/link.png"
+        />
         <input
           :class="{ 'cursor-pointer': field.status !== 0 }"
           :id="(field.field as string)"
