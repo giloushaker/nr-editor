@@ -1224,7 +1224,26 @@ export const useEditorStore = defineStore("editor", {
           }
         }
       }
-
+      const missing = profileType.characteristicTypes?.filter(ct => !profile.characteristics.find(c => c.typeId === ct.id))
+      const badIndex = profile.characteristics.find((c, i) => i !== profileType.characteristicTypes.findIndex(ct => ct.id === c.typeId))
+      if (missing.length || badIndex) {
+        const out_characteristics = []
+        const in_characteristics = [...profile.characteristics]
+        for (const ct of missing) {
+          in_characteristics.push({
+            name: ct.name,
+            typeId: ct.id,
+            $text: "",
+          })
+        }
+        for (const c of in_characteristics) {
+          const idx = profileType.characteristicTypes.findIndex(ct => ct.id === c.typeId)
+          if (idx >= 0) {
+            out_characteristics[idx] = c
+          }
+        }
+        profile.characteristics = out_characteristics
+      }
     },
     // Recursively merges objects with their default created object so that they are valid.
     fix_object<T>(key: string & BaseChildsT, data?: T, catalogue?: Catalogue, parent?: EditorBase): T extends [] ? T[] : T {
