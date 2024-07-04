@@ -28,6 +28,7 @@ export default {
   },
   methods: {
     changed() {
+      this.item.getCatalogue()?.refreshErrors(this.item);
       this.$emit("catalogueChanged");
     },
   },
