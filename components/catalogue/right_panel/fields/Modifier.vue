@@ -8,7 +8,12 @@
         </option>
       </select>
 
-      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged" class="modType min-w-200px">
+      <UtilIconSelect
+        v-model="selectedField"
+        :fetch="() => fieldData"
+        @change="fieldChanged"
+        class="modType min-w-200px"
+      >
         <template #option="opt">
           <div class="flex align-items flex-row">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${opt.option.modifierType}.png`" /><span class="inline">{{
@@ -20,14 +25,12 @@
 
       <template v-if="selectedOperation?.id == 'replace'">
         <div>
-
           <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
           <span v-if="selectedOperation" class="mx-5px"> {{ selectedOperation.word }} </span>
           <input @change="changed" type="text" v-model="item.value" />
         </div>
       </template>
       <template v-else>
-
         <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
         <UtilNumberInput @change="changed" v-if="inputType === 'number'" v-model="(item.value as number)" />
         <select @change="changed" v-if="inputType == 'boolean'" v-model="item.value">
@@ -36,8 +39,14 @@
         </select>
         <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
 
-        <UtilAutocomplete v-if="inputType == 'category'" :options="allCategories" :filterField="(o) => o.getName()"
-          valueField="id" v-model="item.value" @change="changed">
+        <UtilAutocomplete
+          v-if="inputType == 'category'"
+          :options="allCategories"
+          :filterField="(o) => o.getName()"
+          valueField="id"
+          v-model="item.value"
+          @change="changed"
+        >
           <template #option="{ option }">
             <div class="flex align-items flex-row" style="white-space: nowrap">
               <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -46,8 +55,14 @@
             </div>
           </template>
         </UtilAutocomplete>
-        <UtilAutocomplete v-if="inputType == 'defaultSelectionEntryId'" :options="allGroupEntries"
-          :filterField="(o) => o.getName()" valueField="id" v-model="item.value" @change="changed">
+        <UtilAutocomplete
+          v-if="inputType == 'defaultSelectionEntryId'"
+          :options="allGroupEntries"
+          :filterField="(o) => o.getName()"
+          valueField="id"
+          v-model="item.value"
+          @change="changed"
+        >
           <template #option="{ option }">
             <div class="flex align-items flex-row" style="white-space: nowrap">
               <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -75,10 +90,17 @@ import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
 
-type FieldTypes = "string" | "number" | "category" | "boolean" | "string-or-number" | "defaultSelectionEntryId";
+type FieldTypes =
+  | "string"
+  | "number"
+  | "category"
+  | "boolean"
+  | "string-or-number"
+  | "defaultSelectionEntryId"
+  | "defaultAmount";
 const availableModifiers: Record<string, string[]> = {
-  selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints"],
-  selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints"],
+  selectionEntry: ["costs", "name", "page", "hidden", "category", "constraints", "defaultAmount"],
+  selectionEntryLink: ["costs", "name", "page", "hidden", "category", "constraints", "defaultAmount"],
   selectionEntryGroup: ["name", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
   selectionEntryGroupLink: ["name", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
   profile: ["characteristics", "name", "description", "page", "hidden"],
@@ -100,6 +122,7 @@ const availableTypes = {
   description: "string",
   category: "category",
   defaultSelectionEntryId: "defaultSelectionEntryId",
+  defaultAmount: "defaultAmount",
   constraints: "number",
 } as Record<string, FieldTypes>;
 type PossibleTypes = keyof typeof availableTypes;
@@ -178,6 +201,9 @@ export default {
           return typeof currentValue === "boolean" ? currentValue : false;
         case "defaultSelectionEntryId":
           return first(this.allGroupEntries)?.id;
+          return typeof currentValue === "boolean" ? currentValue : false;
+        case "defaultAmount":
+          return "0";
         default:
           throw Error(`fieldType "${fieldType}" has no default value set"`);
       }
@@ -361,6 +387,13 @@ export default {
             word: "to",
           },
         ],
+        defaultAmount: [
+          {
+            id: "set",
+            name: "Set",
+            word: "to",
+          },
+        ],
       };
       return ops[this.selectedField.type];
     },
@@ -423,9 +456,7 @@ export default {
         });
       }
       // Filter out special fields
-      available = available.filter(
-        (elt) => ["costs", "constraints", "category", "characteristics"].includes(elt) == false
-      );
+      available = available.filter((elt) => !["costs", "constraints", "category", "characteristics"].includes(elt));
       return available
         .map((elt) => {
           return {
