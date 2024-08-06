@@ -249,19 +249,6 @@ export default defineComponent({
           e.preventDefault();
           await this.store.redo();
         }
-
-        // if (e.ctrlKey && key === "x") {
-        //   e.preventDefault();
-        //   await this.store.cut(e as any as ClipboardEvent);
-        // }
-        // if (e.ctrlKey && key === "c") {
-        //   e.preventDefault();
-        //   await this.store.copy(e as any as ClipboardEvent);
-        // }
-        // if (e.ctrlKey && key === "v") {
-        //   e.preventDefault();
-        //   await this.store.paste(e as any as ClipboardEvent);
-        // }
         if (e.ctrlKey && key === "d") {
           e.preventDefault();
           await this.store.duplicate();
@@ -269,6 +256,14 @@ export default defineComponent({
         if (e.ctrlKey && key === "l") {
           e.preventDefault();
           await this.store.pasteLink();
+        }
+        if (e.altKey && key === "arrowdown") {
+          e.preventDefault();
+          this.store.get_selections().forEach((s) => (this.store.sortable(s) ? this.store.move_down(s) : null));
+        }
+        if (e.altKey && key === "arrowup") {
+          e.preventDefault();
+          this.store.get_selections().forEach((s) => (this.store.sortable(s) ? this.store.move_up(s) : null));
         }
         if (key === "delete") {
           e.preventDefault();

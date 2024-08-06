@@ -117,10 +117,12 @@
             <span class="gray" v-if="link.target.getCatalogue() !== item.getCatalogue()">
               &nbsp;[{{ link.target.getCatalogue()?.getName() || link.target.getName() }}]
             </span>
+            <span class="gray absolute right-5px">Alt+Click</span>
           </div>
           <div v-if="imported" @click="store.goto(item)">
             Goto
             <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
+            <span class="gray absolute right-5px">Alt+Click</span>
           </div>
           <div
             v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
@@ -130,12 +132,14 @@
             <span class="gray">
               &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
             </span>
+            <span class="gray absolute right-5px">Alt+Click</span>
           </div>
           <div v-if="child && store.can_goto(child)" @click="store.goto(child)">
             Goto {{ child.getName() }}
             <span class="gray" v-if="item.getCatalogue() !== child.getCatalogue()">
               &nbsp;[{{ child.getCatalogue().getName() }}]
             </span>
+            <span class="gray absolute right-5px">Alt+Click</span>
           </div>
           <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
             References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
@@ -248,9 +252,11 @@
 
         <div v-if="!sortable(item.parent)" @click="store.move_up(item)">
           <span> Move Up </span>
+          <span class="gray absolute right-5px">Alt+⭡</span>
         </div>
         <div v-if="!sortable(item.parent)" @click="store.move_down(item)">
           <span> Move Down </span>
+          <span class="gray absolute right-5px">Alt+⭣</span>
         </div>
         <template v-if="!payload && store.get_move_targets(item)?.length">
           <div @mouseover="nestedcontextmenu.show">
@@ -368,8 +374,6 @@ const order: Record<string, number> = {
   categoryLink: 11,
   association: 12,
 };
-const noSort = new Set(["force"]);
-
 const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
 const hiddenTypes = new Set(["characteristicTypes", "characteristics", "costs"]);
 export default {
@@ -483,7 +487,7 @@ export default {
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
-      return noSort.has(entry.editorTypeName) === false;
+      return entry.editorTypeName !== "force";
     },
     ref_count(item: EditorBase) {
       switch (item.editorTypeName) {

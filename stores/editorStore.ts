@@ -1700,6 +1700,11 @@ export const useEditorStore = defineStore("editor", {
         }
       }
     },
+    sortable(entry?: EditorBase) {
+      const settings = useSettingsStore()
+      if (settings.sort === "none") return false;
+      return entry?.editorTypeName !== "force"
+    },
     get_leftpanel_open_collapsible_boxes() {
       function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
         const cls = `depth-${depth} collapsible-box opened`;
