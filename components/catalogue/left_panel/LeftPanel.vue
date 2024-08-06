@@ -257,6 +257,7 @@ export default defineComponent({
           e.preventDefault();
           await this.store.pasteLink();
         }
+
         if (e.altKey && key === "arrowdown") {
           e.preventDefault();
           this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_down(s) : null));
@@ -265,6 +266,7 @@ export default defineComponent({
           e.preventDefault();
           this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_up(s) : null));
         }
+
         if (key === "delete") {
           e.preventDefault();
           await this.store.remove();
