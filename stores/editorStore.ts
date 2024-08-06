@@ -1685,6 +1685,7 @@ export const useEditorStore = defineStore("editor", {
         if (index > 0) {
           const temp = arr.splice(index, 1)[0];
           arr.splice(index - 1, 0, temp);
+          this.changed(obj)
         }
       }
     },
@@ -1695,6 +1696,7 @@ export const useEditorStore = defineStore("editor", {
         if (index >= 0 && index < arr.length - 1) {
           const temp = arr.splice(index, 1)[0];
           arr.splice(index + 1, 0, temp);
+          this.changed(obj)
         }
       }
     },
