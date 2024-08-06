@@ -259,11 +259,11 @@ export default defineComponent({
         }
         if (e.altKey && key === "arrowdown") {
           e.preventDefault();
-          this.store.get_selections().forEach((s) => (this.store.sortable(s) ? this.store.move_down(s) : null));
+          this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_down(s) : null));
         }
         if (e.altKey && key === "arrowup") {
           e.preventDefault();
-          this.store.get_selections().forEach((s) => (this.store.sortable(s) ? this.store.move_up(s) : null));
+          this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_up(s) : null));
         }
         if (key === "delete") {
           e.preventDefault();
