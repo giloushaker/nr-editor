@@ -17,16 +17,22 @@
         <td>Name:</td>
         <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
-      <tr v-if="aliases">
-        <td
-          class="hastooltip"
-          title="Additional Aliases for in-text reference matching (NewRecruit only), case insensitive.
+      <template v-if="aliases">
+        <tr>
+          <td
+            class="hastooltip"
+            title="Additional Aliases for in-text reference matching, case insensitive.
 one per line"
-        >
-          Aliases:
-        </td>
-        <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
-      </tr>
+          >
+            Aliases:
+          </td>
+          <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
+        </tr>
+        <tr>
+          <td class="hastooltip" title="Disable indexing the name of this node for in-text references.">No Index</td>
+          <td><input type="checkbox" v-model="item.noindex" @change="namechanged" /></td>
+        </tr>
+      </template>
     </table>
   </fieldset>
 </template>
@@ -64,7 +70,6 @@ export default {
       this.$emit("aliaschanged");
       this.$emit("catalogueChanged");
     },
-
     refresh() {
       this.id = generateBattlescribeId();
       this.idchanged();
