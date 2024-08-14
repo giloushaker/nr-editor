@@ -4,15 +4,19 @@
       Associations are a New Recruit specific feature allowing you to associate an entry to another, such as a unit to a
       bataillon.
       <br />
-      Be aware that associations are currently in the beta phase and may undergo modifications.
-      <br />
       Feel free to offer feedback or ask questions on our <a href="https://discord.gg/cCtqGbugwb">Discord server</a>.
     </p>
 
     <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
     <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-    <CatalogueRightPanelFieldsQuery :catalogue="catalogue" childSelctions :item="item" @catalogueChanged="changed"
-      class="section" childSelections />
+    <CatalogueRightPanelFieldsQuery
+      :catalogue="catalogue"
+      childSelctions
+      :item="item"
+      @catalogueChanged="changed"
+      class="section"
+      childSelections
+    />
     <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" hideshared />
     <fieldset class="section">
       <legend>Constraints</legend>
