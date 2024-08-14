@@ -260,11 +260,18 @@ export default defineComponent({
 
         if (e.altKey && key === "arrowdown") {
           e.preventDefault();
-          this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_down(s) : null));
+          this.store
+            .get_sorted_selections()
+            .reverse()
+            .filter((o) => !this.store.sortable(o))
+            .forEach((s) => this.store.move_down(s));
         }
         if (e.altKey && key === "arrowup") {
           e.preventDefault();
-          this.store.get_selections().forEach((s) => (!this.store.sortable(s) ? this.store.move_up(s) : null));
+          this.store
+            .get_sorted_selections()
+            .filter((o) => !this.store.sortable(o))
+            .forEach((s) => this.store.move_up(s));
         }
 
         if (key === "delete") {
@@ -277,6 +284,7 @@ export default defineComponent({
       return this.store.update_catalogue_search(this.catalogue, data);
     },
   },
+
   computed: {
     filterData() {
       return {

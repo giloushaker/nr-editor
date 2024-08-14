@@ -27,6 +27,7 @@ import {
   type MaybeArray,
   isObject,
   sortByDescendingInplace,
+  sortByAscendingInplace,
 } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
@@ -729,6 +730,12 @@ export const useEditorStore = defineStore("editor", {
     get_selections(): EditorBase[] {
       const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
       this.selectedEntries.forEach((o) => result.push(o.obj as EditorBase));
+      return result;
+    },
+    get_sorted_selections() {
+      const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
+      this.selectedEntries.forEach((o) => result.push(o.obj as EditorBase));
+      sortByAscendingInplace(result, selection => getEntryPath(selection).map(o => `${o.key}[${o.index}]`).join('/'))
       return result;
     },
     get_selections_with_payload(): Array<{ obj: EditorBase; payload: any }> {
@@ -1793,7 +1800,10 @@ export const useEditorStore = defineStore("editor", {
     },
     put_current_state_in_history() {
       if (this.catalogueComponent && this.catalogueComponent.cat) {
-        this.put_state_in_history(this.get_current_state());
+        const state = this.get_current_state()
+        this.put_state_in_history(state);
+        history.replaceState({ data: state, index: this.historyStackPos }, "", location.href)
+        history.pushState({ index: this.historyStackPos + 1 }, "", null)
       }
     },
     can_back() {
