@@ -117,12 +117,12 @@
             <span class="gray" v-if="link.target.getCatalogue() !== item.getCatalogue()">
               &nbsp;[{{ link.target.getCatalogue()?.getName() || link.target.getName() }}]
             </span>
-            <span class="gray absolute right-5px">Alt+Click</span>
+            <span class="gray right">Alt+Click</span>
           </div>
           <div v-if="imported" @click="store.goto(item)">
             Goto
             <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
-            <span class="gray absolute right-5px">Alt+Click</span>
+            <span class="gray right">Alt+Click</span>
           </div>
           <div
             v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
@@ -132,20 +132,20 @@
             <span class="gray">
               &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
             </span>
-            <span class="gray absolute right-5px">Alt+Click</span>
+            <span class="gray right">Alt+Click</span>
           </div>
           <div v-if="child && store.can_goto(child)" @click="store.goto(child)">
             Goto {{ child.getName() }}
             <span class="gray" v-if="item.getCatalogue() !== child.getCatalogue()">
               &nbsp;[{{ child.getCatalogue().getName() }}]
             </span>
-            <span class="gray absolute right-5px">Alt+Click</span>
+            <span class="gray right">Alt+Click</span>
           </div>
           <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
             References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
           </div>
           <div v-if="store.filter && !item.showChildsInEditor" @click="store.toggle_selections">
-            Show All Childs<span class="gray absolute right-5px">Space</span>
+            Show All Childs<span class="gray right">Space</span>
           </div>
           <Separator v-if="item.isLink() || item.refs || imported" />
         </template>
@@ -245,23 +245,23 @@
           />
         </template>
 
-        <div @click="store.cut" v-if="!payload">Cut<span class="gray absolute right-5px">Ctrl+X</span> </div>
-        <div @click="store.copy" v-if="!payload">Copy<span class="gray absolute right-5px">Ctrl+C</span> </div>
-        <div @click="store.paste">Paste<span class="gray absolute right-5px">Ctrl+V</span> </div>
-        <div @click="store.duplicate" v-if="!payload">Duplicate<span class="gray absolute right-5px">Ctrl+D</span></div>
+        <div @click="store.cut" v-if="!payload">Cut<span class="gray right">Ctrl+X</span> </div>
+        <div @click="store.copy" v-if="!payload">Copy<span class="gray right">Ctrl+C</span> </div>
+        <div @click="store.paste">Paste<span class="gray right">Ctrl+V</span> </div>
+        <div @click="store.duplicate" v-if="!payload">Duplicate<span class="gray right">Ctrl+D</span></div>
 
         <div v-if="!sortable(item.parent)" @click="store.move_up(item)">
           <span> Move Up </span>
-          <span class="gray absolute right-5px">Alt+⭡</span>
+          <span class="gray right">Alt+⭡</span>
         </div>
         <div v-if="!sortable(item.parent)" @click="store.move_down(item)">
           <span> Move Down </span>
-          <span class="gray absolute right-5px">Alt+⭣</span>
+          <span class="gray right">Alt+⭣</span>
         </div>
         <template v-if="!payload && store.get_move_targets(item)?.length">
           <div @mouseover="nestedcontextmenu.show">
             <span> Move To </span>
-            <span class="absolute right-5px">❯</span>
+            <span class="right">❯</span>
           </div>
           <ContextMenu ref="nestedcontextmenu">
             <div
@@ -288,9 +288,7 @@
         </div>
         <Separator v-if="!payload" />
         <div @click="store.remove()" v-if="!payload">
-          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray absolute right-5px"
-            >Del</span
-          >
+          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray right">Del</span>
         </div>
       </template>
     </ContextMenu>
@@ -778,5 +776,11 @@ export default {
 
 .text-orange {
   color: rgb(153 31 31);
+}
+
+.right {
+  margin-left: auto;
+  float: right;
+  padding-left: 5px;
 }
 </style>
