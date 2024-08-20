@@ -42,7 +42,7 @@
         </template>
       </UtilAutocomplete>
 
-      <div class="checks">
+      <div class="checks" v-if="!selfOnly">
         <div v-if="shared">
           <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
           <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
@@ -64,6 +64,7 @@
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
   EditorSearchItem,
@@ -147,7 +148,7 @@ export default {
         return `Its recommended to keep shared checked on ${this.item.editorTypeName}s`;
       }
       return `Indicates that constraints on links should be evaluated as if they are on their target, usually only relevant if the scope is above "parent"
-      
+
 eg: a unit has a Leader and a Model which have a link to the same entry, with a max 1 constraint on the links scoped to the unit.
 assuming both have selected 1 of that entry:
 - a shared constraint would error as its evaluating the target of the links
@@ -159,7 +160,12 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     instanceOf() {
       return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
     },
-
+    parent() {
+      return getModifierOrConditionParent(this.item as EditorBase);
+    },
+    selfOnly() {
+      return this.parent?.editorTypeName === "costType";
+    },
     fieldTypes() {
       const res: {
         name: string;
@@ -218,10 +224,6 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
       return true;
     },
 
-    parent() {
-      return (this.item as any as EditorBase).parent;
-    },
-
     costTypes() {
       let res: BSICostType[] = [];
       for (let elt of this.catalogue.iterateCostTypes()) {
@@ -256,6 +258,14 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     },
 
     allScopes(): ScopeChoice[] {
+      if (this.selfOnly)
+        return [
+          {
+            id: "self",
+            name: "Self",
+            editorTypeName: "bullet",
+          },
+        ];
       const common = [
         {
           id: "force",

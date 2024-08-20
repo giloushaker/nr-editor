@@ -14,7 +14,7 @@
     />
 
     <FilterBy
-      v-if="item.field.startsWith('limit::') == false"
+      v-if="item.field?.startsWith('limit::') == false"
       noshared
       class="section"
       :item="item"
@@ -26,10 +26,11 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
-import Condition from "./fields/Condition.vue";
+import ConditionVue from "./fields/Condition.vue";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
+import { Condition } from "~/assets/shared/battlescribe/bs_main";
+import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["catalogueChanged"],
@@ -48,6 +49,6 @@ export default {
       this.$emit("catalogueChanged");
     },
   },
-  components: { Condition, FilterBy },
+  components: { Condition: ConditionVue, FilterBy },
 };
 </script>

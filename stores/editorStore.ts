@@ -86,6 +86,7 @@ import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
 import { useScriptsStore } from "./scriptsStore";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>
 const enableGithubIntegrationWithGitFolder = false;
@@ -1125,6 +1126,15 @@ export const useEditorStore = defineStore("editor", {
           return result;
         }
         case "conditions":
+          if (parent && getModifierOrConditionParent(parent)?.editorTypeName === "costType") {
+            return {
+              type: "instanceOf",
+              field: "selections",
+              scope: "self",
+              childId: "roster",
+            }
+          }
+
           return {
             type: "atLeast",
             value: 1,
@@ -1289,7 +1299,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create(key: string & BaseChildsT, data?: Record<string, any>) {
-      const added = await this.add({ select: true, ...data }, key);
+      const added = await this.add({ select: true, ...data }, key, this.get_selections_with_payload().map(o => o.obj));
       this.open_selected();
       return added;
     },
@@ -1642,7 +1652,8 @@ export const useEditorStore = defineStore("editor", {
         parent.showInEditor = true;
       });
     },
-    async goto(obj: EditorBase) {
+    async goto(obj?: EditorBase) {
+      if (!obj) return
       const targetCatalogue = obj.getCatalogue();
       this.put_current_state_in_history();
       const uistate = useEditorUIState();

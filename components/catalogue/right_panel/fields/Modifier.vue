@@ -113,6 +113,7 @@ const availableModifiers: Record<string, string[]> = {
   force: ["name", "page", "hidden", "constraints"],
   category: ["name", "page", "hidden", "constraints"],
   categoryLink: ["name", "page", "hidden", "constraints"],
+  costType: ["hidden"],
 };
 const availableTypes = {
   costs: "number",
@@ -125,10 +126,131 @@ const availableTypes = {
   defaultAmount: "defaultAmount",
   constraints: "number",
 } as Record<string, FieldTypes>;
+
+type Operation = {
+  id: BSIModifierType;
+  name: string;
+  word: string;
+};
+const operations = {
+  number: [
+    {
+      id: "set",
+      name: "Set",
+      word: "to",
+    },
+    {
+      id: "increment",
+      name: "Increment",
+      word: "by",
+    },
+    {
+      id: "decrement",
+      name: "Decrement",
+      word: "by",
+    },
+  ],
+  string: [
+    {
+      id: "set",
+      name: "Set",
+      word: "to",
+    },
+    {
+      id: "append",
+      name: "Append",
+      word: "with",
+    },
+    {
+      id: "prepend",
+      name: "Prepend",
+      word: "with",
+    },
+    {
+      id: "replace",
+      name: "Replace",
+      word: "with",
+    },
+  ],
+  "string-or-number": [
+    {
+      id: "set",
+      name: "Set",
+      word: "to",
+    },
+    {
+      id: "append",
+      name: "Append",
+      word: "to",
+    },
+    {
+      id: "prepend",
+      name: "Prepend",
+      word: "to",
+    },
+    {
+      id: "replace",
+      name: "Replace",
+      word: "with",
+    },
+    {
+      id: "increment",
+      name: "Increment",
+      word: "by",
+    },
+    {
+      id: "decrement",
+      name: "Decrement",
+      word: "by",
+    },
+  ],
+  boolean: [
+    {
+      id: "set",
+      name: "Set",
+      word: "to",
+    },
+  ],
+  defaultSelectionEntryId: [
+    {
+      id: "set",
+      name: "Set",
+      word: "",
+    },
+  ],
+  category: [
+    {
+      id: "add",
+      name: "Add",
+      word: "",
+    },
+    {
+      id: "remove",
+      name: "Remove",
+      word: "",
+    },
+    {
+      id: "set-primary",
+      name: "Set Primary",
+      word: "to",
+    },
+    {
+      id: "unset-primary",
+      name: "Unset Primary",
+      word: "to",
+    },
+  ],
+  defaultAmount: [
+    {
+      id: "set",
+      name: "Set",
+      word: "to",
+    },
+  ],
+} as Record<string, Operation[]>;
+
 type PossibleTypes = keyof typeof availableTypes;
-function isNumber(value: string | number | boolean | undefined) {
-  return !isNaN(parseFloat(value as string)) && isFinite(value as number);
-}
+
 export default {
   components: { ErrorIcon },
 
@@ -201,7 +323,6 @@ export default {
           return typeof currentValue === "boolean" ? currentValue : false;
         case "defaultSelectionEntryId":
           return first(this.allGroupEntries)?.id;
-          return typeof currentValue === "boolean" ? currentValue : false;
         case "defaultAmount":
           return "0";
         default:
@@ -274,128 +395,8 @@ export default {
       if (!this.selectedField) {
         return [];
       }
-      type Operation = {
-        id: BSIModifierType;
-        name: string;
-        word: string;
-      };
-      let ops: Record<string, Operation[]> = {
-        number: [
-          {
-            id: "set",
-            name: "Set",
-            word: "to",
-          },
-          {
-            id: "increment",
-            name: "Increment",
-            word: "by",
-          },
-          {
-            id: "decrement",
-            name: "Decrement",
-            word: "by",
-          },
-        ],
-        string: [
-          {
-            id: "set",
-            name: "Set",
-            word: "to",
-          },
-          {
-            id: "append",
-            name: "Append",
-            word: "with",
-          },
-          {
-            id: "prepend",
-            name: "Prepend",
-            word: "with",
-          },
-          {
-            id: "replace",
-            name: "Replace",
-            word: "with",
-          },
-        ],
-        "string-or-number": [
-          {
-            id: "set",
-            name: "Set",
-            word: "to",
-          },
-          {
-            id: "append",
-            name: "Append",
-            word: "to",
-          },
-          {
-            id: "prepend",
-            name: "Prepend",
-            word: "to",
-          },
-          {
-            id: "replace",
-            name: "Replace",
-            word: "with",
-          },
-          {
-            id: "increment",
-            name: "Increment",
-            word: "by",
-          },
-          {
-            id: "decrement",
-            name: "Decrement",
-            word: "by",
-          },
-        ],
-        boolean: [
-          {
-            id: "set",
-            name: "Set",
-            word: "to",
-          },
-        ],
-        defaultSelectionEntryId: [
-          {
-            id: "set",
-            name: "Set",
-            word: "",
-          },
-        ],
-        category: [
-          {
-            id: "add",
-            name: "Add",
-            word: "",
-          },
-          {
-            id: "remove",
-            name: "Remove",
-            word: "",
-          },
-          {
-            id: "set-primary",
-            name: "Set Primary",
-            word: "to",
-          },
-          {
-            id: "unset-primary",
-            name: "Unset Primary",
-            word: "to",
-          },
-        ],
-        defaultAmount: [
-          {
-            id: "set",
-            name: "Set",
-            word: "to",
-          },
-        ],
-      };
-      return ops[this.selectedField.type];
+
+      return operations[this.selectedField.type];
     },
     errors() {
       return [];

@@ -24,7 +24,9 @@
 </template>
 
 <script lang="ts">
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Base, Condition } from "~/assets/shared/battlescribe/bs_main";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import NumberInput from "~/components/util/NumberInput.vue";
 
@@ -32,7 +34,7 @@ export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSICondition>,
+      type: Object as PropType<Condition>,
       required: true,
     },
     catalogue: {
@@ -47,12 +49,14 @@ export default {
   },
   computed: {
     allowNonInstanceOf() {
-      // Somehow atLeast seem to work fine with primary-category so lets allow it even if BS does not
+      if (this.parent?.editorTypeName === "costType") return false;
       return true;
-      // return ["primary-category", "ancestor"].includes(this.item.scope) == false;
     },
     instanceOf() {
       return this.item.type.includes("instance");
+    },
+    parent() {
+      return getModifierOrConditionParent(this.item as Base as EditorBase);
     },
   },
   components: { NumberInput },

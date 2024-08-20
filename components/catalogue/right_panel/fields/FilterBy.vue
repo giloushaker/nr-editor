@@ -7,7 +7,8 @@
         <td>
           <span v-if="child">
             <img class="mr-1 align-middle" :src="`assets/bsicons/${child.editorTypeName}.png`" />
-            {{ child.name }}</span>
+            {{ child.name }}</span
+          >
         </td>
       </tr>
       <tr>
@@ -17,8 +18,16 @@
       <tr>
         <td>Child:</td>
         <td>
-          <UtilAutocomplete v-model="childId" :placeholder="`Search Child...`" :options="availableTargets" valueField="id"
-            filterField="name" @change="changed" :default="child" lazy>
+          <UtilAutocomplete
+            v-model="childId"
+            :placeholder="`Search Child...`"
+            :options="availableTargets"
+            valueField="id"
+            filterField="name"
+            @change="changed"
+            :default="child"
+            lazy
+          >
             <template #option="opt">
               <div v-if="opt.option" style="white-space: nowrap">
                 <template v-if="opt.option.indent >= 1 && !opt.selected">
@@ -39,8 +48,13 @@
     </table>
     <span v-if="!hideshared">
       <input :disabled="noshared && item.shared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
-      <label :class="{ gray: noshared && item.shared }" class="hastooltip"
-        :title="`Its recommended to keep shared checked on ${item.editorTypeName}s`" for="shared">Shared?</label>
+      <label
+        :class="{ gray: noshared && item.shared }"
+        class="hastooltip"
+        :title="`Its recommended to keep shared checked on ${item.editorTypeName}s`"
+        for="shared"
+        >Shared?</label
+      >
     </span>
   </fieldset>
 </template>
@@ -108,6 +122,46 @@ const baseItems = [
     catalogue: null,
     shared: false,
   },
+  {
+    id: "entry",
+    name: "Entry",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "group",
+    name: "Group",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "force",
+    name: "Force",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "category",
+    name: "Category",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
+  {
+    id: "roster",
+    name: "Roster",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
 ];
 export default {
   emits: ["catalogueChanged"],
@@ -148,10 +202,15 @@ export default {
       return true;
     },
     availableTargets() {
-      const result = [...baseItems, ...this.allCategories, ...this.allEntries, ...this.allForces, ...this.allCatalogues];
+      const result = [
+        ...baseItems,
+        ...this.allCategories,
+        ...this.allEntries,
+        ...this.allForces,
+        ...this.allCatalogues,
+      ];
       return result;
     },
-
   },
 
   watch: {
@@ -199,7 +258,7 @@ export default {
       let item = this.item as any;
       if (!item?.parent) return;
       while (item?.parent && !item.parent.isCatalogue()) {
-        item = item.parent
+        item = item.parent;
       }
       return item.id;
     },
