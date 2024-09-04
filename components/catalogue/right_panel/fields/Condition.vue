@@ -50,6 +50,7 @@ export default {
   computed: {
     allowNonInstanceOf() {
       if (this.parent?.editorTypeName === "costType") return false;
+      if (this.item.scope === "ancestor") return false;
       return true;
     },
     instanceOf() {
