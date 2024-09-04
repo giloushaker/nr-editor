@@ -17,6 +17,12 @@
         <td>Name:</td>
         <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
+      <tr v-if="item.editorTypeName === 'force'">
+        <td>Child Forces Label:</td>
+        <td
+          ><input type="text" v-model="(item as Force).childForcesLabel" @change="namechanged" placeholder="Forces"
+        /></td>
+      </tr>
       <template v-if="aliases">
         <tr>
           <td
@@ -42,6 +48,7 @@ import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers"
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIOption, BSINamed, BSIAliasable } from "~/assets/shared/battlescribe/bs_types";
 import InputStringArray from "./InputStringArray.vue";
+import { Force } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   components: { InputStringArray },
