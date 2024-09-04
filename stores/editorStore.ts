@@ -1205,6 +1205,11 @@ export const useEditorStore = defineStore("editor", {
             id: generateBattlescribeId(),
           };
 
+        case "characteristicTypes":
+          return {
+            name: `New ${getTypeLabel(getTypeName(key))}`,
+            id: generateBattlescribeId(),
+          }
         case "characteristics":
         case "costs":
           return {
@@ -1245,7 +1250,7 @@ export const useEditorStore = defineStore("editor", {
       }
       const missing = profileType.characteristicTypes?.filter(ct => !profile.characteristics.find(c => c.typeId === ct.id))
       const badIndex = profile.characteristics.find((c, i) => i !== profileType.characteristicTypes.findIndex(ct => ct.id === c.typeId))
-      if (missing.length || badIndex) {
+      if (missing?.length || badIndex) {
         const out_characteristics = []
         const in_characteristics = [...profile.characteristics]
         for (const ct of missing) {
@@ -1312,7 +1317,7 @@ export const useEditorStore = defineStore("editor", {
      * @param parent the parent to add the child in
      * @param data data to use when creating the child entry
      */
-    async create_child(key: string & BaseChildsT, parent: EditorBase, data?: Record<string, any>) {
+    async create_node(key: string & BaseChildsT, parent: EditorBase, data?: Record<string, any>) {
       const result = await this.add({ select: true, ...data }, key, parent);
       this.open_selected();
       return result;
@@ -1948,6 +1953,8 @@ export const useEditorStore = defineStore("editor", {
     del_child(...args: any[]) { return this.del_node(...args) },
     //@ts-ignore
     edit_child(...args: any[]) { return this.edit_node(...args) },
+    //@ts-ignore
+    create_child(...args: any[]) { return this.create_node(...args) },
     label(node: EditorBase, extra = false) {
       return extra ? [getName(node), getNameExtra(node)].filter(o => o).join(' ') : getName(node)
     }

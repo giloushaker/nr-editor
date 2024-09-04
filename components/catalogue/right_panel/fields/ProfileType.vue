@@ -1,10 +1,7 @@
 <template>
   <span>
-
     <fieldset>
-      <legend>
-        Order
-      </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
+      <legend> Order </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
     </fieldset>
     <fieldset>
       <legend>Profil Type</legend>
@@ -49,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { generateBattlescribeId, replaceKey } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSICharacteristicType, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { PropType } from "vue";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -97,29 +94,21 @@ export default {
     },
     get_profile_types() {
       const files = ((this.item as any as EditorBase).catalogue.manager as GameSystemFiles).getAllLoadedCatalogues();
-      const found = []
+      const found = [];
       for (const file of files) {
         for (const profileType of file.profileTypes || []) {
-          found.push(profileType)
+          found.push(profileType);
         }
       }
-      return found as Array<BSIProfileType & EditorBase>
+      return found as Array<BSIProfileType & EditorBase>;
     },
-    add() {
-      if (!this.item.characteristicTypes) {
-        this.item.characteristicTypes = [];
-      }
-      const type = {
-        id: generateBattlescribeId(),
-        name: "New Characteristic Type",
-      };
-      this.item.characteristicTypes.push(type);
+    async add() {
+      const type = await this.store.create_node("characteristicTypes", this.item);
       const refs = (this.item as BSIProfileType & EditorBase).refs || [];
-      for (const ref of refs) {
-        for (const profile of ref.profilesIterator()) {
+      for (const profile of refs) {
+        if (profile.isProfile() && !profile.isLink()) {
           if (profile.typeId === this.item.id) {
-            if (!profile.characteristics)
-              profile.characteristics = [];
+            if (!profile.characteristics) profile.characteristics = [];
             profile.characteristics.push({ typeId: type.id, name: type.name, $text: "" });
           }
         }
@@ -127,15 +116,9 @@ export default {
       this.$emit("catalogueChanged");
     },
     del() {
-      let type: BSICharacteristicType;
-      if (this.selectedType) {
-        if (this.item.characteristicTypes) {
-          const ind = this.item.characteristicTypes.indexOf(this.selectedType);
-          if (ind != -1) {
-            type = this.item.characteristicTypes.splice(ind, 1)[0];
-            this.selectedType = this.item.characteristicTypes[0];
-          }
-        }
+      const type = this.selectedType;
+      if (type) {
+        this.store.del_node(type);
       }
       const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs) {
@@ -191,7 +174,7 @@ export default {
       this.init();
     },
   },
-  components: { SortOrder }
+  components: { SortOrder },
 };
 </script>
 
