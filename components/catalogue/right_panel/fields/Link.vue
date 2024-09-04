@@ -152,11 +152,20 @@ export default {
 
     async updateLink() {
       if (this.type === "catalogue" && this.item.targetId) {
+        const oldTarget = this.item.target as (Catalogue & EditorBase) | undefined;
+        if (oldTarget) {
+          this.catalogue.removeRef(this.catalogue as Base as EditorBase, oldTarget);
+        }
         const sysId = this.catalogue.gameSystemId || this.catalogue.id;
         await this.catalogue.reload(this.store.get_system(sysId));
         const target = this.item.target as (Catalogue & EditorBase) | undefined;
-        this.item.name = this.item.target?.name || "Unknown";
-        this.item.type = (target?.editorTypeName || this.type) as any;
+        if (target) {
+          this.catalogue.addRef(this.catalogue as Base as EditorBase, target);
+          this.item.name = target.name;
+          this.item.type = target.editorTypeName;
+        } else {
+          this.item.name = "Unknown";
+        }
       } else {
         this.catalogue.updateLink(this.item);
         const target = this.item.target as EditorBase | undefined;
