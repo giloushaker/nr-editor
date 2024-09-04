@@ -69,8 +69,9 @@
       <p class="mt-20px">
         <strong>Notes:</strong> This feature is a work in progress (WIP) and may undergo syntax changes, which could
         require you to re-input them. <br />There may be peformance issues if many modifiers affect a roster or force.
-        <br />Added Modifiers are (currently) evaluated last, in the order they were added by the user, so don't expect
-        a specific order if using multiple relative modifiers <br />Feel free to provide feedback on Discord.
+        If you experience some let me know so i can fix it. <br />Added Modifiers are (currently) evaluated last, in the
+        order they were added by the user, so don't expect a specific order if using multiple relative modifiers
+        <br />Feel free to provide feedback on Discord.
       </p>
     </PopupDialog>
   </fieldset>
