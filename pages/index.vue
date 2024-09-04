@@ -25,26 +25,22 @@
           <fieldset v-for="gst in systems">
             <legend>
               {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
-              <NuxtLink :to="`/search/${gst.getId()}`">
-                <img
-                  class="w-24px h-24px align-bottom icon hover-darken"
-                  src="assets/icons/search.png"
-                  title="Search"
-                />
+              <NuxtLink :to="`/search/${gst.getId()}`" class="w-24px h-24px align-bottom imgBt">
+                <img src="assets/icons/search.png" title="Search" />
               </NuxtLink>
-              <a v-if="gst.github?.githubUrl" :href="gst.github.githubUrl" target="_blank">
+              <a
+                v-if="gst.github?.githubUrl"
+                :href="gst.github.githubUrl"
+                target="_blank"
+                class="w-24px h-24px ml-5px align-bottom imgBt"
+              >
                 <img
-                  class="w-24px h-24px ml-5px align-bottom hover-darken"
                   :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
                   :title="githubHoverTitle(gst.github)"
                 />
               </a>
-              <NuxtLink :to="`/scripts/${gst.getId()}`">
-                <img
-                  class="w-24px h-24px align-bottom icon hover-darken"
-                  src="assets/icons/right2.png"
-                  title="Scripts"
-                />
+              <NuxtLink :to="`/scripts/${gst.getId()}`" class="w-24px h-24px align-bottom imgBt">
+                <img src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
             </legend>
             <IconContainer
