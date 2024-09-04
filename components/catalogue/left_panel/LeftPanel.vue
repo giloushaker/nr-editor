@@ -21,20 +21,20 @@
       >
         🡲
       </span>
-      <img
+      <span
         :class="{ grey: !store.can_undo(), 'cursor-pointer': store.can_undo(), 'hover-darken': store.can_undo() }"
-        class="bold p-4px unselectable ml-5px w-24px h-24px icon"
+        class="bold unselectable ml-5px imgBt"
         @click="store.undo"
-        title="Undo"
-        src="/assets/icons/undo.svg"
-      />
-      <img
+      >
+        <img title="Undo" class="max-w-24px max-h-28px align-bottom" src="/assets/icons/undo.svg" />
+      </span>
+      <span
         :class="{ grey: !store.can_redo(), 'cursor-pointer': store.can_redo(), 'hover-darken': store.can_redo() }"
-        class="bold p-4px unselectable ml-4px w-24px h-24px icon"
+        class="bold unselectable ml-4px imgBt"
         @click="store.redo"
-        title="Redo"
-        src="/assets/icons/redo.svg"
-      />
+      >
+        <img title="Redo" class="max-w-24px max-h-28px align-bottom" src="/assets/icons/redo.svg" />
+      </span>
 
       <div class="absolute right-60px">
         Sort
@@ -45,18 +45,15 @@
           <option value="type">Type</option>
         </select>
       </div>
-      <img
+      <span
         @click="store.goto(store.get_selected())"
-        class="align-middle absolute h-20px p-2px hover-darken cursor-pointer icon right-30px"
-        title="Goto Selected"
-        src="/assets/icons/vertical-alignment-24.png"
-      />
-      <img
-        @click="uistate.collapse_all"
-        class="align-middle absolute right-0 p-2px hover-darken cursor-pointer icon"
-        title="Collapse All"
-        src="/assets/icons/collapse-all.svg"
-      />
+        class="align-middle absolute h-20px p-2px hover-darken cursor-pointer imgBt right-30px"
+      >
+        <img title="Goto Selected" src="/assets/icons/vertical-alignment-24.png" />
+      </span>
+      <span @click="uistate.collapse_all" class="align-middle absolute right-0 p-2px hover-darken cursor-pointer imgBt">
+        <img title="Collapse All" src="/assets/icons/collapse-all.svg" />
+      </span>
       <ErrorIcon :errors="catalogue.errors" showNumber clickable class="z-1" />
       <!-- <img
         @click="uistate.collapse_deepest"
