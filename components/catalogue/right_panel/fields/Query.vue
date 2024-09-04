@@ -42,7 +42,7 @@
         </template>
       </UtilAutocomplete>
 
-      <div class="checks" v-if="!selfOnly">
+      <div class="checks" v-if="!costType">
         <div v-if="shared">
           <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
           <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
@@ -163,7 +163,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     parent() {
       return getModifierOrConditionParent(this.item as EditorBase);
     },
-    selfOnly() {
+    costType() {
       return this.parent?.editorTypeName === "costType";
     },
     fieldTypes() {
@@ -258,11 +258,16 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     },
 
     allScopes(): ScopeChoice[] {
-      if (this.selfOnly)
+      if (this.costType)
         return [
           {
             id: "self",
             name: "Self",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "parent",
+            name: "Parent",
             editorTypeName: "bullet",
           },
         ];
