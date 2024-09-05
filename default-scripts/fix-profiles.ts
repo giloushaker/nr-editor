@@ -1,5 +1,13 @@
-import type { ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import type { Modifier, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+export function findParentWhere<T extends { parent?: T }>(self: T, fn: (node: T) => any): T | undefined {
+    let current = self.parent;
+    while (current && !Object.is(current, current.parent)) {
+        if (fn(current)) return current;
+        current = current.parent;
+    }
+    return undefined;
+}
 export default {
     name: "Fix profiles & characteristics",
     arguments: [{
@@ -68,6 +76,24 @@ export default {
                     }
 
 
+                }
+                else if (obj.editorTypeName === "modifier") {
+                    const parent = findParentWhere(obj, o => !o.editorTypeName.includes('modifier'))
+                    const target = (parent?.target ?? parent) as Profile & EditorBase
+                    const modifier = (obj as Modifier & EditorBase)
+                    const field = modifier.field
+                    const staticFields = ["name", "hidden", "annotation", "page", "defaultAmount", "defaultSelectionEntryId", "description"]
+                    if (staticFields.includes(field)) return;
+                    const found = catalogue.findOptionById(field) as EditorBase
+                    if (!found) {
+                        output.push([[obj, `invalid field type: ${modifier.field}`]])
+                        return;
+                    }
+                    if (found.editorTypeName === 'characteristicType') {
+                        if ((found.parent as ProfileType & EditorBase).id !== target.getTypeId()) {
+                            output.push([[obj, "invalid field type"]])
+                        }
+                    }
                 }
             })
         }

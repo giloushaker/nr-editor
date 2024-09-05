@@ -78,6 +78,7 @@ export default {
       if (newType) {
         this.catalogue.addRef(this.item as Profile & EditorBase, newType);
       }
+      this.item.characteristics = this.characteristics;
       this.$emit("catalogueChanged");
     },
 
