@@ -12,7 +12,7 @@
             valueField="value"
             filterField="name"
             :default="allScopes[0]"
-            @change=""
+            @change="$emit('catalogueChanged')"
           >
             <template #option="opt">
               <div style="white-space: nowrap">
@@ -37,12 +37,15 @@
           </span>
         </td>
         <td>
-          <input type="text" v-model="obj.affects" placeholder="self" />
+          <input type="text" v-model="obj.affects" placeholder="self" @change="$emit('catalogueChanged')" />
         </td>
       </tr>
     </table>
     <PopupDialog v-if="affectsPopup" v-model="affectsPopup">
-      for ease of parsing this field only accepts selectors separated by a <code class="cost">.</code>
+      This field in combination with scope allows you to apply this modifier to other nodes relative to this one. Common
+      use cases: Modify a parent's profile stats: scope=parent affects=profiles.{type} Modify all models stats in
+      parent: scope=parent affects=childs.recursive.model.profiles.Model for ease of parsing this field only accepts
+      selectors separated by a <code class="cost">.</code>
 
       <h5>selectors on nodes:</h5
       ><ul class="m-0">
