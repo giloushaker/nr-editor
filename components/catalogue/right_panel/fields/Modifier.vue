@@ -362,7 +362,7 @@ export default {
           }
           return typeof currentValue === "string" ? currentValue : _default;
         case "string-or-number":
-          return ["strint", "number"].includes(typeof currentValue) ? currentValue : "";
+          return ["string", "number"].includes(typeof currentValue) ? currentValue : "";
         case "boolean":
           return typeof currentValue === "boolean" ? currentValue : false;
         case "defaultSelectionEntryId":
@@ -499,9 +499,9 @@ export default {
         }
         return { type: "anyEntry" };
       } else if (this.item.scope) {
-        const found = this.parent?.getCatalogue().findOptionById(this.item.scope);
-        if (found) {
-          return found.editorTypeName;
+        const found = this.parent?.getCatalogue().findOptionById(this.item.scope) as EditorBase | null;
+        if (found && found.editorTypeName) {
+          return { type: found.editorTypeName };
         }
       }
     },
