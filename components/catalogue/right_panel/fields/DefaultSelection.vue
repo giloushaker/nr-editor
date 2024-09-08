@@ -55,15 +55,21 @@ export default {
 
   computed: {
     children() {
-      let res: { name: string; id: undefined | null; editorTypeName: string }[] = [
+      type entry = { name: string; id: undefined | string; editorTypeName: string };
+      const res = [
         {
-          name: "None",
+          name: "Unset",
           id: undefined,
           editorTypeName: "bullet",
         },
-      ];
+        {
+          name: "None",
+          id: "none",
+          editorTypeName: "bullet",
+        },
+      ] as entry[];
 
-      for (let entry of this.item.entriesIterator()) {
+      for (const entry of this.item.entriesIterator()) {
         if (!entry.isGroup()) {
           res.push(entry as any);
         }
