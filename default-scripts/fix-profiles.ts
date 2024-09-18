@@ -78,9 +78,10 @@ export default {
 
                 }
                 else if (obj.editorTypeName === "modifier") {
+                    const modifier = (obj as Modifier & EditorBase)
+                    if (modifier.scope || modifier.affects) return
                     const parent = findParentWhere(obj, o => !o.editorTypeName.includes('modifier'))
                     const target = (parent?.target ?? parent) as Profile & EditorBase
-                    const modifier = (obj as Modifier & EditorBase)
                     const field = modifier.field
                     const staticFields = ["name", "hidden", "annotation", "page", "defaultAmount", "defaultSelectionEntryId", "description"]
                     if (staticFields.includes(field)) return;
@@ -90,8 +91,9 @@ export default {
                         return;
                     }
                     if (found.editorTypeName === 'characteristicType') {
-                        if ((found.parent as ProfileType & EditorBase).id !== target.getTypeId()) {
-                            output.push([[obj, "invalid field type"]])
+                        const targetTypeId = target.getTypeId()
+                        if ((found.parent as ProfileType & EditorBase).id !== targetTypeId) {
+                            output.push([[obj, `invalid modifiere field type: characteristic on ${target.editorTypeName}`]])
                         }
                     }
                 }

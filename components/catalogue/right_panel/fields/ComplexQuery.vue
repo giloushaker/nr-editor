@@ -42,10 +42,9 @@
       </tr>
     </table>
     <PopupDialog v-if="affectsPopup" v-model="affectsPopup">
-      This field in combination with scope allows you to apply this modifier to other nodes relative to this one. Common
-      use cases: Modify a parent's profile stats: scope=parent affects=profiles.{type} Modify all models stats in
-      parent: scope=parent affects=childs.recursive.model.profiles.Model for ease of parsing this field only accepts
-      selectors separated by a <code class="cost">.</code>
+      This field in combination with scope allows you to apply this modifier to other nodes relative to this one.
+      <br />Common use cases: <br />Modify a parent's profile stats: scope=parent affects=profiles.{type} <br />Modify
+      all models stats in parent: scope=parent affects=childs.recursive.model.profiles.Model
 
       <h5>selectors on nodes:</h5
       ><ul class="m-0">
