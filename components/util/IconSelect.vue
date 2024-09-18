@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :class="{ disabled: disabled }">
+  <div class="select-container" :class="{ disabled: disabled }">
     <div @click="startEditing" class="iconselect-input" v-click-outside="onClickOutside">
       <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
       <slot v-else v-bind="selectedOption" name="option"></slot>
@@ -142,7 +142,7 @@ export default {
   background-color: var(--input-background);
 }
 
-.container {
+.select-container {
   position: relative;
 }
 
@@ -154,7 +154,7 @@ export default {
   display: none;
 }
 
-.container {
+.select-container {
   input {
     height: 33px;
   }

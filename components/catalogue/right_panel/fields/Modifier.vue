@@ -8,12 +8,7 @@
         </option>
       </select>
 
-      <UtilIconSelect
-        v-model="selectedField"
-        :fetch="() => fieldData"
-        @change="fieldChanged"
-        class="modType !max-w-200px"
-      >
+      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged">
         <template #option="opt">
           <div class="flex align-items flex-row">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${opt.option.modifierType}.png`" /><span class="inline">{{
@@ -600,9 +595,5 @@ export default {
   gap: 5px;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.modType {
-  width: 100%;
 }
 </style>
