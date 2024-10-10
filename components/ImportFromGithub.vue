@@ -30,9 +30,13 @@ async function submit(url: string | null) {
     for (const [name, content] of Object.entries(folder)) {
       const extension = getExtension(name);
       if (isAllowedExtension(extension)) {
-        const json = await convertToJson(content, extension);
-        result_files.push(json);
-        getDataObject(json).fullFilePath = name;
+        try {
+          const json = await convertToJson(content, extension);
+          result_files.push(json);
+          getDataObject(json).fullFilePath = name;
+        } catch (e) {
+          continue;
+        }
       }
     }
     if (result_files.length) {
