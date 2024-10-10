@@ -32,8 +32,8 @@ async function submit(url: string | null) {
       if (isAllowedExtension(extension)) {
         try {
           const json = await convertToJson(content, extension);
-          result_files.push(json);
           getDataObject(json).fullFilePath = name;
+          result_files.push(json);
         } catch (e) {
           continue;
         }
