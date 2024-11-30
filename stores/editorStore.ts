@@ -374,7 +374,12 @@ export const useEditorStore = defineStore("editor", {
 
       for (const system of systems) {
         progress && (await progress(0, 0, "Checking for github integration"));
-        await this.load_system(system);
+        try {
+          await this.load_system(system);
+        } catch (e) {
+          progress && (await progress(0, 0, `An error occured while loading ${system.gameSystem?.gameSystem?.name ?? 'this system'}:\n${e}`))
+          throw e;
+        }
       }
 
       return result_system_ids;
