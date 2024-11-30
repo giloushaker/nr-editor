@@ -69,6 +69,7 @@ export default {
   padding: 3px;
   text-align: left;
   background-color: $input_background;
+  min-width: 80px;
 }
 
 [contentEditable="true"]:empty:not(:focus):before {

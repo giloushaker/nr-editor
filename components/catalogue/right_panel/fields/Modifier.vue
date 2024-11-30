@@ -48,7 +48,13 @@
           <option :value="true">True</option>
           <option :value="false">False</option>
         </select>
-        <input @change="changed" type="text" v-if="inputType.includes('string')" v-model="item.value" />
+        <UtilEditableDiv
+          @change="changed"
+          type="text"
+          v-if="inputType.includes('string')"
+          v-model="item.value"
+          style="min-width: 200px"
+        />
 
         <UtilAutocomplete
           class="!max-w-350px"
