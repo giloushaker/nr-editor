@@ -99,7 +99,9 @@ export default {
                 }
             })
         }
-
+        if (output.length === 0 && result.length === 0) {
+            return ["No Issues found"]
+        }
         return [...output, result]
     }
 }

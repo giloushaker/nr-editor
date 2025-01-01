@@ -20,7 +20,7 @@ export default {
   methods: {
     change(e: any) {
       if (e.target) {
-        this.$emit("update:modelValue", e.target.outerText);
+        this.$emit("update:modelValue", e.target.innerText);
         this.$emit("change");
       }
     },

@@ -2,6 +2,8 @@
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
   <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
   <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+
   <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
     Entry
   </CatalogueRightPanelFieldsHidden>

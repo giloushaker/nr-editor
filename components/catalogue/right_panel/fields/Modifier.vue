@@ -8,7 +8,7 @@
         </option>
       </select>
 
-      <UtilIconSelect v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged">
+      <UtilIconSelect class="select" v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged">
         <template #option="opt">
           <div class="flex align-items flex-row">
             <img class="mr-1 my-auto" :src="`assets/bsicons/${opt.option.modifierType}.png`" /><span class="inline">{{
@@ -29,15 +29,13 @@
       </template>
       <template v-else-if="selectedOperation?.id === 'append' || selectedOperation?.id === 'prepend'">
         <div class="mx-5px">
-          {{ selectedOperation.word }} <input @change="changed" type="text" v-model="item.value" />
+          {{ selectedOperation.word }}
+          <UtilEditableDiv class="inline-block" @change="changed" type="text" v-model="item.value" />
         </div>
         <div>
           separate by:
-          <input @change="changed" type="text" v-model="join" /> (<span
-            class="cost !m-0 whitespace-pre"
-            v-if="join.length"
-            >{{ join }}</span
-          >
+          <UtilEditableDiv class="inline-block" @change="changed" type="text" v-model="join" />
+          (<span class="cost !m-0 whitespace-pre" v-if="join.length">{{ join.replace("\n", "\\n") }}</span>
           <span v-else>nothing</span>)
         </div>
       </template>
@@ -109,6 +107,7 @@ import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
 import { set } from "nuxt/dist/app/compat/capi";
+import EditableDiv from "~/components/util/EditableDiv.vue";
 
 type FieldTypes =
   | "string"
@@ -118,11 +117,48 @@ type FieldTypes =
   | "string-or-number"
   | "defaultSelectionEntryId"
   | "defaultAmount"
-  | "error";
+  | "error"
+  | "warning"
+  | "info";
 const availableModifiers: Record<string, string[]> = {
-  selectionEntry: ["costs", "name", "annotation", "page", "hidden", "category", "constraints", "defaultAmount"],
-  selectionEntryLink: ["costs", "name", "annotation", "page", "hidden", "category", "constraints", "defaultAmount"],
-  selectionEntryGroup: ["name", "annotation", "page", "hidden", "category", "constraints", "defaultSelectionEntryId"],
+  selectionEntry: [
+    "costs",
+    "name",
+    "annotation",
+    "page",
+    "hidden",
+    "category",
+    "constraints",
+    "defaultAmount",
+    "error",
+    "warning",
+    "info",
+  ],
+  selectionEntryLink: [
+    "costs",
+    "name",
+    "annotation",
+    "page",
+    "hidden",
+    "category",
+    "constraints",
+    "defaultAmount",
+    "error",
+    "warning",
+    "info",
+  ],
+  selectionEntryGroup: [
+    "name",
+    "annotation",
+    "page",
+    "hidden",
+    "category",
+    "constraints",
+    "defaultSelectionEntryId",
+    "error",
+    "warning",
+    "info",
+  ],
   selectionEntryGroupLink: [
     "name",
     "annotation",
@@ -131,9 +167,12 @@ const availableModifiers: Record<string, string[]> = {
     "category",
     "constraints",
     "defaultSelectionEntryId",
+    "error",
+    "warning",
+    "info",
   ],
   anyProfile: ["name", "annotation", "page", "hidden"],
-  anyEntry: ["name", "annotation", "page", "hidden"],
+  anyEntry: ["name", "annotation", "page", "hidden", "error", "warning", "info"],
   profile: ["characteristics", "name", "annotation", "page", "hidden"],
   profileLink: ["characteristics", "name", "annotation", "description", "page", "hidden"],
   rule: ["name", "annotation", "description", "page", "hidden"],
@@ -141,7 +180,7 @@ const availableModifiers: Record<string, string[]> = {
   infoLink: ["name", "annotation", "page", "hidden"],
   infoGroup: ["name", "annotation", "page", "hidden"],
   infoGroupLink: ["name", "annotation", "page", "hidden"],
-  force: ["name", "annotation", "page", "hidden", "constraints"],
+  force: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info"],
   category: ["name", "page", "hidden", "constraints"],
   categoryLink: ["name", "page", "hidden", "constraints"],
   costType: ["hidden"],
@@ -570,12 +609,28 @@ export default {
           modifierType: "category",
         });
       }
-      if (true || available.includes("error")) {
+      if (available.includes("error")) {
         additional.push({
           id: "error",
           name: "Error",
           type: "error",
           modifierType: "error",
+        });
+      }
+      if (available.includes("warning")) {
+        additional.push({
+          id: "warning",
+          name: "Warning",
+          type: "warning",
+          modifierType: "warning",
+        });
+      }
+      if (available.includes("info")) {
+        additional.push({
+          id: "info",
+          name: "Info",
+          type: "info",
+          modifierType: "info",
         });
       }
       // Filter out special fields
@@ -601,5 +656,10 @@ export default {
   gap: 5px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.select {
+  min-width: 200px;
+  max-width: fit-content;
 }
 </style>
