@@ -46,16 +46,27 @@ export async function getFile(filePath: any) {
   return await readAndUnzipFile(filePath).then((data) => ({ data, name: filename(filePath), path: filePath }));
 }
 
-export async function getFolderFiles(folderPath: any) {
+export async function getFolderFiles(folderPath: any, recursive = false, skip?: string[]) {
+  const toSkip = new Set(skip ?? [])
   const fileObjects = [];
   const isPathFile = await isFile(folderPath);
   if (isPathFile) {
     folderPath = dirname(folderPath);
   }
-  const entries = await readdir(folderPath);
-  for (const entry of entries) {
-    const filePath = `${folderPath}/${entry}`;
-    fileObjects.push(readAndUnzipFile(filePath).then((data) => ({ data, name: entry, path: filePath })));
+
+
+  const stack = [folderPath]
+  while (stack.length) {
+    const curPath = stack.pop();
+    const entries = await readdir(curPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const filePath = `${curPath}/${entry.name}`;
+      if (entry.isDirectory()) {
+        if (recursive && !toSkip?.has(entry.name)) stack.push(filePath)
+      } else {
+        fileObjects.push(readAndUnzipFile(filePath).then((data) => ({ data, name: entry.name, path: filePath })));
+      }
+    }
   }
 
   return (await Promise.all(fileObjects)).filter((o) => o.data);

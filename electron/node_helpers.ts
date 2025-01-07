@@ -7,9 +7,9 @@ export function filename(path: string) {
   const split = path.replaceAll("\\", "/").split("/");
   return split[split.length - 1];
 }
-export async function getFolderFiles(folderPath: string) {
+export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
   if (!electron) return [];
-  return (await electron.invoke("getFolderFiles", folderPath)) as Array<{
+  return (await electron.invoke("getFolderFiles", folderPath, recursive, skip)) as Array<{
     name: string;
     path: string;
     data: string;

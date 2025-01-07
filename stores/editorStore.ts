@@ -335,7 +335,7 @@ export const useEditorStore = defineStore("editor", {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
       }
-      const files = await getFolderFiles(folder);
+      const files = await getFolderFiles(folder, true, [".git", ".github"]);
       if (!files?.length) return;
 
       console.log("Loading", files.length, "files");
@@ -1540,8 +1540,11 @@ export const useEditorStore = defineStore("editor", {
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
       let current = document.getElementById("editor-entries") as Element;
-      if (!current) {
-        return;
+      if (!current) return;
+
+      if (obj.isCatalogue()) {
+        const head = current.getElementsByClassName('head')
+        return head.length ? head[0].children[0] : undefined
       }
 
       async function open_el(el: any) {
@@ -1556,10 +1559,11 @@ export const useEditorStore = defineStore("editor", {
         await context.$nextTick();
       }
 
+
+
       const path = getEntryPath(obj);
-      if (!path?.length) {
-        return;
-      }
+      if (!path?.length) return;
+
       current = current.getElementsByClassName(`depth-0 ${path[0].key}`)[0];
       if (!current) {
         if (noLog !== true) {

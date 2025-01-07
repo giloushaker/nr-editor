@@ -1,5 +1,6 @@
 <template>
   <div class="rightPanel" v-if="item" :key="key">
+    <NodePath :path="path(item)" class="inline p-1px pl-2px" @nodeclick="clicked" />
     <template v-if="store.mode === 'edit'">
       <CatalogueRightPanelPublicationPanel v-if="typeName == 'publication'" :item="item" @catalogueChanged="changed" />
 
@@ -147,8 +148,10 @@
 import { PropType } from "vue";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
-
+import NodePath from "~/components/util/NodePath.vue";
+import { EntryPathEntryExtended, getAtEntryPath, getEntryPathInfo } from "~/assets/shared/battlescribe/bs_editor";
 export default {
+  components: { NodePath },
   setup() {
     return { store: useEditorStore() };
   },
@@ -168,6 +171,22 @@ export default {
   },
 
   methods: {
+    clicked(payload: { path: EntryPathEntryExtended[] }) {
+      if (!payload.path.length) return;
+      const catalogueId = payload.path[0].id;
+      if (!catalogueId) return;
+      const catalogue = this.catalogue.findOptionById(catalogueId) as Catalogue | undefined;
+      if (!catalogue) {
+        notify({ text: `Couldn't find catalogue with id ${catalogueId}`, type: "error" });
+        return;
+      }
+      const node = getAtEntryPath(catalogue, payload.path.slice(1));
+      this.store.goto(node);
+    },
+    path(link: EditorBase) {
+      const path = getEntryPathInfo(link);
+      return path;
+    },
     changed() {
       this.store.changed(this.item || this.catalogue);
     },

@@ -17,7 +17,9 @@
         @change="$emit('secondaryChanged', category)"
       />
       <label :for="`category-${category.id}`">
-        {{ category.name }}<span class="gray"> [{{ category.catalogue.name }}]</span>
+        {{ category.name }}
+        <span class="gray" v-if="category.comment"> #&nbsp;{{ category.comment }} </span>
+        <span class="gray"> [{{ category.catalogue.name }}]</span>
       </label>
     </div>
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">

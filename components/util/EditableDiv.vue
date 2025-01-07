@@ -1,6 +1,14 @@
 <template>
-  <div :placeholder="placeholder" class="editableDiv" @input="change" @paste="onpaste" contenteditable="true" ref="div">
-  </div>
+  <component
+    :is="is"
+    :placeholder="placeholder"
+    class="editableDiv"
+    @input="change"
+    @paste="onpaste"
+    contenteditable="true"
+    ref="div"
+  >
+  </component>
 </template>
 
 <script lang="ts">
@@ -13,6 +21,10 @@ export default {
     placeholder: {
       type: String,
       default: "",
+    },
+    is: {
+      type: String,
+      default: "div",
     },
     beforePaste: Function,
   },

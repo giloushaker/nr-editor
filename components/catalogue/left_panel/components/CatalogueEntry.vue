@@ -185,11 +185,44 @@
           <div @click="store.create('entryLinks', { type: 'selectionEntry' })" v-if="allowed('entryLinks')">
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Link
+            <span class="right">❯</span>
+            <ContextMenu id="link_contextmenu">
+              <div @click="store.create('entryLinks', { type: 'selectionEntry' })">
+                <img class="pr-4px" src="assets/bsicons/selectionEntryLink.png" />
+                Entry
+              </div>
+              <div @click="store.create('entryLinks', { type: 'selectionEntryGroup' })">
+                <img class="pr-4px" src="assets/bsicons/selectionEntryGroupLink.png" />
+                Group
+              </div>
+              <div @click="store.create('infoLinks', { type: 'profile' })">
+                <img class="pr-4px" src="assets/bsicons/profileLink.png" />
+                Profile
+              </div>
+              <div @click="store.create('infoLinks', { type: 'rule' })">
+                <img class="pr-4px" src="assets/bsicons/ruleLink.png" />
+                Rule
+              </div>
+              <div @click="store.create('infoLinks', { type: 'infoGroup' })">
+                <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
+                InfoGroup
+              </div>
+            </ContextMenu>
           </div>
           <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
           <div @click="store.create_child('profiles', item)" v-if="allowed('profiles')">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile
+            <span class="right">❯</span>
+            <ContextMenu id="profile_contextmenu">
+              <div
+                v-for="type of catalogue.iterateProfileTypes()"
+                @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
+              >
+                <img class="pr-4px" src="assets/bsicons/profile.png" />
+                {{ type.getName() }}
+              </div>
+            </ContextMenu>
           </div>
           <div @click="store.create('rules')" v-if="allowed('rules')">
             <img class="pr-4px" src="assets/bsicons/rule.png" />
@@ -199,10 +232,11 @@
             <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
             Info Group
           </div>
-          <div @click="store.create('infoLinks', { type: 'profile' })" v-if="allowed('infoLinks')">
+          <!-- <div @click="store.create('infoLinks', { type: 'profile' })" v-if="allowed('infoLinks')">
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Info Link
-          </div>
+            <span class="right">❯</span>
+          </div> -->
           <div @click="store.create('associations')" v-if="allowed('associations')">
             <img class="pr-4px" src="assets/bsicons/association.png" />
             Association
@@ -259,19 +293,20 @@
           <span class="gray right">Alt+⭣</span>
         </div>
         <template v-if="!payload && store.get_move_targets(item)?.length">
-          <div @mouseover="nestedcontextmenu.show">
+          <div>
             <span> Move To </span>
             <span class="right">❯</span>
+            <ContextMenu id="moveto_contextmenu">
+              <div
+                v-for="target of store.get_move_targets(item)"
+                @click="store.move(item, catalogue, target.target, target.type)"
+              >
+                <img class="pr-4px" src="assets/bsicons/catalogue.png" />
+                {{ target.target.name }} -
+                {{ target.type }}
+              </div>
+            </ContextMenu>
           </div>
-          <ContextMenu ref="nestedcontextmenu">
-            <div
-              v-for="target of store.get_move_targets(item)"
-              @click="store.move(item, catalogue, target.target, target.type)"
-            >
-              {{ target.target.name }} -
-              {{ target.type }}
-            </div>
-          </ContextMenu>
         </template>
 
         <div
@@ -622,21 +657,6 @@ export default {
   },
 
   computed: {
-    // primary() {
-    //   let result = "";
-    //   for (const cl of this.item.categoryLinksIterator()) {
-    //     if (cl.primary) {
-    //       result = cl.target.name;
-    //     }
-    //   }
-    //   return result ? result + " " : result;
-    // },
-    order() {
-      return order;
-    },
-    _name() {
-      return getName(this.item);
-    },
     scope() {
       const _item = this.item as Condition & EditorBase;
       if (_item.scope) {
@@ -677,9 +697,6 @@ export default {
     },
     contextmenu() {
       return this.menu("contextmenu");
-    },
-    nestedcontextmenu() {
-      return this.menu("nestedcontextmenu");
     },
     catalogue() {
       return this.item.getCatalogue() as Catalogue & EditorBase;

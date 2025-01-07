@@ -1,6 +1,6 @@
 <template>
   <div class="-indent-16px pl-16px">
-    <div v-for="(node, i) in path" class="inline">
+    <div v-for="(node, i) in path" class="inline hover-darken cursor-pointer" @click="onClick(node, i)">
       <span class="whitespace-nowrap">
         <img class="typeIcon" :src="`/assets/bsicons/${node.type}.png`" />
         <template v-if="i == path.length - 1">
@@ -30,6 +30,12 @@ export default defineComponent({
     maxLength: { type: Number, default: 80, required: false },
     endArrow: { type: Boolean, default: false },
     text: { type: String },
+  },
+  methods: {
+    onClick(node: EntryPathEntryExtended, i: number) {
+      const path = this.path.slice(0, i + 1);
+      this.$emit("nodeclick", { path, node, i });
+    },
   },
 });
 </script>

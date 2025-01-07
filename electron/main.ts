@@ -94,8 +94,8 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
       }
     }
   });
-  handle("getFolderFiles", async (event: null | any, path: any) => {
-    return await getFolderFiles(path);
+  handle("getFolderFiles", async (event: null | any, path: any, recursive: boolean, skip?: string[]) => {
+    return await getFolderFiles(path, recursive, skip);
   });
   handle("getFile", async (event: null | any, path: any) => {
     return await getFile(path);

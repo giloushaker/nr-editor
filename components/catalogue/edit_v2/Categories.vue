@@ -53,9 +53,11 @@
           <div class="flex align-items flex-row" style="white-space: nowrap">
             <template v-if="option?.name">
               <Tag class="icon" />
-              <span
-                >&nbsp;{{ option.name }}<span class="gray"> [{{ option.catalogue.name }}]</span></span
-              >
+              <span>
+                &nbsp;{{ option.name }}
+                <span class="gray" v-if="option.comment"> #&nbsp;{{ option.comment }}</span>
+                <span class="gray"> [{{ option.catalogue.name }}]</span>
+              </span>
             </template>
           </div>
         </template>

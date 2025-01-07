@@ -331,6 +331,20 @@ const operations = {
       word: "message:",
     },
   ],
+  warning: [
+    {
+      id: "add",
+      name: "Add",
+      word: "message:",
+    },
+  ],
+  info: [
+    {
+      id: "add",
+      name: "Add",
+      word: "message:",
+    },
+  ],
 } as Record<string, Operation[]>;
 
 type PossibleTypes = keyof typeof availableTypes;
@@ -410,6 +424,8 @@ export default {
         case "defaultAmount":
           return "0";
         case "error":
+        case "warning":
+        case "info":
           return "{this} is not allowed";
         default:
           throw Error(`fieldType "${fieldType}" has no default value set"`);

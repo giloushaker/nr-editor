@@ -1,9 +1,18 @@
 <template>
-  <Teleport to="#dialogs" v-show="visible">
-    <li ref="context-menu" class="context-menu" :style="style" v-show="visible">
-      <slot :payload="payload" />
-    </li>
-  </Teleport>
+  <span :context-menu-id="id" style="display: none">
+    <Teleport to="#dialogs" v-show="visible">
+      <li
+        ref="context-menu"
+        class="context-menu"
+        :style="style"
+        v-show="visible"
+        @mousemove="hover($event, $event.target)"
+        @mouseleave="hover($event, null)"
+      >
+        <slot :payload="payload" />
+      </li>
+    </Teleport>
+  </span>
 </template>
 
 <script lang="ts">
@@ -21,6 +30,8 @@ export default {
       isDown: false,
       isRight: false,
       payload: undefined,
+      hoveredElement: null as Element | null,
+      nestedContextMenus: {} as Record<string, typeof this>,
     };
   },
   props: {
@@ -28,8 +39,29 @@ export default {
       type: Boolean,
       default: true,
     },
+    id: {
+      type: String,
+      required: false,
+    },
   },
   methods: {
+    hover(event: Event, e: Element | null) {
+      if (this.hoveredElement !== e) {
+        const div = e?.closest(".context-menu > *");
+        for (const nested of div?.querySelectorAll("[context-menu-id]") || []) {
+          const id = nested.getAttribute("context-menu-id");
+          if (id) {
+            for (const key in this.nestedContextMenus)
+              if (key === id) {
+                this.nestedContextMenus[key]?.show(event);
+              } else {
+                this.nestedContextMenus[key]?.close(event);
+              }
+          }
+        }
+      }
+      this.hoveredElement = e;
+    },
     do_update(e: MouseEvent) {
       this.width = this.el?.clientWidth || this.width;
       this.height = this.el?.clientHeight || this.height;
@@ -67,16 +99,36 @@ export default {
       this.visible = false;
       this.$emit("update:modelValue", false);
     },
+    get_parent_context() {
+      let parent = this.$parent;
+      while (parent) {
+        if (parent.$options.name === this.$options.name) return parent;
+        parent = parent.$parent;
+      }
+      return null;
+    },
   },
   mounted() {
     addEventListener("click", this.close, { capture: true });
     addEventListener("contextmenu", this.close, { capture: true });
     addEventListener("scroll", this.close, { capture: true });
+    if (this.id) {
+      const parent = this.get_parent_context();
+      if (parent && parent.nestedContextMenus) {
+        parent.nestedContextMenus[this.id] = this;
+      }
+    }
   },
   unmounted() {
     addEventListener("click", this.close, { capture: true });
     removeEventListener("contextmenu", this.close, { capture: true });
     removeEventListener("scroll", this.close, { capture: true });
+    if (this.id) {
+      const parent = this.get_parent_context();
+      if (parent && parent.nestedContextMenus) {
+        delete parent.nestedContextMenus[this.id];
+      }
+    }
   },
   computed: {
     el() {
