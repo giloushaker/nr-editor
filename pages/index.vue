@@ -164,9 +164,8 @@ export default defineComponent({
           if (found) {
             result[id] = found;
           }
-
-          return result;
         }
+        return result;
       }
 
       return this.store.gameSystems;
