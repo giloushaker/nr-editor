@@ -182,31 +182,38 @@
             <img class="pr-4px" src="assets/bsicons/selectionEntryGroup.png" />
             Group
           </div>
-          <div @click="store.create('entryLinks', { type: 'selectionEntry' })" v-if="allowed('entryLinks')">
+          <div
+            @click="store.create('entryLinks', { type: 'selectionEntry' })"
+            v-if="allowed(['entryLinks', 'infoLinks'])"
+          >
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Link
             <span class="right">❯</span>
             <ContextMenu id="link_contextmenu">
-              <div @click="store.create('entryLinks', { type: 'selectionEntry' })">
-                <img class="pr-4px" src="assets/bsicons/selectionEntryLink.png" />
-                Entry
-              </div>
-              <div @click="store.create('entryLinks', { type: 'selectionEntryGroup' })">
-                <img class="pr-4px" src="assets/bsicons/selectionEntryGroupLink.png" />
-                Group
-              </div>
-              <div @click="store.create('infoLinks', { type: 'profile' })">
-                <img class="pr-4px" src="assets/bsicons/profileLink.png" />
-                Profile
-              </div>
-              <div @click="store.create('infoLinks', { type: 'rule' })">
-                <img class="pr-4px" src="assets/bsicons/ruleLink.png" />
-                Rule
-              </div>
-              <div @click="store.create('infoLinks', { type: 'infoGroup' })">
-                <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
-                InfoGroup
-              </div>
+              <template v-if="allowed('entryLinks')">
+                <div @click="store.create('entryLinks', { type: 'selectionEntry' })">
+                  <img class="pr-4px" src="assets/bsicons/selectionEntryLink.png" />
+                  Entry
+                </div>
+                <div @click="store.create('entryLinks', { type: 'selectionEntryGroup' })">
+                  <img class="pr-4px" src="assets/bsicons/selectionEntryGroupLink.png" />
+                  Group
+                </div>
+              </template>
+              <template v-if="allowed('infoLinks')">
+                <div @click="store.create('infoLinks', { type: 'profile' })">
+                  <img class="pr-4px" src="assets/bsicons/profileLink.png" />
+                  Profile
+                </div>
+                <div @click="store.create('infoLinks', { type: 'rule' })">
+                  <img class="pr-4px" src="assets/bsicons/ruleLink.png" />
+                  Rule
+                </div>
+                <div @click="store.create('infoLinks', { type: 'infoGroup' })">
+                  <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
+                  InfoGroup
+                </div>
+              </template>
             </ContextMenu>
           </div>
           <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
