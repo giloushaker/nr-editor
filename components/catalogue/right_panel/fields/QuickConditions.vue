@@ -3,6 +3,13 @@
     <legend><img src="assets/bsicons/condition.png" /> Quick Conditions</legend>
     <div class="columns">
       <div class="buttonList">
+        <button
+          class="bouton"
+          @click="add('self', 'selections', 'instanceOf', 1)"
+          v-if="item.editorTypeName === 'localConditionGroup'"
+        >
+          <img src="/assets/icons/iconeplus.png" />SELF INSTANCE OF
+        </button>
         <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
           <img src="/assets/icons/iconeplus.png" />PARENT ATLEAST 1
         </button>
@@ -17,6 +24,13 @@
         </button>
       </div>
       <div class="buttonList">
+        <button
+          class="bouton"
+          @click="add('self', 'selections', 'notInstanceOf', 1)"
+          v-if="item.editorTypeName === 'localConditionGroup'"
+        >
+          <img src="/assets/icons/iconeplus.png" />SELF NOT INSTANCE OF
+        </button>
         <button class="bouton" @click="add('parent', 'selections', 'lessThan', 1)">
           <img src="/assets/icons/iconeplus.png" />PARENT LESS THAN 1
         </button>
@@ -80,7 +94,7 @@ export default {
         type: type,
         value: value,
         childId: "any",
-        includeChildSelections: ["roster"].includes(scope) ? true : false
+        includeChildSelections: ["roster"].includes(scope) ? true : false,
       });
     },
   },
