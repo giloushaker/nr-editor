@@ -1157,6 +1157,8 @@ export const useEditorStore = defineStore("editor", {
         case "modifierGroups":
         case "conditionGroups":
           return { type: "and" };
+        case "localConditionGroups":
+          return { type: "atLeast", value: 1, scope: "parent", field: "selections", includeChildSelections: true, includeChildForces: true }
         case "sharedSelectionEntries":
         case "selectionEntries":
           return {

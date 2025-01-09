@@ -83,6 +83,14 @@ const baseItems = [
     shared: false,
   },
   {
+    id: "self",
+    name: "Self",
+    editorTypeName: "bullet",
+    indent: 0,
+    catalogue: null,
+    shared: false,
+  },
+  {
     id: "unit",
     name: "Unit",
     editorTypeName: "bullet",

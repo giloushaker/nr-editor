@@ -220,16 +220,18 @@
           <div @click="store.create_child('profiles', item)" v-if="allowed('profiles')">
             <img class="pr-4px" src="assets/bsicons/profile.png" />
             Profile
-            <span class="right">❯</span>
-            <ContextMenu id="profile_contextmenu">
-              <div
-                v-for="type of catalogue.iterateProfileTypes()"
-                @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
-              >
-                <img class="pr-4px" src="assets/bsicons/profile.png" />
-                {{ type.getName() }}
-              </div>
-            </ContextMenu>
+            <template v-if="profileTypes.length">
+              <span class="right">❯</span>
+              <ContextMenu id="profile_contextmenu">
+                <div
+                  v-for="type of profileTypes"
+                  @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
+                >
+                  <img class="pr-4px" src="assets/bsicons/profile.png" />
+                  {{ type.getName() }}
+                </div>
+              </ContextMenu>
+            </template>
           </div>
           <div @click="store.create('rules')" v-if="allowed('rules')">
             <img class="pr-4px" src="assets/bsicons/rule.png" />
@@ -256,6 +258,10 @@
           <div @click="store.create('conditionGroups')" v-if="allowed('conditionGroups')">
             <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
             Condition Group
+          </div>
+          <div @click="store.create('localConditionGroups')" v-if="allowed('localConditionGroups')">
+            <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
+            Local Condition Group
           </div>
           <div @click="store.create('repeats')" v-if="allowed('repeats')">
             <img class="pr-4px" src="assets/bsicons/repeat.png" />
@@ -414,7 +420,7 @@ const order: Record<string, number> = {
   categoryLink: 11,
   association: 12,
 };
-const preferOpen = new Set(["modifierGroups", "conditionGroups"]);
+const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
 const hiddenTypes = new Set(["characteristicTypes", "characteristics", "costs"]);
 export default {
   name: "CatalogueEntry",
@@ -688,6 +694,9 @@ export default {
         }
       }
       return formatCosts(result);
+    },
+    profileTypes() {
+      return [...this.catalogue.iterateProfileTypes()];
     },
     childId(): string | undefined {
       return (this.item as any as Condition).childId;

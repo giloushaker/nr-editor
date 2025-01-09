@@ -14,7 +14,7 @@
     />
 
     <FilterBy
-      v-if="item.field?.startsWith('limit::') == false"
+      v-if="item.field?.startsWith('limit::') == false && item.editorTypeName !== 'localConditionGroup'"
       noshared
       class="section"
       :item="item"

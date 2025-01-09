@@ -11,8 +11,10 @@
           <option value="atLeast">At Least</option>
           <option value="atMost">At Most</option>
         </template>
-        <option value="instanceOf">Instance Of</option>
-        <option value="notInstanceOf">Not Instance Of</option>
+        <template v-if="allowInstanceOf">
+          <option value="instanceOf">Instance Of</option>
+          <option value="notInstanceOf">Not Instance Of</option>
+        </template>
       </select>
       <UtilNumberInput :disabled="instanceOf" v-model="item.value" @change="changed" />
       <div>
@@ -53,8 +55,12 @@ export default {
       if (this.item.scope === "ancestor") return false;
       return true;
     },
+    allowInstanceOf() {
+      if ((this.item as Base as EditorBase).editorTypeName === "localConditionGroup") return false;
+      return true;
+    },
     instanceOf() {
-      return this.item.type.includes("instance");
+      return this.item.type?.includes("instance");
     },
     parent() {
       return getModifierOrConditionParent(this.item as Base as EditorBase);

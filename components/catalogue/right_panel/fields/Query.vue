@@ -116,6 +116,13 @@ export default {
     },
 
     scopeChanged() {
+      if (this.item.scope === "roster") {
+        this.item.includeChildSelections = true;
+        this.item.includeChildForces = true;
+      }
+      if (this.item.scope === "force") {
+        this.item.includeChildSelections = true;
+      }
       this.item.catalogue.updateCondition(this.item as EditorBase & (Condition | Constraint));
       this.changed();
     },
@@ -124,6 +131,7 @@ export default {
       if (this.item.field.startsWith("limit::") && this.item.editorTypeName !== "constraint") {
         this.item.childId = "any";
       }
+
       this.changed();
     },
 
@@ -313,21 +321,12 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
           editorTypeName: "bullet",
         },
       ];
-      let res = [
-        {
-          id: "force",
-          name: "Force",
-          editorTypeName: "bullet",
-        },
-        {
-          id: "roster",
-          name: "Roster",
-          editorTypeName: "bullet",
-        },
-        ...common,
-      ];
+      let res = [] as ScopeChoice[];
 
-      if (this.item.field != "forces" && ["condition", "association"].includes(this.item.editorTypeName)) {
+      if (
+        this.item.field != "forces" &&
+        ["condition", "localConditionGroup", "association"].includes(this.item.editorTypeName)
+      ) {
         res = [
           {
             id: "self",
@@ -350,7 +349,6 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
             name: "Primary Category",
             editorTypeName: "bullet",
           },
-          ...common,
         ] as ScopeChoice[];
       }
 
@@ -366,11 +364,14 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
             name: "Parent",
             editorTypeName: "bullet",
           },
-          ...common,
         ];
       }
 
-      return res.concat(this.allParents).concat(this.allSelections).concat(this.allCategories).concat(this.allForces);
+      return [...res, ...common]
+        .concat(this.allParents)
+        .concat(this.allSelections)
+        .concat(this.allCategories)
+        .concat(this.allForces);
     },
   },
 

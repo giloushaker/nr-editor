@@ -77,7 +77,7 @@
         @catalogueChanged="changed"
       />
       <CatalogueRightPanelConditionPanel
-        v-else-if="typeName == 'condition'"
+        v-else-if="typeName == 'condition' || typeName === 'localConditionGroup'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"
