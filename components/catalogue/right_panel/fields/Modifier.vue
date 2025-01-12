@@ -196,7 +196,11 @@ const availableTypes = {
   defaultSelectionEntryId: "defaultSelectionEntryId",
   defaultAmount: "defaultAmount",
   constraints: "number",
+  error: "string",
+  warning: "string",
+  info: "string",
 } as Record<string, FieldTypes>;
+const nonBullet = new Set(["cost", "categories", "constraints", "characteristics", "error", "warning", "info"]);
 
 type Operation = {
   id: BSIModifierType;
@@ -426,7 +430,7 @@ export default {
         case "error":
         case "warning":
         case "info":
-          return "{this} is not allowed";
+          return currentValue && typeof currentValue === "string" ? currentValue : "{this} is not allowed";
         default:
           throw Error(`fieldType "${fieldType}" has no default value set"`);
       }
@@ -507,7 +511,7 @@ export default {
         return [];
       }
 
-      return operations[this.selectedField.type];
+      return operations[this.selectedField.type] || [];
     },
     errors() {
       return [];
@@ -650,7 +654,7 @@ export default {
         });
       }
       // Filter out special fields
-      available = available.filter((elt) => !["costs", "constraints", "category", "characteristics"].includes(elt));
+      available = available.filter((elt) => !nonBullet.has(elt));
       return available
         .map((elt) => {
           return {

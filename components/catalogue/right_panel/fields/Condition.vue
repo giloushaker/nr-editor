@@ -10,6 +10,8 @@
           <option value="notEqualTo">Not Equal To</option>
           <option value="atLeast">At Least</option>
           <option value="atMost">At Most</option>
+          <option value="always">Always</option>
+          <option value="never">Never</option>
         </template>
         <template v-if="allowInstanceOf">
           <option value="instanceOf">Instance Of</option>
