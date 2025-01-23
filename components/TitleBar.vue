@@ -12,14 +12,6 @@
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
-      <!-- <div class="iconbox" @click="bug = true">
-        <img src="/assets/icons/bug.png" class="icon" />
-        <span class="icontext">Bug</span>
-      </div>
-      <div class="iconbox" @click="feedback = true">
-        <img src="/assets/icons/feedback.png" class="icon" />
-        <span class="icontext">Feedback</span>
-      </div> -->
       <div class="iconbox no-underline unselectable" @click="settingsOpen = true">
         <img class="icon" src="/assets/icons/filtre.png" />
         <span class="icontext">Settings</span>
@@ -36,38 +28,6 @@
       <div v-if="electron">
         <img src="/assets/icons/electron32.png" />
       </div>
-
-      <PopupDialog v-if="bug" :disabled="!can_submit_bug" v-model="bug" button="Submit" @button="submit_bug">
-        <div class="m-20px">
-          <h2 class="text-center">Bug Report form</h2>
-          <label for="contact">Contact:</label>
-          <div>
-            <input type="text" id="contact" v-model="contact" />
-          </div>
-          <label for="text1">What happened <span class="gray">(include the steps to reproduce)</span>:*</label>
-          <textarea required class="w-full textbox" type="text" id="text1" v-model="text1" />
-
-          <label for="text2">What did you expect to happen:*</label>
-          <textarea required class="w-full mt-1px textbox" type="text" id="text2" v-model="text2" />
-        </div>
-      </PopupDialog>
-      <PopupDialog
-        v-if="feedback"
-        :disabled="!can_submit_feedback"
-        v-model="feedback"
-        button="Submit"
-        @button="submit_feedback"
-      >
-        <div class="m-20px">
-          <h2 class="text-center">Feedback form</h2>
-          <label for="contact">Contact:</label>
-          <div>
-            <input type="text" id="contact" v-model="contact" />
-          </div>
-          <label for="text"> Do you have any suggestions to improve NewRecruit ?:* </label>
-          <textarea required class="w-full mt-1px textbox" type="text" id="text" v-model="text" />
-        </div>
-      </PopupDialog>
       <PopupDialog v-if="settingsOpen" v-model="settingsOpen">
         <Settings />
       </PopupDialog>
@@ -96,45 +56,8 @@ export default {
     return { version: useRuntimeConfig().public.clientVersion, settings: useSettingsStore() };
   },
   computed: {
-    can_submit_bug() {
-      return this.text1 && this.text2;
-    },
-    can_submit_feedback() {
-      return this.text;
-    },
     electron() {
       return Boolean(globalThis.electron);
-    },
-  },
-  methods: {
-    submit_bug() {
-      const data = {
-        contact: this.contact,
-        happened: this.text1,
-        expected: this.text2,
-        type: "bug",
-      };
-      fetch("https://corsproxy.io/?https://www.newrecruit.eu/api/feedback", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    },
-    submit_feedback() {
-      const data = {
-        contact: this.contact,
-        content: this.text,
-        type: "suggestion",
-      };
-      fetch("https://corsproxy.io/?https://www.newrecruit.eu/api/feedback", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
     },
   },
   components: { Settings, Prompt },

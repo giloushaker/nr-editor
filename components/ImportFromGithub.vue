@@ -22,7 +22,7 @@ async function submit(url: string | null) {
     const zipDlUrl = `https://codeload.github.com/${repoPath}/zip/refs/heads/${defaultBranch}`;
 
     // Download the zip through a cors proxy
-    const zipFile = await $fetch<Blob>(`https://corsproxy.io/?${zipDlUrl}`);
+    const zipFile = await $fetch<Blob>(`https://www.newrecruit.eu/api/proxy?url=${zipDlUrl}`);
 
     // Extract the useful files
     const folder = await unzipFolder(zipFile, `${repoName}-${defaultBranch}`);

@@ -1,7 +1,7 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
   <CatalogueRightPanelFieldsModifier class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
-  <CatalogueRightPanelFieldsComplexQuery :obj="item" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsComplexQuery :item="item" @catalogueChanged="changed" class="section" />
   <CatalogueRightPanelFieldsQuickConditions
     :item="item"
     @catalogueChanged="changed"

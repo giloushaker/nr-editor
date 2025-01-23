@@ -101,7 +101,7 @@
 import type { PropType } from "vue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import { Category, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import { Category, deconstruct_affects_query, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
@@ -426,7 +426,7 @@ export default {
         case "defaultSelectionEntryId":
           return first(this.allGroupEntries)?.id;
         case "defaultAmount":
-          return "0";
+          return typeof currentValue === "number" ? String(currentValue) : "0";
         case "error":
         case "warning":
         case "info":
@@ -436,7 +436,7 @@ export default {
       }
     },
     fieldChanged() {
-      this.selectedOperation = this.operations[0];
+      this.selectedOperation = this.operations.find((o) => o.id === this.selectedOperation?.id) || this.operations[0];
       if (this.selectedField) {
         this.item.value = this.getDefaultFieldValue(this.selectedField.type, this.selectedField.name, this.item.value)!;
       }
@@ -542,7 +542,8 @@ export default {
     },
     type() {
       if (this.item.affects && this.item.affects !== "self") {
-        const split = this.item.affects.split(".");
+        const what = deconstruct_affects_query(this.item.affects).affectsWhat || "entries";
+        const split = what.split(".");
         const index = split.indexOf("profiles");
         if (index !== -1) {
           const which = split[index + 1];
@@ -607,18 +608,6 @@ export default {
               }))
             );
           }
-        }
-      }
-      if (this.type?.type === "profile" && this.type.value) {
-        if (this.type.value.characteristicTypes) {
-          additional.push(
-            ...this.type.value.characteristicTypes.map((o) => ({
-              id: o.id,
-              name: o.name,
-              type: "string-or-number" as const,
-              modifierType: "characteristic",
-            }))
-          );
         }
       }
       if (available.includes("category")) {

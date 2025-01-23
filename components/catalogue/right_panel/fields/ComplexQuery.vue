@@ -6,13 +6,13 @@
         <td>Scope:</td>
         <td>
           <UtilAutocomplete
-            v-model="scope"
-            :placeholder="`Search Scope...`"
+            v-model="item.scope"
+            placeholder="Search Scope..."
             :options="allScopes"
-            valueField="value"
+            valueField="id"
             filterField="name"
             :default="allScopes[0]"
-            @change="$emit('catalogueChanged')"
+            @change="changed"
           >
             <template #option="opt">
               <div style="white-space: nowrap">
@@ -30,52 +30,74 @@
         </td>
       </tr>
       <tr>
-        <td
-          >Affects:
-          <span class="imgBt">
-            <img src="/assets/icons/i.png" class="align-text-bottom" @click="affectsPopup = true" />
-          </span>
-        </td>
+        <td>Affects: </td>
         <td>
-          <input type="text" v-model="obj.affects" placeholder="self" @change="$emit('catalogueChanged')" />
+          <UtilAutocomplete
+            v-model="fields.affectsWhat"
+            placeholder="Entries"
+            :options="allAffects"
+            valueField="value"
+            filterField="name"
+            @change="changed"
+          >
+            <template #option="opt">
+              <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName || 'bullet'}.png`" />
+              <span style="white-space: nowrap"> {{ opt.option.name }} </span>
+            </template>
+          </UtilAutocomplete>
+        </td>
+      </tr>
+      <tr>
+        <td>Filter By: </td>
+        <td>
+          <UtilAutocomplete
+            v-model="fields.filterBy"
+            :placeholder="`Search Child...`"
+            :options="allFilterBy"
+            valueField="id"
+            filterField="name"
+            @change="changed"
+            :default="filterBySelected"
+            lazy
+          >
+            <template #option="opt">
+              <div v-if="opt.option" style="white-space: nowrap">
+                <template v-if="opt.option.indent >= 1 && !opt.selected">
+                  <span v-for="n of opt.option.indent">&nbsp;&nbsp;&nbsp;</span>
+                </template>
+                <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
+
+                {{ opt.option.name }}
+                <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
+                <span class="shared" v-if="opt.option.shared"> (shared) </span>
+                <span class="gray" v-if="opt.option.rootId === rootId"> (same ancestor)</span>
+                <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
+              </div>
+            </template>
+          </UtilAutocomplete>
         </td>
       </tr>
     </table>
-    <PopupDialog v-if="affectsPopup" v-model="affectsPopup">
-      This field in combination with scope allows you to apply this modifier to other nodes relative to this one.
-      <br />Common use cases: <br />Modify a parent's profile stats: scope=parent affects=profiles.{type} <br />Modify
-      all models stats in parent: scope=parent affects=childs.recursive.model.profiles.Model
-
-      <h5>selectors on nodes:</h5
-      ><ul class="m-0">
-        <li><span class="cost">all</span></li>
-        <li><span class="cost">childs</span></li>
-        <li><span class="cost">forces</span></li>
-        <li><span class="cost">categories</span></li>
-        <li><span class="cost">units</span></li>
-        <li>
-          <span class="cost">profiles</span>: May be followed by a typeName e.g
-          <span class="cost">profiles.Weapon</span>.
-        </li>
-        <li>
-          <span class="cost">{id}</span>: Used to filter the nodes, e.g
-          <span class="cost">childs.recursive.model</span>.
-        </li>
-      </ul>
-
-      <h5>Additional Selectors:</h5>
-      <ul class="m-0">
-        <li><span class="cost">.recursive</span> Recursively applies the previous selector.</li>
-      </ul>
-
-      <p class="mt-20px">
-        <strong>Notes:</strong> This feature is a work in progress (WIP) and may undergo syntax changes, which could
-        require you to re-input them. <br />There may be peformance issues if many modifiers affect a roster or force.
-        If you experience some let me know so i can fix it. <br />Added Modifiers are (currently) evaluated last, in the
-        order they were added by the user, so don't expect a specific order if using multiple relative modifiers
-        <br />Feel free to provide feedback on Discord.
-      </p>
-    </PopupDialog>
+    <div>
+      <div class="checks">
+        <div>
+          <input @change="changed" id="includeSelf" type="checkbox" v-model="fields.self" />
+          <label for="includeSelf">Include self(scope)</label>
+        </div>
+        <div>
+          <input @change="changed" id="includeChildSelections" type="checkbox" v-model="fields.entries" />
+          <label for="includeChildSelections">Include child Selections</label>
+        </div>
+        <div>
+          <input @change="changed" id="includeChildForces" type="checkbox" v-model="fields.forces" />
+          <label for="includeChildForces">Include child Forces</label>
+        </div>
+        <div>
+          <input @change="changed" id="recursive" type="checkbox" v-model="fields.recursive" />
+          <label for="recursive">Recursive</label>
+        </div>
+      </div>
+    </div>
   </fieldset>
 </template>
 <script lang="ts">
@@ -89,23 +111,23 @@ import {
   getSearchElements,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import { Modifier } from "~/assets/shared/battlescribe/bs_main";
+import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
 const scopes = {
-  self: { value: "self", name: "Self" },
-  parent: { value: "parent", name: "Parent" },
-  roster: { value: "roster", name: "Roster" },
-  force: { value: "force", name: "Force" },
-  category: { value: "category", name: "Category" },
-  ancestor: { value: "ancestor", name: "Ancestor" },
-  parents: { value: "ancestor", name: "All Parents" },
-  primaryCategory: { value: "primary-category", name: "Primary Category" },
-  primaryCatalogue: { value: "primary-catalogue", name: "Primary Catalogue" },
-  rootEntry: { value: "root-entry", name: "Root Entry" },
-  unit: { value: "unit", name: "Type: Unit" },
-  model: { value: "model", name: "Type: Model" },
-  upgrade: { value: "upgrade", name: "Type: Upgrade" },
-  modelOrUnit: { value: "model-or-unit", name: "Type: Model or Unit" },
+  self: { id: "self", name: "Self" },
+  parent: { id: "parent", name: "Parent" },
+  roster: { id: "roster", name: "Roster" },
+  force: { id: "force", name: "Force" },
+  category: { id: "category", name: "Category" },
+  ancestor: { id: "ancestor", name: "Ancestor" },
+  parents: { id: "ancestor", name: "All Parents" },
+  primaryCategory: { id: "primary-category", name: "Primary Category" },
+  primaryCatalogue: { id: "primary-catalogue", name: "Primary Catalogue" },
+  rootEntry: { id: "root-entry", name: "Root Entry" },
+  unit: { id: "unit", name: "Type: Unit" },
+  model: { id: "model", name: "Type: Model" },
+  upgrade: { id: "upgrade", name: "Type: Upgrade" },
+  modelOrUnit: { id: "model-or-unit", name: "Type: Model or Unit" },
 } as const;
 interface ScopeChoice {
   value: string;
@@ -113,14 +135,22 @@ interface ScopeChoice {
   editorTypeName?: string;
   title?: string;
 }
+
 export default defineComponent({
   components: { PopupDialog },
   emits: ["catalogueChanged"],
   props: {
-    obj: { type: Object as PropType<Modifier & EditorBase>, required: true },
+    item: { type: Object as PropType<Modifier & EditorBase>, required: true },
   },
   data: () => ({
-    affectsPopup: false,
+    fields: {
+      self: true,
+      entries: false,
+      forces: false,
+      recursive: false,
+      filterBy: "any",
+      affectsWhat: "entries",
+    },
   }),
   methods: {
     getNameExtra,
@@ -128,27 +158,33 @@ export default defineComponent({
       if (!opt.catalogue) {
         return false;
       }
-      if (opt.catalogue === this.obj.catalogue?.getName()) {
+      if (opt.catalogue === this.item.catalogue?.getName()) {
         return false;
       }
       return true;
     },
+    changed() {
+      this.$emit("catalogueChanged");
+    },
+  },
+  mounted() {
+    this.fields = deconstruct_affects_query(this.item.affects);
   },
   computed: {
     scope: {
       get() {
-        return this.obj.scope ?? "self";
+        return this.item.scope ?? "self";
       },
       set(val: string) {
-        if (val === "self") delete this.obj.scope;
-        else this.obj.scope = val;
+        if (val === "self") delete this.item.scope;
+        else this.item.scope = val;
       },
     },
     catalogue() {
-      return this.obj.getCatalogue();
+      return this.item.getCatalogue();
     },
     type() {
-      return this.obj.editorTypeName;
+      return this.item.editorTypeName;
     },
     costTypes() {
       let res: BSICostType[] = [];
@@ -157,9 +193,17 @@ export default defineComponent({
       }
       return res;
     },
+    rootId() {
+      let item = this.item as any;
+      if (!item?.parent) return;
+      while (item?.parent && !item.parent.isCatalogue()) {
+        item = item.parent;
+      }
+      return item.id;
+    },
 
     allSelections(): EditorSearchItem[] {
-      return getParentUnitHierarchy(this.obj);
+      return getParentUnitHierarchy(this.item);
     },
 
     allCategories(): EditorSearchItem[] {
@@ -171,9 +215,27 @@ export default defineComponent({
     },
 
     allParents(): EditorSearchItem[] {
-      return getParentScopes(this.obj);
+      return getParentScopes(this.item);
     },
 
+    allAffects(): Array<any> {
+      return [
+        {
+          name: "Entries",
+          value: "entries",
+        },
+        ...[...this.catalogue.iterateProfileTypes()].map((type) => ({
+          name: `Profiles (${type.name})`,
+          value: `profiles.${type.name}`,
+          editorTypeName: "profileType",
+        })),
+        {
+          name: "Rules",
+          value: "rules",
+          editorTypeName: "rule",
+        },
+      ];
+    },
     allScopes(): Array<ScopeChoice | EditorSearchItem> {
       const result = [scopes.self, scopes.parent, scopes.force, scopes.roster, scopes.primaryCatalogue] as Array<
         ScopeChoice | EditorSearchItem
@@ -188,6 +250,42 @@ export default defineComponent({
       result.push(...this.allForces);
       return result;
     },
+    allFilterBy() {
+      const result = [...filterByItems, ...this.allCategories];
+      return result;
+    },
+
+    filterBySelected() {
+      if (!this.fields.filterBy || this.fields.filterBy === "any") {
+        return this.allFilterBy[0];
+      }
+
+      const base = this.allFilterBy.find((elt) => elt.id === this.fields.filterBy);
+      if (base) {
+        return base;
+      }
+      return this.catalogue.findOptionById(this.fields.filterBy) as any as EditorSearchItem;
+    },
+  },
+  watch: {
+    fields: {
+      deep: true,
+      handler(fields) {
+        const built = construct_affects_query(fields);
+        if (!built || built === "self") {
+          delete this.item.affects;
+        } else {
+          this.item.affects = built;
+        }
+        console.log(built);
+      },
+    },
   },
 });
 </script>
+<style scoped lang="scss">
+.checks > div {
+  display: inline-block;
+  margin-right: 10px;
+}
+</style>

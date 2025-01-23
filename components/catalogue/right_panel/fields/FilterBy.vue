@@ -73,104 +73,7 @@ import {
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-const baseItems = [
-  {
-    id: "any",
-    name: "Anything",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "self",
-    name: "Self",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "unit",
-    name: "Unit",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "model",
-    name: "Model",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "upgrade",
-    name: "Upgrade",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "mount",
-    name: "Mount",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "crew",
-    name: "Crew",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "entry",
-    name: "Entry",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "group",
-    name: "Group",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "force",
-    name: "Force",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "category",
-    name: "Category",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-  {
-    id: "roster",
-    name: "Roster",
-    editorTypeName: "bullet",
-    indent: 0,
-    catalogue: null,
-    shared: false,
-  },
-];
+import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
 export default {
   emits: ["catalogueChanged"],
   props: {
@@ -211,7 +114,7 @@ export default {
     },
     availableTargets() {
       const result = [
-        ...baseItems,
+        ...filterByItems,
         ...this.allCategories,
         ...this.allEntries,
         ...this.allForces,
