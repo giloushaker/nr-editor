@@ -172,7 +172,7 @@ const availableModifiers: Record<string, string[]> = {
     "info",
   ],
   anyProfile: ["name", "annotation", "page", "hidden"],
-  anyEntry: ["name", "annotation", "page", "hidden", "error", "warning", "info"],
+  anyEntry: ["name", "costs", "category", "annotation", "page", "hidden", "error", "warning", "info"],
   profile: ["characteristics", "name", "annotation", "page", "hidden"],
   profileLink: ["characteristics", "name", "annotation", "description", "page", "hidden"],
   rule: ["name", "annotation", "description", "page", "hidden"],
