@@ -114,7 +114,7 @@ import {
 import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
 const scopes = {
-  self: { id: "self", name: "Self" },
+  self: { id: undefined, name: "Self" },
   parent: { id: "parent", name: "Parent" },
   roster: { id: "roster", name: "Roster" },
   force: { id: "force", name: "Force" },
