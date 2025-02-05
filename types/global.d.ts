@@ -17,7 +17,7 @@ declare global {
   function $toRaw<T extends Object>(o: T): T;
   function $markRaw<T extends Object>(o: T): T;
   function $nextTick(): Promise<unknown>
-  var customPrompt: (data: string | { html: string, accept?: string, cancel?: string, id?: string }) => boolean;
+  var customPrompt: (data: string | { html: string, accept?: string, cancel?: string, id?: string }) => Promise<boolean>;
   var electron:
     | undefined
     | {

@@ -16,6 +16,7 @@
       @catalogueChanged="changed"
       class="section"
       childSelections
+      childForces
     />
     <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" hideshared />
     <fieldset class="section">

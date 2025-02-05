@@ -1,12 +1,18 @@
 <template>
-  <PopupDialog v-model="isOpen" v-if="isOpen" :text="promptCancel" @button="doResolve(true)" @close="doResolve(false)"
-    :button="promptAccept" nocloseonclickoutside>
+  <PopupDialog
+    v-model="isOpen"
+    v-if="isOpen"
+    :text="promptCancel"
+    @button="doResolve(true)"
+    @close="doResolve(false)"
+    :button="promptAccept"
+    nocloseonclickoutside
+  >
     <div v-html="promptHtml"></div>
 
     <div v-if="promptId">
       <br />
-      <input type="checkbox" v-model="promptDontShowAgain" /><label>Dont show
-        this again</label>
+      <input type="checkbox" v-model="promptDontShowAgain" /><label>Dont show this again</label>
     </div>
   </PopupDialog>
 </template>
@@ -20,13 +26,13 @@ const promptAccept = ref("Yes");
 const promptCancel = ref("Cancel");
 const promptId = ref<string | null>(null);
 const promptDontShowAgain = ref(false);
-let promptResolve = null as ((response: number) => void) | null;
+let promptResolve = null as ((response: boolean) => void) | null;
 globalThis.customPrompt = (data: any) => {
   let shouldOpen = true;
   if (promptResolve !== null) {
     throw new Error("Cannot create a Prompt when one is already active");
   }
-  const promise = new Promise((resolve) => {
+  const promise = new Promise<boolean>((resolve) => {
     if (typeof data === "string") {
       promptHtml.value = data;
     } else if (isObject(data)) {
@@ -52,7 +58,7 @@ function doResolve(result: any) {
     promptResolve = null;
   }
   if (promptDontShowAgain.value && promptId.value) {
-    store.set(promptId.value, promptDontShowAgain.value)
+    store.set(promptId.value, promptDontShowAgain.value);
   }
   isOpen.value = false;
 }
