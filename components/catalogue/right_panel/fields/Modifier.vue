@@ -7,7 +7,6 @@
           {{ operation.name }}
         </option>
       </select>
-
       <UtilIconSelect class="select" v-model="selectedField" :fetch="() => fieldData" @change="fieldChanged">
         <template #option="opt">
           <div class="flex align-items flex-row">
@@ -96,7 +95,9 @@
       <template
         v-if="
           selectedOperation?.id &&
-          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id)
+          selectedField?.type &&
+          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id) &&
+          ['string', 'string-or-number'].includes(selectedField.type)
         "
       >
         <div>
