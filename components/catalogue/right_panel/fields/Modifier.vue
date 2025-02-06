@@ -18,7 +18,10 @@
         </template>
       </UtilIconSelect>
       <template
-        v-if="['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation?.id)"
+        v-if="
+          selectedOperation?.id &&
+          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id)
+        "
       >
         <div v-if="selectedOperation?.id == 'replace'">
           <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
@@ -32,7 +35,7 @@
             <span class="hastooltip" title="1-Based index of the match to affect. supports negative indexes. 0 = All">
               position:
             </span>
-            <input @change="changed" type="number" v-model="item.position" style="width: 60px; margin-left: 3px" />
+            <input @change="changed" type="number" v-model="position" style="width: 60px; margin-left: 3px" />
           </span>
         </div>
       </template>
@@ -475,6 +478,14 @@ export default {
       set(val: string) {
         if (val === " ") delete this.item.join;
         this.item.join = val;
+      },
+    },
+    position: {
+      get() {
+        return this.item.position;
+      },
+      set(val: number | string) {
+        this.item.position = val === "" ? undefined : Number(val);
       },
     },
     inputType() {
