@@ -34,11 +34,7 @@
                 target="_blank"
                 class="ml-5px align-bottom imgBt inline-block"
               >
-                <img
-                  class="w-24px h-24px"
-                  :src="settings.theme === 'dark' ? 'assets/icons/github-dark.png' : 'assets/icons/github-light.png'"
-                  :title="githubHoverTitle(gst.github)"
-                />
+                <img class="w-24px h-24px" src="assets/icons/github-light.png" :title="githubHoverTitle(gst.github)" />
               </a>
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />

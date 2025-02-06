@@ -17,13 +17,22 @@
           </div>
         </template>
       </UtilIconSelect>
-
-      <template v-if="selectedOperation?.id == 'replace'">
-        <div>
+      <template
+        v-if="['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation?.id)"
+      >
+        <div v-if="selectedOperation?.id == 'replace'">
           <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
           <span v-if="selectedOperation" class="mx-5px whitespace-nowrap">
             {{ selectedOperation.word }}
             <input @change="changed" type="text" v-model="item.value" />
+          </span>
+        </div>
+        <div>
+          <span>
+            <span class="hastooltip" title="1-Based index of the match to affect. supports negative indexes. 0 = All">
+              position:
+            </span>
+            <input @change="changed" type="number" v-model="item.position" style="width: 60px; margin-left: 3px" />
           </span>
         </div>
       </template>
