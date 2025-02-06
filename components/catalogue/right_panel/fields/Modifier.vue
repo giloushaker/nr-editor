@@ -17,25 +17,12 @@
           </div>
         </template>
       </UtilIconSelect>
-      <template
-        v-if="
-          selectedOperation?.id &&
-          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id)
-        "
-      >
-        <div v-if="selectedOperation?.id == 'replace'">
+      <template v-if="selectedOperation?.id == 'replace'">
+        <div>
           <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
           <span v-if="selectedOperation" class="mx-5px whitespace-nowrap">
             {{ selectedOperation.word }}
             <input @change="changed" type="text" v-model="item.value" />
-          </span>
-        </div>
-        <div>
-          <span>
-            <span class="hastooltip" title="1-Based index of the match to affect. supports negative indexes. 0 = All">
-              position:
-            </span>
-            <input @change="changed" type="number" v-model="position" style="width: 60px; margin-left: 3px" />
           </span>
         </div>
       </template>
@@ -53,7 +40,12 @@
       </template>
       <template v-else>
         <span v-if="selectedOperation"> {{ selectedOperation.word }} </span>
-        <UtilNumberInput @change="changed" v-if="inputType === 'number'" v-model="(item.value as number)" />
+        <UtilNumberInput
+          @change="changed"
+          v-if="inputType === 'number'"
+          v-model="(item.value as number)"
+          style="width: 60px; margin-left: 3px"
+        />
         <select @change="changed" v-if="inputType == 'boolean'" v-model="item.value">
           <option :value="true">True</option>
           <option :value="false">False</option>
@@ -100,6 +92,21 @@
             </div>
           </template>
         </UtilAutocomplete>
+      </template>
+      <template
+        v-if="
+          selectedOperation?.id &&
+          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id)
+        "
+      >
+        <div>
+          <span>
+            <span class="hastooltip" title="1-Based index of the match to affect. supports negative indexes. 0 = All">
+              position:
+            </span>
+            <input @change="changed" type="number" v-model="item.position" style="width: 60px; margin-left: 3px" />
+          </span>
+        </div>
       </template>
     </div>
     <div v-for="error in errors" class="mt-8px flex items-center">
