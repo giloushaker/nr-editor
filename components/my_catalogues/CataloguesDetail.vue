@@ -46,8 +46,9 @@
     <div class="section boutons">
       <button class="bouton" @click="$emit('edit', catalogue)">Edit</button>
       <button class="bouton" @click="deletePopup = true">Delete</button>
-      <button class="bouton" @click="download_file">Download</button>
-      <button class="bouton" v-if="isSystem" @click="popup_change_format">Change File Format</button>
+      <button class="bouton" @click="download_file" v-if="!electron">Download</button>
+      <button class="bouton" v-if="isSystem && electron" @click="popup_change_format">Change File Format</button>
+      <button class="bouton" v-if="isSystem && electron" @click="popup_change_ids">Change Ids</button>
       <p class="info"> To quickly edit a catalogue, you can double-click on it. </p>
     </div>
     <PopupDialog
@@ -82,13 +83,20 @@
         <input type="checkbox" id="deleteExisting" v-model="deleteExistingFiles" />
       </div>
     </PopupDialog>
+    <PopupDialog button="Confirm" text="Cancel" @button="change_ids()" v-model="changeIdsPopup" v-if="changeIdsPopup">
+      <div>
+        Are you sure you want to change the ids of all the files in this system?<br />
+        This will cause new lists for this system to be completely separate from the original.<br />
+        only use for major versions or forks.
+      </div>
+    </PopupDialog>
   </fieldset>
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
 import { convertToXml, removeExtension } from "~/assets/shared/battlescribe/bs_convert";
-import { addOne } from "~/assets/shared/battlescribe/bs_helpers";
+import { addOne, generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { download, saveFilePickerOrDownload } from "~/assets/shared/util";
@@ -110,6 +118,7 @@ export default {
     return {
       deletePopup: false,
       changeFormatPopup: false,
+      changeIdsPopup: false,
       format: "gst" as "gstz" | "gst" | "json",
       deleteExistingFiles: false,
     };
@@ -126,7 +135,33 @@ export default {
     popup_change_format() {
       this.changeFormatPopup = true;
     },
+    popup_change_ids() {
+      this.changeIdsPopup = true;
+    },
 
+    async change_ids() {
+      const data = getDataObject(this.catalogue);
+      const sys = this.store.get_system(data.gameSystemId || data.id);
+      const files = sys.getAllCatalogueFiles();
+      const ids = {} as Record<string, string>;
+      for (const file of files) {
+        const file_data = getDataObject(file);
+        ids[file_data.id] = generateBattlescribeId();
+      }
+      for (const file of files) {
+        const file_data = getDataObject(file);
+        file_data.id = ids[file_data.id];
+        if (file_data.gameSystemId) {
+          file_data.gameSystemId = ids[file_data.gameSystemId];
+        }
+        for (const cl of file_data.catalogueLinks || []) {
+          cl.targetId = ids[cl.targetId];
+        }
+      }
+      for (const file of files) {
+        this.store.saveCatalogue(file);
+      }
+    },
     async change_format(format: "gstz" | "gst" | "json", deleteExistingFiles: boolean) {
       const data = getDataObject(this.catalogue);
       const sys = this.store.get_system(data.gameSystemId || data.id);

@@ -14,7 +14,7 @@ export default {
       name: "filter",
       type: "string",
       optional: true,
-      description: "preview refs to (exact match)"
+      description: "view what holds references to (exact match)"
     },
   ],
   run(catalogues: Catalogue[], filter?: string) {

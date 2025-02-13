@@ -1,7 +1,7 @@
 <template>
   <span>
     <fieldset>
-      <legend> Order </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
+      <legend> Profiles Order </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
     </fieldset>
     <fieldset>
       <legend>Profil Type</legend>
@@ -13,28 +13,39 @@
           </option>
         </select>
         <div class="section add">
-          <button class="bouton" @click="add"> <img src="/assets/icons/iconeplus.png" /> Add </button>
-          <button class="bouton" @click="del"> <img src="/assets/icons/trash.png" /> Delete </button>
+          <button class="bouton" @click="add_characteristic"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+          <button class="bouton" @click="del_characteristic"> <img src="/assets/icons/trash.png" /> Delete </button>
         </div>
-
-        <template v-if="selectedType">
-          <h3 class="section">Selected Characteristic Type</h3>
-          <table class="editorTable">
-            <tr>
-              <td>Unique Id:</td>
-              <td>
-                <input type="text" v-model="selectedType.id" @change="characteristicIdChanged(selectedType)" />
-              </td>
-            </tr>
-            <tr>
-              <td>Name:</td>
-              <td>
-                <input type="text" v-model="selectedType.name" @change="characteristicNameChanged(selectedType)" />
-              </td>
-            </tr>
-          </table>
-        </template>
       </div>
+      <h3>Attribute Types</h3>
+      <div>
+        <select size="2" v-model="selected">
+          <option :value="t.id" v-for="t of item.attributeTypes">
+            {{ t.name }}
+          </option>
+        </select>
+        <div class="section add">
+          <button class="bouton" @click="add_attribute"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+          <button class="bouton" @click="del_attribute"> <img src="/assets/icons/trash.png" /> Delete </button>
+        </div>
+      </div>
+      <template v-if="selectedType">
+        <h3 class="section">Selected Type</h3>
+        <table class="editorTable">
+          <tr>
+            <td>Unique Id:</td>
+            <td>
+              <input type="text" v-model="selectedType.id" @change="typeIdChanged(selectedType)" />
+            </td>
+          </tr>
+          <tr>
+            <td>Name:</td>
+            <td>
+              <input type="text" v-model="selectedType.name" @change="typeNameChanged(selectedType)" />
+            </td>
+          </tr>
+        </table>
+      </template>
     </fieldset>
     <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
@@ -53,17 +64,18 @@ import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import SortOrder from "./SortOrder.vue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { BSIAttributeType } from "~/assets/shared/battlescribe/bs_types";
 export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIProfileType>,
+      type: Object as PropType<BSIProfileType & EditorBase>,
       required: true,
     },
   },
   data() {
     return {
-      selectedType: null as BSICharacteristicType | null,
+      selectedType: null as ((BSICharacteristicType | BSIAttributeType) & EditorBase) | null,
       orderPopup: false,
     };
   },
@@ -73,7 +85,10 @@ export default {
   computed: {
     selected: {
       set(id: string | null) {
-        this.selectedType = this.item.characteristicTypes.find((o) => o.id === id) || null;
+        this.selectedType =
+          (this.item.characteristicTypes?.find((o) => o.id === id) as EditorBase) ||
+          (this.item.attributeTypes?.find((o) => o.id === id) as EditorBase) ||
+          null;
       },
       get(): string | null {
         return this.selectedType?.id || null;
@@ -102,7 +117,7 @@ export default {
       }
       return found as Array<BSIProfileType & EditorBase>;
     },
-    async add() {
+    async add_characteristic() {
       const type = await this.store.create_node("characteristicTypes", this.item);
       const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const profile of refs) {
@@ -115,7 +130,7 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-    del() {
+    del_characteristic() {
       const type = this.selectedType;
       if (type) {
         this.store.del_node(type);
@@ -132,7 +147,37 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-    characteristicIdChanged(type: BSICharacteristicType) {
+    async add_attribute() {
+      const type = await this.store.create_node("attributeTypes", this.item);
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
+      for (const profile of refs) {
+        if (profile.isProfile() && !profile.isLink()) {
+          if (profile.typeId === this.item.id) {
+            if (!profile.attributes) profile.attributes = [];
+            profile.attributes.push({ typeId: type.id, name: type.name, $text: "" });
+          }
+        }
+      }
+      this.$emit("catalogueChanged");
+    },
+    del_attribute() {
+      const type = this.selectedType;
+      if (type) {
+        this.store.del_node(type);
+      }
+      const refs = (this.item as BSIProfileType & EditorBase).refs || [];
+      for (const ref of refs) {
+        for (const profile of ref.profilesIterator()) {
+          if (profile.typeId === this.item.id) {
+            if (profile.attributes) {
+              profile.attributes = profile.attributes.filter((o) => o.typeId !== type.id);
+            }
+          }
+        }
+      }
+      this.$emit("catalogueChanged");
+    },
+    typeIdChanged(type: BSICharacteristicType | BSIAttributeType) {
       const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeId === this.item.id) {
@@ -146,7 +191,7 @@ export default {
       }
       this.$emit("catalogueChanged");
     },
-    characteristicNameChanged(type: BSICharacteristicType) {
+    typeNameChanged(type: BSICharacteristicType | BSIAttributeType) {
       const refs = (this.item as BSIProfileType & EditorBase).refs || [];
       for (const ref of refs as (BSIProfile & EditorBase)[]) {
         if (ref.typeId === this.item.id) {
@@ -163,6 +208,8 @@ export default {
     init() {
       if (this.item.characteristicTypes?.length) {
         this.selectedType = this.item.characteristicTypes[0];
+      } else if (this.item.attributeTypes?.length) {
+        this.selectedType = this.item.attributeTypes[0];
       }
     },
   },
@@ -181,7 +228,7 @@ export default {
 <style scoped lang="scss">
 select {
   width: 100%;
-  height: 300px;
+  height: 200px;
 }
 
 h3 {

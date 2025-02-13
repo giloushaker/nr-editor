@@ -1,10 +1,7 @@
 <template>
   <fieldset>
-    <legend>Description</legend>
-    <UtilEditableDiv
-      v-model="item.description"
-      @change="changed"
-    ></UtilEditableDiv>
+    <legend>Description<span class="gray" v-if="link"> (from target)</span></legend>
+    <UtilEditableDiv v-model="item.description" @change="changed"></UtilEditableDiv>
   </fieldset>
 </template>
 
@@ -15,6 +12,9 @@ export default {
     item: {
       type: Object as PropType<{ description: string }>,
       required: true,
+    },
+    link: {
+      type: Boolean,
     },
   },
 

@@ -56,6 +56,22 @@
     :catalogue="item.target.catalogue"
     link
   />
+  <CatalogueRightPanelFieldsAttributes
+    class="mt-10px"
+    v-if="item.target?.isProfile()"
+    :item="(item.target as EditorBase & Profile)"
+    :catalogue="item.target.catalogue"
+    link
+  />
+  <CatalogueRightPanelFieldsDescription
+    class="section"
+    v-if="item.target?.isRule()"
+    :item="(item.target as EditorBase & Rule)"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+    link
+  />
+
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
     @catalogueChanged="changed"
@@ -74,7 +90,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Link, Profile } from "~/assets/shared/battlescribe/bs_main";
+import { Link, Profile, Rule } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useSettingsStore } from "~/stores/settingsState";
 

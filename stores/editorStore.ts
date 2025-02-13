@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import {
-  ItemKeys,
   ItemTypes,
   EntryPathEntry,
   getEntryPath,
@@ -41,8 +40,7 @@ import {
   Rule,
   getDataObject,
   getDataDbId,
-  BaseChildsT,
-  goodJsonArrayKeys,
+  arrayKeys,
   ProfileType,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
@@ -87,6 +85,7 @@ import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
 import { useScriptsStore } from "./scriptsStore";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
+import { entries } from "~/assets/shared/battlescribe/entries";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>
 const enableGithubIntegrationWithGitFolder = false;
@@ -125,7 +124,7 @@ export interface IEditorStore {
 }
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
-  type: ItemKeys;
+  type: string & keyof typeof entries;
   imported?: boolean;
 }
 export interface CatalogueState {
@@ -704,13 +703,13 @@ export const useEditorStore = defineStore("editor", {
         const depth = el.depth;
         const parent = (el.$el as HTMLElement).closest(`.collapsible-box.depth-${depth - 1}`);
         const nodes = [...parent?.getElementsByClassName(`collapsible-box depth-${depth}`) || []] as unknown as Array<{ vnode: VueComponent }>;
-        const entries = nodes.map(o => o.vnode)
-        const a = entries.findIndex((o) => o === toRaw(last_element));
-        const b = entries.findIndex((o) => o === toRaw(this.selectedElement));
+        const foundEntries = nodes.map(o => o.vnode)
+        const a = foundEntries.findIndex((o) => o === toRaw(last_element));
+        const b = foundEntries.findIndex((o) => o === toRaw(this.selectedElement));
         const low = Math.min(a, b);
         const high = Math.max(a, b);
         for (let i = low; i <= high; i++) {
-          const entry: any = entries[i];
+          const entry: any = foundEntries[i];
           entry.select();
         }
         return;
@@ -934,26 +933,26 @@ export const useEditorStore = defineStore("editor", {
      * Remove the current selections.
      */
     remove(entry_or_entries?: MaybeArray<Base>) {
-      let entries = [] as EditorBase[];
+      let foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
-          entries.push(entry as EditorBase);
+          foundEntries.push(entry as EditorBase);
         }
       } else {
         const selections = this.get_selections();
         if (!selections.length) return;
         for (const selected of selections) {
-          entries.push(selected);
+          foundEntries.push(selected);
         }
       }
 
-      const catalogue = entries[0].getCatalogue();
+      const catalogue = foundEntries[0].getCatalogue();
       const sysId = catalogue.getSystemId();
 
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
       const redo = async () => {
-        const temp = entries;
+        const temp = foundEntries;
         const manager = this.get_system(sysId);
         removeds = [];
         paths = [];
@@ -986,7 +985,7 @@ export const useEditorStore = defineStore("editor", {
      */
     async add(
       data: MaybeArray<EditorBase | Record<string, any>>,
-      childKey?: string & BaseChildsT,
+      childKey?: string & keyof typeof entries,
       parents?: EditorBase | EditorBase[]
     ) {
       let parentsWithPayload = [] as Array<{ obj: EditorBase; payload?: string }>;
@@ -1000,13 +999,13 @@ export const useEditorStore = defineStore("editor", {
         console.error("Couldn't add: no selection or parent(s) provided");
         return;
       }
-      const entries = (Array.isArray(data) ? data : [data])
-      if (!entries.length) {
+      const foundEntries = (Array.isArray(data) ? data : [data])
+      if (!foundEntries.length) {
         console.error("Couldn't add: no data provided");
         return;
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
-      const fixedEntries = entries.map(o => this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined))
+      const fixedEntries = foundEntries.map(o => this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined))
       const sysId = catalogue.getSystemId();
 
       let addeds = [] as EditorBase[];
@@ -1014,7 +1013,7 @@ export const useEditorStore = defineStore("editor", {
         addeds = [];
         for (const selection of parentsWithPayload) {
           const item = selection.obj;
-          const selectedCatalogueKey = selection.payload as BaseChildsT | "";
+          const selectedCatalogueKey = selection.payload as keyof typeof entries;
           await this.open(item, true);
           const toAdd = [];
           for (const entry of fixedEntries) {
@@ -1097,7 +1096,7 @@ export const useEditorStore = defineStore("editor", {
      * @param key the key of the given type (eg: `selectionEntries`)
      * @param parent (optional) the parent, used to modify the initial object conditionally
      */
-    get_initial_object(key: string, parent?: EditorBase): any {
+    get_initial_object(key: string & keyof typeof entries, parent?: EditorBase): any {
       switch (key) {
         case "costTypes":
           return {
@@ -1213,11 +1212,13 @@ export const useEditorStore = defineStore("editor", {
           };
 
         case "characteristicTypes":
+        case "attributeTypes":
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
             id: generateBattlescribeId(),
           }
         case "characteristics":
+        case "attributes":
         case "costs":
           return {
 
@@ -1277,7 +1278,7 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     // Recursively merges objects with their default created object so that they are valid.
-    fix_object<T>(key: string & BaseChildsT, data?: T, catalogue?: Catalogue, parent?: EditorBase): T extends [] ? T[] : T {
+    fix_object<T>(key: string & keyof typeof entries, data?: T, catalogue?: Catalogue, parent?: EditorBase): T extends [] ? T[] : T {
       if (Array.isArray(data)) {
         //@ts-ignore
         return data.map(o => this.fix_object(key, o, catalogue)) as T[];
@@ -1292,11 +1293,11 @@ export const useEditorStore = defineStore("editor", {
       }
       for (const nested_key in obj) {
         const val = obj[nested_key]
-        if ((goodJsonArrayKeys as Set<string>).has(nested_key) && isObject(val)) {
+        if ((arrayKeys as Set<string>).has(nested_key) && isObject(val)) {
           if (Array.isArray(val)) {
-            obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as BaseChildsT, o, catalogue))
+            obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as keyof typeof entries, o, catalogue))
           } else {
-            obj[nested_key] = [this.fix_object(nested_key as BaseChildsT, val, catalogue)]
+            obj[nested_key] = [this.fix_object(nested_key as keyof typeof entries, val, catalogue)]
           }
         }
       }
@@ -1310,7 +1311,7 @@ export const useEditorStore = defineStore("editor", {
      * @param key the key of the child (eg: `selectionEntries`)
      * @param data data to use when creating the child entry
      */
-    async create(key: string & BaseChildsT, data?: Record<string, any>) {
+    async create(key: string & keyof typeof entries, data?: Record<string, any>) {
       const added = await this.add({ select: true, ...data }, key, this.get_selections_with_payload().map(o => o.obj));
       this.open_selected();
       return added;
@@ -1324,7 +1325,7 @@ export const useEditorStore = defineStore("editor", {
      * @param parent the parent to add the child in
      * @param data data to use when creating the child entry
      */
-    async create_node(key: string & BaseChildsT, parent: EditorBase, data?: Record<string, any>) {
+    async create_node(key: string & keyof typeof entries, parent: EditorBase, data?: Record<string, any>) {
       const result = await this.add({ select: true, ...data }, key, parent);
       this.open_selected();
       return result;
@@ -1340,7 +1341,7 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & BaseChildsT, parent: EditorBase, data?: Record<string, any>) {
+    add_node(_key: string & keyof typeof entries, parent: EditorBase, data?: Record<string, any>) {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1483,7 +1484,7 @@ export const useEditorStore = defineStore("editor", {
     move(obj: EditorBase, from: Catalogue, to: Catalogue, type: "root" | "shared") {
       const redo = () => {
         // Get key the object will end up in
-        const catalogueKey = this.move_to_key(obj, type) as ItemKeys;
+        const catalogueKey = this.move_to_key(obj, type) as string & keyof typeof entries;;
         if (!catalogueKey) {
           console.error("Could not find key for move", obj.editorTypeName, type);
           return;

@@ -158,7 +158,7 @@
             <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
-          <div @click="store.create('infoLinks', { type: 'profile' })" v-if="payload === 'rules'">
+          <div @click="store.create('infoLinks', { type: 'rule' })" v-if="payload === 'rules'">
             <img class="pr-4px" :src="`assets/bsicons/link.png`" />
             Link
           </div>
@@ -166,7 +166,7 @@
         </template>
         <template v-else>
           <div @click="store.create('forceEntries')" v-if="allowed('forceEntries')">
-            <img class="pr-4px" src="assets/bsicons/force.png" />
+            <img class="pr-4px" src="assets/bsicons/forceEntry.png" />
             Force
           </div>
           <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks') && item.isForce()">
@@ -421,7 +421,7 @@ const order: Record<string, number> = {
   association: 12,
 };
 const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
-const hiddenTypes = new Set(["characteristicTypes", "characteristics", "costs"]);
+const hiddenTypes = new Set(["characteristicTypes", "characteristics", "attributeTypes", "attributes", "costs"]);
 export default {
   name: "CatalogueEntry",
   components: {

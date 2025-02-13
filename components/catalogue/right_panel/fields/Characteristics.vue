@@ -1,8 +1,6 @@
 <template>
   <fieldset>
-    <legend
-      >Characteristics<template v-if="link"><span class="gray"> (from target)</span></template></legend
-    >
+    <legend>Characteristics<span class="gray" v-if="link"> (from target)</span></legend>
     <table class="editorTable">
       <tr>
         <td>Profile Type: </td>

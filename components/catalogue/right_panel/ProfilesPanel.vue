@@ -12,6 +12,12 @@
     :catalogue="catalogue"
     @catalogueChanged="changed"
   />
+  <CatalogueRightPanelFieldsAttributes
+    class="section"
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+  />
 </template>
 
 <script lang="ts">
