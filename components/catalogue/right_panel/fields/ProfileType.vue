@@ -17,7 +17,10 @@
           <button class="bouton" @click="del_characteristic"> <img src="/assets/icons/trash.png" /> Delete </button>
         </div>
       </div>
-      <h3>Attribute Types</h3>
+      <h3
+        >Attribute Types
+        <img src="/assets/icons/i.png" class="align-text-bottom clickable hover-darken" @click="attributesPopup = true"
+      /></h3>
       <div>
         <select size="2" v-model="selected">
           <option :value="t.id" v-for="t of item.attributeTypes">
@@ -53,6 +56,12 @@
         <template #item="{ item }">{{ item.name }}</template>
       </SortOrder>
     </PopupDialog>
+    <PopupDialog v-if="attributesPopup" v-model="attributesPopup">
+      <p class="mt-20px">
+        Attributes are similar to characteristics except they will not display in the builder; they will only be usable
+        in scripts or export templates.
+      </p>
+    </PopupDialog>
   </span>
 </template>
 
@@ -77,6 +86,7 @@ export default {
     return {
       selectedType: null as ((BSICharacteristicType | BSIAttributeType) & EditorBase) | null,
       orderPopup: false,
+      attributesPopup: false,
     };
   },
   setup() {
