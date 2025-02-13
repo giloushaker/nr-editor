@@ -17,7 +17,7 @@
         <td>Name:</td>
         <td><input type="text" v-model="item.name" @change="namechanged" /></td>
       </tr>
-      <tr v-if="item.editorTypeName === 'force'">
+      <tr v-if="item.editorTypeName === 'forceEntry'">
         <td>Child Forces Label:</td>
         <td
           ><input type="text" v-model="(item as Force).childForcesLabel" @change="namechanged" placeholder="Forces"

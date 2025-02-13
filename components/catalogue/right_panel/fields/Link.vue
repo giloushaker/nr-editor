@@ -198,8 +198,8 @@ export default {
     },
 
     targetIsValid(target: ItemTypes) {
-      if (this.item.type == undefined || this.item.type === "category") {
-        return target.editorTypeName == "category";
+      if (this.item.type == undefined || this.item.type === "category" || this.item.type === "categoryEntry") {
+        return target.editorTypeName == "categoryEntry";
       }
       return target.editorTypeName == this.item.type;
     },

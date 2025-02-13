@@ -1468,7 +1468,7 @@ export const useEditorStore = defineStore("editor", {
           return "rules";
         case "profile":
           return "";
-        case "category":
+        case "categoryEntry":
           return "categoryEntries"
         case "profileType":
           return "profileTypes"
@@ -1739,7 +1739,7 @@ export const useEditorStore = defineStore("editor", {
     sortable(entry?: EditorBase) {
       const settings = useSettingsStore()
       if (settings.sort === "none") return false;
-      return entry?.editorTypeName !== "force"
+      return entry?.editorTypeName !== "forceEntry"
     },
     get_leftpanel_open_collapsible_boxes() {
       function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {

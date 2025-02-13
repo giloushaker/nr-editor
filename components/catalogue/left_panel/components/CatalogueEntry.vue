@@ -533,14 +533,10 @@ export default {
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
-      return entry.editorTypeName !== "force";
+      return entry.editorTypeName !== "forceEntry";
     },
     ref_count(item: EditorBase) {
-      switch (item.editorTypeName) {
-        case "category":
-        default:
-          return item.refs?.length;
-      }
+      return item.refs?.length;
     },
     async onctrlclick() {
       if (this.store.can_follow(this.item)) {

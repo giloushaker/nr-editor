@@ -15,13 +15,13 @@
       </CatalogueRightPanelProfileTypesPanel>
 
       <CatalogueRightPanelCategoryEntriesPanel
-        v-else-if="typeName == 'category'"
+        v-else-if="typeName == 'categoryEntry'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"
       />
       <CatalogueRightPanelForceEntriesPanel
-        v-else-if="typeName == 'force'"
+        v-else-if="typeName == 'forceEntry'"
         :item="item"
         :catalogue="catalogue"
         @catalogueChanged="changed"

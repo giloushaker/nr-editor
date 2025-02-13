@@ -240,11 +240,11 @@ export default defineComponent({
       const result = [scopes.self, scopes.parent, scopes.force, scopes.roster, scopes.primaryCatalogue] as Array<
         ScopeChoice | EditorSearchItem
       >;
-      if (this.type !== "force") {
+      if (this.type !== "forceEntry") {
         result.push(scopes.rootEntry, scopes.unit, scopes.model, scopes.upgrade, scopes.modelOrUnit);
       }
       result.push(...this.allParents);
-      if (this.type !== "force") {
+      if (this.type !== "forceEntry") {
         result.push(...this.allCategories);
       }
       result.push(...this.allForces);

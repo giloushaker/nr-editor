@@ -77,7 +77,7 @@
     @catalogueChanged="changed"
     :withCategory="false"
     class="section"
-    v-if="type == 'entry' || type == 'category'"
+    v-if="type == 'entry' || type == 'categoryEntry'"
   />
 
   <CatalogueRightPanelFieldsSortChilds
