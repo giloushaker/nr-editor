@@ -1904,33 +1904,36 @@ export const useEditorStore = defineStore("editor", {
       let more = false;
 
       await system.loadAll();
-      for (const file of system.getAllLoadedCatalogues()) {
-        file.forEachObjectWhitelist((val: Base, parent) => {
-          try {
-            if (result.length >= max) return;
-            if ((val as unknown as Link).targetId) {
-              if (val.target && val.target.isCategory() && !parent?.isForce()) {
-                return;
-              }
+      function search(val: Base, parent?: Base) {
+        try {
+          if (result.length >= max) return;
+          if ((val as unknown as Link).targetId) {
+            if (val.target && val.target.isCategory() && !parent?.isForce()) {
+              return;
             }
-
-            const name = val.getName?.call(val);
-            const text = (val as any as Characteristic).$text;
-            const desc = (val as any as Rule).description;
-            const id = val.id;
-            if (id === filter) {
-              result.push(val);
-            } else if ((name && String(name).match(regx)) || id === filter) {
-              result.push(val);
-            } else if (text && String(text).match(regx)) {
-              result.push(val);
-            } else if (desc && String(desc).match(regx)) {
-              result.push(val);
-            }
-          } catch (e) {
-            console.error("Error while searching:", e);
           }
-        });
+
+          const name = val.getName?.call(val);
+          const text = (val as any as Characteristic).$text;
+          const desc = (val as any as Rule).description;
+          const id = val.id;
+          if (id === filter) {
+            result.push(val);
+          } else if ((name && String(name).match(regx)) || id === filter) {
+            result.push(val);
+          } else if (text && String(text).match(regx)) {
+            result.push(val);
+          } else if (desc && String(desc).match(regx)) {
+            result.push(val);
+          }
+        } catch (e) {
+          console.error("Error while searching:", e);
+        }
+      }
+
+      for (const file of system.getAllLoadedCatalogues()) {
+        search(file)
+        file.forEachObjectWhitelist(search);
         if (result.length >= max) {
           more = true;
           break;
@@ -1939,7 +1942,8 @@ export const useEditorStore = defineStore("editor", {
       console.log("Search for", `"${filter}"`, "found", result.length, "results");
       const grouped = {} as Record<string, Base[]>;
       for (const found of result) {
-        addObj(grouped, found.catalogue.name, found);
+        const catalogueName = found.getCatalogue().name
+        addObj(grouped, catalogueName, found);
       }
       return { grouped, all: result, more };
     },

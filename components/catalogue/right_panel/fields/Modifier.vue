@@ -200,9 +200,9 @@ const availableModifiers: Record<string, string[]> = {
   infoLink: ["name", "annotation", "page", "hidden"],
   infoGroup: ["name", "annotation", "page", "hidden"],
   infoGroupLink: ["name", "annotation", "page", "hidden"],
-  force: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info"],
-  category: ["name", "page", "hidden", "constraints"],
-  categoryLink: ["name", "page", "hidden", "constraints"],
+  forceEntry: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info"],
+  categoryEntry: ["name", "page", "hidden", "constraints"],
+  categoryEntryLink: ["name", "page", "hidden", "constraints"],
   costType: ["hidden"],
 };
 const availableTypes = {

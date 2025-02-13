@@ -170,7 +170,7 @@ export default {
   },
   data() {
     return {
-      links: ["link", "selectionEntryLink", "selectionEntryGroupLink"],
+      links: ["link", "entryLink", "selectionEntryLink", "selectionEntryGroupLink"],
       infoLinks: ["infoLink", "profileLink", "ruleLink", "infoGroupLink"],
       key: 0,
     };
