@@ -1195,6 +1195,7 @@ export const useEditorStore = defineStore("editor", {
             hidden: false,
             id: generateBattlescribeId(),
             characteristics: [],
+            attributes: [],
           } as BSIProfile;
         case "catalogueLinks":
           return {
@@ -1404,7 +1405,7 @@ export const useEditorStore = defineStore("editor", {
 
             // @ts-ignore
             const fixed_obj = this.fix_object(key, val, catalogue);
-            setPrototypeRecursive({ [key]: fixed_obj })
+            setPrototypeRecursive({ [key]: fixed_obj }, true)
 
             // @ts-ignore
             entry[key] = fixed_obj
