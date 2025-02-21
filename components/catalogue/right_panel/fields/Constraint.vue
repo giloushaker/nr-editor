@@ -16,9 +16,11 @@
       <UtilNumberInput v-model="item.value" @change="changed" />
       <div>
         <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
-        <label for="percent">Percentage?</label>
+        <label for="percent">Percentage</label>
         <input id="negative" type="checkbox" v-model="item.negative" @change="changed" />
-        <label for="negative">Negative?</label>
+        <label for="negative">Negative</label>
+        <input id="automatic" type="checkbox" v-model="item.automatic" @change="changed" />
+        <label for="automatic">Automatic</label>
       </div>
     </div>
   </fieldset>
@@ -50,5 +52,8 @@ export default {
   grid-template-columns: 1fr 100px max-content;
   align-items: center;
   grid-gap: 5px;
+}
+.checkbox {
+  margin-left: 5px;
 }
 </style>
