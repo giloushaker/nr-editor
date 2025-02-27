@@ -15,13 +15,17 @@
       </tr>
       <tr>
         <td>Name:</td>
-        <td><input type="text" v-model="item.name" @change="namechanged" /></td>
+        <td class="flex gap-2px items-center">
+          <input type="text" v-model="item.name" @change="changed" />
+          <template v-if="sortable">
+            <span> Position: </span>
+            <input type="number" class="w-50px !mr-8px inline-block" v-model="item.sortIndex" @change="changed" />
+          </template>
+        </td>
       </tr>
       <tr v-if="item.editorTypeName === 'forceEntry'">
         <td>Child Forces Label:</td>
-        <td
-          ><input type="text" v-model="(item as Force).childForcesLabel" @change="namechanged" placeholder="Forces"
-        /></td>
+        <td><input type="text" v-model="(item as Force).childForcesLabel" @change="changed" placeholder="Forces" /></td>
       </tr>
       <template v-if="aliases">
         <tr>
@@ -52,7 +56,7 @@ import { Force } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   components: { InputStringArray },
-  emits: ["catalogueChanged", "namechanged", "idchanged", "aliaschanged"],
+  emits: ["catalogueChanged", "idchanged"],
   props: {
     item: {
       type: Object as PropType<BSIOption & BSINamed & Partial<BSIAliasable>>,
@@ -66,15 +70,10 @@ export default {
 
   methods: {
     idchanged() {
-      this.$emit("idchanged");
       this.$emit("catalogueChanged");
+      this.changed();
     },
-    namechanged() {
-      this.$emit("namechanged");
-      this.$emit("catalogueChanged");
-    },
-    aliaschanged() {
-      this.$emit("aliaschanged");
+    changed() {
       this.$emit("catalogueChanged");
     },
     refresh() {
@@ -94,6 +93,18 @@ export default {
         obj.id = id;
         catalogue.addToIndex(obj);
       },
+    },
+    typeName() {
+      return (this.item as EditorBase).editorTypeName;
+    },
+    sortable() {
+      return [
+        "forceEntry",
+        "selectionEntry",
+        "selectionEntryGroup",
+        "selectionEntryLink",
+        "selectionEntryGroupLink",
+      ].includes(this.typeName);
     },
   },
 };
