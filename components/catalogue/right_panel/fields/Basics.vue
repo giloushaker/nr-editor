@@ -1,49 +1,53 @@
 <template>
   <fieldset>
     <legend>Basics</legend>
-    <table class="editorTable">
-      <tr>
-        <td>Unique ID:</td>
-        <td class="flex gap-2px">
-          <input type="text" v-model="id" @change="idchanged" class="flex flex-shrink" />
-          <button class="btn !w-34px flex items-center mr-8px" @click="refresh">
-            <span>
-              <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generate Id" />
-            </span>
-          </button>
-        </td>
-      </tr>
-      <tr>
-        <td>Name:</td>
-        <td class="flex gap-2px items-center">
-          <input type="text" v-model="item.name" @change="changed" />
-          <template v-if="sortable">
-            <span> Position: </span>
-            <input type="number" class="w-50px !mr-8px inline-block" v-model="item.sortIndex" @change="changed" />
-          </template>
-        </td>
-      </tr>
-      <tr v-if="item.editorTypeName === 'forceEntry'">
-        <td>Child Forces Label:</td>
-        <td><input type="text" v-model="(item as Force).childForcesLabel" @change="changed" placeholder="Forces" /></td>
-      </tr>
-      <template v-if="aliases">
+    <div class="mr-8px">
+      <table class="editorTable">
         <tr>
-          <td
-            class="hastooltip"
-            title="Additional Aliases for in-text reference matching, case insensitive.
-one per line"
-          >
-            Aliases:
+          <td>Unique ID:</td>
+          <td class="flex gap-2px">
+            <input type="text" v-model="id" @change="idchanged" class="flex flex-shrink" />
+            <button class="btn !w-34px flex items-center" @click="refresh">
+              <span>
+                <img class="h-20px w-20px icon" src="/assets/icons/back.png" title="Generate Id" />
+              </span>
+            </button>
           </td>
-          <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
         </tr>
         <tr>
-          <td class="hastooltip" title="Disable indexing the name of this node for in-text references.">No Index</td>
-          <td><input type="checkbox" v-model="item.noindex" @change="namechanged" /></td>
+          <td>Name:</td>
+          <td class="flex gap-2px items-center">
+            <input type="text" v-model="item.name" @change="changed" />
+            <template v-if="sortable">
+              <span> Position: </span>
+              <input type="number" class="w-50px inline-block" v-model="item.sortIndex" @change="changed" />
+            </template>
+          </td>
         </tr>
-      </template>
-    </table>
+        <tr v-if="item.editorTypeName === 'forceEntry'">
+          <td>Child Forces Label:</td>
+          <td
+            ><input type="text" v-model="(item as Force).childForcesLabel" @change="changed" placeholder="Forces"
+          /></td>
+        </tr>
+        <template v-if="aliases">
+          <tr>
+            <td
+              class="hastooltip"
+              title="Additional Aliases for in-text reference matching, case insensitive.
+one per line"
+            >
+              Aliases:
+            </td>
+            <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
+          </tr>
+          <tr>
+            <td class="hastooltip" title="Disable indexing the name of this node for in-text references.">No Index</td>
+            <td><input type="checkbox" v-model="item.noindex" @change="namechanged" /></td>
+          </tr>
+        </template>
+      </table>
+    </div>
   </fieldset>
 </template>
 
