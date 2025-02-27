@@ -96,7 +96,9 @@
         v-if="
           selectedOperation?.id &&
           selectedField?.type &&
-          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo'].includes(selectedOperation.id) &&
+          ['replace', 'increment', 'decrement', 'multiply', 'divide', 'modulo', 'floor', 'ceil'].includes(
+            selectedOperation.id
+          ) &&
           ['string', 'string-or-number'].includes(selectedField.type)
         "
       >
@@ -250,6 +252,16 @@ const operations = {
       name: "Decrement",
       word: "by",
     },
+    {
+      id: "ceil",
+      name: "Ceil",
+      word: "to",
+    },
+    {
+      id: "floor",
+      name: "Floor",
+      word: "to",
+    },
   ],
   string: [
     {
@@ -303,6 +315,16 @@ const operations = {
       id: "decrement",
       name: "Decrement",
       word: "by",
+    },
+    {
+      id: "ceil",
+      name: "Ceil",
+      word: "to",
+    },
+    {
+      id: "floor",
+      name: "Floor",
+      word: "to",
     },
   ],
   boolean: [
