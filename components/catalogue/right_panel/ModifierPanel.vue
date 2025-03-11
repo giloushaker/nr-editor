@@ -24,7 +24,7 @@ export default {
       required: true,
     },
     item: {
-      type: Object as PropType<BSIModifier>,
+      type: Object as PropType<BSIModifier & EditorBase>,
       required: true,
     },
   },

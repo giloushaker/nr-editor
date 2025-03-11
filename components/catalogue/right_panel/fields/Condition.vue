@@ -38,7 +38,7 @@ export default {
   emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Condition>,
+      type: Object as PropType<EditorBase & BSICondition>,
       required: true,
     },
     catalogue: {

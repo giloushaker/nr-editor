@@ -61,7 +61,7 @@ export default {
   },
   props: {
     item: {
-      type: Object as PropType<ItemTypes>,
+      type: Object as PropType<EditorBase>,
       required: true,
     },
 

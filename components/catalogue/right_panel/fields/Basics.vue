@@ -27,7 +27,7 @@
         <tr v-if="item.editorTypeName === 'forceEntry'">
           <td>Child Forces Label:</td>
           <td
-            ><input type="text" v-model="(item as Force).childForcesLabel" @change="changed" placeholder="Forces"
+            ><input type="text" v-model="(item as BSIForce).childForcesLabel" @change="changed" placeholder="Forces"
           /></td>
         </tr>
         <template v-if="aliases">
@@ -39,11 +39,11 @@ one per line"
             >
               Aliases:
             </td>
-            <td><InputStringArray v-model="item.alias" @change="aliaschanged" /></td>
+            <td><InputStringArray v-model="item.alias" @change="changed" /></td>
           </tr>
           <tr>
             <td class="hastooltip" title="Disable indexing the name of this node for in-text references.">No Index</td>
-            <td><input type="checkbox" v-model="item.noindex" @change="namechanged" /></td>
+            <td><input type="checkbox" v-model="item.noindex" @change="changed" /></td>
           </tr>
         </template>
       </table>
@@ -54,7 +54,7 @@ one per line"
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIOption, BSINamed, BSIAliasable } from "~/assets/shared/battlescribe/bs_types";
+import { BSIOption, BSINamed, BSIAliasable, BSIForce } from "~/assets/shared/battlescribe/bs_types";
 import InputStringArray from "./InputStringArray.vue";
 import { Force } from "~/assets/shared/battlescribe/bs_main";
 
@@ -63,7 +63,7 @@ export default {
   emits: ["catalogueChanged", "idchanged"],
   props: {
     item: {
-      type: Object as PropType<BSIOption & BSINamed & Partial<BSIAliasable>>,
+      type: Object as PropType<EditorBase & Partial<BSIAliasable>>,
       required: true,
     },
     aliases: {

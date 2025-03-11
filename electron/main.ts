@@ -10,9 +10,7 @@ import { getFile, getFolderFiles } from "./files";
 import { entry, options } from "./entry";
 import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
 import { stripHtml } from "./electron_helpers";
-import { useEditorStore } from "~/stores/editorStore";
-import { createPinia, setActivePinia } from "pinia";
-import { WriteFileOptions, writeFileSync } from "fs";
+import { readFileSync, WriteFileOptions, writeFileSync } from "fs";
 
 
 export function init_globals() {
@@ -230,13 +228,15 @@ function askForUpdate() {
 
 const createSecondaryWindow = () => {
   const win = new BrowserWindow({
+    autoHideMenuBar: true,
     width: 1200,
     height: 900,
-    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+
+
   win.on("close", () => {
     remove_watchers(win.id);
   });
@@ -293,9 +293,9 @@ const createMainWindow = () => {
     }
   );
 
+  const userDataPath = app.getPath("userData")
+  console.log(userDataPath)
   const win = new BrowserWindow({
-    width: 1200,
-    height: 900,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
@@ -306,7 +306,20 @@ const createMainWindow = () => {
   mainWindow = win;
   win.on("close", () => {
     remove_watchers(win.id);
+    writeFileSync(`${userDataPath}/ini.json`, JSON.stringify({ ...win.getBounds(), maximized: win.isMaximized() }));
   });
+
+  win.isFullScreen()
+  try {
+    const existing = JSON.parse(readFileSync(`${userDataPath}/ini.json`, { encoding: 'utf-8' }))
+    win.setBounds(existing)
+    if (existing.maximized) win.maximize()
+  } catch (e) {
+    win.setBounds({
+      width: 1200,
+      height: 900,
+    })
+  }
 
   // Use the user's primary browser when opening links
   win.webContents.setWindowOpenHandler(({ url }: { url: string }) => {

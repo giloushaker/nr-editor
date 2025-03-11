@@ -103,7 +103,7 @@
 <script lang="ts">
 import PopupDialog from "~/shared_components/PopupDialog.vue";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICostType } from "~/assets/shared/battlescribe/bs_types";
+import { BSICostType, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 import {
   EditorSearchItem,
   getParentUnitHierarchy,
@@ -112,7 +112,12 @@ import {
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
 import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
+import {
+  AffectsQuery,
+  construct_affects_query,
+  deconstruct_affects_query,
+  Modifier,
+} from "~/assets/shared/battlescribe/bs_main";
 const scopes = {
   self: { id: undefined, name: "Self" },
   parent: { id: "parent", name: "Parent" },
@@ -130,7 +135,7 @@ const scopes = {
   modelOrUnit: { id: "model-or-unit", name: "Type: Model or Unit" },
 } as const;
 interface ScopeChoice {
-  value: string;
+  id: string;
   name: string;
   editorTypeName?: string;
   title?: string;
@@ -140,7 +145,7 @@ export default defineComponent({
   components: { PopupDialog },
   emits: ["catalogueChanged"],
   props: {
-    item: { type: Object as PropType<Modifier & EditorBase>, required: true },
+    item: { type: Object as PropType<BSIModifier & EditorBase>, required: true },
   },
   data: () => ({
     fields: {
@@ -150,7 +155,7 @@ export default defineComponent({
       recursive: false,
       filterBy: "any",
       affectsWhat: "entries",
-    },
+    } as AffectsQuery,
   }),
   methods: {
     getNameExtra,
