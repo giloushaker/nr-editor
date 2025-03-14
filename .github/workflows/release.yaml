@@ -46,7 +46,6 @@ jobs:
           git push
 
   build-executables:
-    needs: version-increment
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -94,7 +93,6 @@ jobs:
         run: npx electron-builder --${{ matrix.target.platform }} --publish=always
 
   build-ghpages:
-    needs: version-increment
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
