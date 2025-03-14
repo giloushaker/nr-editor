@@ -1,0 +1,125 @@
+name: Multi-Platform Release
+
+on:
+  workflow_dispatch:
+    inputs:
+        version:
+          description: 'Version type ("patch"|"minor"|"major")'     
+          required: true
+          default: 'patch'
+jobs:
+  version-increment:
+      runs-on: ubuntu-latest
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      steps:  
+      - name: Setup env
+            run: |
+              git config --global credential.helper store
+              git config --global user.email "actions@github.com"
+              git config --global user.name "GitHub Actions"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: giloushaker/nr-editor
+          submodules: true
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 1
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.11.0
+
+      - name: Run version increment script and capture output
+        id: version_script
+        run: echo "::set-output name=version::$(node ./increment-version.js --${{ github.event.inputs.version }})"
+
+      - name: Commit and push if version updated
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+          git add ./package.json ./package-lock.json
+          git commit -m "${{ steps.version_script.outputs.version }}"
+          git push
+        
+
+  build-executables:
+    needs: version-increment
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        target:
+          - { os: 'windows-latest', platform: 'win' }
+          - { os: 'macos-latest', platform: 'mac' }
+          - { os: 'ubuntu-latest', platform: 'linux' }
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Setup environment
+        run: |
+          git config --global credential.helper store
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: giloushaker/nr-editor
+          submodules: true
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 1
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.16.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Create release
+        run: npx electron-builder --${{ matrix.target.platform }} --publish=always
+
+  build-ghpages:
+    needs: version-increment
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Setup environment
+        run: |
+          git config --global credential.helper store
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: giloushaker/nr-editor
+          submodules: true
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 1
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.16.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application for GitHub Pages
+        run: npm run generate -- --ghpages
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          publish_dir: ./dist
