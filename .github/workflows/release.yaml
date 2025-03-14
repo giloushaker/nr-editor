@@ -44,7 +44,9 @@ jobs:
           git add ./package.json ./package-lock.json
           git commit -m "${{ steps.version_script.outputs.version }}"
           git push
-        
+
+      - name: Wait for version increment to propagate
+        run: sleep 10  # Wait 10 seconds to ensure the push is reflected remotely
 
   build-executables:
     needs: version-increment
