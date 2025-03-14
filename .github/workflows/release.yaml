@@ -90,7 +90,7 @@ jobs:
         run: npm run build
 
       - name: Create release
-        run: npx electron-builder --${{ matrix.target.platform }} --publish=always
+        run: npx electron-builder --${{ matrix.platform_flag }} --publish=always
 
   build-ghpages:
     runs-on: ubuntu-latest
