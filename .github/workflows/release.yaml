@@ -116,6 +116,10 @@ jobs:
         with:
           node-version: 18.16.0
 
+      - name: Run version increment script
+        id: version_script
+        run: node ./increment-version.js
+        
       - name: Install dependencies
         run: npm ci
 
