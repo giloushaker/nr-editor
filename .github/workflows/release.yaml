@@ -52,11 +52,11 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           - os: windows-latest
-            platform_flag: --win
+            platform_flag: win
           - os: macos-latest
-            platform_flag: --mac
+            platform_flag: mac
           - os: ubuntu-latest
-            platform_flag: --linux
+            platform_flag: linux
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
