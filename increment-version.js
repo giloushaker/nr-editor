@@ -31,3 +31,4 @@ function setJsonFileVersion(path, version) {
 }
 const newVersion = incrementJsonFileVersion("./package.json");
 setJsonFileVersion("./package-lock.json", newVersion);
+console.log("Incremented version to", newVersion)
