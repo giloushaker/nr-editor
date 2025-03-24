@@ -29,7 +29,7 @@ Once installed, launch the NewRecruit Data Editor application on your desktop.
 
 If you are on a MAC you may have to run 
 ```
-$ xattr -c <path/to/application.app>
+xattr -c <path/to/application.app>
 ```
 to remove the "App Is Damaged and Can’t Be Opened. You Should Move It To The Trash" popup 
 
