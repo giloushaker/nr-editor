@@ -7,7 +7,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 import * as helpers from "~/assets/shared/battlescribe/bs_helpers";
 import * as node from "~/electron/node_helpers";
 import { notify } from "@kyvg/vue3-notification";
-
+import { cataloguesdexie } from "~/assets/shared/battlescribe/cataloguesdexie";
 
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.use(vClickOutside);
@@ -15,19 +15,19 @@ export default defineNuxtPlugin((nuxtApp) => {
   (nuxtApp.$pinia as Pinia).use(({ store }) => {
     store.$router = nuxtApp.$router as Router;
   });
-  const oldLog = globalThis.console.log
+  const oldLog = globalThis.console.log;
   globalThis.$toRaw = toRaw;
-  globalThis.console.log = (...args: any[]) => oldLog(...args.map((arg) => toRaw(arg)))
+  globalThis.console.log = (...args: any[]) => oldLog(...args.map((arg) => toRaw(arg)));
   globalThis.$markRaw = markRaw;
   globalThis.$helpers = helpers;
   globalThis.$node = node;
   globalThis.notify = notify;
   globalThis.isEditor = true;
-  globalThis.$nextTick = nextTick
+  globalThis.$nextTick = nextTick;
+  globalThis.cataloguesdexie = cataloguesdexie;
   if (typeof globalThis.electron === "undefined") {
-    (globalThis as any).electron = null
+    (globalThis as any).electron = null;
   }
-  const settings = useSettingsStore()
-  settings.init()
-
+  const settings = useSettingsStore();
+  settings.init();
 });
