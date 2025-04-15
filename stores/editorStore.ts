@@ -76,7 +76,7 @@ import {
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { cataloguesdexie as db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
@@ -87,7 +87,7 @@ import { useScriptsStore } from "./scriptsStore";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { entries } from "~/assets/shared/battlescribe/entries";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
-type MaybePromise<T> = T | Promise<T>
+type MaybePromise<T> = T | Promise<T>;
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
   selectionsParent?: Object | null;
@@ -120,7 +120,7 @@ export interface IEditorStore {
   $nextTick?: Promise<any>;
   $nextTickResolve?: (...args: any[]) => unknown;
 
-  scripts: ReturnType<typeof useScriptsStore>
+  scripts: ReturnType<typeof useScriptsStore>;
 }
 export interface CatalogueEntryItem {
   item: ItemTypes & EditorBase;
@@ -205,7 +205,7 @@ export const useEditorStore = defineStore("editor", {
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
-    scripts: useScriptsStore()
+    scripts: useScriptsStore(),
   }),
 
   actions: {
@@ -349,7 +349,7 @@ export const useEditorStore = defineStore("editor", {
           const json = await convertToJson(file.data, file.name.endsWith("json") ? "json" : "xml");
           if (!json.catalogue && !json.gameSystem) {
             continue;
-          };
+          }
           const obj = getDataObject(json);
           obj.fullFilePath = file.path.replaceAll("\\", "/");
           const systemId = json?.gameSystem?.id;
@@ -366,7 +366,7 @@ export const useEditorStore = defineStore("editor", {
           }
           result_files.push(json);
         } catch (e) {
-          console.error(`Error loading ${file.name}`, e)
+          console.error(`Error loading ${file.name}`, e);
         }
       }
       progress && (await progress(result_files.length, allowed.length));
@@ -376,7 +376,12 @@ export const useEditorStore = defineStore("editor", {
         try {
           await this.load_system(system);
         } catch (e) {
-          progress && (await progress(0, 0, `An error occured while loading ${system.gameSystem?.gameSystem?.name ?? 'this system'}:\n${e}`))
+          progress &&
+            (await progress(
+              0,
+              0,
+              `An error occured while loading ${system.gameSystem?.gameSystem?.name ?? "this system"}:\n${e}`
+            ));
           throw e;
         }
       }
@@ -512,15 +517,15 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     changed(node: EditorBase | Catalogue) {
-      const catalogue = node.getCatalogue()
+      const catalogue = node.getCatalogue();
       if (catalogue) {
-        this.set_catalogue_changed(catalogue)
+        this.set_catalogue_changed(catalogue);
       }
     },
     removed(node: EditorBase | Catalogue) {
-      const catalogue = node.getCatalogue()
+      const catalogue = node.getCatalogue();
       if (catalogue) {
-        this.set_catalogue_changed(catalogue)
+        this.set_catalogue_changed(catalogue);
       }
     },
     /**
@@ -571,7 +576,7 @@ export const useEditorStore = defineStore("editor", {
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
-                }))
+                }));
               return promptResult ? "yes" : "no";
             } else if (settings.githubAutoIncrement) {
               return "github";
@@ -582,7 +587,7 @@ export const useEditorStore = defineStore("editor", {
                   cancel: "No",
                   accept: "Yes",
                   id: "revision",
-                }))
+                }));
               return promptResult ? "yes" : "no";
             }
           } else {
@@ -593,7 +598,7 @@ export const useEditorStore = defineStore("editor", {
                 cancel: "No",
                 accept: "Yes",
                 id: "revision",
-              }))
+              }));
             return promptResult ? "yes" : "no";
           }
         }
@@ -668,7 +673,7 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       this.selections = next_selected;
-      this.selectedEntries = next_selected_entries
+      this.selectedEntries = next_selected_entries;
       for (const unselected of [...next_unselected, ...next_unselected_entries]) {
         if (unselected.onunselected) {
           unselected.onunselected();
@@ -702,8 +707,10 @@ export const useEditorStore = defineStore("editor", {
       if (e?.shiftKey) {
         const depth = el.depth;
         const parent = (el.$el as HTMLElement).closest(`.collapsible-box.depth-${depth - 1}`);
-        const nodes = [...parent?.getElementsByClassName(`collapsible-box depth-${depth}`) || []] as unknown as Array<{ vnode: VueComponent }>;
-        const foundEntries = nodes.map(o => o.vnode)
+        const nodes = [
+          ...(parent?.getElementsByClassName(`collapsible-box depth-${depth}`) || []),
+        ] as unknown as Array<{ vnode: VueComponent }>;
+        const foundEntries = nodes.map((o) => o.vnode);
         const a = foundEntries.findIndex((o) => o === toRaw(last_element));
         const b = foundEntries.findIndex((o) => o === toRaw(this.selectedElement));
         const low = Math.min(a, b);
@@ -740,7 +747,11 @@ export const useEditorStore = defineStore("editor", {
     get_sorted_selections() {
       const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
       this.selectedEntries.forEach((o) => result.push(o.obj as EditorBase));
-      sortByAscendingInplace(result, selection => getEntryPath(selection).map(o => `${o.key}[${o.index}]`).join('/'))
+      sortByAscendingInplace(result, (selection) =>
+        getEntryPath(selection)
+          .map((o) => `${o.key}[${o.index}]`)
+          .join("/")
+      );
       return result;
     },
     get_selections_with_payload(): Array<{ obj: EditorBase; payload: any }> {
@@ -757,15 +768,15 @@ export const useEditorStore = defineStore("editor", {
       this.selectedEntries = arr.map((o) => ({ obj: o, onunselected: () => null }));
     },
     toggle_selections() {
-      const bases = this.get_selections()
-      if (this.filter && bases.find(o => !o.showChildsInEditor)) {
-        bases.forEach(o => this.show(o, false));
+      const bases = this.get_selections();
+      if (this.filter && bases.find((o) => !o.showChildsInEditor)) {
+        bases.forEach((o) => this.show(o, false));
       } else {
-        const boxes = this.selections.map(o => o.obj)
-        if (boxes.find(o => o.collapsed === true)) {
-          boxes.filter(o => o.collapsed === true).forEach(o => o.open())
+        const boxes = this.selections.map((o) => o.obj);
+        if (boxes.find((o) => o.collapsed === true)) {
+          boxes.filter((o) => o.collapsed === true).forEach((o) => o.open());
         } else {
-          boxes.filter(o => o.collapsed === false).forEach(o => o.close())
+          boxes.filter((o) => o.collapsed === false).forEach((o) => o.close());
         }
       }
     },
@@ -818,14 +829,14 @@ export const useEditorStore = defineStore("editor", {
           try {
             return JSON.parse(text);
           } catch (e) {
-            return text
+            return text;
           }
         } else {
           const text = await navigator.clipboard.readText();
           try {
             return JSON.parse(text);
           } catch (e) {
-            return text
+            return text;
           }
         }
       }
@@ -858,12 +869,12 @@ export const useEditorStore = defineStore("editor", {
       this.remove();
     },
     async copy(event: ClipboardEvent, selections?: MaybeArray<EditorBase>) {
-      const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections()
+      const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections();
       await this.set_clipboard(toCopy, event);
     },
     async paste(event: ClipboardEvent) {
       const clip = await this.get_clipboard(event);
-      const script_result = await this.scripts.run_hooks("paste", {}, clip)
+      const script_result = await this.scripts.run_hooks("paste", {}, clip);
       if (script_result) {
         this.add(script_result);
       }
@@ -923,7 +934,7 @@ export const useEditorStore = defineStore("editor", {
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
-          this.removed(entry)
+          this.removed(entry);
           onRemoveEntry(entry);
         }
       };
@@ -999,13 +1010,15 @@ export const useEditorStore = defineStore("editor", {
         console.error("Couldn't add: no selection or parent(s) provided");
         return;
       }
-      const foundEntries = (Array.isArray(data) ? data : [data])
+      const foundEntries = Array.isArray(data) ? data : [data];
       if (!foundEntries.length) {
         console.error("Couldn't add: no data provided");
         return;
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
-      const fixedEntries = foundEntries.map(o => this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined))
+      const fixedEntries = foundEntries.map((o) =>
+        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined)
+      );
       const sysId = catalogue.getSystemId();
 
       let addeds = [] as EditorBase[];
@@ -1020,8 +1033,8 @@ export const useEditorStore = defineStore("editor", {
             // Ensure there is array to put the childs in
             const key = fixKey(item, childKey || entry.parentKey, selectedCatalogueKey);
             if (!key) {
-              const text = `Couldn't create ${childKey || entry.parentKey} in ${selectedCatalogueKey}`
-              notify({ type: "error", text })
+              const text = `Couldn't create ${childKey || entry.parentKey} in ${selectedCatalogueKey}`;
+              notify({ type: "error", text });
               console.warn(text);
               continue;
             }
@@ -1032,8 +1045,8 @@ export const useEditorStore = defineStore("editor", {
             if (!Array.isArray(arr)) continue;
 
             if (!allowed_children(item, item.parentKey)?.has(key as string)) {
-              const text = `Couldn't add ${key} to a ${item.parentKey}`
-              notify({ type: "error", text })
+              const text = `Couldn't add ${key} to a ${item.parentKey}`;
+              notify({ type: "error", text });
               console.warn(text);
               continue;
             }
@@ -1070,7 +1083,7 @@ export const useEditorStore = defineStore("editor", {
             // Add it to its parent
             arr.push(entry);
             onAddEntry(entry, catalogue, item, this.get_system(sysId));
-            this.changed(entry)
+            this.changed(entry);
             addeds.push(entry);
           }
         }
@@ -1079,7 +1092,7 @@ export const useEditorStore = defineStore("editor", {
       const undo = () => {
         for (const entry of addeds) {
           popAtEntryPath(catalogue, getEntryPath(entry));
-          this.removed(entry)
+          this.removed(entry);
           onRemoveEntry(entry);
         }
       };
@@ -1136,7 +1149,7 @@ export const useEditorStore = defineStore("editor", {
               field: "selections",
               scope: "self",
               childId: "roster",
-            }
+            };
           }
 
           return {
@@ -1157,7 +1170,15 @@ export const useEditorStore = defineStore("editor", {
         case "conditionGroups":
           return { type: "and" };
         case "localConditionGroups":
-          return { type: "atLeast", value: 1, scope: "parent", field: "selections", includeChildSelections: true, includeChildForces: true, repeats: 1 }
+          return {
+            type: "atLeast",
+            value: 1,
+            scope: "parent",
+            field: "selections",
+            includeChildSelections: true,
+            includeChildForces: true,
+            repeats: 1,
+          };
         case "sharedSelectionEntries":
         case "selectionEntries":
           return {
@@ -1217,13 +1238,11 @@ export const useEditorStore = defineStore("editor", {
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
             id: generateBattlescribeId(),
-          }
+          };
         case "characteristics":
         case "attributes":
         case "costs":
-          return {
-
-          }
+          return {};
         default:
           return {
             name: `New ${getTypeLabel(getTypeName(key))}`,
@@ -1234,71 +1253,86 @@ export const useEditorStore = defineStore("editor", {
     },
     // Resolves ids from profile/characteristic names so they dont need to be known by scripts
     fix_profile(catalogue: Catalogue, profile: BSIProfile) {
-      let profileType = catalogue.findOptionById(profile.typeId) as ProfileType | null
+      let profileType = catalogue.findOptionById(profile.typeId) as ProfileType | null;
       if (profile.typeName && !(profileType instanceof ProfileType)) {
-        const profileTypes = catalogue.findOptionsByText(profile.typeName, true).filter(o => o instanceof ProfileType) as ProfileType[]
-        sortByDescendingInplace(profileTypes, o => o.characteristicTypes?.length === profile.characteristics?.length ? 1 : 0)
-        profileType = profileTypes[0]
+        const profileTypes = catalogue
+          .findOptionsByText(profile.typeName, true)
+          .filter((o) => o instanceof ProfileType) as ProfileType[];
+        sortByDescendingInplace(profileTypes, (o) =>
+          o.characteristicTypes?.length === profile.characteristics?.length ? 1 : 0
+        );
+        profileType = profileTypes[0];
       }
       if (!profileType) return;
-      profile.typeName = profileType.name
-      profile.typeId = profileType.id
+      profile.typeName = profileType.name;
+      profile.typeId = profileType.id;
 
       for (const c of profile.characteristics || []) {
         if (!c.typeId) {
-          const characteristicType = profileType?.characteristicTypes.find(o => o.name === c.name)
+          const characteristicType = profileType?.characteristicTypes.find((o) => o.name === c.name);
           if (characteristicType) {
-            c.typeId = characteristicType.id
+            c.typeId = characteristicType.id;
           }
         } else if (!c.name && c.typeId) {
-          const characteristicType = profileType?.characteristicTypes.find(o => o.id === c.typeId)
+          const characteristicType = profileType?.characteristicTypes.find((o) => o.id === c.typeId);
           if (characteristicType) {
-            c.name = characteristicType.name
+            c.name = characteristicType.name;
           }
         }
       }
-      const missing = profileType.characteristicTypes?.filter(ct => !profile.characteristics.find(c => c.typeId === ct.id))
-      const badIndex = profile.characteristics.find((c, i) => i !== profileType.characteristicTypes.findIndex(ct => ct.id === c.typeId))
+      const missing = profileType.characteristicTypes?.filter(
+        (ct) => !profile.characteristics.find((c) => c.typeId === ct.id)
+      );
+      const badIndex = profile.characteristics.find(
+        (c, i) => i !== profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId)
+      );
       if (missing?.length || badIndex) {
-        const out_characteristics = []
-        const in_characteristics = [...profile.characteristics]
+        const out_characteristics = [];
+        const in_characteristics = [...profile.characteristics];
         for (const ct of missing) {
           in_characteristics.push({
             name: ct.name,
             typeId: ct.id,
             $text: "",
-          })
+          });
         }
         for (const c of in_characteristics) {
-          const idx = profileType.characteristicTypes.findIndex(ct => ct.id === c.typeId)
+          const idx = profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId);
           if (idx >= 0) {
-            out_characteristics[idx] = c
+            out_characteristics[idx] = c;
           }
         }
-        profile.characteristics = out_characteristics
+        profile.characteristics = out_characteristics;
       }
     },
     // Recursively merges objects with their default created object so that they are valid.
-    fix_object<T>(key: string & keyof typeof entries, data?: T, catalogue?: Catalogue, parent?: EditorBase): T extends [] ? T[] : T {
+    fix_object<T>(
+      key: string & keyof typeof entries,
+      data?: T,
+      catalogue?: Catalogue,
+      parent?: EditorBase
+    ): T extends [] ? T[] : T {
       if (Array.isArray(data)) {
         //@ts-ignore
-        return data.map(o => this.fix_object(key, o, catalogue)) as T[];
+        return data.map((o) => this.fix_object(key, o, catalogue)) as T[];
       }
       const obj = {
         ...this.get_initial_object(key, parent),
         ...data,
-      }
+      };
 
       if (catalogue && getTypeName(key) === "profile") {
         this.fix_profile(catalogue, obj);
       }
       for (const nested_key in obj) {
-        const val = obj[nested_key]
+        const val = obj[nested_key];
         if ((arrayKeys as Set<string>).has(nested_key) && isObject(val)) {
           if (Array.isArray(val)) {
-            obj[nested_key] = obj[nested_key].map((o: any) => this.fix_object(nested_key as keyof typeof entries, o, catalogue))
+            obj[nested_key] = obj[nested_key].map((o: any) =>
+              this.fix_object(nested_key as keyof typeof entries, o, catalogue)
+            );
           } else {
-            obj[nested_key] = [this.fix_object(nested_key as keyof typeof entries, val, catalogue)]
+            obj[nested_key] = [this.fix_object(nested_key as keyof typeof entries, val, catalogue)];
           }
         }
       }
@@ -1313,7 +1347,11 @@ export const useEditorStore = defineStore("editor", {
      * @param data data to use when creating the child entry
      */
     async create(key: string & keyof typeof entries, data?: Record<string, any>) {
-      const added = await this.add({ select: true, ...data }, key, this.get_selections_with_payload().map(o => o.obj));
+      const added = await this.add(
+        { select: true, ...data },
+        key,
+        this.get_selections_with_payload().map((o) => o.obj)
+      );
       this.open_selected();
       return added;
     },
@@ -1383,7 +1421,7 @@ export const useEditorStore = defineStore("editor", {
         const manager = catalogue.manager;
         const path = getEntryPath(entry as EditorBase);
         const removed = popAtEntryPath(catalogue, path);
-        this.removed(removed)
+        this.removed(removed);
         onRemoveEntry(removed, manager);
       } catch (e) {
         console.error("Failed to delete", entry);
@@ -1396,23 +1434,23 @@ export const useEditorStore = defineStore("editor", {
     edit_node(entry: EditorBase, data?: Record<string, any>) {
       let changed = false;
       for (const key in data) {
-        const val = data[key]
+        const val = data[key];
         // @ts-ignore
         if (entry[key] !== val) {
           if (isObject(val)) {
-            const catalogue = entry.getCatalogue()
+            const catalogue = entry.getCatalogue();
             const sysId = catalogue.getSystemId();
 
             // @ts-ignore
             const fixed_obj = this.fix_object(key, val, catalogue);
-            setPrototypeRecursive({ [key]: fixed_obj })
+            setPrototypeRecursive({ [key]: fixed_obj });
 
             // @ts-ignore
-            entry[key] = fixed_obj
+            entry[key] = fixed_obj;
             onAddEntry(fixed_obj, catalogue, entry, this.get_system(sysId));
           } else {
             // @ts-ignore
-            entry[key] = val
+            entry[key] = val;
           }
           changed = true;
         }
@@ -1420,7 +1458,7 @@ export const useEditorStore = defineStore("editor", {
       if (changed) {
         this.changed(entry);
       }
-      return changed
+      return changed;
     },
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
@@ -1469,11 +1507,11 @@ export const useEditorStore = defineStore("editor", {
         case "profile":
           return "";
         case "categoryEntry":
-          return "categoryEntries"
+          return "categoryEntries";
         case "profileType":
-          return "profileTypes"
+          return "profileTypes";
         case "costType":
-          return "costTypes"
+          return "costTypes";
         case "selectionEntry":
           return "selectionEntries";
         case "selectionEntryGroup":
@@ -1485,7 +1523,7 @@ export const useEditorStore = defineStore("editor", {
     move(obj: EditorBase, from: Catalogue, to: Catalogue, type: "root" | "shared") {
       const redo = () => {
         // Get key the object will end up in
-        const catalogueKey = this.move_to_key(obj, type) as string & keyof typeof entries;;
+        const catalogueKey = this.move_to_key(obj, type) as string & keyof typeof entries;
         if (!catalogueKey) {
           console.error("Could not find key for move", obj.editorTypeName, type);
           return;
@@ -1496,7 +1534,7 @@ export const useEditorStore = defineStore("editor", {
         const path = getEntryPath(obj);
 
         removeEntry(obj);
-        this.removed(obj)
+        this.removed(obj);
         onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
@@ -1505,7 +1543,7 @@ export const useEditorStore = defineStore("editor", {
 
         to[catalogueKey]!.push(copy);
         onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
-        this.changed(copy)
+        this.changed(copy);
         const linkableTypes = ["rule", "infoGroup", "profile", "selectionEntry", "selectionEntryGroup"];
         const canBeLinked = linkableTypes.includes(obj.editorTypeName);
         const shouldMakeLink = !obj.parentKey.startsWith("shared");
@@ -1528,7 +1566,7 @@ export const useEditorStore = defineStore("editor", {
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
           onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
-          this.changed(link)
+          this.changed(link);
         }
       };
       function undo() {
@@ -1547,8 +1585,8 @@ export const useEditorStore = defineStore("editor", {
       if (!current) return;
 
       if (obj.isCatalogue()) {
-        const head = current.getElementsByClassName('head')
-        return head.length ? head[0].children[0] : undefined
+        const head = current.getElementsByClassName("head");
+        return head.length ? head[0].children[0] : undefined;
       }
 
       async function open_el(el: any) {
@@ -1563,8 +1601,6 @@ export const useEditorStore = defineStore("editor", {
         await context.$nextTick();
       }
 
-
-
       const path = getEntryPath(obj);
       if (!path?.length) return;
 
@@ -1575,7 +1611,7 @@ export const useEditorStore = defineStore("editor", {
         }
         return;
       }
-      await this.show(obj, false)
+      await this.show(obj, false);
       await open_el(current);
       const nodes = [] as EditorBase[];
       forEachParent(obj, (parent) => {
@@ -1597,12 +1633,11 @@ export const useEditorStore = defineStore("editor", {
         const childs = current.getElementsByClassName(`depth-${i + 1} ${node.parentKey}`);
         let child: Element | undefined;
         if (node.parentKey.startsWith("label-")) {
-          child = childs[0]
-        }
-        else {
-          const arr = []
+          child = childs[0];
+        } else {
+          const arr = [];
           for (let i = 0; i < childs.length; i++) {
-            arr.push(childs[i])
+            arr.push(childs[i]);
           }
           child = arr.find((o) => $toRaw(get_base_from_vue_el(get_ctx(o))) === $toRaw(node));
         }
@@ -1651,7 +1686,9 @@ export const useEditorStore = defineStore("editor", {
 
         this.$nextTick = new Promise((resolve, reject) => {
           this.$nextTickResolve = resolve;
-        }).then(() => { delete this.$nextTickResolve });
+        }).then(() => {
+          delete this.$nextTickResolve;
+        });
         return this.$nextTick;
       }
       return false;
@@ -1671,7 +1708,7 @@ export const useEditorStore = defineStore("editor", {
       });
     },
     async goto(obj?: EditorBase) {
-      if (!obj) return
+      if (!obj) return;
       const targetCatalogue = obj.getCatalogue();
       this.put_current_state_in_history();
       const uistate = useEditorUIState();
@@ -1682,8 +1719,7 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {
-      el.scrollIntoView({ block: "center", "inline": "start", behavior: "instant" })
-
+      el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" });
     },
     async scrollto(obj: EditorBase) {
       const el = await this.open(obj as EditorBase);
@@ -1721,7 +1757,7 @@ export const useEditorStore = defineStore("editor", {
         if (index > 0) {
           const temp = arr.splice(index, 1)[0];
           arr.splice(index - 1, 0, temp);
-          this.changed(obj)
+          this.changed(obj);
         }
       }
     },
@@ -1732,14 +1768,14 @@ export const useEditorStore = defineStore("editor", {
         if (index >= 0 && index < arr.length - 1) {
           const temp = arr.splice(index, 1)[0];
           arr.splice(index + 1, 0, temp);
-          this.changed(obj)
+          this.changed(obj);
         }
       }
     },
     sortable(entry?: EditorBase) {
-      const settings = useSettingsStore()
+      const settings = useSettingsStore();
       if (settings.sort === "none") return false;
-      return entry?.editorTypeName !== "forceEntry"
+      return entry?.editorTypeName !== "forceEntry";
     },
     get_leftpanel_open_collapsible_boxes() {
       function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
@@ -1760,10 +1796,10 @@ export const useEditorStore = defineStore("editor", {
             if (!(index in obj[key])) obj[key][index] = {};
             find_open_recursive(cur, obj[key][index], depth + 1);
           } else {
-            const arr = []
+            const arr = [];
             for (var i = 0; i < cur.classList.length; i++) {
               const cur_class = cur.classList[i];
-              arr.push(cur_class)
+              arr.push(cur_class);
             }
             const keys = arr.filter((o) => goodJsonKeys.has(o) || o.startsWith("label-"));
             for (const key of keys) {
@@ -1829,10 +1865,10 @@ export const useEditorStore = defineStore("editor", {
     },
     put_current_state_in_history() {
       if (this.catalogueComponent && this.catalogueComponent.cat) {
-        const state = this.get_current_state()
+        const state = this.get_current_state();
         this.put_state_in_history(state);
-        history.replaceState({ data: state, index: this.historyStackPos }, "", location.href)
-        history.pushState({ index: this.historyStackPos + 1 }, "", null)
+        history.replaceState({ data: state, index: this.historyStackPos }, "", location.href);
+        history.pushState({ index: this.historyStackPos + 1 }, "", null);
       }
     },
     can_back() {
@@ -1877,7 +1913,7 @@ export const useEditorStore = defineStore("editor", {
         for (const p of this.filtered) {
           this.show(p as EditorBase);
         }
-        await (globalThis.$nextTick && globalThis.$nextTick())
+        await (globalThis.$nextTick && globalThis.$nextTick());
 
         if (this.filtered.length < 300) {
           for (const p of this.filtered) {
@@ -1893,7 +1929,7 @@ export const useEditorStore = defineStore("editor", {
         this.set_filter("");
         this.filtered = [];
       }
-      return this.filtered
+      return this.filtered;
     },
     async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
       const result = [] as Base[];
@@ -1932,7 +1968,7 @@ export const useEditorStore = defineStore("editor", {
       }
 
       for (const file of system.getAllLoadedCatalogues()) {
-        search(file)
+        search(file);
         file.forEachObjectWhitelist(search);
         if (result.length >= max) {
           more = true;
@@ -1942,7 +1978,7 @@ export const useEditorStore = defineStore("editor", {
       console.log("Search for", `"${filter}"`, "found", result.length, "results");
       const grouped = {} as Record<string, Base[]>;
       for (const found of result) {
-        const catalogueName = found.getCatalogue().name
+        const catalogueName = found.getCatalogue().name;
         addObj(grouped, catalogueName, found);
       }
       return { grouped, all: result, more };
@@ -1965,15 +2001,23 @@ export const useEditorStore = defineStore("editor", {
     },
     // Backwards dependency
     //@ts-ignore
-    add_child(...args: any[]) { return this.add_node(...args) },
+    add_child(...args: any[]) {
+      return this.add_node(...args);
+    },
     //@ts-ignore
-    del_child(...args: any[]) { return this.del_node(...args) },
+    del_child(...args: any[]) {
+      return this.del_node(...args);
+    },
     //@ts-ignore
-    edit_child(...args: any[]) { return this.edit_node(...args) },
+    edit_child(...args: any[]) {
+      return this.edit_node(...args);
+    },
     //@ts-ignore
-    create_child(...args: any[]) { return this.create_node(...args) },
+    create_child(...args: any[]) {
+      return this.create_node(...args);
+    },
     label(node: EditorBase, extra = false) {
-      return extra ? [getName(node), getNameExtra(node)].filter(o => o).join(' ') : getName(node)
-    }
+      return extra ? [getName(node), getNameExtra(node)].filter((o) => o).join(" ") : getName(node);
+    },
   },
 });
