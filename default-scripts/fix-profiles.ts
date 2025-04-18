@@ -31,7 +31,7 @@ export default {
                     }
                     // Fix characteristic with wrong typeId
                     for (const c of obj.characteristics || []) {
-                        const ct = type.characteristicTypes.find(ct => ct.name === c.name)!
+                        const ct = type.characteristicTypes?.find(ct => ct.name === c.name)!
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
                             $store.edit_node(c, { typeId: ct.id })
@@ -39,7 +39,7 @@ export default {
                     }
                     // Fix attribute with wrong typeId
                     for (const c of obj.attributes || []) {
-                        const ct = type.attributeTypes.find(ct => ct.name === c.name)!
+                        const ct = type.attributeTypes?.find(ct => ct.name === c.name)!
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
                             $store.edit_node(c, { typeId: ct.id })
@@ -48,7 +48,7 @@ export default {
 
                     // Fix characteristic with wrong name
                     for (const c of obj.characteristics || []) {
-                        const ct = type.characteristicTypes.find(ct => ct.id === c.typeId)!
+                        const ct = type.characteristicTypes?.find(ct => ct.id === c.typeId)!
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed characteristic name: ${c.name} -> ${ct.name}`])
                             $store.edit_node(c, { name: ct.name })
@@ -57,7 +57,7 @@ export default {
 
                     // Fix attribute with wrong name
                     for (const c of obj.attributes || []) {
-                        const ct = type.attributeTypes.find(ct => ct.id === c.typeId)!
+                        const ct = type.attributeTypes?.find(ct => ct.id === c.typeId)!
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed attribute name: ${c.name} -> ${ct.name}`])
                             $store.edit_node(c, { name: ct.name })
@@ -65,7 +65,7 @@ export default {
                     }
                     // Fix characteristic order & remove extra characteristics
                     const missingCharacteristics = type.characteristicTypes?.filter(ct => !obj.characteristics?.find(c => c.typeId === ct.id)) || []
-                    const characteristicBadIndex = obj.characteristics?.find((c, i) => i !== type.characteristicTypes.findIndex(ct => ct.id === c.typeId))
+                    const characteristicBadIndex = obj.characteristics?.find((c, i) => i !== type.characteristicTypes?.findIndex(ct => ct.id === c.typeId))
                     if (missingCharacteristics.length || characteristicBadIndex) {
                         const out_characteristics = []
                         const in_characteristics = [...(obj.characteristics || [])]
@@ -81,7 +81,7 @@ export default {
                             result.push([obj, `fixed characteristics order`])
                         }
                         for (const c of in_characteristics) {
-                            const idx = type.characteristicTypes.findIndex(ct => ct.id === c.typeId)
+                            const idx = type.characteristicTypes?.findIndex(ct => ct.id === c.typeId)
                             if (idx >= 0) {
                                 out_characteristics[idx] = c
                             } else {
@@ -93,7 +93,7 @@ export default {
                     }
                     // Fix attribute order & remove extra attributes
                     const missingAttributes = type.attributeTypes?.filter(ct => !obj.attributes?.find(c => c.typeId === ct.id)) || []
-                    const attributeBadIndex = obj.attributes?.find((c, i) => i !== type.attributeTypes.findIndex(ct => ct.id === c.typeId))
+                    const attributeBadIndex = obj.attributes?.find((c, i) => i !== type.attributeTypes?.findIndex(ct => ct.id === c.typeId))
                     if (missingAttributes.length || attributeBadIndex) {
                         const out_attributes = []
                         const in_attributes = [...(obj.attributes || [])]
@@ -109,7 +109,7 @@ export default {
                             result.push([obj, `fixed attributes order`])
                         }
                         for (const c of in_attributes) {
-                            const idx = type.attributeTypes.findIndex(ct => ct.id === c.typeId)
+                            const idx = type.attributeTypes?.findIndex(ct => ct.id === c.typeId)
                             if (idx >= 0) {
                                 out_attributes[idx] = c
                             } else {
