@@ -76,7 +76,7 @@ import {
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { cataloguesdexie as db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
