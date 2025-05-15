@@ -1389,6 +1389,7 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
+        // @ts-ignore
         ...this.fix_object(key, data, catalogue),
         ...data,
       };
@@ -1539,8 +1540,10 @@ export const useEditorStore = defineStore("editor", {
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
         setPrototypeRecursive({ [catalogueKey]: copy });
+        // @ts-ignore
         if (!to[catalogueKey]) to[catalogueKey] = [];
 
+        // @ts-ignore
         to[catalogueKey]!.push(copy);
         onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
         this.changed(copy);
@@ -2000,20 +2003,24 @@ export const useEditorStore = defineStore("editor", {
       return { system, catalogue: loaded };
     },
     // Backwards dependency
-    //@ts-ignore
+
     add_child(...args: any[]) {
+      // @ts-ignore
       return this.add_node(...args);
     },
-    //@ts-ignore
+
     del_child(...args: any[]) {
+      // @ts-ignore
       return this.del_node(...args);
     },
-    //@ts-ignore
+
     edit_child(...args: any[]) {
+      // @ts-ignore
       return this.edit_node(...args);
     },
-    //@ts-ignore
+
     create_child(...args: any[]) {
+      // @ts-ignore
       return this.create_node(...args);
     },
     label(node: EditorBase, extra = false) {
