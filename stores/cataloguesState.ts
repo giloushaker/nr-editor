@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICatalogue, BSIDataCatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
+import { BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 export interface ICatalogueState {
   edited?: boolean;
   errors?: string[];
