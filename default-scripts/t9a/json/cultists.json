@@ -1,0 +1,833 @@
+{
+  "name": "Cultists",
+  "prefix": "CU",
+  "version": "Alpha 1",
+  "date": "01/01/2025",
+  "logoPath": "pics/logo_big_CU.jpg",
+  "modelRules": [
+    {
+      "name": "smother",
+      "inherits": "smother",
+      "type": "attackattribute"
+    }
+  ],
+  "armyRules": [
+    {
+      "name": "aegis",
+      "inherits": "aegis",
+      "type": "personalprotection"
+    },
+    {
+      "name": "daemonicsummon",
+      "type": "universal"
+    },
+    {
+      "name": "pledgedtodarkness",
+      "type": "universal"
+    }
+  ],
+  "magicItems": [
+    {
+      "name": "bookofnukuja",
+      "type": "artefact",
+      "cost": 45,
+      "support": [],
+      "rarity": "legendary",
+      "dominant": false,
+      "restriction": ["generalonly"]
+    },
+    {
+      "name": "idolofvanadra",
+      "type": "artefact",
+      "cost": 65,
+      "support": [],
+      "rarity": "legendary",
+      "dominant": false,
+      "restriction": ["generalonly"]
+    },
+    {
+      "name": "fiendishsnares",
+      "type": "artefact",
+      "cost": 40,
+      "support": [],
+      "rarity": "legendary",
+      "dominant": false,
+      "restriction": []
+    }
+  ],
+  "sharedMagicItems": [
+    {
+      "name": "eldritchinscriptions",
+      "type": "weapon",
+      "cost": 20
+    },
+    {
+      "name": "herosheart",
+      "type": "weapon",
+      "cost": 45
+    },
+    {
+      "name": "supernaturaldexterity",
+      "type": "weapon",
+      "cost": 20
+    },
+    {
+      "name": "ghostlyguard",
+      "type": "armour",
+      "cost": 30
+    },
+    {
+      "name": "sigilofprotection",
+      "type": "armour",
+      "cost": 30
+    },
+    {
+      "name": "essenceofafreemind",
+      "type": "artefact",
+      "cost": 10
+    },
+    {
+      "name": "obsidianrock",
+      "type": "artefact",
+      "cost": 20
+    },
+    {
+      "name": "scrollofdraining",
+      "type": "potionandscroll",
+      "cost": 25
+    },
+    {
+      "name": "scrollofpower",
+      "type": "potionandscroll",
+      "cost": 30
+    },
+    {
+      "name": "spellscroll",
+      "type": "potionandscroll",
+      "cost": 15,
+      "parameter": ["occultismspellfour"]
+    }
+  ],
+  "hereditarySpell": {
+    "name": "spearofinfinity",
+    "inherits": "spearofinfinity"
+  },
+  "armyOrganisation": [
+    {
+      "name": "characters",
+      "logo": "character",
+      "value": 35,
+      "minimum": false
+    },
+    {
+      "name": "core",
+      "logo": "core",
+      "value": 25,
+      "minimum": true
+    },
+    {
+      "name": "special",
+      "logo": "special",
+      "value": 0,
+      "minimum": true
+    },
+    {
+      "name": "daemonicsummon",
+      "logo": "summoned",
+      "value": 45,
+      "minimum": false
+    },
+    {
+      "name": "aves",
+      "logo": "bird",
+      "value": 30,
+      "minimum": false
+    },
+    {
+      "name": "smallarmsfireDL",
+      "logo": "arrows",
+      "smallArmsLimits": {
+        "number": 15,
+        "pointsSlice": 1500
+      },
+      "list": [
+        {
+          "weapons": ["energybolts", "throwingweapons"],
+          "ratio": 1
+        },
+        {
+          "weapons": ["darkfire"],
+          "ratio": 3
+        },
+        {
+          "weapons": ["aetherbattery"],
+          "ratio": 5
+        }
+      ]
+    }
+  ],
+  "armyList": [
+    {
+      "name": "cultleader",
+      "inherits": "battlefieldwizard",
+      "profile": {
+        "global": {
+          "rules": [
+            "PARENT",
+            "fearless",
+            "unstable",
+            {
+              "name": "exclusive",
+              "parameters": ["cultist"]
+            }
+          ]
+        },
+        "offensiveA": {
+          "name": "cultleader",
+          "tags": ["cultist", "grandsummoner"]
+        }
+      },
+      "options": [
+        {
+          "name": "magicitemsallowance",
+          "cost": 100,
+          "upto": true,
+          "parameters": {
+            "allowanceifwizardmaster": {
+              "cost": 200,
+              "upto": true
+            }
+          }
+        },
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "kinslayers",
+                "costpermodel": 0
+              },
+              {
+                "name": "waywardchildren",
+                "costpermodel": 5
+              },
+              {
+                "name": "fallenheroes",
+                "costpermodel": 15
+              },
+              {
+                "name": "thedishonoured",
+                "costpermodel": 20
+              }
+            ],
+            "optionChoiceLimits": {
+              "maxSelection": 0,
+              "minSelection": 1
+            }
+          }
+        }
+      ],
+      "mounts": {
+        "parameters": {
+          "list": []
+        }
+      },
+      "paths": ["evocation", "occultism", "thaumaturgy"]
+    },
+    {
+      "name": "daemonsymbiote",
+      "inherits": "harbingeroffatherchaos",
+      "baseSize": {
+        "width": 20,
+        "depth": 20
+      },
+      "profile": {
+        "global": {
+          "rules": [
+            "PARENT",
+            "lighttroops",
+            {
+              "name": "exclusive",
+              "parameters": ["cultist"]
+            }
+          ]
+        },
+        "defensive": {
+          "armour": "2"
+        },
+        "offensiveA": {
+          "name": "daemonsymbiote",
+          "tags": ["cultist", "metalarmour"]
+        }
+      },
+      "options": [
+        {
+          "name": "manifestationsallowancenodominant",
+          "cost": "nolimit"
+        },
+        {
+          "name": "magicitemsallowance",
+          "cost": 150,
+          "upto": true
+        },
+        {
+          "name": "shield",
+          "costpermodel": 5
+        },
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "greatweapon",
+                "costpermodel": 5
+              },
+              {
+                "name": "halberd",
+                "costpermodel": 5
+              },
+              {
+                "name": "pairedweapons",
+                "costpermodel": 5
+              },
+              {
+                "name": "spear",
+                "costpermodel": 5
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        },
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "thedishonoured",
+                "costpermodel": 0
+              },
+              {
+                "name": "fallenheroes",
+                "costpermodel": 5
+              },
+              {
+                "name": "waywardchildren",
+                "costpermodel": 5
+              },
+              {
+                "name": "kinslayers",
+                "costpermodel": 10
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        }
+      ],
+      "mounts": {
+        "parameters": {
+          "list": [
+            {
+              "name": "lighttroops",
+              "cost": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "cultists",
+      "categories": ["core"],
+      "cost": 105,
+      "unitSize": 15,
+      "maxunitsize": 50,
+      "costpermodel": 3,
+      "rarity": "common",
+      "height": 1,
+      "baseSize": {
+        "width": 20,
+        "depth": 20
+      },
+      "profile": {
+        "global": {
+          "chargeRate": 4,
+          "marchRate": 4,
+          "discipline": 6,
+          "rules": [
+            "unstable",
+            {
+              "name": "wizardconclave",
+              "parameters": [1]
+            }
+          ]
+        },
+        "defensive": {
+          "hp": 1,
+          "defensiveSkill": 2,
+          "resistance": 3,
+          "armour": 0,
+          "rules": []
+        },
+        "offensiveA": {
+          "name": "cultist",
+          "attacks": 1,
+          "offensiveSkill": 2,
+          "strength": 3,
+          "ap": 0,
+          "agility": 3,
+          "tags": ["cultist", "summoner"],
+          "rules": [
+            {
+              "name": "devastatingcharge",
+              "parameters": ["fury"]
+            }
+          ]
+        }
+      },
+      "options": [
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "spear",
+                "costpermodel": 1
+              },
+              {
+                "name": "pairedweapons",
+                "costpermodel": 1
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        },
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "kinslayers",
+                "costpermodel": 0
+              },
+              {
+                "name": "waywardchildren",
+                "costpermodel": 1
+              },
+              {
+                "name": "fallenheroes",
+                "costpermodel": 2
+              },
+              {
+                "name": "thedishonoured",
+                "costpermodel": 4
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        }
+      ],
+      "wizardconclave": {
+        "parameters": {
+          "spelllist": [
+            {
+              "name": "spearofinfinity"
+            }
+          ]
+        }
+      },
+      "commandgroup": {
+        "parameters": {
+          "list": [
+            {
+              "name": "musician",
+              "cost": 10,
+              "parameters": {}
+            },
+            {
+              "name": "standardbearer",
+              "cost": 10,
+              "parameters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "ritualaltar",
+      "categories": ["special"],
+      "cost": 160,
+      "unitSize": 1,
+      "rarity": "legendary",
+      "height": 2,
+      "baseSize": {
+        "width": 60,
+        "depth": 60
+      },
+      "profile": {
+        "global": {
+          "chargeRate": 0,
+          "marchRate": 0,
+          "discipline": 6,
+          "rules": [
+            "darkconclave",
+            "fearless",
+            "emplacement",
+            "solitary",
+            "unstable",
+            {
+              "name": "wizardconclave",
+              "parameters": [2]
+            }
+          ]
+        },
+        "defensive": {
+          "hp": 5,
+          "defensiveSkill": 1,
+          "resistance": 4,
+          "armour": 2,
+          "rules": [
+            {
+              "name": "aegis",
+              "parameters": ["5+"]
+            }
+          ]
+        },
+        "offensiveA": {
+          "name": "cultist (5)",
+          "attacks": 1,
+          "offensiveSkill": 2,
+          "strength": 3,
+          "ap": 0,
+          "agility": 3,
+          "tags": ["cultist", "grandsummoner"],
+          "rules": []
+        }
+      },
+      "options": [
+        {
+          "name": "grandcouncil",
+          "costpermodel": 60,
+          "parameters": {}
+        }
+      ],
+      "wizardconclave": {
+        "parameters": {
+          "spelllist": [
+            {
+              "name": "spearofinfinity"
+            },
+            {
+              "name": "occultismspellsix",
+              "path": "occultism"
+            },
+            {
+              "name": "thaumaturgyspellfive",
+              "path": "thaumaturgy"
+            },
+            {
+              "name": "thaumaturgyspellone",
+              "path": "thaumaturgy"
+            }
+          ]
+        }
+      },
+      "modelRules": [
+        {
+          "name": "darkconclave"
+        }
+      ],
+      "optionalModelRules": [
+        {
+          "name": "grandcouncil"
+        }
+      ]
+    },
+    {
+      "name": "cultistinfiltrators",
+      "inherits": "scraplingtrappers",
+      "profile": {
+        "offensiveA": {
+          "tags": ["cultist"]
+        }
+      }
+    },
+    {
+      "name": "possessed",
+      "categories": ["special"],
+      "cost": 130,
+      "unitSize": 10,
+      "maxunitsize": 25,
+      "costpermodel": 9,
+      "rarity": "common",
+      "height": 1,
+      "baseSize": {
+        "width": 20,
+        "depth": 20
+      },
+      "profile": {
+        "global": {
+          "chargeRate": 5,
+          "marchRate": 5,
+          "discipline": 7,
+          "rules": ["fearless", "pledgedtodarkness", "scoring", "supernal"]
+        },
+        "defensive": {
+          "hp": 1,
+          "defensiveSkill": 2,
+          "resistance": 3,
+          "armour": 1,
+          "rules": [
+            {
+              "name": "aegis",
+              "parameters": ["5+"]
+            }
+          ]
+        },
+        "offensiveA": {
+          "name": "possessed",
+          "attacks": 2,
+          "offensiveSkill": 2,
+          "strength": 4,
+          "ap": 1,
+          "agility": 4,
+          "tags": ["cultist", "lightarmour"],
+          "rules": []
+        }
+      },
+      "specificOptions": [
+        {
+          "name": "manifestations",
+          "parameters": {
+            "list": [
+              {
+                "name": "bronzebackbone",
+                "god": "pride",
+                "costpermodel": 3
+              },
+              {
+                "name": "redhaze",
+                "god": "wrath",
+                "costpermodel": 3
+              },
+              {
+                "name": "chitinousscales",
+                "god": "chaos",
+                "costpermodel": 4
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        }
+      ],
+      "options": [
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "pairedweapons",
+                "costpermodel": 0
+              },
+              {
+                "name": "spear",
+                "costpermodel": 1
+              },
+              {
+                "name": "greatweapon",
+                "costpermodel": 2
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        },
+        {
+          "name": "optionGroup",
+          "parameters": {
+            "list": [
+              {
+                "name": "kinslayers",
+                "costpermodel": 0
+              },
+              {
+                "name": "waywardchildren",
+                "costpermodel": 1
+              },
+              {
+                "name": "fallenheroes",
+                "costpermodel": 2
+              },
+              {
+                "name": "thedishonoured",
+                "costpermodel": 4
+              }
+            ],
+            "optionChoiceLimits": {
+              "minSelection": 0,
+              "maxSelection": 1
+            }
+          }
+        }
+      ],
+      "commandgroup": {
+        "parameters": {
+          "list": [
+            {
+              "name": "musician",
+              "cost": 10,
+              "parameters": {}
+            },
+            {
+              "name": "standardbearer",
+              "cost": 10,
+              "parameters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "lemures",
+      "inherits": "lemures"
+    },
+    {
+      "name": "succubi",
+      "inherits": "succubi"
+    },
+    {
+      "name": "myrmidons",
+      "inherits": "myrmidons"
+    },
+    {
+      "name": "imps",
+      "inherits": "imps"
+    },
+    {
+      "name": "threshingengine",
+      "inherits": "threshingengine"
+    },
+    {
+      "name": "eidolons",
+      "inherits": "eidolons"
+    },
+    {
+      "name": "hellhounds",
+      "inherits": "hellhounds"
+    },
+    {
+      "name": "titanslayerchariot",
+      "inherits": "titanslayerchariot"
+    },
+    {
+      "name": "mageblightgremlins",
+      "inherits": "mageblightgremlins"
+    },
+    {
+      "name": "clawedfiends",
+      "inherits": "clawedfiends"
+    },
+    {
+      "name": "hoarders",
+      "inherits": "hoarders"
+    },
+    {
+      "name": "furies",
+      "inherits": "furies"
+    },
+    {
+      "name": "veilserpents",
+      "inherits": "veilserpents"
+    },
+    {
+      "name": "bloatflies",
+      "inherits": "bloatflies"
+    },
+    {
+      "name": "brazenbeasts",
+      "inherits": "brazenbeasts"
+    }
+  ],
+  "loc": {
+    "en": {
+      "daemonicsummon": "Daemonic Summon",
+      "daemonicsummonInitial": "DS",
+      "grandsummoner": "Grand Summoner",
+      "summoner": "Summoner",
+      "aves": "Aves",
+      "avesInitial": "A",
+      "aegisdef": "A Personal Protection Save taken after failing an Armour Save. Cannot be improved beyond 3+.",
+      "daemonicsummondef": "At the end of step 2 of the owner’s Magic Phase (Siphon the Veil), each non-Shaken Unit with Summoner or a model with Grand Summoner may, once per magic phase: 1. Choose a unit with Summoned Daemon that has not yet entered the Battlefield.2. Remove Cultist Models Based on the chosen unit’s Point Cost from a unit within 6 0–300 points 2D3. if unit performing summoning is Grand Summoner reduce cost to 1D3 301+ points: 4D3. if unit performing summoning is Grand Summoner reduce cost to 3D3Turn Limits: You can make 5D3 sacrifices per Player Turn.    Exception for the first Game Turn: If you’re the first Player: Maximum 2D3 Sacrifices If you’re the second Player: Maximum 4D3 Sacrifices3. The chosen unit immediately arrives at the Battlefield using Ambush (12 from the Summoner performing Daemonic Summoning).",
+      "pledgedtodarkness": "Pledged to Darkness",
+      "pledgedtodarknessdef": "During Building an Army (Step 1.B of Battle Preparations) you may select one of the following model rules.All units able to take a selected model rule must do. Wayward Children: +1~Charge Speed and Mobility, in addition model parts with ChTag{Cultist} gain +2~Agility.The Dishonoured: -1~Charge Speed and +1~Resilience, in addition model parts with ChTag{Cultist} suffers -1~ Agility.Fallen Heroes: Resilience is set to 4, and model parts with ChTag{Cultist} Strength is set to~4.In addition if chosen by a model with a Base Size of 20x20mm, it is changed to to 25x25mm.",
+      "smother": "Smother",
+      "smotherdef": "If the attack targets a model of the same Height as the attacker, it gains +1 to hit and +1 to wound.",
+      "bookofnukuja": "Book of Nukuja",
+      "bookofnukujadef": "When the bearer fails a Cast, you may remove 1 model to reroll each Magic Dice that rolled ‘1’ for its Casting Roll. Casting Rolls made by a model in this army using two or three Magic Dice gain a +1 modifier.",
+      "idolofvanadra": "Idol of Vanadra",
+      "idolofvanadradef": "All units with Cultists within range of the wearer's Commanding Presence gain Fury, Frenzy and First Strike (Stubborn).",
+      "fiendishsnares": "Jacuzzi of Cibaresh",
+      "fiendishsnaresdef": "During Pre-game Selections, you may place a single Jacuzzi of Cibaresh Water Terrain on the Battlefield, in contact with your Deployment Zone and not in contact with any other Terrain Feature.The Jacuzzi of Cibaresh has the dimensions of a 10″×6″ rectangle.It has all the usual rules of a Water Terrain, except Dangerous Terrain (6+, Metal Armour) .In addition the Jacuzzi of Cibaresh has the following additional rules:- Dangerous Terrain (5+).- Can never be chosen for Primary or Secondary Objectives.- All models with on Daemon (both sides) are considered to have Strider (Jacuzzi of Cibaresh)..- During the every Magic Phase of the player that placed, the Jacuzzi of Cibaresh it is considered to be a model with Grand Summoner for the purposes of Daemonic Summon.",
+      "cultleader": "Cult Leader",
+      "daemonsymbiote": "Daemon Symbiote",
+      "cultists": "Cultists",
+      "possessed": "Possessed",
+      "cultist": "Cultist",
+      "manifestationsallowancenodominant": "Must take 1 or 2 Manifestations\\newline{}\\suboptionindent{} without Dominant",
+      "hideout": "Hideout",
+      "hideoutdef": "The Cultists army gains +6 to the roll for choosing the Deployment Zone. After determining who deploys first, place a Ruins Terrain Feature fully in the friendly Deployment Zone, not touching other terrain.",
+      "masterofritual": "Master of Ritual",
+      "masterofritualdef": "The model gains +1 Discipline, Daemonic Summon, Scout, and Commanding Presence (18″).",
+      "specialitemallowance": "Specialitemallowance",
+      "specialitemallowancedef": "Definition for Specialitemallowance.",
+      "specialitemallowancewizardmaster": "Specialitemallowancewizardmaster",
+      "specialitemallowancewizardmasterdef": "Definition for Specialitemallowancewizardmaster.",
+      "kinslayers": "Kinslayers",
+      "kinslayersdef": "Species Archetype: Focused on offense and defense.",
+      "waywardchildren": "Wayward Children",
+      "waywardchildrendef": "Species Archetype: Agile and fast-moving.",
+      "fallenheroes": "Fallen Heroes",
+      "fallenheroesdef": "Species Archetype: Resilient but slower.",
+      "thedishonoured": "The Dishonoured",
+      "thedishonoureddef": "Species Archetype: Tough, slow, and cursed with dishonor.",
+      "infiltrators": "Infiltrators",
+      "infiltratorsdef": "The model gains Light Troops, Scout, and Skirmisher. It gains Throwing Weapons(5+)",
+      "hereticgolem": "Heretic Golem",
+      "hereticgolemdef": "The model gains +1 Strength and +1 Armour Penetration.",
+      "manifestation": "Manifestation",
+      "manifestationdef": "Choose a Daemonic Manifestation to enhance the unit.",
+      "chitinousscales": "Chitinous Scales",
+      "chitinousscalesdef": "Adds +2 Armour up to a maximum of 3.",
+      "wickerman": "Wicker Man",
+      "wickermandef": "The model gains Flammable, Flaming Attacks, and Grind Attacks (3D3). These Grind Attacks are resolved with Strength 4, AP 0, and Flaming Attacks.",
+      "redhaze": "Red Haze",
+      "redhazedef": "Boosts Strength and AP, but risks harming the bearer.",
+      "darkconclave": "Dark Conclave",
+      "darkconclavedef": "Spells cast by this unit gains +12 Range. At list building, choose a Character from the Daemon Legions Army Book and note it on your Army List. During your Magic Phase in Game Turn 4, 5, or 6, instead of performing a Daemonic Summon with this model, you may replace it with the selected Character. The Character may take a mount option, but cannot take any upgrades or other optional selections. It also loses all magic levels and spells.",
+      "grandcouncil": "Grand Council",
+      "grandcouncildef": "Upgrade: HP to 8, Cultist crew to 8, Base size to 100x100mm, and it gains Channel(1).",
+      "apostateautomaton": "Apostate Automaton",
+      "apostateautomatondef": "The model gains +1 Resilience, Crush Attack, and its Armour is set to 3.",
+      "doomsdaycolossus": "Doomsday Colossus",
+      "doomsdaycolossusdef": "The model’s Health Points are set to 8, its base is 75×100 mm, and Stomp Attack rolls are subject to Maximised Roll.",
+      "profaneidol": "Profane Idol",
+      "ritualaltar": "Ritual Altar",
+      "cultistinfiltrators": "Cultists Infiltrators"
+    }
+  }
+}

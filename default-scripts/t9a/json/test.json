@@ -1,0 +1,130 @@
+{
+  "parentKey": "selectionEntries",
+  "categoryLinks": [
+    {
+      "targetId": "4bcd-01c8-ce5e-7108",
+      "id": "5c6c-528c-08f5-72c1",
+      "primary": true,
+      "name": "Core"
+    }
+  ],
+
+  "costs": [
+    {
+      "name": "pts",
+      "typeId": "24fd-8af8-0c78-001c",
+      "value": 70
+    }
+  ],
+
+  "selectionEntries": [
+    {
+      "costs": [
+        {
+          "name": "pts",
+          "typeId": "24fd-8af8-0c78-001c",
+          "value": 17
+        }
+      ],
+      "constraints": [
+        {
+          "type": "max",
+          "value": 25,
+          "field": "selections",
+          "scope": "parent",
+          "shared": true,
+          "id": "a67a-7fbf-7242-e687",
+          "includeChildSelections": true
+        },
+        {
+          "type": "min",
+          "value": 10,
+          "field": "selections",
+          "scope": "parent",
+          "shared": true,
+          "id": "4d28-aa0a-dd4c-2145",
+          "includeChildSelections": true
+        }
+      ],
+      "type": "model",
+      "import": true,
+      "name": "Sylvan Archers",
+      "hidden": false,
+      "id": "c6a8-f0ef-feda-02fc",
+      "sortIndex": 1
+    }
+  ],
+  "entryLinks": [],
+  "type": "unit",
+  "import": true,
+  "name": "Sylvan Archers",
+  "hidden": false,
+  "id": "ffe2-482f-dd1e-1908",
+  "selectionEntryGroups": [
+    {
+      "name": "Command Group",
+      "id": "0158-50a5-ea8a-7880",
+      "hidden": false,
+      "entryLinks": [],
+      "sortIndex": 2,
+      "selectionEntries": [
+        {
+          "type": "upgrade",
+          "import": true,
+          "name": "Musician",
+          "hidden": false,
+          "id": "7d86-36a2-f9f4-445d",
+          "constraints": [
+            {
+              "type": "max",
+              "value": 1,
+              "field": "selections",
+              "scope": "parent",
+              "shared": true,
+              "id": "7638-304b-cdd5-7f08",
+              "percentValue": false,
+              "includeChildSelections": false,
+              "includeChildForces": false
+            }
+          ],
+          "costs": [
+            {
+              "name": "pts",
+              "typeId": "24fd-8af8-0c78-001c",
+              "value": 10
+            }
+          ],
+          "collective": false
+        },
+        {
+          "type": "upgrade",
+          "import": true,
+          "name": "Standard Bearer",
+          "hidden": false,
+          "id": "79e3-d1a7-ff06-e5d4",
+          "constraints": [
+            {
+              "type": "max",
+              "value": 1,
+              "field": "selections",
+              "scope": "parent",
+              "shared": true,
+              "id": "4e0b-758e-0203-bcb0",
+              "percentValue": false,
+              "includeChildSelections": false,
+              "includeChildForces": false
+            }
+          ],
+          "costs": [
+            {
+              "name": "pts",
+              "typeId": "24fd-8af8-0c78-001c",
+              "value": 10
+            }
+          ],
+          "collective": false
+        }
+      ]
+    }
+  ]
+}
