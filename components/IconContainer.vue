@@ -52,7 +52,7 @@ export default {
     },
   },
   methods: {
-    debug(item) {
+    debug(item: any) {
       console.log(item);
     },
     getDataObject,
