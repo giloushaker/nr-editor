@@ -46,6 +46,9 @@
       <template v-else-if="type === 'boolean' || type === 'toggle'">
         <input type="checkbox" v-model="value" />
       </template>
+      <template v-else-if="type === 'file'">
+        <input type="file" @input="onFileSelected" />
+      </template>
     </div>
   </div>
 </template>
@@ -132,6 +135,13 @@ export default defineComponent({
     getDefaultValue(str: string) {
       if (this.arg.default !== undefined) return this.arg.default;
       if (str === "catalogue[]") return "All Catalogues";
+    },
+    onFileSelected(event: any) {
+      const input_files = [...((event.target?.files as any | null) || [])];
+
+      for (const file of input_files) {
+        this.value = file.text();
+      }
     },
   },
   computed: {

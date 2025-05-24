@@ -14,7 +14,7 @@
             <span class="gray">...</span>
           </template>
           <template v-else>
-            <img src="/assets/icons/right2.png" />
+            <img class="icon" src="/assets/icons/right2.png" />
             Run Script
           </template>
         </button>
