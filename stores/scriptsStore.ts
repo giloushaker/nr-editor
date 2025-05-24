@@ -11,7 +11,7 @@ import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_he
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
 import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
-import t9a_import from "~/default-scripts/t9a/json_import";
+import t9a_import from "~/default-scripts/nrt9a/import_json";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {

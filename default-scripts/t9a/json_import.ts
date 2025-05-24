@@ -1,5 +1,5 @@
-import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ArmyListEntry, T9aJson } from "./types";
+import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { T9aJson } from "./types";
 import { toEntry } from "./entry";
 
 export default {
@@ -11,7 +11,7 @@ export default {
     },
     {
       name: "json",
-      type: "string",
+      type: "file",
       optional: true,
       description: "Json file for t9a",
     },
@@ -27,6 +27,7 @@ export default {
     for (let entry of parsed.armyList) {
       if (!entry.inherits) {
         const selectionEntry = toEntry(entry, parsed.loc.en);
+        selectionEntry.editorTypeName = "sharedSelectionEntries";
         $store.add(selectionEntry, "sharedSelectionEntries", catalogues[0] as any);
       }
     }
