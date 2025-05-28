@@ -3,6 +3,7 @@ import { Group } from "~/assets/shared/battlescribe/bs_main";
 
 export function addDictionnaryEntries(groups: Group[], opt: ArmyBookOption, res: Record<string, any>) {
   if (!opt.optionsDict) return;
+
   for (let dictRef of opt.optionsDict) {
     for (let sharedGroup of groups || []) {
       const split = sharedGroup.id.split(":");

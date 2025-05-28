@@ -8,3 +8,15 @@ export function cost(val: number | undefined) {
     },
   ];
 }
+
+export function specialCostType() {
+  return "78d6-b449-3c80-9b2a";
+}
+
+export function specialCost(val: number) {
+  return {
+    name: "Special Equipment",
+    typeId: "78d6-b449-3c80-9b2a",
+    value: val,
+  };
+}

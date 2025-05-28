@@ -1,37 +1,40 @@
-import { BSICondition, BSIConditionGroup, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import { BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 import { ArmyBookOption } from "./army_book_interfaces";
 import T9AImporter from "./t9a_importer";
 import { toTitleCaseWords } from "./util";
+import { convertRef } from "./refs";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { specialCost, specialCostType } from "../t9a/costs";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
-function insertIdConditions(found: string[], scope: string): BSIConditionGroup {
+function insertIdConditions(id: string, scope: string): BSIConditionGroup {
   const res: BSIConditionGroup = {
     type: "or",
     conditions: [],
     conditionGroups: [],
   };
 
-  for (let id of found) {
-    if (res.conditions) {
-      res.conditions.push({
-        type: "instanceOf",
-        value: 1,
-        field: "selections",
-        scope: scope,
-        childId: id,
-        shared: true,
-        includeChildSelections: true,
-      });
+  if (res.conditions) {
+    res.conditions.push({
+      type: "instanceOf",
+      value: 1,
+      field: "selections",
+      scope: scope,
+      childId: id,
+      shared: true,
+      includeChildSelections: true,
+    });
 
-      res.conditions.push({
-        type: "atLeast",
-        value: 1,
-        field: "selections",
-        scope: scope,
-        childId: id,
-        shared: true,
-        includeChildSelections: true,
-      });
-    }
+    res.conditions.push({
+      type: "atLeast",
+      value: 1,
+      field: "selections",
+      scope: scope,
+      childId: id,
+      shared: true,
+      includeChildSelections: true,
+    });
   }
   return res;
 }
@@ -41,14 +44,98 @@ export function addConstraint(node: any, constraint: any) {
   node.constraints.push(constraint);
 }
 
+export async function hasNotOption(
+  field: "hasNotOption" | "armyHasNotOption",
+  importer: T9AImporter,
+  node: ArmyBookOption,
+  res: Record<string, any>
+) {
+  let foundCondition = false;
+  if (node[field] && node[field].length) {
+    const modifier: BSIModifier = {
+      type: "set",
+      value: true,
+      field: "hidden",
+      localConditionGroups: [],
+      conditionGroups: [
+        {
+          type: "or",
+          conditions: [],
+          conditionGroups: [],
+        },
+      ],
+    };
+
+    res.hidden = false;
+    if (!res.modifiers) {
+      res.modifiers = [];
+    }
+
+    for (let opt of node[field]) {
+      let hasOptionBlock = opt;
+      if (typeof hasOptionBlock === "string") {
+        hasOptionBlock = {
+          refs: [hasOptionBlock],
+          amount: 1,
+        };
+      }
+
+      const orElement: BSIConditionGroup = {
+        type: "or",
+        conditions: [],
+        conditionGroups: [],
+      };
+
+      for (let ref of hasOptionBlock.refs) {
+        // if the node has itself as a ref, we insert a simple constraint, not a modifier
+        if (node.refs) {
+          if (node.refs.map((elt) => convertRef(elt)).find((r) => r.ref == ref)) {
+            if (!res.constraints) res.constraints = [];
+            const constraint: BSIConstraint = {
+              id: generateBattlescribeId(),
+              type: "max",
+              scope: field == "armyHasNotOption" ? "roster" : "unit",
+              field: "selections",
+              value: hasOptionBlock.amount,
+            };
+            res.constraints.push(constraint);
+            continue;
+          }
+        }
+
+        const refs = importer.refCatalogue[ref];
+        let id = refs?.category_id || refs?.option_id;
+
+        const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
+        if (cat) {
+          id = cat.id;
+        }
+
+        if (id) {
+          const cond = insertIdConditions(id, field === "hasNotOption" ? "unit" : "roster");
+          orElement.conditionGroups?.push(cond);
+          foundCondition = true;
+        }
+      }
+
+      if (modifier.conditionGroups && modifier.conditionGroups[0].conditionGroups) {
+        modifier.conditionGroups[0].conditionGroups.push(orElement);
+      }
+    }
+
+    if (foundCondition) {
+      res.modifiers.push(modifier);
+    }
+  }
+}
+
 export async function hasOption(
   field: "hasOption" | "armyHasOption",
   importer: T9AImporter,
   node: ArmyBookOption,
-  scope: ArmyBookOption,
   res: Record<string, any>
 ) {
-  if (node[field]) {
+  if (node[field] && node[field].length) {
     const modifier: BSIModifier = {
       type: "set",
       value: false,
@@ -86,37 +173,17 @@ export async function hasOption(
 
       for (let ref of hasOptionBlock.refs) {
         const refs = importer.refCatalogue[ref];
-        if (refs) {
-          if (refs.category_id == null) {
-            const cond = insertIdConditions([refs.option_id], scope.option_id);
-            orElement.conditionGroups?.push(cond);
-          } else {
-            // Create a constraint on the category
-            const cond: BSICondition = {
-              type: "atLeast",
-              value: refs.amount,
-              field: "selections",
-              scope: field === "hasOption" ? "unit" : "roster",
-              childId: refs.category_id,
-              shared: true,
-              includeChildSelections: true,
-            };
-            const categoryCatalogue = importer.catalogues.find((elt) => elt.name === "Categories");
-            if (categoryCatalogue) {
-              const category = categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
-              const existing = category?.constraints || [];
+        let id = refs?.category_id || refs?.option_id;
 
-              if (existing.length) {
-                if (existing[0].value != cond.value || existing[0].scope != cond.scope) {
-                  console.error(
-                    `A condition already exists for category ${refs.category_id} with a different amount or scope`
-                  );
-                }
-              } else {
-                await $store.add(cond, "constraints", category as any);
-              }
-            }
-          }
+        const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
+        if (cat) {
+          id = cat.id;
+        }
+
+        //  if (refs.category_id == null) {
+        if (id) {
+          const cond = insertIdConditions(id, field === "hasOption" ? "unit" : "roster");
+          orElement.conditionGroups?.push(cond);
         }
       }
 
@@ -152,6 +219,57 @@ export async function initConstraintCategories(importer: T9AImporter) {
         );
         item.category_id = found?.id;
       }
+    }
+  }
+}
+
+export function leafMaxCost(importer: T9AImporter, node: ArmyBookOption, res: Record<string, any>) {
+  // set leaf max cost on the node
+  const leafMaxCost = node.leafMaxCost;
+  if (leafMaxCost) {
+    const constraint: BSIConstraint = {
+      id: generateBattlescribeId(),
+      field: specialCostType(),
+      value: leafMaxCost,
+      scope: "self",
+      includeChildSelections: true,
+      type: "max",
+    };
+    res.constraints.push(constraint);
+    res.comment = "leafMaxCost";
+  }
+
+  if (node.countAsLeaf != null) {
+    res.comment = `leaf:${node.countAsLeaf}`;
+  }
+}
+
+function isLeaf(node: EditorBase) {
+  const com = node.comment;
+
+  if (com?.startsWith("leaf:")) {
+    const leaf = com.split(":")[1];
+    if (leaf === "true") return true;
+    if (leaf === "false") return false;
+  }
+
+  let parent = node.parent;
+  while (parent) {
+    if (parent.comment === "leafMaxCost") return true;
+    parent = parent.parent;
+  }
+
+  return false;
+}
+
+export async function setSpecialEquipment(node: EditorBase) {
+  // set special equipment cost
+  if (isLeaf(node)) {
+    const cost = node.target?.costs?.find((elt) => elt.name === "pts");
+
+    if (cost) {
+      const newCost = specialCost(cost.value);
+      await $store.add(newCost, "costs", node);
     }
   }
 }

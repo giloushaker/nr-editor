@@ -1,9 +1,16 @@
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { ArmyBookArmy, ArmyBookBook, ArmyBookOption, ArmyBookUnit } from "./army_book_interfaces";
 import { catalogueAllRefs, convertRef, T9ARef } from "./refs";
 import { cost } from "../t9a/costs";
-import { addConstraint, hasOption, initConstraintCategories } from "./constraints";
-import { BSICategoryLink, BSIEntryLink } from "~/assets/shared/battlescribe/bs_types";
+import {
+  addConstraint,
+  hasNotOption,
+  hasOption,
+  initConstraintCategories,
+  leafMaxCost,
+  setSpecialEquipment,
+} from "./constraints";
+import { BSICategoryLink } from "~/assets/shared/battlescribe/bs_types";
 import { toTitleCaseWords } from "./util";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { addDictionnaryEntries } from "./dictionnary";
@@ -36,11 +43,13 @@ export default class T9AImporter {
   gst: Catalogue;
   catalogue: Catalogue;
   specialCatalogue: Catalogue;
+  categoryCatalogue: Catalogue;
 
   constructor(catalogues: Catalogue[], book: string) {
     this.book = JSON.parse((book || "").replace(/ /g, "")) as ArmyBookBook;
     this.catalogue = catalogues.find((elt) => elt.name === this.book.name)!;
     this.specialCatalogue = catalogues.find((elt) => elt.name === "Special Items")!;
+    this.categoryCatalogue = catalogues.find((elt) => elt.name === "Categories")!;
     this.gst = catalogues[0];
     this.catalogues = catalogues;
     if (!this.catalogue) throw "Unable to find catalogue";
@@ -50,6 +59,9 @@ export default class T9AImporter {
 
   public async import() {
     await initConstraintCategories(this);
+
+    await this.cleanup();
+    await this.insertArmyForceEntry();
     await this.addDictionnary();
     await this.addUnits();
   }
@@ -63,6 +75,7 @@ export default class T9AImporter {
       selectionEntries: [],
       selectionEntryGroups: [],
       constraints: [],
+      modifiers: [],
       collective: true,
       categoryLinks: [] as BSICategoryLink[],
     };
@@ -141,33 +154,60 @@ export default class T9AImporter {
     addDictionnaryEntries(this.catalogue.sharedSelectionEntryGroups || [], opt, childGroup);
     addDictionnaryEntries(this.specialCatalogue.sharedSelectionEntryGroups || [], opt, childGroup);
 
-    // hasOption Constraints
-    if (parentUnit) {
-      hasOption("hasOption", this, opt, parentUnit, res);
+    // add hasOption Constraints
+    hasOption("hasOption", this, opt, res);
+    hasOption("armyHasOption", this, opt, res);
+    hasNotOption("hasNotOption", this, opt, res);
+    hasNotOption("armyHasNotOption", this, opt, res);
+
+    leafMaxCost(this, opt, res);
+
+    // Add Category Links from Constraint Categories
+    for (let ref of opt.refs || []) {
+      let actualRef = convertRef(ref);
+      const category = this.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === actualRef.ref);
+
+      if (category) {
+        const link: BSICategoryLink = {
+          name: "",
+          id: generateBattlescribeId(),
+          targetId: category.id,
+          hidden: false,
+        };
+        res.categoryLinks.push(link);
+      }
     }
 
     // Convertis les child soit en selectionEntry ou en selectionEntryGroup
     for (let child of opt.options || []) {
       const converted = this.convertOption(child, parentArmy, parentUnit);
-      if (child.type == undefined || child.type === "group") {
-        childGroup.selectionEntryGroups.push(converted);
-      } else {
-        childGroup.selectionEntries.push(converted);
-      }
-    }
 
-    // Add Category Links from Constraint Categories
-    for (let ref of opt.refs || []) {
-      let actualRef = convertRef(ref);
-      const catalogueRef = this.refCatalogue[actualRef.ref];
-      if (catalogueRef && catalogueRef.category_id) {
-        const link: BSICategoryLink = {
-          name: "",
-          id: generateBattlescribeId(),
-          targetId: catalogueRef.category_id,
-          hidden: false,
-        };
-        res.categoryLinks.push(link);
+      // Make a link for shared items
+      if (child.shared) {
+        // Find the target in the special catalogue
+        for (let group of this.specialCatalogue.sharedSelectionEntryGroups || []) {
+          for (let entry of group.selectionEntries || []) {
+            if (entry.name === converted.name) {
+              // Found
+              converted.targetId = entry.id;
+              break;
+            }
+          }
+          if (converted.targetId) break;
+        }
+
+        if (converted.targetId) {
+          if (!childGroup.entryLinks) childGroup.entryLinks = [];
+          childGroup.entryLinks.push(converted);
+        } else {
+          console.log("Could not find target for shared item: " + converted.name);
+        }
+      } else {
+        if (child.type == undefined || child.type === "group") {
+          childGroup.selectionEntryGroups.push(converted);
+        } else {
+          childGroup.selectionEntries.push(converted);
+        }
       }
     }
 
@@ -184,7 +224,7 @@ export default class T9AImporter {
         for (let ref of elt.refs) {
           const opt: ArmyBookOption = {
             ...elt,
-            option_id: `dict:${elt.refs.join("-")}`,
+            option_id: `dictoptionid12345678910:${elt.refs.join("-")}`,
             name: toTitleCaseWords(ref),
             optionsLabel: toTitleCaseWords(ref),
           };
@@ -200,7 +240,7 @@ export default class T9AImporter {
           // if no existing group, create one
           if (root == null) {
             const converted = this.convertOption(opt, this.book.army ? this.book.army[0] : null);
-            await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
+            const added = await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
           } else {
             // Else add entries to the existing group
             for (let child of opt.options || []) {
@@ -220,23 +260,117 @@ export default class T9AImporter {
     // Add Units
     if (army) {
       for (let cat of army.options) {
+        const catRef = cat.refs ? cat.refs[0] : "?";
+
+        // Add Category entry to the book if it does not exist
+        let primaryCategory = this.gst.categoryEntries?.find((elt) => elt.comment === catRef);
+        if (!primaryCategory) primaryCategory = this.catalogue.categoryEntries?.find((elt) => elt.comment === catRef);
+        if (!primaryCategory && cat.refs) {
+          const newCategory: any = {
+            comment: cat.refs[0],
+            id: generateBattlescribeId(),
+            name: cat.name,
+            hidden: false,
+          };
+          primaryCategory = await $store.add(newCategory, "categoryEntries", this.catalogue as any);
+          if (primaryCategory) {
+            const categoryLink = {
+              name: primaryCategory.name,
+              hidden: false,
+              id: generateBattlescribeId(),
+              targetId: primaryCategory.id,
+            };
+
+            const force = this.catalogue.forceEntries?.find((elt) => elt.name === "Army");
+            if (force) {
+              await $store.add(categoryLink, "categoryLinks", force as any);
+            }
+          }
+        }
+
         for (let unit of cat.options) {
           const converted = this.convertOption(unit, army);
           converted.type = "unit";
-          const elt = await $store.add(converted, "sharedSelectionEntries", this.catalogue as any);
+          const elt = (await $store.add(converted, "sharedSelectionEntries", this.catalogue as any)) as EditorBase;
           if (!cat.invisible) {
-            const link: BSIEntryLink = {
+            const link: any = {
               type: "selectionEntry",
               costs: [],
               hidden: false,
               name: elt.name,
               targetId: elt.id,
               id: generateBattlescribeId(),
+              categoryLinks: [],
             };
+
+            elt.forEach(async (elt) => {
+              await setSpecialEquipment(elt as EditorBase);
+            });
+
+            // Add Primary Category
+
+            if (primaryCategory) {
+              link.categoryLinks.push({
+                name: "",
+                id: generateBattlescribeId(),
+                targetId: primaryCategory.id,
+                hidden: false,
+                primary: true,
+              });
+            }
             await $store.add(link, "entryLinks", this.catalogue as any);
           }
         }
       }
+    }
+  }
+
+  async insertArmyForceEntry() {
+    const node = {
+      name: "Army",
+      id: generateBattlescribeId(),
+      hidden: false,
+      categoryLinks: [
+        {
+          name: "Characters",
+          hidden: false,
+          id: generateBattlescribeId(),
+          targetId: "953d-22cd-7ee1-36dc",
+        },
+        {
+          name: "Core Units",
+          hidden: false,
+          id: generateBattlescribeId(),
+          targetId: "4bcd-01c8-ce5e-7108",
+        },
+        {
+          name: "Special",
+          hidden: false,
+          id: generateBattlescribeId(),
+          targetId: "f8f1-3d4f-12bf-73cd",
+        },
+      ],
+    };
+    if (this.catalogue.name !== "Special Items") {
+      await $store.add(node, "forceEntries", this.catalogue as any);
+    }
+  }
+
+  async cleanup() {
+    const toDelete = [
+      "sharedSelectionEntries",
+      "selectionEntries",
+      "forceEntries",
+      "categoryEntries",
+      "sharedSelectionEntryGroups",
+      "selectionEntryLinks",
+      "sharedSelectionEntryLinks",
+      "entryLinks",
+    ];
+
+    for (let elt of toDelete) {
+      const node = (this.catalogue as any)[elt] as EditorBase[];
+      await $store.remove(node);
     }
   }
 }
