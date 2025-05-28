@@ -943,7 +943,7 @@ export const useEditorStore = defineStore("editor", {
     /**
      * Remove the current selections.
      */
-    remove(entry_or_entries?: MaybeArray<Base>) {
+    async remove(entry_or_entries?: MaybeArray<Base>) {
       let foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
@@ -985,7 +985,7 @@ export const useEditorStore = defineStore("editor", {
           this.changed(entry);
         }
       };
-      this.do_action("remove", undo, redo);
+      await this.do_action("remove", undo, redo);
       this.unselect();
     },
     /**
