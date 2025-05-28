@@ -91,6 +91,12 @@ jobs:
 
       - name: Create release
         run: npx electron-builder --${{ matrix.platform_flag }} --publish=always
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}-release
+          path: .release/*
 
   build-ghpages:
     runs-on: ubuntu-latest
