@@ -92,6 +92,9 @@ jobs:
       - name: Create release
         run: npx electron-builder --${{ matrix.platform_flag }} --publish=always
 
+      - name: Display current folder
+        run: pwd
+        
       - name: List files in .release
         run: ls -l .release
   
@@ -99,7 +102,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-release
-          path: .release/**/*
+          path: .release/*
 
   build-ghpages:
     runs-on: ubuntu-latest
