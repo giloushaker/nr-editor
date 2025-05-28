@@ -50,7 +50,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://www.newrecruit.eu/downloads"
+        "url": "https://www.newrecruit.eu/downloads/editor"
       }
     ],
     "nsis": {
