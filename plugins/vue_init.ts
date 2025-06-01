@@ -30,4 +30,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
   const settings = useSettingsStore();
   settings.init();
+
+  // put null in the $optionStore to avoid warning
+  nuxtApp.vueApp.config.globalProperties.$optionStore = null;
 });
