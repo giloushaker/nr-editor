@@ -12,6 +12,7 @@ import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
 import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 import t9a_import from "~/default-scripts/nrt9a/import_json";
+import t9a_rarity from "~/default-scripts/nrt9a/rarity_script";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -68,6 +69,7 @@ export const useScriptsStore = defineStore("scripts", {
       testScripts.push(pasteEquipment);
       return [
         t9a_import,
+        t9a_rarity,
         fixlinknames,
         fixprofiles,
         listrefs,

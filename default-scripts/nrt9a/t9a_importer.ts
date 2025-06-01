@@ -11,10 +11,11 @@ import {
   setSpecialEquipment,
 } from "./constraints";
 import { BSICategoryLink } from "~/assets/shared/battlescribe/bs_types";
-import { toTitleCaseWords } from "./util";
+import { cleanup, toTitleCaseWords } from "./util";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { addDictionnaryEntries } from "./dictionnary";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import { findRule } from "./rule_importer";
 
 const sortIndex: Record<string, number> = {
   Models: 1,
@@ -45,8 +46,8 @@ export default class T9AImporter {
   specialCatalogue: Catalogue;
   categoryCatalogue: Catalogue;
 
-  constructor(catalogues: Catalogue[], book: string) {
-    this.book = JSON.parse((book || "").replace(/ /g, "")) as ArmyBookBook;
+  constructor(catalogues: Catalogue[], book: any) {
+    this.book = book;
     this.catalogue = catalogues.find((elt) => elt.name === this.book.name)!;
     this.specialCatalogue = catalogues.find((elt) => elt.name === "Special Items")!;
     this.categoryCatalogue = catalogues.find((elt) => elt.name === "Categories")!;
@@ -58,18 +59,20 @@ export default class T9AImporter {
   }
 
   public async import() {
-    await initConstraintCategories(this);
+    await cleanup(this.catalogue);
 
-    await this.cleanup();
+    await initConstraintCategories(this);
     await this.insertArmyForceEntry();
     await this.addDictionnary();
     await this.addUnits();
+
+    //await armyConstraints(this);
   }
 
   convertOption(opt: ArmyBookOption, parentArmy: ArmyBookArmy | null, parentUnit?: ArmyBookUnit): Record<string, any> {
     // Base Fields
     const res: any = {
-      name: opt.name,
+      name: opt.name || "",
       id: opt.option_id,
       costs: cost(opt.cost),
       selectionEntries: [],
@@ -78,11 +81,14 @@ export default class T9AImporter {
       modifiers: [],
       collective: true,
       categoryLinks: [] as BSICategoryLink[],
+      infoLinks: [],
+      type: "upgrade",
+      hidden: false,
     };
 
     // Name
     if (opt.type === "group" || opt.type == undefined) {
-      res.name = opt.optionsLabel || opt.name;
+      res.name = opt.optionsLabel || opt.name || "";
     }
 
     // Max 1 for checkboxes
@@ -105,6 +111,7 @@ export default class T9AImporter {
 
     if (res.name === "Number" && parentUnit) {
       res.name = parentUnit.name;
+      res.type = "model";
     }
 
     // Sort index for groups
@@ -118,12 +125,12 @@ export default class T9AImporter {
     if (opt.type == "check" || opt.type == "numeric") {
       if (opt.options?.length || opt.optionsDict?.length) {
         childGroup = {
-          name: opt.optionsLabel || opt.name,
+          name: opt.optionsLabel || opt.name || "",
           selectionEntries: [],
           selectionEntryGroups: [],
           constraints: [],
         };
-        res.selectionEntryGroups.push(childGroup);
+        res.selectionEntryGroups!.push(childGroup);
       }
     }
 
@@ -162,6 +169,10 @@ export default class T9AImporter {
 
     leafMaxCost(this, opt, res);
 
+    // Rarity
+    if (opt.rarity) {
+      res.comment = `Rarity: ${opt.rarity}`;
+    }
     // Add Category Links from Constraint Categories
     for (let ref of opt.refs || []) {
       let actualRef = convertRef(ref);
@@ -206,11 +217,23 @@ export default class T9AImporter {
         if (child.type == undefined || child.type === "group") {
           childGroup.selectionEntryGroups.push(converted);
         } else {
-          childGroup.selectionEntries.push(converted);
+          if (converted.targetId == null) {
+            childGroup.selectionEntries.push(converted);
+          } else {
+            if (!childGroup.entryLinks) childGroup.entryLinks = [];
+            childGroup.entryLinks.push(converted);
+          }
         }
       }
     }
 
+    // Add rule links
+    const rule = findRule(this.catalogues, this.book.name, res.name);
+    if (rule) {
+      res.targetId = rule.targetId;
+      res.type = "selectionEnry";
+      // res.infoLinks.push(rule);
+    }
     return res;
   }
 
@@ -240,7 +263,7 @@ export default class T9AImporter {
           // if no existing group, create one
           if (root == null) {
             const converted = this.convertOption(opt, this.book.army ? this.book.army[0] : null);
-            const added = await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
+            await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
           } else {
             // Else add entries to the existing group
             for (let child of opt.options || []) {
@@ -289,7 +312,7 @@ export default class T9AImporter {
         }
 
         for (let unit of cat.options) {
-          const converted = this.convertOption(unit, army);
+          const converted = this.convertOption(unit, army, unit);
           converted.type = "unit";
           const elt = (await $store.add(converted, "sharedSelectionEntries", this.catalogue as any)) as EditorBase;
           if (!cat.invisible) {
@@ -353,24 +376,6 @@ export default class T9AImporter {
     };
     if (this.catalogue.name !== "Special Items") {
       await $store.add(node, "forceEntries", this.catalogue as any);
-    }
-  }
-
-  async cleanup() {
-    const toDelete = [
-      "sharedSelectionEntries",
-      "selectionEntries",
-      "forceEntries",
-      "categoryEntries",
-      "sharedSelectionEntryGroups",
-      "selectionEntryLinks",
-      "sharedSelectionEntryLinks",
-      "entryLinks",
-    ];
-
-    for (let elt of toDelete) {
-      const node = (this.catalogue as any)[elt] as EditorBase[];
-      await $store.remove(node);
     }
   }
 }

@@ -5,7 +5,6 @@ import { toTitleCaseWords } from "./util";
 import { convertRef } from "./refs";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { specialCost, specialCostType } from "../t9a/costs";
-import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 function insertIdConditions(id: string, scope: string): BSIConditionGroup {
@@ -97,6 +96,7 @@ export async function hasNotOption(
               scope: field == "armyHasNotOption" ? "roster" : "unit",
               field: "selections",
               value: hasOptionBlock.amount,
+              includeChildSelections: true,
             };
             res.constraints.push(constraint);
             continue;
@@ -272,4 +272,8 @@ export async function setSpecialEquipment(node: EditorBase) {
       await $store.add(newCost, "costs", node);
     }
   }
+}
+
+export async function armyConstraints(importer: T9AImporter) {
+  hasNotOption("armyHasNotOption", importer, importer.book.army[0], {});
 }

@@ -1,3 +1,5 @@
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+
 export function toTitleCaseWords(str: string): string {
   if (str.includes("-")) {
     // kebab-case or similar
@@ -17,7 +19,22 @@ export function toTitleCaseWords(str: string): string {
   }
 }
 
-// Examples:
-console.log(toTitleCaseWords("camelCaseToWords")); // "Camel Case To Words"
-console.log(toTitleCaseWords("kebab-case-to-words")); // "Kebab Case To Words"
-console.log(toTitleCaseWords("snake_case_to_words")); // "Snake Case To Words"
+export async function cleanup(catalogue: Catalogue, gst = false) {
+  const toDelete = [
+    "sharedSelectionEntries",
+    "selectionEntries",
+    "forceEntries",
+    "sharedSelectionEntryGroups",
+    "selectionEntryLinks",
+    "sharedSelectionEntryLinks",
+    "entryLinks",
+    "sharedRules",
+  ];
+
+  if (!gst) toDelete.push("categoryEntries");
+
+  for (let elt of toDelete) {
+    const node = (catalogue as any)[elt] as EditorBase[];
+    await $store.remove(node);
+  }
+}

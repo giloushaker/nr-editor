@@ -13,13 +13,17 @@ export function addDictionnaryEntries(groups: Group[], opt: ArmyBookOption, res:
         if (refs.includes(dictRef)) {
           if (!res.entryLinks) res.entryLinks = [];
 
-          for (let item of sharedGroup.selectionEntries || []) {
-            res.entryLinks.push({
-              import: true,
-              hidden: false,
-              targetId: item.id,
-              type: "selectionEntry",
-            });
+          const gr = [sharedGroup.selectionEntries || [], sharedGroup.entryLinks || []];
+          for (let shgr of gr) {
+            for (let item of shgr) {
+              res.entryLinks.push({
+                import: true,
+                hidden: false,
+                targetId: item.targetId || item.id,
+                type: "selectionEntry",
+                costs: item.costs,
+              });
+            }
           }
         }
       }
