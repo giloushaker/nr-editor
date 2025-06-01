@@ -91,6 +91,19 @@ jobs:
 
       - name: Create release
         run: npx electron-builder --${{ matrix.platform_flag }} --publish=always
+ 
+      - name: Rename output folder
+        run: mv .release electrondist
+  
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-release
+          path: |
+              electrondist/*.yml
+              electrondist/*.AppImage
+              electrondist/*.exe
+              electrondist/*.dmg
 
   build-ghpages:
     runs-on: ubuntu-latest

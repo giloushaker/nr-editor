@@ -304,4 +304,8 @@ export default {
   border-top: 5px solid #000;
   filter: var(--image-filter);
 }
+
+.autocomplete-input {
+  padding-left: 5px;
+}
 </style>

@@ -77,7 +77,7 @@ export default defineComponent({
       const catalogue = this.item.getCatalogue();
       const costs = this.item.getCosts();
       for (const cost of costs) {
-        const name = catalogue.findOptionById(cost.typeId)?.name || cost.name || cost.typeId;
+        const name = catalogue?.findOptionById(cost.typeId)?.name || cost.name || cost.typeId;
         if (name) {
           result.push({
             name: name,

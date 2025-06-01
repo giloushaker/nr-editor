@@ -164,6 +164,7 @@ export default {
   background-color: var(--input-background);
   width: 100% !important;
   padding-right: 30px;
+  padding-left: 5px;
 }
 
 .iconselect-input::before {

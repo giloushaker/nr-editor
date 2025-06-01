@@ -76,7 +76,7 @@ import {
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { EditorUIState, useEditorUIState } from "./editorUIState";
-import { cataloguesdexie as db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { toRaw } from "vue";
@@ -943,7 +943,7 @@ export const useEditorStore = defineStore("editor", {
     /**
      * Remove the current selections.
      */
-    remove(entry_or_entries?: MaybeArray<Base>) {
+    async remove(entry_or_entries?: MaybeArray<Base>) {
       let foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
@@ -985,7 +985,7 @@ export const useEditorStore = defineStore("editor", {
           this.changed(entry);
         }
       };
-      this.do_action("remove", undo, redo);
+      await this.do_action("remove", undo, redo);
       this.unselect();
     },
     /**
@@ -1389,6 +1389,7 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
+        // @ts-ignore
         ...this.fix_object(key, data, catalogue),
         ...data,
       };
@@ -1539,8 +1540,10 @@ export const useEditorStore = defineStore("editor", {
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
         setPrototypeRecursive({ [catalogueKey]: copy });
+        // @ts-ignore
         if (!to[catalogueKey]) to[catalogueKey] = [];
 
+        // @ts-ignore
         to[catalogueKey]!.push(copy);
         onAddEntry(copy, to, to, this.get_system(to.getSystemId()));
         this.changed(copy);
@@ -2000,20 +2003,24 @@ export const useEditorStore = defineStore("editor", {
       return { system, catalogue: loaded };
     },
     // Backwards dependency
-    //@ts-ignore
+
     add_child(...args: any[]) {
+      // @ts-ignore
       return this.add_node(...args);
     },
-    //@ts-ignore
+
     del_child(...args: any[]) {
+      // @ts-ignore
       return this.del_node(...args);
     },
-    //@ts-ignore
+
     edit_child(...args: any[]) {
+      // @ts-ignore
       return this.edit_node(...args);
     },
-    //@ts-ignore
+
     create_child(...args: any[]) {
+      // @ts-ignore
       return this.create_node(...args);
     },
     label(node: EditorBase, extra = false) {

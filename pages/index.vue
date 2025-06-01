@@ -92,7 +92,7 @@ import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
 import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
-import { cataloguesdexie as db } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { GithubIntegration } from "~/assets/shared/battlescribe/github";
 

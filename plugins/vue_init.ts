@@ -7,7 +7,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 import * as helpers from "~/assets/shared/battlescribe/bs_helpers";
 import * as node from "~/electron/node_helpers";
 import { notify } from "@kyvg/vue3-notification";
-import { cataloguesdexie } from "~/assets/shared/battlescribe/cataloguesdexie";
+import { db as cataloguesdexie } from "~/assets/shared/battlescribe/cataloguesdexie";
 
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.use(vClickOutside);
@@ -30,4 +30,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
   const settings = useSettingsStore();
   settings.init();
+
+  // put null in the $optionStore to avoid warning
+  nuxtApp.vueApp.config.globalProperties.$optionStore = null;
 });
