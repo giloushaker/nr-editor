@@ -226,7 +226,7 @@ export default defineComponent({
     allAffects(): Array<any> {
       return [
         {
-          name: "Entries",
+          name: " Entries ",
           value: "entries",
         },
         ...[...this.catalogue.iterateProfileTypes()].map((type) => ({

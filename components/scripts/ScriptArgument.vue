@@ -45,6 +45,7 @@
       </template>
       <template v-else-if="type === 'boolean' || type === 'toggle'">
         <input type="checkbox" v-model="value" />
+        <label>{{ arg.name }}</label>
       </template>
       <template v-else-if="type === 'file'">
         <input type="file" @input="onFileSelected" />

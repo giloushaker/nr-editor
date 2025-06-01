@@ -306,7 +306,6 @@ export default {
 }
 
 .autocomplete-input {
-  display: grid;
   padding-left: 5px;
 }
 </style>
