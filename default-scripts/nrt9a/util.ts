@@ -35,6 +35,8 @@ export async function cleanup(catalogue: Catalogue, gst = false) {
 
   for (let elt of toDelete) {
     const node = (catalogue as any)[elt] as EditorBase[];
-    await $store.remove(node);
+    if (node) {
+      await $store.remove(node);
+    }
   }
 }

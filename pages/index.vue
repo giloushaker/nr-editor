@@ -22,9 +22,8 @@
     <SplitView showMiddle showRight :rightWidth="400" id="systemView">
       <template #middle>
         <div class="scrollable">
-          <fieldset v-for="gst in systems">
-            <legend>
-              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+          <fieldset v-for="gst in systems" class="section">
+            <legend class="systemLegend">
               <NuxtLink :to="`/search/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/search.png" title="Search" />
               </NuxtLink>
@@ -39,6 +38,7 @@
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
+              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
             </legend>
             <IconContainer
               :items="systemAndCatalogues(gst)"
@@ -366,5 +366,11 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 
 .icon {
   padding: 1px;
+}
+
+.systemLegend {
+  img {
+    vertical-align: middle;
+  }
 }
 </style>

@@ -4,13 +4,14 @@ import { catalogueAllRefs, convertRef, T9ARef } from "./refs";
 import { cost } from "../t9a/costs";
 import {
   addConstraint,
+  armyConstraints,
   hasNotOption,
   hasOption,
   initConstraintCategories,
   leafMaxCost,
   setSpecialEquipment,
 } from "./constraints";
-import { BSICategoryLink } from "~/assets/shared/battlescribe/bs_types";
+import { BSICategoryLink, BSIInfoLink } from "~/assets/shared/battlescribe/bs_types";
 import { cleanup, toTitleCaseWords } from "./util";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { addDictionnaryEntries } from "./dictionnary";
@@ -66,7 +67,7 @@ export default class T9AImporter {
     await this.addDictionnary();
     await this.addUnits();
 
-    //await armyConstraints(this);
+    await armyConstraints(this);
   }
 
   convertOption(opt: ArmyBookOption, parentArmy: ArmyBookArmy | null, parentUnit?: ArmyBookUnit): Record<string, any> {
@@ -85,6 +86,9 @@ export default class T9AImporter {
       type: "upgrade",
       hidden: false,
     };
+
+    // Add comment to identify shared items from special.json
+    if (opt.shared && this.catalogue.name === "Special Items") res.comment = "shared item";
 
     // Name
     if (opt.type === "group" || opt.type == undefined) {
@@ -194,7 +198,7 @@ export default class T9AImporter {
       const converted = this.convertOption(child, parentArmy, parentUnit);
 
       // Make a link for shared items
-      if (child.shared) {
+      if (child.shared && child.cost) {
         // Find the target in the special catalogue
         for (let group of this.specialCatalogue.sharedSelectionEntryGroups || []) {
           for (let entry of group.selectionEntries || []) {
@@ -230,9 +234,23 @@ export default class T9AImporter {
     // Add rule links
     const rule = findRule(this.catalogues, this.book.name, res.name);
     if (rule) {
-      res.targetId = rule.targetId;
-      res.type = "selectionEnry";
-      // res.infoLinks.push(rule);
+      if (parentUnit) {
+        res.targetId = rule.id;
+        res.type = "selectionEntry";
+      } else {
+        res.infoLinks.push(
+          ...(rule.infoLinks || []).map((link) => {
+            const res: BSIInfoLink = {
+              hidden: false,
+              targetId: link.targetId,
+              name: link.name,
+              id: link.id,
+              type: link.type,
+            };
+            return res;
+          })
+        );
+      }
     }
     return res;
   }
@@ -247,7 +265,7 @@ export default class T9AImporter {
         for (let ref of elt.refs) {
           const opt: ArmyBookOption = {
             ...elt,
-            option_id: `dictoptionid12345678910:${elt.refs.join("-")}`,
+            option_id: generateBattlescribeId(),
             name: toTitleCaseWords(ref),
             optionsLabel: toTitleCaseWords(ref),
           };
@@ -263,6 +281,7 @@ export default class T9AImporter {
           // if no existing group, create one
           if (root == null) {
             const converted = this.convertOption(opt, this.book.army ? this.book.army[0] : null);
+            converted.comment = `dict:${elt.refs.join("-")}`;
             await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
           } else {
             // Else add entries to the existing group
@@ -311,6 +330,7 @@ export default class T9AImporter {
           }
         }
 
+        // Add Units
         for (let unit of cat.options) {
           const converted = this.convertOption(unit, army, unit);
           converted.type = "unit";
@@ -331,7 +351,6 @@ export default class T9AImporter {
             });
 
             // Add Primary Category
-
             if (primaryCategory) {
               link.categoryLinks.push({
                 name: "",
