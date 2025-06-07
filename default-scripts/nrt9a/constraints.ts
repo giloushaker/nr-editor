@@ -6,37 +6,7 @@ import { convertRef } from "./refs";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { specialCost, specialCostType } from "../t9a/costs";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-
-function insertIdConditions(id: string, scope: string, amt: number): BSIConditionGroup {
-  const res: BSIConditionGroup = {
-    type: "or",
-    conditions: [],
-    conditionGroups: [],
-  };
-
-  if (res.conditions) {
-    res.conditions.push({
-      type: "instanceOf",
-      value: amt,
-      field: "selections",
-      scope: scope,
-      childId: id,
-      shared: true,
-      includeChildSelections: true,
-    });
-
-    res.conditions.push({
-      type: "atLeast",
-      value: amt,
-      field: "selections",
-      scope: scope,
-      childId: id,
-      shared: true,
-      includeChildSelections: true,
-    });
-  }
-  return res;
-}
+import { getConditionFromHasOption, insertIdConditions } from "./conditions";
 
 export function addConstraint(node: any, constraint: any) {
   constraint.id = `${node.id}-constraint-${node.constraints.length}`;
@@ -103,10 +73,8 @@ export async function hasNotOption(
           }
         }
 
-        // else : example hasNotOption: [mount], then we find the category and add a constraint on that category
         const refs = importer.refCatalogue[ref];
         let id = refs?.category_id || refs?.option_id;
-
         const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
         if (cat) {
           id = cat.id;
@@ -172,21 +140,8 @@ export async function hasOption(
         conditionGroups: [],
       };
 
-      for (let ref of hasOptionBlock.refs) {
-        const refs = importer.refCatalogue[ref];
-        let id = refs?.category_id || refs?.option_id;
-
-        const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
-        if (cat) {
-          id = cat.id;
-        }
-
-        //  if (refs.category_id == null) {
-        if (id) {
-          const cond = insertIdConditions(id, field === "hasOption" ? "unit" : "roster", 1);
-          orElement.conditionGroups?.push(cond);
-        }
-      }
+      const conds = getConditionFromHasOption(importer, hasOptionBlock, field);
+      orElement.conditionGroups?.push(...conds);
 
       if (modifier.conditionGroups && modifier.conditionGroups[0].conditionGroups) {
         modifier.conditionGroups[0].conditionGroups.push(orElement);
@@ -235,6 +190,7 @@ export function leafMaxCost(importer: T9AImporter, node: ArmyBookOption, res: Re
       scope: "self",
       includeChildSelections: true,
       type: "max",
+      comment: "leafMaxCost",
     };
     res.constraints.push(constraint);
     res.comment = "leafMaxCost";

@@ -18,13 +18,19 @@ export default {
       description: "Json Book file for t9a",
     },
     {
+      name: "special",
+      type: "file",
+      optional: true,
+      description: "Special.json for t9a",
+    },
+    {
       name: "cleanup",
       type: "boolean",
       description: "Cleanup Only",
     },
   ],
 
-  async run(catalogues: Catalogue[], book: string, clean: boolean) {
+  async run(catalogues: Catalogue[], book: string, special: string, clean: boolean) {
     catalogues.map((elt) => elt.processForEditor());
 
     if (clean) {
@@ -37,7 +43,11 @@ export default {
 
     const json = JSON.parse((book || "").replace(/ /g, ""));
     if (json.name != "Unit Stats" && json.name != "Rule Definitions") {
-      const importer = new T9AImporter(catalogues, json);
+      let specialJson;
+      if (special) {
+        specialJson = JSON.parse((special || "").replace(/ /g, ""));
+      }
+      const importer = new T9AImporter(catalogues, json, specialJson);
 
       importer.import();
     }
