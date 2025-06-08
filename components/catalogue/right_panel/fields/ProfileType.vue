@@ -1,39 +1,12 @@
 <template>
-  <span>
-    <fieldset>
+  <div>
+    <fieldset class="section">
       <legend> Profiles Order </legend><button class="bouton inline" @click="orderPopup = true">Change</button>
     </fieldset>
-    <fieldset>
-      <legend>Profil Type</legend>
-      <h3>Characteristic Types</h3>
-      <div>
-        <select size="2" v-model="selected">
-          <option :value="t.id" v-for="t of item.characteristicTypes">
-            {{ t.name }}
-          </option>
-        </select>
-        <div class="section add">
-          <button class="bouton" @click="add_characteristic"> <img src="/assets/icons/iconeplus.png" /> Add </button>
-          <button class="bouton" @click="del_characteristic"> <img src="/assets/icons/trash.png" /> Delete </button>
-        </div>
-      </div>
-      <h3
-        >Attribute Types
-        <img src="/assets/icons/i.png" class="align-text-bottom clickable hover-darken" @click="attributesPopup = true"
-      /></h3>
-      <div>
-        <select size="2" v-model="selected">
-          <option :value="t.id" v-for="t of item.attributeTypes">
-            {{ t.name }}
-          </option>
-        </select>
-        <div class="section add">
-          <button class="bouton" @click="add_attribute"> <img src="/assets/icons/iconeplus.png" /> Add </button>
-          <button class="bouton" @click="del_attribute"> <img src="/assets/icons/trash.png" /> Delete </button>
-        </div>
-      </div>
-      <template v-if="selectedType">
-        <h3 class="section">Selected Type</h3>
+
+    <template v-if="selectedType">
+      <fieldset class="section">
+        <legend>Selected Type</legend>
         <table class="editorTable">
           <tr>
             <td>Unique Id:</td>
@@ -48,7 +21,38 @@
             </td>
           </tr>
         </table>
-      </template>
+      </fieldset>
+    </template>
+
+    <fieldset class="section">
+      <legend>Profil Type</legend>
+      <h3>Characteristic Types</h3>
+      <div>
+        <select size="2" v-model="selected" class="multiple">
+          <option :value="t.id" v-for="t of item.characteristicTypes">
+            {{ t.name }}
+          </option>
+        </select>
+        <div class="section add">
+          <button class="bouton" @click="add_characteristic"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+          <button class="bouton" @click="del_characteristic"> <img src="/assets/icons/trash.png" /> Delete </button>
+        </div>
+      </div>
+      <h3
+        >Attribute Types
+        <img src="/assets/icons/i.png" class="align-text-bottom clickable hover-darken" @click="attributesPopup = true"
+      /></h3>
+      <div>
+        <select size="2" v-model="selected" class="multiple">
+          <option :value="t.id" v-for="t of item.attributeTypes">
+            {{ t.name }}
+          </option>
+        </select>
+        <div class="section add">
+          <button class="bouton" @click="add_attribute"> <img src="/assets/icons/iconeplus.png" /> Add </button>
+          <button class="bouton" @click="del_attribute"> <img src="/assets/icons/trash.png" /> Delete </button>
+        </div>
+      </div>
     </fieldset>
     <PopupDialog v-if="orderPopup" v-model="orderPopup">
       <div class="text-center">Drag & Drop to change profileTypes order</div>
@@ -62,7 +66,7 @@
         in scripts or export templates.
       </p>
     </PopupDialog>
-  </span>
+  </div>
 </template>
 
 <script lang="ts">

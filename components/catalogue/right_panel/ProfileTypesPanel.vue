@@ -1,7 +1,12 @@
 <template>
   <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section"
-    @namechanged="profileNameChanged" @idchanged="profileIdChanged" />
+  <CatalogueRightPanelFieldsBasics
+    :item="item"
+    @catalogueChanged="changed"
+    class="section"
+    @namechanged="profileNameChanged"
+    @idchanged="profileIdChanged"
+  />
   <CatalogueRightPanelFieldsProfileType class="section" :item="item" @catalogueChanged="changed" />
 </template>
 
