@@ -18,6 +18,7 @@ import { addDictionnaryEntries } from "./dictionnary";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { findRule } from "./rule_importer";
 import { override } from "./override";
+import { insertSpells } from "./spells_importer";
 
 const sortIndex: Record<string, { index: number; collapsible: boolean }> = {
   Models: { index: 1, collapsible: false },
@@ -278,6 +279,11 @@ export default class T9AImporter {
 
     // Modifiers
     override(this, opt, res);
+
+    // Spells
+    if (parentUnit) {
+      insertSpells(this, opt, res, parentUnit);
+    }
 
     return res;
   }

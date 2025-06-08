@@ -1,4 +1,5 @@
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { BSICharacteristic, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 
 export function toTitleCaseWords(str: string): string {
   if (str.includes("-")) {
@@ -39,4 +40,26 @@ export async function cleanup(catalogue: Catalogue, gst = false) {
       await $store.remove(node);
     }
   }
+}
+
+export function charac(type: BSIProfileType, name: string, val: string) {
+  let charType = type.characteristicTypes?.find((elt) => elt.name === name);
+  if (!charType) charType = type.attributeTypes?.find((elt) => elt.name === name);
+
+  let value: number | string = val;
+
+  if (val?.match(/^[-]?[0-9]+$/)) {
+    value = parseInt(val);
+  } else {
+    value = val;
+    if (value == null) value = "";
+  }
+
+  if (charType) {
+    const res: BSICharacteristic = { name: charType.name, typeId: charType.id || "", $text: value };
+
+    return res;
+  }
+
+  return null;
 }

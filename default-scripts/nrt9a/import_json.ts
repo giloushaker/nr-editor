@@ -3,6 +3,7 @@ import T9AImporter from "./t9a_importer";
 import ProfileImporter from "./profile_import";
 import RulesImporter from "./rule_importer";
 import { cleanup } from "./util";
+import SpellsImporter from "./spells_importer";
 
 export default {
   name: "Imports a T9A Json file",
@@ -60,6 +61,11 @@ export default {
     if (json.name === "Rule Definitions") {
       const statsImporter = new RulesImporter(catalogues, json);
       statsImporter.import();
+    }
+
+    if (json.name === "Spells") {
+      const spellsImporter = new SpellsImporter(catalogues, json);
+      spellsImporter.import();
     }
     return "Import done";
   },

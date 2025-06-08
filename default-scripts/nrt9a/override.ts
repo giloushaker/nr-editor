@@ -42,9 +42,6 @@ export function overrideFromComment(
         conditionGroups: [],
       };
 
-      if (comment === "maxSize") {
-        debugger;
-      }
       insertConditions(importer, modifier, overrideNode);
 
       if (!res.modifiers) res.modifiers = [];
