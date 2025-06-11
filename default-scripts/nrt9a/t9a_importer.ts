@@ -4,49 +4,64 @@ import { catalogueAllRefs, convertRef, T9ARef } from "./refs";
 import { cost } from "../t9a/costs";
 import {
   addConstraint,
+  armyConstraints,
   hasNotOption,
   hasOption,
   initConstraintCategories,
   leafMaxCost,
   setSpecialEquipment,
 } from "./constraints";
-import { BSICategoryLink } from "~/assets/shared/battlescribe/bs_types";
+import { BSICategoryLink, BSIInfoLink } from "~/assets/shared/battlescribe/bs_types";
 import { cleanup, toTitleCaseWords } from "./util";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { addDictionnaryEntries } from "./dictionnary";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { findRule } from "./rule_importer";
+import { override } from "./override";
+import { insertSpells } from "./spells_importer";
 
-const sortIndex: Record<string, number> = {
-  Models: 1,
-  Leadership: 2,
-  "Leadership Skills": 3,
-  "Specialist Skills": 4,
-  "Blood Powers": 5,
-  Honour: 6,
-  Type: 7,
-  Command: 8,
-  Mount: 9,
-  Magic: 10,
-  Level: 11,
-  Path: 12,
-  Equipment: 13,
-  Weapons: 14,
-  "Castellan Weapons": 15,
-  Manifestations: 16,
-  Options: 17,
+const sortIndex: Record<string, { index: number; collapsible: boolean }> = {
+  Models: { index: 1, collapsible: false },
+  Leadership: { index: 2, collapsible: true },
+  "Leadership Skills": { index: 3, collapsible: true },
+  "Specialist Skills": { index: 4, collapsible: true },
+  "Blood Powers": { index: 5, collapsible: true },
+  Honour: { index: 6, collapsible: true },
+  Type: { index: 7, collapsible: true },
+  Command: { index: 8, collapsible: true },
+  Mount: { index: 9, collapsible: true },
+  Magic: { index: 10, collapsible: true },
+  Level: { index: 11, collapsible: true },
+  Path: { index: 12, collapsible: true },
+  Equipment: { index: 13, collapsible: true },
+  Weapons: { index: 14, collapsible: true },
+  "Castellan Weapons": { index: 15, collapsible: true },
+  Manifestations: { index: 16, collapsible: true },
+  Options: { index: 13, collapsible: false },
+
+  Weapon: { index: 1, collapsible: true },
+  "Melee Weapon": { index: 2, collapsible: true },
+  "Hand Weapon Enchant": { index: 3, collapsible: true },
+  "Ranged Weapon": { index: 4, collapsible: true },
+  Shield: { index: 5, collapsible: true },
+  "Shield Enchant": { index: 6, collapsible: true },
+  Armour: { index: 7, collapsible: true },
+  "Armour Enchant": { index: 8, collapsible: true },
+  Artefact: { index: 9, collapsible: true },
+  "Postions and Scrolls": { index: 10, collapsible: true },
 };
 
 export default class T9AImporter {
   catalogues: Catalogue[];
-  refCatalogue: Record<string, T9ARef>;
+  refCatalogue: Record<string, T9ARef> = {};
   book: ArmyBookBook;
+  specialBook?: ArmyBookBook;
   gst: Catalogue;
   catalogue: Catalogue;
   specialCatalogue: Catalogue;
   categoryCatalogue: Catalogue;
 
-  constructor(catalogues: Catalogue[], book: any) {
+  constructor(catalogues: Catalogue[], book: any, specialBook?: any) {
     this.book = book;
     this.catalogue = catalogues.find((elt) => elt.name === this.book.name)!;
     this.specialCatalogue = catalogues.find((elt) => elt.name === "Special Items")!;
@@ -55,8 +70,15 @@ export default class T9AImporter {
     this.catalogues = catalogues;
     if (!this.catalogue) throw "Unable to find catalogue";
 
-    this.refCatalogue = catalogueAllRefs(this, this.book) || {};
+    catalogueAllRefs(this, this.book, this.refCatalogue);
+    if (specialBook) {
+      catalogueAllRefs(this, specialBook, this.refCatalogue);
+    }
   }
+
+  /*
+   ** Import order: ruledefs.json > spells.json > special.json > all catalogues json > unitstats.json
+   */
 
   public async import() {
     await cleanup(this.catalogue);
@@ -66,7 +88,7 @@ export default class T9AImporter {
     await this.addDictionnary();
     await this.addUnits();
 
-    //await armyConstraints(this);
+    await armyConstraints(this);
   }
 
   convertOption(opt: ArmyBookOption, parentArmy: ArmyBookArmy | null, parentUnit?: ArmyBookUnit): Record<string, any> {
@@ -85,6 +107,9 @@ export default class T9AImporter {
       type: "upgrade",
       hidden: false,
     };
+
+    // Add comment to identify shared items from special.json
+    if (opt.shared && this.catalogue.name === "Special Items") res.comment = "shared item";
 
     // Name
     if (opt.type === "group" || opt.type == undefined) {
@@ -115,8 +140,9 @@ export default class T9AImporter {
     }
 
     // Sort index for groups
-    if (opt.optionsLabel) {
-      res.sortIndex = sortIndex[opt.optionsLabel];
+    if (opt.optionsLabel && sortIndex[opt.optionsLabel]) {
+      res.sortIndex = sortIndex[opt.optionsLabel].index;
+      res.collapsible = sortIndex[opt.optionsLabel].collapsible;
     }
 
     let childGroup = res;
@@ -143,6 +169,7 @@ export default class T9AImporter {
         scope: "parent",
         shared: true,
         includeChildSelections: false,
+        comment: "minSize",
       });
     }
 
@@ -155,6 +182,7 @@ export default class T9AImporter {
         scope: "parent",
         shared: true,
         includeChildSelections: false,
+        comment: "maxSize",
       });
     }
 
@@ -194,7 +222,7 @@ export default class T9AImporter {
       const converted = this.convertOption(child, parentArmy, parentUnit);
 
       // Make a link for shared items
-      if (child.shared) {
+      if (child.shared && child.cost) {
         // Find the target in the special catalogue
         for (let group of this.specialCatalogue.sharedSelectionEntryGroups || []) {
           for (let entry of group.selectionEntries || []) {
@@ -230,10 +258,33 @@ export default class T9AImporter {
     // Add rule links
     const rule = findRule(this.catalogues, this.book.name, res.name);
     if (rule) {
-      res.targetId = rule.targetId;
-      res.type = "selectionEnry";
-      // res.infoLinks.push(rule);
+      if (parentUnit) {
+        res.targetId = rule.id;
+        res.type = "selectionEntry";
+      } else {
+        res.infoLinks.push(
+          ...(rule.infoLinks || []).map((link) => {
+            const res: BSIInfoLink = {
+              hidden: false,
+              targetId: link.targetId,
+              name: link.name,
+              id: link.id,
+              type: link.type,
+            };
+            return res;
+          })
+        );
+      }
     }
+
+    // Modifiers
+    override(this, opt, res);
+
+    // Spells
+    if (parentUnit) {
+      insertSpells(this, opt, res, parentUnit);
+    }
+
     return res;
   }
 
@@ -247,7 +298,7 @@ export default class T9AImporter {
         for (let ref of elt.refs) {
           const opt: ArmyBookOption = {
             ...elt,
-            option_id: `dictoptionid12345678910:${elt.refs.join("-")}`,
+            option_id: generateBattlescribeId(),
             name: toTitleCaseWords(ref),
             optionsLabel: toTitleCaseWords(ref),
           };
@@ -263,6 +314,7 @@ export default class T9AImporter {
           // if no existing group, create one
           if (root == null) {
             const converted = this.convertOption(opt, this.book.army ? this.book.army[0] : null);
+            converted.comment = `dict:${elt.refs.join("-")}`;
             await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
           } else {
             // Else add entries to the existing group
@@ -311,6 +363,7 @@ export default class T9AImporter {
           }
         }
 
+        // Add Units
         for (let unit of cat.options) {
           const converted = this.convertOption(unit, army, unit);
           converted.type = "unit";
@@ -331,7 +384,6 @@ export default class T9AImporter {
             });
 
             // Add Primary Category
-
             if (primaryCategory) {
               link.categoryLinks.push({
                 name: "",

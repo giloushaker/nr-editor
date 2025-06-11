@@ -2,6 +2,7 @@ import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers"
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSICharacteristic, BSIInfoLink, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { findRule } from "./rule_importer";
+import { charac } from "./util";
 
 export interface T9AProfileRule {
   name: string;
@@ -62,26 +63,6 @@ export interface StatsBook {
 export const bookNames: Record<string, string> = {
   se: "Sylvan Elves",
 };
-
-function charac(type: BSIProfileType, name: string, val: string) {
-  const charType = type.characteristicTypes?.find((elt) => elt.name === name);
-  let value: number | string = val;
-
-  if (val?.match(/-+[0-9]+/)) {
-    value = parseInt(val);
-  } else {
-    value = val;
-    if (value == null) value = "";
-  }
-
-  if (charType) {
-    const res: BSICharacteristic = { name: charType.name, typeId: charType.id || "", $text: value };
-
-    return res;
-  }
-
-  return null;
-}
 
 export default class ProfileImporter {
   book: StatsBook;

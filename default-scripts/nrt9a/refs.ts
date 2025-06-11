@@ -52,8 +52,7 @@ function readRefs(
   }
 }
 
-export function catalogueAllRefs(importer: T9AImporter, book: ArmyBookBook) {
-  const res: Record<string, T9ARef> = {};
+export function catalogueAllRefs(importer: T9AImporter, book: ArmyBookBook, res: Record<string, T9ARef>) {
   const army = book.army ? book.army[0] : null;
   const catalogue = importer.catalogues.find((elt) => elt.name === book.name);
 
@@ -74,5 +73,4 @@ export function catalogueAllRefs(importer: T9AImporter, book: ArmyBookBook) {
       });
     }
   }
-  return res;
 }

@@ -1,42 +1,12 @@
 import { BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
-import { ArmyBookOption } from "./army_book_interfaces";
+import { ArmyBookCondition, ArmyBookOption } from "./army_book_interfaces";
 import T9AImporter from "./t9a_importer";
 import { toTitleCaseWords } from "./util";
 import { convertRef } from "./refs";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { specialCost, specialCostType } from "../t9a/costs";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-
-function insertIdConditions(id: string, scope: string): BSIConditionGroup {
-  const res: BSIConditionGroup = {
-    type: "or",
-    conditions: [],
-    conditionGroups: [],
-  };
-
-  if (res.conditions) {
-    res.conditions.push({
-      type: "instanceOf",
-      value: 1,
-      field: "selections",
-      scope: scope,
-      childId: id,
-      shared: true,
-      includeChildSelections: true,
-    });
-
-    res.conditions.push({
-      type: "atLeast",
-      value: 1,
-      field: "selections",
-      scope: scope,
-      childId: id,
-      shared: true,
-      includeChildSelections: true,
-    });
-  }
-  return res;
-}
+import { getConditionFromHasOption, insertIdConditions } from "./conditions";
 
 export function addConstraint(node: any, constraint: any) {
   constraint.id = `${node.id}-constraint-${node.constraints.length}`;
@@ -105,14 +75,13 @@ export async function hasNotOption(
 
         const refs = importer.refCatalogue[ref];
         let id = refs?.category_id || refs?.option_id;
-
         const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
         if (cat) {
           id = cat.id;
         }
 
         if (id) {
-          const cond = insertIdConditions(id, field === "hasNotOption" ? "unit" : "roster");
+          const cond = insertIdConditions(id, field === "hasNotOption" ? "unit" : "roster", hasOptionBlock.amount);
           orElement.conditionGroups?.push(cond);
           foundCondition = true;
         }
@@ -171,21 +140,8 @@ export async function hasOption(
         conditionGroups: [],
       };
 
-      for (let ref of hasOptionBlock.refs) {
-        const refs = importer.refCatalogue[ref];
-        let id = refs?.category_id || refs?.option_id;
-
-        const cat = importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === ref);
-        if (cat) {
-          id = cat.id;
-        }
-
-        //  if (refs.category_id == null) {
-        if (id) {
-          const cond = insertIdConditions(id, field === "hasOption" ? "unit" : "roster");
-          orElement.conditionGroups?.push(cond);
-        }
-      }
+      const conds = getConditionFromHasOption(importer, hasOptionBlock, field);
+      orElement.conditionGroups?.push(...conds);
 
       if (modifier.conditionGroups && modifier.conditionGroups[0].conditionGroups) {
         modifier.conditionGroups[0].conditionGroups.push(orElement);
@@ -234,6 +190,7 @@ export function leafMaxCost(importer: T9AImporter, node: ArmyBookOption, res: Re
       scope: "self",
       includeChildSelections: true,
       type: "max",
+      comment: "leafMaxCost",
     };
     res.constraints.push(constraint);
     res.comment = "leafMaxCost";
@@ -274,6 +231,61 @@ export async function setSpecialEquipment(node: EditorBase) {
   }
 }
 
+export function findRefCategory(importer: T9AImporter, ref: string) {
+  return importer.categoryCatalogue.categoryEntries?.find((elt) => elt.comment == ref) || null;
+}
+
 export async function armyConstraints(importer: T9AImporter) {
-  hasNotOption("armyHasNotOption", importer, importer.book.army[0], {});
+  const res: Record<string, any> = {};
+  const army = importer.book.army[0];
+  if (army) {
+    for (let elt of army.armyHasNotOption || []) {
+      const block = elt as ArmyBookCondition;
+      let modifiers: BSIModifier[] = [];
+
+      const constraint: BSIConstraint = {
+        id: generateBattlescribeId(),
+        type: "max",
+        field: "selections",
+        value: block.amount,
+        scope: "roster",
+        includeChildSelections: true,
+        shared: true,
+        includeChildForces: true,
+      };
+
+      if (block.perPoints) {
+        constraint.value = 0;
+        const modifier: BSIModifier = {
+          type: "increment",
+          value: block.amount,
+          field: constraint.id,
+          repeats: [
+            {
+              value: block.perPoints,
+              repeats: 1,
+              field: "limit::24fd-8af8-0c78-001c",
+              scope: "roster",
+              childId: "any",
+              shared: true,
+              roundUp: false,
+              includeChildSelections: true,
+              includeChildForces: true,
+            },
+          ],
+        };
+        modifiers.push(modifier);
+      }
+
+      for (let ref of block.refs) {
+        const cat = findRefCategory(importer, ref);
+        if (!cat) {
+          console.log("Could not find category for ref: " + ref);
+        } else {
+          await $store.add(constraint, "constraints", cat as any);
+          await $store.add(modifiers, "modifiers", cat as any);
+        }
+      }
+    }
+  }
 }

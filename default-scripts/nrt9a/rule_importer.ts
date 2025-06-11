@@ -99,15 +99,7 @@ export function findRule(catalogues: Catalogue[], bookName: string, rulename: st
   for (let cat of cats) {
     for (let rule of cat?.sharedSelectionEntries || []) {
       if (rule.name === rulename) {
-        const res: BSIEntryLink = {
-          type: "selectionEntry",
-          targetId: rule.id,
-          name: rule.name,
-          hidden: false,
-          id: generateBattlescribeId(),
-          costs: [],
-        };
-        return res;
+        return rule as EditorBase;
       }
     }
   }
