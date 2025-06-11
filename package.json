@@ -55,7 +55,6 @@
         "releaseType": "release"
       }
     ],
-    ],
     "nsis": {
       "allowToChangeInstallationDirectory": true,
       "oneClick": false
