@@ -228,7 +228,7 @@
                   @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
                 >
                   <img class="pr-4px" src="assets/bsicons/profile.png" />
-                  {{ type.getName() }}
+                  {{ type.getName() }} {{ getNameExtra(type) }}
                 </div>
               </ContextMenu>
             </template>
