@@ -49,9 +49,12 @@
     ],
     "publish": [
       {
-        "provider": "generic",
-        "url": "https://www.newrecruit.eu/downloads/editor"
+        "provider": "github",
+        "owner": "giloushaker",
+        "repo": "nr-editor",
+        "releaseType": "release"
       }
+    ],
     ],
     "nsis": {
       "allowToChangeInstallationDirectory": true,
