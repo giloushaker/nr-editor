@@ -115,6 +115,85 @@ export default {
       this.$emit("catalogueChanged");
     },
 
+    getProfilesInScope() {
+      const profiles: {profile: any, entryName?: string}[] = [];
+      const scope = this.item.scope;
+      
+      // Helper function to collect profiles from an entry and its selectionEntries recursively
+      const collectProfilesFromEntry = (entry: any, entryName?: string, recurseChildren: boolean = false) => {
+        if (!entry) return;
+        
+        // Collect profiles directly from this entry
+        if (entry.profilesIterator) {
+          for (const profile of entry.profilesIterator()) {
+            profiles.push({ profile, entryName: entryName || entry.name });
+          }
+        } else if (entry.profiles) {
+          // Fallback for direct profiles array access
+          for (const profile of entry.profiles) {
+            profiles.push({ profile, entryName: entryName || entry.name });
+          }
+        }
+        
+        // Only recursively collect profiles from selectionEntries if includeChildSelections is true
+        if (recurseChildren) {
+          if (entry.selectionEntriesIterator) {
+            for (const selectionEntry of entry.selectionEntriesIterator()) {
+              collectProfilesFromEntry(selectionEntry, selectionEntry.name, recurseChildren);
+            }
+          } else if (entry.selectionEntries) {
+            // Fallback for direct selectionEntries array access
+            for (const selectionEntry of entry.selectionEntries) {
+              collectProfilesFromEntry(selectionEntry, selectionEntry.name, recurseChildren);
+            }
+          }
+        }
+      };
+
+      // Start with the parent's profiles as fallback
+      const parent = this.parent;
+      
+      if (scope === "self" || !scope) {
+        // Self scope - use parent profiles and its children
+        if (parent) {
+          collectProfilesFromEntry(parent, parent.name === "self" ? undefined : parent.name, this.item.includeChildSelections);
+        }
+      } else if (scope === "parent") {
+        // Parent scope
+        if (parent?.parent) {
+          collectProfilesFromEntry(parent.parent, parent.parent.name, this.item.includeChildSelections);
+        }
+      } else {
+        // Try to find the scope by ID first
+        const targetEntry = this.catalogue.findOptionById(scope);
+        if (targetEntry) {
+          collectProfilesFromEntry(targetEntry, targetEntry.name, this.item.includeChildSelections);
+        } else if (["force", "roster", "primary-catalogue"].includes(scope)) {
+          // For broader scopes, search through available selections
+          const allAvailableEntries = [
+            ...this.allSelections,
+            ...this.allCategories,
+            ...this.allForces
+          ];
+          
+          for (const item of allAvailableEntries) {
+            const entry = this.catalogue.findOptionById(item.id);
+            if (entry) {
+              collectProfilesFromEntry(entry, entry.name, this.item.includeChildSelections);
+            }
+          }
+        }
+        
+        // If no profiles found in scope, fallback to parent
+        if (profiles.length === 0 && parent) {
+          collectProfilesFromEntry(parent, parent.name === "self" ? undefined : parent.name, this.item.includeChildSelections);
+        }
+      }
+
+      console.log(`Profiles found in scope "${scope}":`, profiles.length);
+      return profiles;
+    },
+
     scopeChanged() {
       if (this.item.scope === "roster") {
         this.item.includeChildSelections = true;
@@ -197,6 +276,14 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
         value: "forces",
         type: "bullet",
       });
+      // Add characteristics from profiles
+      for (const charOption of this.availableCharacteristics) {
+        res.push({
+          name: charOption.name,
+          value: charOption.id,
+          type: "characteristic",
+        });
+      }
       for (const costType of this.costTypes) {
         res.push({
           name: costType.name,
@@ -238,6 +325,43 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
         res.push(elt);
       }
       return res;
+    },
+
+    availableCharacteristics() {
+      const characteristicMap = new Map<string, {id: string, name: string, profileType: string, entryName?: string}>();
+      
+      // Get profiles from the selected scope
+      const profilesInScope = this.getProfilesInScope();
+      
+      for (const profileInfo of profilesInScope) {
+        const profile = profileInfo.profile;
+        const entryName = profileInfo.entryName;
+        const profileType = this.catalogue.profileTypes?.find(pt => pt.id === profile.typeId);
+        
+        if (profileType && profileType.characteristicTypes) {
+          for (const charType of profileType.characteristicTypes) {
+            // Create a unique key for each characteristic in each entry context
+            const key = `${profile.typeId}:${charType.id}:${entryName || 'self'}`;
+            if (!characteristicMap.has(key)) {
+              let displayName = `${charType.name} (${profileType.name})`;
+              
+              // Add entry name in parentheses if it's not self (current entry)
+              if (entryName && entryName !== this.parent?.name && entryName !== "self") {
+                displayName += ` (${entryName})`;
+              }
+              
+              characteristicMap.set(key, {
+                id: charType.id,
+                name: displayName,
+                profileType: profileType.name,
+                entryName: entryName
+              });
+            }
+          }
+        }
+      }
+      
+      return Array.from(characteristicMap.values()).sort((a, b) => a.name.localeCompare(b.name));
     },
 
     allSelections(): EditorSearchItem[] {
