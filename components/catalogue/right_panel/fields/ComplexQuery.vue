@@ -219,6 +219,10 @@ export default defineComponent({
       return getSearchElements(this.catalogue, "forcesIterator");
     },
 
+    allEntries(): EditorSearchItem[] {
+      return getSearchElements(this.catalogue, "entriesIterator");
+    },
+
     allParents(): EditorSearchItem[] {
       return getParentScopes(this.item);
     },
@@ -256,7 +260,7 @@ export default defineComponent({
       return result;
     },
     allFilterBy() {
-      const result = [...filterByItems, ...this.allCategories];
+      const result = [...filterByItems, ...this.allCategories, ...this.allEntries];
       return result;
     },
 

@@ -228,7 +228,8 @@
                   @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
                 >
                   <img class="pr-4px" src="assets/bsicons/profile.png" />
-                  {{ type.getName() }}
+                  <span>{{ type.getName() }}</span>
+                  <span v-if="getNameExtra(type)" class="gray"> &nbsp;{{ getNameExtra(type, false) }}</span>
                 </div>
               </ContextMenu>
             </template>
