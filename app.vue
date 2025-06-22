@@ -180,6 +180,11 @@ a.bouton {
   font-size: $fontButtonSize !important;
 }
 
+.autocomplete-input {
+  align-items: center;
+  display: flex;
+}
+
 .date {
   color: $gray;
   font-style: italic;
