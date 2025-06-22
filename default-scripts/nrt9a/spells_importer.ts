@@ -42,23 +42,23 @@ export default class SpellsImporter {
     this.catalogues = catalogues;
   }
 
-  private async importSpell(catalogues: Catalogue[], path: ArmyBookPath) {}
-
   private async importPath(catalogues: Catalogue[], path: ArmyBookPath) {
     const gst = catalogues[0];
     const spellType = gst.profileTypes?.find((elt) => elt.name === "Spell");
     if (!spellType) return;
 
     const res: BSIInfoGroup = {
+      id: generateBattlescribeId(),
       name: path.name,
-      id: `path-${path.ref}`,
+      comment: `path:${path.ref}`,
       hidden: false,
       profiles: [],
     };
 
     for (let spell of path.spells) {
       const spellProfile: BSIProfile = {
-        id: `spell-${spell.ref}`,
+        comment: `spell:${spell.ref}`,
+        id: generateBattlescribeId(),
         typeId: "03f2-8c24-0df8-7052",
         name: spell.name,
         typeName: "Spell",
@@ -107,7 +107,16 @@ export default class SpellsImporter {
 }
 
 function findPath(spellBook: Catalogue, pathref: string) {
-  return spellBook.sharedInfoGroups?.find((elt) => elt.id === `path-${pathref}`);
+  return spellBook.sharedInfoGroups?.find((elt) => elt.comment === `path:${pathref}`);
+}
+
+function getWizardIds(importer: T9AImporter) {
+  return {
+    "Wizard Apprentice": importer.catalogues[0].sharedSelectionEntries?.find((elt) => elt.name === "Wizard Apprentice")
+      ?.id,
+    "Wizard Adept": importer.catalogues[0].sharedSelectionEntries?.find((elt) => elt.name === "Wizard Adept")?.id,
+    "Wizard Master": importer.catalogues[0].sharedSelectionEntries?.find((elt) => elt.name === "Wizard Master")?.id,
+  };
 }
 
 export function insertSpells(
@@ -119,11 +128,7 @@ export function insertSpells(
   if (!opt.refs) return;
   const spellBook = importer.catalogues.find((elt) => elt.name === "Spells");
   if (!spellBook) return;
-  const possibleLevels: Record<string, number> = {
-    wizardApprentice: 1,
-    wizardAdept: 3,
-    wizardMaster: 5,
-  };
+  const wizardLevelIds = getWizardIds(importer);
 
   for (let elt of opt.refs) {
     const ref = convertRef(elt);
@@ -182,7 +187,7 @@ export function insertSpells(
           {
             field: "selections",
             scope: "unit",
-            childId: "d176-2596-3285-fa8b", // Wizard Apprentice
+            childId: wizardLevelIds["Wizard Apprentice"], // Wizard Apprentice
             type: "atLeast",
             value: 1,
             includeChildSelections: true,
@@ -198,7 +203,7 @@ export function insertSpells(
           {
             field: "selections",
             scope: "unit",
-            childId: "4151-e137-d2f9-3d24", // Wizard Adept
+            childId: wizardLevelIds["Wizard Adept"], // Wizard Adept
             type: "atLeast",
             value: 1,
             includeChildSelections: true,
@@ -214,7 +219,7 @@ export function insertSpells(
           {
             field: "selections",
             scope: "unit",
-            childId: "84bf-0aec-016e-49c0", // Wizard Master
+            childId: wizardLevelIds["Wizard Master"], // Wizard Master
             type: "atLeast",
             value: 1,
             includeChildSelections: true,
