@@ -304,7 +304,7 @@ export const useEditorStore = defineStore("editor", {
 
       const extension = getExtension(path);
       if (path.endsWith(".json")) {
-        const content = rootToJson(data);
+        const content = rootToJson(data, 2);
         await writeFile(path, content);
       } else {
         const xml = convertToXml(data);
@@ -1704,7 +1704,7 @@ export const useEditorStore = defineStore("editor", {
       obj.showInEditor = true;
       obj.showChildsInEditor = true;
       if (highlight) {
-        obj.highlight = true;
+        obj.highlightInEditor = true;
       }
       forEachParent(obj as EditorBase, (parent) => {
         parent.showInEditor = true;
@@ -1804,7 +1804,7 @@ export const useEditorStore = defineStore("editor", {
               const cur_class = cur.classList[i];
               arr.push(cur_class);
             }
-            const keys = arr.filter((o) => goodJsonKeys.has(o) || o.startsWith("label-"));
+            const keys = arr.filter((o) => arrayKeys.has(o) || o.startsWith("label-"));
             for (const key of keys) {
               obj[key] = {};
               obj[key][0] = {};
@@ -1901,7 +1901,7 @@ export const useEditorStore = defineStore("editor", {
       for (const p of prev) {
         delete p.showInEditor;
         delete p.showChildsInEditor;
-        delete p.highlight;
+        delete p.highlightInEditor;
         forEachParent(p as EditorBase, (parent) => {
           delete parent.showInEditor;
           delete p.showChildsInEditor;

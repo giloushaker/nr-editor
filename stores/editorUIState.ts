@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { getEntryPath, type EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
-import { goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
+import { type EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import { arrayKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_base_from_vue_el, get_ctx } from "./editorStore";
 
@@ -83,7 +83,7 @@ export const useEditorUIState = defineStore("editor-ui", {
               for (let i = 0; i < cur.classList.length; i++) {
                 arr.push(cur.classList[i])
               }
-              const keys = arr.filter((o) => goodJsonKeys.has(o));
+              const keys = arr.filter((o) => arrayKeys.has(o));
               for (const key of keys) {
                 obj[key] = {};
                 obj[key][0] = {};

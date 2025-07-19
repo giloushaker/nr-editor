@@ -266,6 +266,41 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     },
 
     allScopes(): ScopeChoice[] {
+      if (this.parent?.editorTypeName === "forceEntry") {
+        return [
+          {
+            id: "self",
+            name: "Self",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "parent",
+            name: "Parent",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "force",
+            name: "Force",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "roster",
+            name: "Roster",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "primary-catalogue",
+            name: "Primary Catalogue",
+            editorTypeName: "bullet",
+          },
+          {
+            id: "ancestor",
+            name: "Ancestor",
+            editorTypeName: "bullet",
+            title: "checks the condition in all parents",
+          },
+        ];
+      }
       if (this.costType)
         return [
           {
