@@ -304,7 +304,7 @@ export const useEditorStore = defineStore("editor", {
 
       const extension = getExtension(path);
       if (path.endsWith(".json")) {
-        const content = rootToJson(data, 2);
+        const content = rootToJson(data);
         await writeFile(path, content);
       } else {
         const xml = convertToXml(data);
