@@ -63,7 +63,7 @@ export default {
     },
     forces() {
       if (!this.item) return [];
-      return [...this.item.forcesEntriesIterator()];
+      return [...this.item.forcesIterator()];
     },
     entries() {
       if (!this.item) return [];

@@ -258,7 +258,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
       if (!this.includeForces) {
         return [];
       }
-      return getSearchElements(this.catalogue, "forcesIterator");
+      return getSearchElements(this.catalogue, "forceEntriesIterator");
     },
 
     allParents(): EditorSearchItem[] {

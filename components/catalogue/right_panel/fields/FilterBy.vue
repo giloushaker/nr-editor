@@ -184,7 +184,7 @@ export default {
       if (!this.includeForces) {
         return [];
       }
-      return getSearchElements(this.catalogue, "forcesIterator");
+      return getSearchElements(this.catalogue, "forceEntriesIterator");
     },
 
     allCatalogues(): EditorSearchItem[] {

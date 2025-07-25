@@ -216,7 +216,7 @@ export default defineComponent({
     },
 
     allForces(): EditorSearchItem[] {
-      return getSearchElements(this.catalogue, "forcesIterator");
+      return getSearchElements(this.catalogue, "forceEntriesIterator");
     },
 
     allEntries(): EditorSearchItem[] {
