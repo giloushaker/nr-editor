@@ -184,7 +184,7 @@
           </div>
           <div
             @click="store.create('entryLinks', { type: 'selectionEntry' })"
-            v-if="allowed(['entryLinks', 'infoLinks'])"
+            v-if="allowed(['entryLinks', 'infoLinks', 'forceEntryLinks'])"
           >
             <img class="pr-4px" src="assets/bsicons/link.png" />
             Link
@@ -212,6 +212,12 @@
                 <div @click="store.create('infoLinks', { type: 'infoGroup' })">
                   <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
                   InfoGroup
+                </div>
+              </template>
+              <template v-if="allowed('forceEntryLinks')">
+                <div @click="store.create('forceEntryLinks')">
+                  <img class="pr-4px" src="assets/bsicons/forceEntryLink.png" />
+                  Force
                 </div>
               </template>
             </ContextMenu>

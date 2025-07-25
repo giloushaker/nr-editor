@@ -45,6 +45,13 @@
         @catalogueChanged="changed"
       />
       <CatalogueRightPanelLinkPanel
+        v-else-if="typeName == 'forceEntryLink'"
+        :item="item"
+        :catalogue="catalogue"
+        @catalogueChanged="changed"
+        :type="'force'"
+      />
+      <CatalogueRightPanelLinkPanel
         v-else-if="links.includes(typeName)"
         :item="item"
         :catalogue="catalogue"
@@ -170,7 +177,7 @@ export default {
   },
   data() {
     return {
-      links: ["link", "entryLink", "selectionEntryLink", "selectionEntryGroupLink"],
+      links: ["link", "entryLink", "selectionEntryLink", "selectionEntryGroupLink", "forceEntryLink"],
       infoLinks: ["infoLink", "profileLink", "ruleLink", "infoGroupLink"],
       key: 0,
     };

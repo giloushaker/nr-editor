@@ -135,6 +135,15 @@ export default {
           .filter((o) => o.id !== this.catalogue.id);
         return catalogues;
       }
+      if (this.type === "force") {
+        const forces = [];
+        for (const catalogue of [...this.catalogue.imports, this.catalogue]) {
+          for (const force of catalogue.forcesIteratorRecursive()) {
+            forces.push(force);
+          }
+        }
+        return forces;
+      }
       const all = [];
       for (const entry of this.catalogue.iterateAllImported()) {
         if (!this.targetIsValid(entry as ItemTypes)) continue;
