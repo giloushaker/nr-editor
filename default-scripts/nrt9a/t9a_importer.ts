@@ -68,7 +68,10 @@ export default class T9AImporter {
     this.categoryCatalogue = catalogues.find((elt) => elt.name === "Categories")!;
     this.gst = catalogues[0];
     this.catalogues = catalogues;
-    if (!this.catalogue) throw "Unable to find catalogue";
+    if (!this.catalogue) {
+      console.error(catalogues);
+      throw "Unable to find catalogue: " + this.book.name;
+    }
 
     catalogueAllRefs(this, this.book, this.refCatalogue);
     if (specialBook) {
