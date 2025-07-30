@@ -5,7 +5,12 @@
   <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
     Entry
   </CatalogueRightPanelFieldsHidden>
-
+  <CatalogueRightPanelFieldsDescription
+    class="section"
+    :item="item"
+    :catalogue="catalogue"
+    @catalogueChanged="changed"
+  />
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
     @catalogueChanged="changed"

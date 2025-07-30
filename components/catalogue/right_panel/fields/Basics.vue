@@ -104,6 +104,7 @@ export default {
     sortable() {
       return [
         "forceEntry",
+        "forceEntryLink",
         "selectionEntry",
         "selectionEntryGroup",
         "selectionEntryLink",

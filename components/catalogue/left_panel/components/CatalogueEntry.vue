@@ -418,6 +418,7 @@ const order: Record<string, number> = {
   entryGroupLink: 2,
   constraint: 3,
   forceEntry: 4,
+  forceEntryLink: 4,
   profile: 5,
   rule: 6,
   infoGroup: 7,
