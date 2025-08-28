@@ -42,7 +42,7 @@
         </template>
       </UtilAutocomplete>
 
-      <div class="checks" v-if="!costType">
+      <div class="checks" v-if="!isCostType">
         <div v-if="shared">
           <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
           <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
@@ -171,8 +171,11 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     parent() {
       return getModifierOrConditionParent(this.item as EditorBase);
     },
-    costType() {
+    isCostType() {
       return this.parent?.editorTypeName === "costType";
+    },
+    isForceEntry() {
+      return ["forceEntryLink", "forceEntry"].includes(this.parent?.editorTypeName!);
     },
     fieldTypes() {
       const res: {
@@ -266,70 +269,45 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
     },
 
     allScopes(): ScopeChoice[] {
-      if (this.parent?.editorTypeName === "forceEntry") {
-        return [
-          {
-            id: "self",
-            name: "Self",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "parent",
-            name: "Parent",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "force",
-            name: "Force",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "roster",
-            name: "Roster",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "primary-catalogue",
-            name: "Primary Catalogue",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "ancestor",
-            name: "Ancestor",
-            editorTypeName: "bullet",
-            title: "checks the condition in all parents",
-          },
-        ];
+      const SCOPE_SELF = {
+        id: "self",
+        name: "Self",
+        editorTypeName: "bullet",
+      };
+      const SCOPE_PARENT = {
+        id: "parent",
+        name: "Parent",
+        editorTypeName: "bullet",
+      };
+      const SCOPE_FORCE = {
+        id: "force",
+        name: "Force",
+        editorTypeName: "bullet",
+      };
+      const SCOPE_ROSTER = {
+        id: "roster",
+        name: "Roster",
+        editorTypeName: "bullet",
+      };
+      const SCOPE_ANCESTOR = {
+        id: "ancestor",
+        name: "Ancestor",
+        editorTypeName: "bullet",
+        title: "checks the condition in all parents",
+      };
+      const SCOPE_PRIMARY_CATALOGUE = {
+        id: "primary-catalogue",
+        name: "Primary Catalogue",
+        editorTypeName: "bullet",
+      };
+      if (this.isForceEntry) {
+        return [SCOPE_SELF, SCOPE_PARENT, SCOPE_FORCE, SCOPE_ROSTER, SCOPE_PRIMARY_CATALOGUE, SCOPE_ANCESTOR];
       }
-      if (this.costType)
-        return [
-          {
-            id: "self",
-            name: "Self",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "parent",
-            name: "Parent",
-            editorTypeName: "bullet",
-          },
-        ];
-      const common = [
-        {
-          id: "force",
-          name: "Force",
-          editorTypeName: "bullet",
-        },
-        {
-          id: "roster",
-          name: "Roster",
-          editorTypeName: "bullet",
-        },
-        {
-          id: "primary-catalogue",
-          name: "Primary Catalogue",
-          editorTypeName: "bullet",
-        },
+      if (this.isCostType) {
+        return [SCOPE_SELF, SCOPE_PARENT];
+      }
+      const common = [SCOPE_FORCE, SCOPE_ROSTER, SCOPE_PRIMARY_CATALOGUE];
+      const common_non_forces_field = [
         {
           id: "root-entry",
           name: "Root Entry",
@@ -356,50 +334,17 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
           editorTypeName: "bullet",
         },
       ];
-      let res = [] as ScopeChoice[];
-
-      if (
-        this.item.field != "forces" &&
-        ["condition", "localConditionGroup", "association"].includes(this.item.editorTypeName)
-      ) {
-        res = [
-          {
-            id: "self",
-            name: "Self",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "parent",
-            name: "Parent",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "ancestor",
-            name: "Ancestor",
-            editorTypeName: "bullet",
-            title: "checks the condition in all parents",
-          },
-          {
-            id: "primary-category",
-            name: "Primary Category",
-            editorTypeName: "bullet",
-          },
-        ] as ScopeChoice[];
+      if (this.item.field != "forces") {
+        common.push(...common_non_forces_field);
       }
-
-      if (this.item.field !== "forces" && ["repeat", "constraint"].includes(this.item.editorTypeName)) {
-        res = [
-          {
-            id: "self",
-            name: "Self",
-            editorTypeName: "bullet",
-          },
-          {
-            id: "parent",
-            name: "Parent",
-            editorTypeName: "bullet",
-          },
-        ];
+      let res = [] as ScopeChoice[];
+      if (this.item.field != "forces") {
+        if (["condition", "localConditionGroup", "association"].includes(this.item.editorTypeName)) {
+          res = [SCOPE_SELF, SCOPE_PARENT, SCOPE_ANCESTOR, SCOPE_PRIMARY_CATALOGUE];
+        }
+        if (["repeat", "constraint"].includes(this.item.editorTypeName)) {
+          res = [SCOPE_SELF, SCOPE_PARENT];
+        }
       }
 
       return [...res, ...common]
@@ -413,9 +358,6 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
   watch: {
     "item.field": {
       handler() {
-        if (this.item.field == "forces") {
-          this.item.scope = "roster";
-        }
         this.itemField = this.fieldTypes.find((elt) => {
           return elt.value == this.item.field;
         });
