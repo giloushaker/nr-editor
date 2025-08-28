@@ -178,8 +178,13 @@ export default {
       } else {
         this.catalogue.updateLink(this.item);
         const target = this.item.target as EditorBase | undefined;
-        this.item.name = target?.name || "Unknown";
-        this.item.type = (target?.editorTypeName || this.item.type) as any;
+        if (target) {
+          this.item.name = target.name || "Unknown";
+          const type = target.editorTypeName || this.item.type;
+          if (type !== "categoryEntry") {
+            this.item.type = type;
+          }
+        }
       }
       this.$emit("targetChanged");
     },
