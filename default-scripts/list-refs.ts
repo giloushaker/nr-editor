@@ -2,11 +2,11 @@ import type { Base } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-    name: "List all used",
-    description: "Find out what a catalogue uses from an imported catalogue, used to find out if an import is not necesarry",
+    name: "List used imports",
+    description: "Lists what a catalogue uses from an imported catalogue, can used to find out if an import is not necesarry",
     arguments: [
         {
-            name: "catalogue (importing)",
+            name: "catalogue",
             type: "catalogue"
         },
         {

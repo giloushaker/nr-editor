@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 
-import fixlinknames from "~/default-scripts/fix-link-names.js";
-import fixprofiles from "~/default-scripts/fix-profiles";
-import listrefs from "~/default-scripts/list-refs";
+import fixLinkNames from "~/default-scripts/fix-link-names.js";
+import fixProfiles from "~/default-scripts/fix-profiles";
+import listRefs from "~/default-scripts/list-refs";
 import select from "~/default-scripts/select";
-import listautomaticrefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
+import listAutomaticRefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_helpers";
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
@@ -13,6 +13,7 @@ import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 import t9a_import from "~/default-scripts/nrt9a/import_json";
 import t9a_rarity from "~/default-scripts/nrt9a/rarity_script";
+import findDuplicateIds from "~/default-scripts/find-duplicate-ids";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -23,10 +24,14 @@ export const useScriptsStore = defineStore("scripts", {
   actions: {
     async get_scripts(system?: GameSystemFiles) {
       if (!system?.gameSystem) return [];
+      const result = [];
+      if (["The Ninth Age", "The 9th Age"].includes(system.gameSystem.name!)) {
+        result.push(t9a_import);
+        result.push(t9a_rarity);
+      }
       try {
         const path = getDataObject(system.gameSystem).fullFilePath;
         if (!path) return [];
-        const result = [];
         const dir = `${dirname(path)}/scripts`;
 
         for (const file of await getFolderFiles(dir)) {
@@ -68,13 +73,12 @@ export const useScriptsStore = defineStore("scripts", {
       testScripts.push(pasteWeapons);
       testScripts.push(pasteEquipment);
       return [
-        t9a_import,
-        t9a_rarity,
-        fixlinknames,
-        fixprofiles,
-        listrefs,
+        fixLinkNames,
+        fixProfiles,
+        listRefs,
         select,
-        listautomaticrefs,
+        findDuplicateIds,
+        listAutomaticRefs,
         ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
     },
