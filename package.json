@@ -34,7 +34,7 @@
     },
     "linux": {
       "category": "Utility",
-      "icon": "dist/favicon.icns",
+      "icon": "dist/favicon.png",
       "target": "AppImage"
     },
     "files": [
