@@ -235,162 +235,59 @@ type ModifierField = {
   type: FieldTypes;
   modifierType: string;
 };
+
+// Operation constants
+const OPERATION_SET: Operation = { id: "set", name: "Set", word: "to" };
+const OPERATION_MULTIPLY: Operation = { id: "multiply", name: "Multiply", word: "by" };
+const OPERATION_DIVIDE: Operation = { id: "divide", name: "Divide", word: "by" };
+const OPERATION_MODULO: Operation = { id: "modulo", name: "Modulo", word: "by" };
+const OPERATION_INCREMENT: Operation = { id: "increment", name: "Increment", word: "by" };
+const OPERATION_DECREMENT: Operation = { id: "decrement", name: "Decrement", word: "by" };
+const OPERATION_CEIL: Operation = { id: "ceil", name: "Ceil", word: "to" };
+const OPERATION_FLOOR: Operation = { id: "floor", name: "Floor", word: "to" };
+const OPERATION_APPEND: Operation = { id: "append", name: "Append", word: "with" };
+const OPERATION_PREPEND: Operation = { id: "prepend", name: "Prepend", word: "with" };
+const OPERATION_REPLACE: Operation = { id: "replace", name: "Replace", word: "with" };
+const OPERATION_ADD: Operation = { id: "add", name: "Add", word: "" };
+const OPERATION_ADD_ERROR: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_ADD_WARNING: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_ADD_INFO: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_REMOVE: Operation = { id: "remove", name: "Remove", word: "" };
+const OPERATION_SET_PRIMARY: Operation = { id: "set-primary", name: "Set Primary", word: "to" };
+const OPERATION_UNSET_PRIMARY: Operation = { id: "unset-primary", name: "Unset Primary", word: "to" };
+
 const operations = {
   number: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "increment",
-      name: "Increment",
-      word: "by",
-    },
-    {
-      id: "decrement",
-      name: "Decrement",
-      word: "by",
-    },
-    {
-      id: "ceil",
-      name: "Ceil",
-      word: "to",
-    },
-    {
-      id: "floor",
-      name: "Floor",
-      word: "to",
-    },
+    OPERATION_SET,
+    OPERATION_INCREMENT,
+    OPERATION_DECREMENT,
+    OPERATION_MULTIPLY,
+    OPERATION_DIVIDE,
+    OPERATION_MODULO,
+    OPERATION_CEIL,
+    OPERATION_FLOOR,
   ],
-  string: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "append",
-      name: "Append",
-      word: "with",
-    },
-    {
-      id: "prepend",
-      name: "Prepend",
-      word: "with",
-    },
-    {
-      id: "replace",
-      name: "Replace",
-      word: "with",
-    },
-  ],
+  string: [OPERATION_SET, OPERATION_APPEND, OPERATION_PREPEND, OPERATION_REPLACE],
   "string-or-number": [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "append",
-      name: "Append",
-      word: "with",
-    },
-    {
-      id: "prepend",
-      name: "Prepend",
-      word: "with",
-    },
-    {
-      id: "replace",
-      name: "Replace",
-      word: "with",
-    },
-    {
-      id: "increment",
-      name: "Increment",
-      word: "by",
-    },
-    {
-      id: "decrement",
-      name: "Decrement",
-      word: "by",
-    },
-    {
-      id: "ceil",
-      name: "Ceil",
-      word: "to",
-    },
-    {
-      id: "floor",
-      name: "Floor",
-      word: "to",
-    },
+    OPERATION_SET,
+    OPERATION_APPEND,
+    OPERATION_PREPEND,
+    OPERATION_REPLACE,
+    OPERATION_INCREMENT,
+    OPERATION_DECREMENT,
+    OPERATION_MULTIPLY,
+    OPERATION_DIVIDE,
+    OPERATION_MODULO,
+    OPERATION_CEIL,
+    OPERATION_FLOOR,
   ],
-  boolean: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-  ],
-  defaultSelectionEntryId: [
-    {
-      id: "set",
-      name: "Set",
-      word: "",
-    },
-  ],
-  category: [
-    {
-      id: "add",
-      name: "Add",
-      word: "",
-    },
-    {
-      id: "remove",
-      name: "Remove",
-      word: "",
-    },
-    {
-      id: "set-primary",
-      name: "Set Primary",
-      word: "to",
-    },
-    {
-      id: "unset-primary",
-      name: "Unset Primary",
-      word: "to",
-    },
-  ],
-  defaultAmount: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-  ],
-  error: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
-  warning: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
-  info: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
+  boolean: [OPERATION_SET],
+  defaultSelectionEntryId: [OPERATION_SET],
+  category: [OPERATION_ADD, OPERATION_REMOVE, OPERATION_SET_PRIMARY, OPERATION_UNSET_PRIMARY],
+  defaultAmount: [OPERATION_SET],
+  error: [OPERATION_ADD_ERROR],
+  warning: [OPERATION_ADD_WARNING],
+  info: [OPERATION_ADD_INFO],
 } as Record<string, Operation[]>;
 
 type PossibleTypes = keyof typeof availableTypes;
