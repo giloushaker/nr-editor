@@ -2,13 +2,7 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <UtilIconSelect
-        v-model="itemField"
-        :fetch="() => fieldTypes"
-        @change="fieldChanged"
-        class="modType"
-        :disabled="instanceOf || association"
-      >
+      <UtilIconSelect v-model="itemField" :fetch="() => fieldTypes" @change="fieldChanged" class="modType" :disabled="instanceOf || association">
         <template #option="opt">
           <div>
             <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.type}.png`" />
@@ -19,15 +13,7 @@
 
       <span> in </span>
 
-      <UtilAutocomplete
-        v-model="item.scope"
-        :placeholder="`Search Scope...`"
-        :options="allScopes"
-        valueField="id"
-        filterField="name"
-        @change="scopeChanged"
-        :disabled="itemField?.value?.startsWith('limit::')"
-      >
+      <UtilAutocomplete v-model="item.scope" :placeholder="`Search Scope...`" :options="allScopes" valueField="id" filterField="name" @change="scopeChanged" :disabled="itemField?.value?.startsWith('limit::')">
         <template #option="opt">
           <div style="white-space: nowrap">
             <template v-if="opt.option.indent >= 2 && !opt.selected">
@@ -300,6 +286,11 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
         name: "Primary Catalogue",
         editorTypeName: "bullet",
       };
+      const SCOPE_PRIMARY_CATEGORY = {
+        id: "primary-category",
+        name: "Primary Category",
+        editorTypeName: "bullet",
+      };
       if (this.isForceEntry) {
         return [SCOPE_SELF, SCOPE_PARENT, SCOPE_FORCE, SCOPE_ROSTER, SCOPE_PRIMARY_CATALOGUE, SCOPE_ANCESTOR];
       }
@@ -340,7 +331,7 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
       let res = [] as ScopeChoice[];
       if (this.item.field != "forces") {
         if (["condition", "localConditionGroup", "association"].includes(this.item.editorTypeName)) {
-          res = [SCOPE_SELF, SCOPE_PARENT, SCOPE_ANCESTOR, SCOPE_PRIMARY_CATALOGUE];
+          res = [SCOPE_SELF, SCOPE_PARENT, SCOPE_ANCESTOR, SCOPE_PRIMARY_CATEGORY];
         }
         if (["repeat", "constraint"].includes(this.item.editorTypeName)) {
           res = [SCOPE_SELF, SCOPE_PARENT];

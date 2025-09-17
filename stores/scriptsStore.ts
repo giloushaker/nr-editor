@@ -14,6 +14,7 @@ import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 import t9a_import from "~/default-scripts/nrt9a/import_json";
 import t9a_rarity from "~/default-scripts/nrt9a/rarity_script";
 import findDuplicateIds from "~/default-scripts/find-duplicate-ids";
+import findDuplicatesProfiles from "~/default-scripts/find-duplicates-profiles";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -78,7 +79,10 @@ export const useScriptsStore = defineStore("scripts", {
         listRefs,
         select,
         findDuplicateIds,
+        findDuplicatesProfiles,
         listAutomaticRefs,
+
+
         ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
     },

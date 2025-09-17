@@ -60,7 +60,6 @@ import {
   filename,
   getFolderFiles,
   getFolderRemote,
-  unwatchFile,
   watchFile,
   writeFile,
 } from "~/electron/node_helpers";
@@ -803,13 +802,13 @@ export const useEditorStore = defineStore("editor", {
      * @param data the entries to set in the clipboard, do not use for copying text
      * @param event the event to use, if not provided a valid ClipboardEvent, will use the navigator.clipboard.writeText()
      */
-    async set_clipboard(data: EditorBase[], event?: ClipboardEvent) {
+    async set_clipboard(data: EditorBase[], event?: ClipboardEvent | MouseEvent) {
       if (this.clipboardmode === "json") {
         //@ts-ignore
         const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o, sortIndex: undefined })) as EditorBase[];
         const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false, formatted: true });
-        if (event?.clipboardData) {
-          event.clipboardData.setData("text/plain", json);
+        if ((event as ClipboardEvent)?.clipboardData) {
+          (event as ClipboardEvent).clipboardData!.setData("text/plain", json);
         } else {
           await navigator.clipboard.writeText(json);
         }
@@ -868,7 +867,7 @@ export const useEditorStore = defineStore("editor", {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent, selections?: MaybeArray<EditorBase>) {
+    async copy(event: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
       const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections();
       await this.set_clipboard(toCopy, event);
     },

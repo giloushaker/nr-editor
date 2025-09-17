@@ -4,16 +4,11 @@
   <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
   <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
 
-  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
+  <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed">
     Entry
-  </CatalogueRightPanelFieldsHidden>
+  </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsQuickConstraints
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="true"
-    class="section"
-  >
+  <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="true" class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
 </template>
 
