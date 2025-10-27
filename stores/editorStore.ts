@@ -526,7 +526,7 @@ export const useEditorStore = defineStore("editor", {
         return result
       }
 
-      if (getParents(node as EditorBase).find(o => o.editorTypeName === "profileType")) {
+      if ((node as EditorBase).editorTypeName === "profileType" || getParents(node as EditorBase).find(o => o.editorTypeName === "profileType")) {
         const system = this.get_system(node.getCatalogue().getSystemId());
         await system.loadAll();
         const catalogues = system.getAllLoadedCatalogues();
