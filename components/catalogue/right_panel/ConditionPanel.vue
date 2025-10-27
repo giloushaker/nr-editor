@@ -1,26 +1,12 @@
 <template>
   <div>
-    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
+    <CatalogueRightPanelFieldsComment :item="item" />
 
-    <Condition class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
+    <Condition class="section" :item="item" :catalogue="catalogue" />
 
-    <CatalogueRightPanelFieldsQuery
-      class="section"
-      :item="item"
-      @catalogueChanged="changed"
-      :catalogue="catalogue"
-      childForces
-      childSelections
-    />
+    <CatalogueRightPanelFieldsQuery class="section" :item="item" :catalogue="catalogue" childForces childSelections />
 
-    <FilterBy
-      v-if="item.field?.startsWith('limit::') == false && item.editorTypeName !== 'localConditionGroup'"
-      noshared
-      class="section"
-      :item="item"
-      @catalogueChanged="changed"
-      :catalogue="catalogue"
-    />
+    <FilterBy v-if="item.field?.startsWith('limit::') == false && item.editorTypeName !== 'localConditionGroup'" noshared class="section" :item="item" :catalogue="catalogue" />
   </div>
 </template>
 
@@ -33,7 +19,6 @@ import { Condition } from "~/assets/shared/battlescribe/bs_main";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSICondition & EditorBase>,
@@ -42,11 +27,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   components: { Condition: ConditionVue, FilterBy },

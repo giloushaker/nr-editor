@@ -1,11 +1,6 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsQuickConditions
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsQuickConditions :item="item" :withCategory="false" class="section" />
 </template>
 
 <script lang="ts">
@@ -14,7 +9,6 @@ import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Base>,
@@ -24,12 +18,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

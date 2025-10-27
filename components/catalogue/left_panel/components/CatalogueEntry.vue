@@ -248,16 +248,20 @@
             <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
             Info Group
           </div>
-          <!-- <div @click="store.create('infoLinks', { type: 'profile' })" v-if="allowed('infoLinks')">
-            <img class="pr-4px" src="assets/bsicons/link.png" />
-            Info Link
-            <span class="right">❯</span>
-          </div> -->
           <div @click="store.create('associations')" v-if="allowed('associations')">
             <img class="pr-4px" src="assets/bsicons/association.png" />
             Association
           </div>
           <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
+          <div @click="store.create('characteristicTypes')" v-if="allowed('characteristicTypes')">
+            <img class="pr-4px" src="assets/bsicons/characteristicType.png" />
+            Characteristic Type
+          </div>
+          <div @click="store.create('attributeTypes')" v-if="allowed('attributeTypes')">
+            <img class="pr-4px" src="assets/bsicons/attributeType.png" />
+            Attribute Type
+          </div>
+          <Separator v-if="allowed(['attributeTypes', 'characteristicTypes'])" />
           <div @click="store.create('conditions')" v-if="allowed('conditions')">
             <img class="pr-4px" src="assets/bsicons/condition.png" />
             Condition
@@ -328,7 +332,18 @@
             </ContextMenu>
           </div>
         </template>
-
+        <template v-if="!payload && store.get_context_actions().length">
+          <div>
+            <span> Scripts </span>
+            <span class="right">❯</span>
+            <ContextMenu id="moveto_contextmenu">
+              <div v-for="action of store.get_context_actions()">
+                <img class="pr-4px" src="assets/icons/right2.png" />
+                {{ action }}
+              </div>
+            </ContextMenu>
+          </div>
+        </template>
         <div
           @click="
             store.create_child('entryLinks', catalogue, {
@@ -414,6 +429,8 @@ const order: Record<string, number> = {
   link: 1,
   selectionEntry: 1,
   entryLink: 1,
+  characteristicType: 1,
+  attributeType: 2,
   selectionEntryGroup: 2,
   entryGroupLink: 2,
   constraint: 3,
@@ -429,7 +446,7 @@ const order: Record<string, number> = {
   association: 12,
 };
 const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
-const hiddenTypes = new Set(["characteristicTypes", "characteristics", "attributeTypes", "attributes", "costs"]);
+const hiddenTypes = new Set(["characteristics", "attributes", "costs"]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -541,7 +558,9 @@ export default {
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
-      return entry.editorTypeName !== "forceEntry";
+      if (entry.editorTypeName === "forceEntry") return false;
+      if (entry.editorTypeName === "profileType") return false;
+      return true;
     },
     ref_count(item: EditorBase) {
       return item.refs?.length;

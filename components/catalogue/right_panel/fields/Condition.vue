@@ -2,7 +2,7 @@
   <fieldset>
     <legend>Condition</legend>
     <div class="condition">
-      <select v-model="item.type" @change="changed">
+      <select v-model="item.type">
         <template v-if="allowNonInstanceOf">
           <option value="lessThan">Less Than</option>
           <option value="greaterThan">Greater Than</option>
@@ -18,9 +18,9 @@
           <option value="notInstanceOf">Not Instance Of</option>
         </template>
       </select>
-      <UtilNumberInput :disabled="instanceOf" v-model="item.value" @change="changed" />
+      <UtilNumberInput :disabled="instanceOf" v-model="item.value" />
       <div>
-        <input :disabled="instanceOf" id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
+        <input :disabled="instanceOf" id="percent" type="checkbox" v-model="item.percentValue" />
         <label :class="{ disabled: instanceOf }" for="percent">Percentage?</label>
       </div>
     </div>
@@ -35,7 +35,6 @@ import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import NumberInput from "~/components/util/NumberInput.vue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<EditorBase & BSICondition>,
@@ -44,11 +43,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {

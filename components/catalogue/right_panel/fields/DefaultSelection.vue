@@ -12,7 +12,6 @@
             :options="children"
             valueField="id"
             filterField="name"
-            @change="changed"
           >
             <template #option="opt">
               <div style="white-space: nowrap">
@@ -38,7 +37,6 @@ import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Group>,
@@ -48,9 +46,6 @@ export default {
 
   methods: {
     getNameExtra,
-    changed() {
-      this.$emit("catalogueChanged");
-    },
   },
 
   computed: {

@@ -33,7 +33,6 @@ interface BooleanField {
   default?: boolean;
 }
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Base & EditorBase>,
@@ -49,9 +48,6 @@ export default {
       if (selfValue === targetValue) return false;
       return targetValue !== field.default
     },
-    changed() {
-      this.$emit("catalogueChanged");
-    },
     getCheckedValue(field: BooleanField) {
       if (this.item[field.field] === undefined) {
         return field.default ?? false
@@ -65,7 +61,6 @@ export default {
       } else {
         this.item[field.field] = target.checked;
       }
-      this.changed();
     },
   },
 

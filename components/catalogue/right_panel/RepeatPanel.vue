@@ -1,21 +1,9 @@
 <template>
   <div>
-    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-    <CatalogueRightPanelFieldsRepeat :catalogue="catalogue" :item="item" @catalogueChanged="changed" />
-    <CatalogueRightPanelFieldsQuery
-      class="section"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-      childForces
-      childSelections
-    />
-    <CatalogueRightPanelFieldsFilterBy
-      class="section"
-      :item="item"
-      :catalogue="catalogue"
-      @catalogueChanged="changed"
-    />
+    <CatalogueRightPanelFieldsComment :item="item" />
+    <CatalogueRightPanelFieldsRepeat :catalogue="catalogue" :item="item" />
+    <CatalogueRightPanelFieldsQuery class="section" :item="item" :catalogue="catalogue" childForces childSelections />
+    <CatalogueRightPanelFieldsFilterBy class="section" :item="item" :catalogue="catalogue" />
   </div>
 </template>
 
@@ -25,7 +13,6 @@ import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSIRepeat>,
@@ -34,12 +21,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

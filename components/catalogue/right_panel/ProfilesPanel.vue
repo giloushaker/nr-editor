@@ -1,23 +1,13 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" aliases />
-  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
+  <CatalogueRightPanelFieldsComment :item="item" class="section" />
+  <CatalogueRightPanelFieldsBasics :item="item" class="section" aliases />
+  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsHidden :item="item" class="section">
     Constraints
   </CatalogueRightPanelFieldsHidden>
 
-  <CatalogueRightPanelFieldsCharacteristics
-    class="section"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-  />
-  <CatalogueRightPanelFieldsAttributes
-    class="section"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-  />
+  <CatalogueRightPanelFieldsCharacteristics class="section" :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsAttributes class="section" :item="item" :catalogue="catalogue" />
 </template>
 
 <script lang="ts">
@@ -26,7 +16,6 @@ import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { BSIProfile } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -35,12 +24,6 @@ export default {
     item: {
       type: Object as PropType<BSIProfile>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

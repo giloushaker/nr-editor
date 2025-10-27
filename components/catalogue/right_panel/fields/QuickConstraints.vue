@@ -54,7 +54,6 @@ import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
-  emits: ["catalogueChanged"],
   setup() {
     return { store: useEditorStore() };
   },
@@ -71,9 +70,6 @@ export default {
   },
 
   methods: {
-    changed() {
-      this.$emit("catalogueChanged");
-    },
     add(type: string, scope: string) {
       this.store.create_child("constraints", this.item as EditorBase, {
         type: type,
@@ -108,4 +104,5 @@ export default {
 
 .text {
   margin-left: 28px;
-}</style>
+}
+</style>

@@ -95,7 +95,7 @@ export const useScriptsStore = defineStore("scripts", {
         }
       }
     },
-    async run_hooks(key: string, event: any, arg: any[]) {
+    async run_hooks(key: string, event?: Event, arg?: any) {
       for (const cb of Object.values(this.hooks[key] || {})) {
         try {
           const returned = await cb(event, arg);
@@ -109,6 +109,24 @@ export const useScriptsStore = defineStore("scripts", {
         }
       }
       return arg;
+    },
+    run_hooks_sync(key: string, event?: Event, arg?: any): string[] {
+      const result = []
+      for (const [name, cb] of Object.entries(this.hooks[key] || {})) {
+        try {
+          const returned = cb(event, arg);
+          if (returned) {
+            result.push(name)
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return result
+    },
+    async run_script(script: string, ...args: any[]) {
+      console.log("Running script", script, "with args", args);
+      return await this.get_default_scripts().find((s) => s.name === script)?.run?.(...args);
     },
     add_hook(hook_key: string, func_key: string, func: Function) {
       if (!this.hooks[hook_key]) {

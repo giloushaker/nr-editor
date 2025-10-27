@@ -4,13 +4,7 @@
     <div class="costs">
       <div v-for="cost of costTypes">
         <label>{{ cost.name }}: </label>
-        <UtilNumberInput
-          v-if="selectedCosts[cost.id] != null"
-          v-model="selectedCosts[cost.id].value"
-          class="input"
-          @change="changed"
-          placeholder="unset"
-        />
+        <UtilNumberInput v-if="selectedCosts[cost.id] != null" v-model="selectedCosts[cost.id].value" class="input" @change="changed" placeholder="unset" />
       </div>
     </div>
   </fieldset>
@@ -21,7 +15,6 @@ import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_cata
 import { BSICost, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   data() {
     return {
       selectedCosts: {} as Record<string, BSICost>,
@@ -57,7 +50,6 @@ export default {
   methods: {
     changed() {
       this.item.costs = Object.values(this.selectedCosts).filter((o) => isFinite(o.value));
-      this.$emit("catalogueChanged");
     },
 
     update() {

@@ -42,14 +42,7 @@
       <tr>
         <td>Target:</td>
         <td>
-          <UtilAutocomplete
-            v-model="item.targetId"
-            :placeholder="`Search Target...`"
-            :options="availableTargets"
-            valueField="id"
-            filterField="name"
-            @change="targetIdChanged"
-          >
+          <UtilAutocomplete v-model="item.targetId" :placeholder="`Search Target...`" :options="availableTargets" valueField="id" filterField="name" @change="targetIdChanged">
             <template #option="opt">
               <div style="white-space: nowrap">
                 <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
@@ -86,7 +79,7 @@ export default {
     return { store: useEditorStore() };
   },
 
-  emits: ["catalogueChanged", "targetChanged"],
+  emits: ["targetChanged"],
 
   data() {
     return {
@@ -152,7 +145,7 @@ export default {
       }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-    typeChanged() {},
+    typeChanged() { },
 
     targetIdChanged() {
       this.updateLink();
@@ -191,10 +184,6 @@ export default {
     changedImportRootEntries() {
       this.changed();
     },
-    changed() {
-      this.$emit("catalogueChanged");
-    },
-
     getType(item: Link): string {
       if (!item.target) {
         return "bullet";

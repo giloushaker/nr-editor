@@ -202,7 +202,19 @@ const availableModifiers: Record<string, string[]> = {
   infoLink: ["name", "annotation", "page", "hidden"],
   infoGroup: ["name", "annotation", "page", "hidden"],
   infoGroupLink: ["name", "annotation", "page", "hidden"],
-  forceEntry: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info"],
+  forceEntry: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info", "readme"],
+  forceEntryLink: [
+    "name",
+    "annotation",
+    "page",
+    "hidden",
+    "constraints",
+    "costs",
+    "error",
+    "warning",
+    "info",
+    "readme",
+  ],
   categoryEntry: ["name", "page", "hidden", "constraints"],
   categoryEntryLink: ["name", "page", "hidden", "constraints"],
   costType: ["hidden"],
@@ -255,6 +267,7 @@ const OPERATION_ADD_INFO: Operation = { id: "add", name: "Add", word: "message:"
 const OPERATION_REMOVE: Operation = { id: "remove", name: "Remove", word: "" };
 const OPERATION_SET_PRIMARY: Operation = { id: "set-primary", name: "Set Primary", word: "to" };
 const OPERATION_UNSET_PRIMARY: Operation = { id: "unset-primary", name: "Unset Primary", word: "to" };
+const OPERRATION_HIDE: Operation = { id: "hide", name: "Hide", word: "" };
 
 const operations = {
   number: [
@@ -295,7 +308,6 @@ type PossibleTypes = keyof typeof availableTypes;
 export default {
   components: { ErrorIcon },
 
-  emits: ["catalogueChanged"],
   data() {
     return {
       value: "",
@@ -337,7 +349,6 @@ export default {
       if (this.selectedOperation) {
         this.item.type = this.selectedOperation.id;
       }
-      this.$emit("catalogueChanged");
     },
     getDefaultFieldValue(
       fieldType: PossibleTypes,
@@ -457,7 +468,6 @@ export default {
       if (!this.selectedField) {
         return [];
       }
-
       return operations[this.selectedField.type] || [];
     },
     errors() {

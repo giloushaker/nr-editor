@@ -29,21 +29,10 @@
           <template v-else-if="Array.isArray(piece) && isEntryList(piece)">
             <div v-for="node in piece" class="node">
               <template v-if="Array.isArray(node)">
-                <NodePath
-                  :path="path(node[0])"
-                  @click="store.goto(node[0])"
-                  class="hover-darken cursor-pointer p-1px"
-                  :text="node[1]"
-                  @click.middle="debug(node[0].editorTypeName, node[0])"
-                />
+                <NodePath :path="path(node[0])" @click="store.goto(node[0])" class="hover-darken cursor-pointer p-1px" :text="node[1]" @click.middle="debug(node[0].editorTypeName, node[0])" />
               </template>
               <template v-else>
-                <NodePath
-                  :path="path(node)"
-                  @click="store.goto(node)"
-                  class="hover-darken cursor-pointer p-1px"
-                  @click.middle="debug(node.editorTypeName, node)"
-                />
+                <NodePath :path="path(node)" @click="store.goto(node)" class="hover-darken cursor-pointer p-1px" @click.middle="debug(node.editorTypeName, node)" />
               </template>
             </div>
             <!-- <div v-if="piece.length > 100">
@@ -51,12 +40,7 @@
             </div> -->
           </template>
           <template v-else-if="isEntry(piece)">
-            <NodePath
-              :path="path(piece)"
-              @click="store.goto(piece)"
-              class="hover-darken cursor-pointer p-1px"
-              @click.middle="debug(piece.editorTypeName, piece)"
-            />
+            <NodePath :path="path(piece)" @click="store.goto(piece)" class="hover-darken cursor-pointer p-1px" @click.middle="debug(piece.editorTypeName, piece)" />
           </template>
           <template v-else-if="isError(piece)">
             <div class="error">{{ piece }}</div>

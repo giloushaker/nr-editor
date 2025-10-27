@@ -18,7 +18,6 @@ import SortOrder from "./SortOrder.vue";
 import Entry from "../../left_panel/Entry.vue";
 
 export default defineComponent({
-    emits: ["catalogueChanged"],
     props: {
         item: {
             type: Object as PropType<any>,
@@ -38,9 +37,6 @@ export default defineComponent({
         }
     },
     methods: {
-        changed() {
-            this.$emit("catalogueChanged");
-        },
         get(item: EditorBase) {
             return item.sortIndex;
         },

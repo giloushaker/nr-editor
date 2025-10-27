@@ -1,7 +1,7 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsPublication class="section" :item="item" @catalogueChanged="changed" />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+  <CatalogueRightPanelFieldsPublication class="section" :item="item" />
 </template>
 
 <script lang="ts">
@@ -9,17 +9,10 @@ import { PropType } from "vue";
 import { Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Publication>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

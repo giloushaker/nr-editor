@@ -26,7 +26,6 @@ import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
-  emits: ["catalogueChanged"],
   setup() {
     return { store: useEditorStore() };
   },
@@ -50,9 +49,6 @@ export default {
     },
   },
   methods: {
-    changed() {
-      this.$emit("catalogueChanged");
-    },
     add(field: string, type: string, value: string | number) {
       if (field === "id") {
         field = (this.item as EditorBase).id;

@@ -2,7 +2,13 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
-      <UtilIconSelect v-model="itemField" :fetch="() => fieldTypes" @change="fieldChanged" class="modType" :disabled="instanceOf || association">
+      <UtilIconSelect
+        v-model="itemField"
+        :fetch="() => fieldTypes"
+        @change="fieldChanged"
+        class="modType"
+        :disabled="instanceOf || association"
+      >
         <template #option="opt">
           <div>
             <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.type}.png`" />
@@ -13,7 +19,15 @@
 
       <span> in </span>
 
-      <UtilAutocomplete v-model="item.scope" :placeholder="`Search Scope...`" :options="allScopes" valueField="id" filterField="name" @change="scopeChanged" :disabled="itemField?.value?.startsWith('limit::')">
+      <UtilAutocomplete
+        v-model="item.scope"
+        :placeholder="`Search Scope...`"
+        :options="allScopes"
+        valueField="id"
+        filterField="name"
+        @change="scopeChanged"
+        :disabled="itemField?.value?.startsWith('limit::')"
+      >
         <template #option="opt">
           <div style="white-space: nowrap">
             <template v-if="opt.option.indent >= 2 && !opt.selected">
@@ -30,15 +44,15 @@
 
       <div class="checks" v-if="!isCostType">
         <div v-if="shared">
-          <input @change="changed" id="shared" type="checkbox" v-model="item.shared" />
+          <input id="shared" type="checkbox" v-model="item.shared" />
           <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
         </div>
         <div v-if="childSelections">
-          <input @change="changed" id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
+          <input id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
           <label for="childSelections">And all child Selections</label>
         </div>
         <div v-if="childForces">
-          <input @change="changed" id="childForces" type="checkbox" v-model="item.includeChildForces" />
+          <input id="childForces" type="checkbox" v-model="item.includeChildForces" />
           <label for="childForces">And all child Forces</label>
         </div>
       </div>
@@ -66,7 +80,6 @@ interface ScopeChoice {
   title?: string;
 }
 export default {
-  emits: ["catalogueChanged"],
   data() {
     return {
       itemField: null as any,
@@ -97,9 +110,6 @@ export default {
 
   methods: {
     getNameExtra,
-    changed() {
-      this.$emit("catalogueChanged");
-    },
 
     scopeChanged() {
       if (this.item.scope === "roster") {

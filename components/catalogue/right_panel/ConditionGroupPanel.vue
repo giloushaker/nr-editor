@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ConditionGroup :item="item" @catalogueChanged="changed" />
+    <ConditionGroup :item="item" />
   </div>
 </template>
 
@@ -8,18 +8,13 @@
 import { PropType } from "vue";
 import ConditionGroup from "./fields/ConditionGroup.vue";
 import { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
+import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<BSIConditionGroup>,
+      type: Object as PropType<BSIConditionGroup & EditorBase>,
       required: true,
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   components: { ConditionGroup },

@@ -6,13 +6,7 @@
         <td>Profile Type: </td>
 
         <td>
-          <UtilAutocomplete
-            :options="profileTypes"
-            :filterField="(o: any) => o.getName()"
-            valueField="id"
-            v-model="item.typeId"
-            @change="changedType"
-          >
+          <UtilAutocomplete :options="profileTypes" :filterField="(o: any) => o.getName()" valueField="id" v-model="item.typeId" @change="changedType">
             <template #option="{ option }">
               <div class="flex align-items flex-row" style="white-space: nowrap">
                 <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
@@ -27,12 +21,9 @@
     <table class="editorTable">
       <tr v-for="char of characteristics">
         <td>{{ char.name }}: </td>
-        <td
-          ><UtilEditableDiv
-            v-model="char.$text"
-            @change="changed"
-            :beforePaste="settings.autoFormatCharacteristics ? fixEndlines : undefined"
-        /></td>
+        <td>
+          <UtilEditableDiv v-model="char.$text" @change="changed" :beforePaste="settings.autoFormatCharacteristics ? fixEndlines : undefined" />
+        </td>
       </tr>
     </table>
   </fieldset>
@@ -47,7 +38,6 @@ import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -77,13 +67,11 @@ export default {
         this.catalogue.addRef(this.item as Profile & EditorBase, newType);
       }
       this.item.characteristics = this.characteristics;
-      this.$emit("catalogueChanged");
     },
 
     changed(): void {
       const characteristics = this.characteristics;
       this.store.edit_node(this.item as Profile & EditorBase, { characteristics });
-      this.$emit("catalogueChanged");
     },
 
     fixEndlines(updatedDescription: string): string {

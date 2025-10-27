@@ -32,7 +32,6 @@ export default {
   setup() {
     return { store: useEditorStore() };
   },
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,

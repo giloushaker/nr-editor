@@ -7,7 +7,7 @@
       <tr>
         <td>Type:</td>
         <td>
-          <select v-model="type" @change="changed">
+          <select v-model="type">
             <option value="model">Model</option>
             <option value="upgrade">Upgrade</option>
             <option value="unit">Unit</option>
@@ -23,7 +23,6 @@
 
 <script lang="ts">
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<{
@@ -33,16 +32,10 @@ export default {
       required: true,
     },
   },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
-    },
-  },
   computed: {
     type: {
       get() {
-        return this.item.subType ?? this.item.type
+        return this.item.subType ?? this.item.type;
       },
       set(val: "model" | "unit" | "upgrade" | "mount" | "crew" | "unit-group") {
         switch (val) {
@@ -63,8 +56,8 @@ export default {
             this.item.subType = val;
             break;
         }
-      }
-    }
-  }
+      },
+    },
+  },
 };
 </script>

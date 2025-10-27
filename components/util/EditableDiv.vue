@@ -33,7 +33,10 @@ export default {
     change(e: any) {
       if (e.target) {
         this.$emit("update:modelValue", e.target.innerText);
-        this.$emit("change");
+        const event = new CustomEvent("change", {
+          bubbles: true,
+        });
+        this.$el?.dispatchEvent(event);
       }
     },
     get() {
@@ -55,7 +58,10 @@ export default {
       }
       document.execCommand("insertText", false, text);
       this.$emit("update:modelValue", this.get().innerText);
-      this.$emit("change");
+      const event = new CustomEvent("change", {
+        bubbles: true,
+      });
+      this.$el?.dispatchEvent(event);
     },
   },
 

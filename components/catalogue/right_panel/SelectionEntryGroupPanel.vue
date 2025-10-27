@@ -1,11 +1,10 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsDefaultSelection :item="item" :catalogue="catalogue" @catalogueChanged="changed"
-    class="section" />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsDefaultSelection :item="item" :catalogue="catalogue" class="section" />
 
-  <CatalogueRightPanelFieldsBooleans :item="item" @catalogueChanged="changed" :fields="[
+  <CatalogueRightPanelFieldsBooleans :item="item" :fields="[
     { field: 'hidden', enabled: true, name: 'Hidden' },
     { field: 'collective', enabled: false, name: 'Collective' },
     { field: 'import', enabled: true, name: 'Import' },
@@ -13,12 +12,11 @@
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsCategories :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
+  <CatalogueRightPanelFieldsCategories :item="item" :catalogue="catalogue" class="section" />
 
-  <CatalogueRightPanelFieldsQuickConstraints :item="item" @catalogueChanged="changed" :withCategory="false"
-    class="section">
+  <CatalogueRightPanelFieldsQuickConstraints :item="item" :withCategory="false" class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
-  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" @catalogueChanged="changed" />
+  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" />
 </template>
 
 <script lang="ts">
@@ -28,7 +26,6 @@ import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<ItemTypes & EditorBase & (Base | Link<Group>)>,
@@ -38,12 +35,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

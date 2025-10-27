@@ -4,7 +4,9 @@
     <table class="editorTable">
       <tr v-for="char of attributes">
         <td>{{ char.name }}: </td>
-        <td><UtilEditableDiv v-model="char.$text" @change="changed" /></td>
+        <td>
+          <UtilEditableDiv v-model="char.$text" @change="changed" />
+        </td>
       </tr>
     </table>
   </fieldset>
@@ -19,7 +21,6 @@ import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -49,12 +50,10 @@ export default {
         this.catalogue.addRef(this.item as Profile & EditorBase, newType);
       }
       this.item.attributes = this.attributes;
-      this.$emit("catalogueChanged");
     },
 
     changed(): void {
       this.store.edit_node(this.item as Profile & EditorBase, { attributes: this.attributes });
-      this.$emit("catalogueChanged");
     },
   },
 

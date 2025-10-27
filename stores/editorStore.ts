@@ -515,7 +515,25 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = changedState;
       }
     },
-    changed(node: EditorBase | Catalogue) {
+    async changed(node: EditorBase | Catalogue) {
+      function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
+        const result = [] as NonNullable<T>[]
+        let cur = node as typeof node;
+        while (cur.parent) {
+          result.push(cur.parent)
+          cur = cur.parent as any as typeof node;
+        }
+        return result
+      }
+
+      if (getParents(node as EditorBase).find(o => o.editorTypeName === "profileType")) {
+        const system = this.get_system(node.getCatalogue().getSystemId());
+        await system.loadAll();
+        const catalogues = system.getAllLoadedCatalogues();
+        catalogues.map((o) => o.processForEditor());
+        console.log(await this.scripts.run_script("Fix profiles", catalogues));
+      }
+
       const catalogue = node.getCatalogue();
       if (catalogue) {
         this.set_catalogue_changed(catalogue);
@@ -873,10 +891,24 @@ export const useEditorStore = defineStore("editor", {
     },
     async paste(event: ClipboardEvent) {
       const clip = await this.get_clipboard(event);
-      const script_result = await this.scripts.run_hooks("paste", {}, clip);
+      const script_result = await this.scripts.run_hooks("paste", event, clip);
       if (script_result) {
         this.add(script_result);
       }
+    },
+    get_script_args() {
+      const selections = this.get_selections();
+      if (!selections.length) return;
+      const system = selections[0].getCatalogue().getSystem()
+      const catalogues = [...new Set(selections.map(o => o.getCatalogue()))];
+      return {
+        selections,
+        system,
+        catalogues,
+      }
+    },
+    get_context_actions() {
+      return this.scripts.run_hooks_sync("context", undefined, this.get_script_args());
     },
     async pasteLink() {
       const obj = await this.get_clipboard();
