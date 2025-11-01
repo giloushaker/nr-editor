@@ -13,7 +13,7 @@
 
 <script lang="ts">
 export default {
-  emits: ["change", "update:modelValue", "paste"],
+  emits: ["update:modelValue", "paste"],
   props: {
     modelValue: {
       type: [String, Number, Array],

@@ -42,7 +42,14 @@
       <tr>
         <td>Target:</td>
         <td>
-          <UtilAutocomplete v-model="item.targetId" :placeholder="`Search Target...`" :options="availableTargets" valueField="id" filterField="name" @change="targetIdChanged">
+          <UtilAutocomplete
+            v-model="item.targetId"
+            :placeholder="`Search Target...`"
+            :options="availableTargets"
+            valueField="id"
+            filterField="name"
+            @change.native="targetIdChanged"
+          >
             <template #option="opt">
               <div style="white-space: nowrap">
                 <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
@@ -58,7 +65,7 @@
       <tr v-if="type === 'catalogue'">
         <td></td>
         <td>
-          <input @change="changedImportRootEntries" id="importRoot" type="checkbox" v-model="item.importRootEntries" />
+          <input id="importRoot" type="checkbox" v-model="item.importRootEntries" />
           <label for="importRoot">Import Root Entries</label>
         </td>
       </tr>
@@ -78,8 +85,6 @@ export default {
   setup() {
     return { store: useEditorStore() };
   },
-
-  emits: ["targetChanged"],
 
   data() {
     return {
@@ -145,11 +150,10 @@ export default {
       }
       return sortByAscending(all, (o) => o.name) as Array<Base & EditorBase>;
     },
-    typeChanged() { },
+    typeChanged() {},
 
     targetIdChanged() {
       this.updateLink();
-      this.changed();
     },
 
     async updateLink() {
@@ -179,10 +183,6 @@ export default {
           }
         }
       }
-      this.$emit("targetChanged");
-    },
-    changedImportRootEntries() {
-      this.changed();
     },
     getType(item: Link): string {
       if (!item.target) {

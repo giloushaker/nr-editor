@@ -1,6 +1,16 @@
 <template>
   <div class="autocomplete container">
-    <input class="input autocomplete-input" type="text" ref="edit" @input.stop="suggest" @click="maySuggest" v-model="searchPattern" :placeholder="placeholder" v-click-outside="onClickOutside" v-if="editing" />
+    <input
+      class="input autocomplete-input"
+      type="text"
+      ref="edit"
+      @input.stop="suggest"
+      @click="maySuggest"
+      v-model="searchPattern"
+      :placeholder="placeholder"
+      v-click-outside="onClickOutside"
+      v-if="editing"
+    />
     <div v-else @click="startEditing" class="autocomplete-input">
       <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
       <slot v-else v-bind="selectedOption" name="option"></slot>
@@ -17,7 +27,7 @@
 import { PropType } from "vue";
 
 export default {
-  emits: ["change", "update:modelValue"],
+  emits: ["update:modelValue"],
   props: {
     modelValue: String,
     placeholder: {
@@ -145,11 +155,11 @@ export default {
       this.emitNativeChangeEvent(opt.option, old);
     },
     emitNativeChangeEvent(a1: any, a2: any) {
-      const event = new CustomEvent('change', {
+      const event = new CustomEvent("change", {
         bubbles: true,
-        detail: { value: a1, old: a2 }
-      })
-      this.$el?.dispatchEvent(event)
+        detail: { value: a1, old: a2 },
+      });
+      this.$el?.dispatchEvent(event);
     },
     reset() {
       this.searchPattern = "";
