@@ -222,7 +222,7 @@ const availableModifiers: Record<string, string[]> = {
 const availableTypes = {
   costs: "number",
   name: "string",
-  annotation: "string",
+  annotation: "string-or-number",
   page: "string",
   hidden: "boolean",
   description: "string",
