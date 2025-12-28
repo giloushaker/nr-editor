@@ -400,6 +400,7 @@ import { getModifiedField } from "~/assets/shared/battlescribe/bs_modifiers";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import CatalogueLabel from "~/components/catalogue/left_panel/components/CatalogueLabel.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
+import { entries } from "~/assets/shared/battlescribe/entries";
 export interface ICost {
   name: string;
   value: number;
@@ -447,6 +448,14 @@ const order: Record<string, number> = {
 };
 const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
 const hiddenTypes = new Set(["characteristics", "attributes", "costs"]);
+const avoidSorting = new Set([
+  "forceEntry",
+  "profileType",
+  "condition",
+  "conditionGroup",
+  "repeat",
+  "localConditionGroup",
+]);
 export default {
   name: "CatalogueEntry",
   components: {
@@ -558,8 +567,9 @@ export default {
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
-      if (entry.editorTypeName === "forceEntry") return false;
-      if (entry.editorTypeName === "profileType") return false;
+      if (avoidSorting.has(entry.editorTypeName)) {
+        return false;
+      }
       return true;
     },
     ref_count(item: EditorBase) {

@@ -11,6 +11,25 @@
             <option value="and">And</option>
             <option value="not">Not</option>
             <option value="count">Count</option>
+
+            <!-- Numeric operations -->
+            <option disabled>== Numeric ==</option>
+            <option value="add">Add</option>
+            <option value="subtract">Subtract</option>
+            <option value="multiply">Multiply</option>
+            <option value="divide">Divide</option>
+            <option value="modulo">Modulo</option>
+            <option value="power">Power</option>
+            <option value="min">Min</option>
+            <option value="max">Max</option>
+            <!-- Comparison operators -->
+            <option disabled>== Comparison ==</option>
+            <option value="greater">Greater</option>
+            <option value="greaterOrEqual">Greater or Equal</option>
+            <option value="less">Less</option>
+            <option value="lessOrEqual">Less or Equal</option>
+            <option value="equal">Equal</option>
+            <option value="notEqual">Not Equal</option>
           </select>
         </td>
       </tr>

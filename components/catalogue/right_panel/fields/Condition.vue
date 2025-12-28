@@ -17,6 +17,9 @@
           <option value="instanceOf">Instance Of</option>
           <option value="notInstanceOf">Not Instance Of</option>
         </template>
+        <template v-if="allowPositional">
+          <option value="before">Is Before</option>
+        </template>
       </select>
       <UtilNumberInput :disabled="instanceOf" v-model="item.value" />
       <div>
@@ -28,7 +31,8 @@
 </template>
 
 <script lang="ts">
-import { Base, Condition } from "~/assets/shared/battlescribe/bs_main";
+import { findParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
@@ -54,6 +58,11 @@ export default {
     allowInstanceOf() {
       if ((this.item as Base as EditorBase).editorTypeName === "localConditionGroup") return false;
       return true;
+    },
+    allowPositional() {
+      return Boolean(
+        findParentWhere(this.item as Base as EditorBase, (p) => p.editorTypeName === "localConditionGroup")
+      );
     },
     instanceOf() {
       return this.item.type?.includes("instance");

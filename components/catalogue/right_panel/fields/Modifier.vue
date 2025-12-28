@@ -128,8 +128,6 @@ import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main
 import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
-import { set } from "nuxt/dist/app/compat/capi";
-import EditableDiv from "~/components/util/EditableDiv.vue";
 
 type FieldTypes =
   | "string"
