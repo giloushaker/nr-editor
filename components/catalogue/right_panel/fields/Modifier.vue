@@ -251,6 +251,7 @@ const OPERATION_SET: Operation = { id: "set", name: "Set", word: "to" };
 const OPERATION_MULTIPLY: Operation = { id: "multiply", name: "Multiply", word: "by" };
 const OPERATION_DIVIDE: Operation = { id: "divide", name: "Divide", word: "by" };
 const OPERATION_MODULO: Operation = { id: "modulo", name: "Modulo", word: "by" };
+const OPERATION_POWER: Operation = { id: "power", name: "Power", word: "by" };
 const OPERATION_INCREMENT: Operation = { id: "increment", name: "Increment", word: "by" };
 const OPERATION_DECREMENT: Operation = { id: "decrement", name: "Decrement", word: "by" };
 const OPERATION_CEIL: Operation = { id: "ceil", name: "Ceil", word: "to" };
@@ -275,6 +276,7 @@ const operations = {
     OPERATION_MULTIPLY,
     OPERATION_DIVIDE,
     OPERATION_MODULO,
+    OPERATION_POWER,
     OPERATION_CEIL,
     OPERATION_FLOOR,
   ],
@@ -289,6 +291,7 @@ const operations = {
     OPERATION_MULTIPLY,
     OPERATION_DIVIDE,
     OPERATION_MODULO,
+    OPERATION_POWER,
     OPERATION_CEIL,
     OPERATION_FLOOR,
   ],
