@@ -256,6 +256,13 @@ const OPERATION_INCREMENT: Operation = { id: "increment", name: "Increment", wor
 const OPERATION_DECREMENT: Operation = { id: "decrement", name: "Decrement", word: "by" };
 const OPERATION_CEIL: Operation = { id: "ceil", name: "Ceil", word: "to" };
 const OPERATION_FLOOR: Operation = { id: "floor", name: "Floor", word: "to" };
+const OPERATION_CUMULATIVE_ADD: Operation = { id: "cumulative-add", name: "Add (Cumulative)", word: "" };
+const OPERATION_CUMULATIVE_MULTIPLY: Operation = {
+  id: "cumulative-multiply",
+  name: "Multiply (Cumulative)",
+  word: "by",
+};
+const OPERATION_CUMULATIVE_POWER: Operation = { id: "cumulative-power", name: "Power (Cumulative)", word: "by" };
 const OPERATION_APPEND: Operation = { id: "append", name: "Append", word: "with" };
 const OPERATION_PREPEND: Operation = { id: "prepend", name: "Prepend", word: "with" };
 const OPERATION_REPLACE: Operation = { id: "replace", name: "Replace", word: "with" };
@@ -279,6 +286,9 @@ const operations = {
     OPERATION_POWER,
     OPERATION_CEIL,
     OPERATION_FLOOR,
+    OPERATION_CUMULATIVE_ADD,
+    OPERATION_CUMULATIVE_MULTIPLY,
+    OPERATION_CUMULATIVE_POWER,
   ],
   string: [OPERATION_SET, OPERATION_APPEND, OPERATION_PREPEND, OPERATION_REPLACE],
   "string-or-number": [
@@ -294,6 +304,9 @@ const operations = {
     OPERATION_POWER,
     OPERATION_CEIL,
     OPERATION_FLOOR,
+    OPERATION_CUMULATIVE_ADD,
+    OPERATION_CUMULATIVE_MULTIPLY,
+    OPERATION_CUMULATIVE_POWER,
   ],
   boolean: [OPERATION_SET],
   defaultSelectionEntryId: [OPERATION_SET],
