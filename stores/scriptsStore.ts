@@ -81,8 +81,6 @@ export const useScriptsStore = defineStore("scripts", {
         findDuplicateIds,
         findDuplicatesProfiles,
         listAutomaticRefs,
-
-
         ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
     },

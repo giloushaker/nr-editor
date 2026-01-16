@@ -9,22 +9,20 @@
 
   <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" class="section" />
 
-  <CatalogueRightPanelFieldsBooleans :item="item" class="section">
-    Entry
-  </CatalogueRightPanelFieldsBooleans>
+  <CatalogueRightPanelFieldsBooleans :item="item" class="section"> Entry </CatalogueRightPanelFieldsBooleans>
 
   <CatalogueRightPanelFieldsCategories :item="item" :catalogue="catalogue" class="section" />
-
 
   <CatalogueRightPanelFieldsQuickConstraints :item="item" :withCategory="false" class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
 
-  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" :get_items="getChilds" />
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   props: {
@@ -35,6 +33,11 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
+    },
+  },
+  methods: {
+    getChilds(item: EditorBase) {
+      return sortByAscending([...item.iterateSelectionEntries()], (o) => o.getName());
     },
   },
 };

@@ -4,11 +4,15 @@
   <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" class="section" />
   <CatalogueRightPanelFieldsDefaultSelection :item="item" :catalogue="catalogue" class="section" />
 
-  <CatalogueRightPanelFieldsBooleans :item="item" :fields="[
-    { field: 'hidden', enabled: true, name: 'Hidden' },
-    { field: 'collective', enabled: false, name: 'Collective' },
-    { field: 'import', enabled: true, name: 'Import' },
-  ]" class="section">
+  <CatalogueRightPanelFieldsBooleans
+    :item="item"
+    :fields="[
+      { field: 'hidden', enabled: true, name: 'Hidden' },
+      { field: 'collective', enabled: false, name: 'Collective' },
+      { field: 'import', enabled: true, name: 'Import' },
+    ]"
+    class="section"
+  >
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
@@ -16,12 +20,13 @@
 
   <CatalogueRightPanelFieldsQuickConstraints :item="item" :withCategory="false" class="section">
   </CatalogueRightPanelFieldsQuickConstraints>
-  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" :get_items="getChilds" />
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
@@ -35,6 +40,11 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
+    },
+  },
+  methods: {
+    getChilds(item: EditorBase & Link<Group>) {
+      return sortByAscending([...item.iterateSelectionEntries()], (o) => o.getName());
     },
   },
 };
