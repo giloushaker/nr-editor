@@ -4,7 +4,7 @@
       class="input autocomplete-input"
       type="text"
       ref="edit"
-      @input="suggest"
+      @input.stop="suggest"
       @click="maySuggest"
       v-model="searchPattern"
       :placeholder="placeholder"
@@ -27,7 +27,7 @@
 import { PropType } from "vue";
 
 export default {
-  emits: ["change", "update:modelValue"],
+  emits: ["update:modelValue"],
   props: {
     modelValue: String,
     placeholder: {
@@ -152,9 +152,15 @@ export default {
         selected: true,
       };
       this.$emit("update:modelValue", res);
-      this.$emit("change", opt.option, old);
+      this.emitNativeChangeEvent(opt.option, old);
     },
-
+    emitNativeChangeEvent(a1: any, a2: any) {
+      const event = new CustomEvent("change", {
+        bubbles: true,
+        detail: { value: a1, old: a2 },
+      });
+      this.$el?.dispatchEvent(event);
+    },
     reset() {
       this.searchPattern = "";
       this.selectedOption = null;

@@ -162,12 +162,14 @@ export default defineComponent({
   },
   methods: {
     getNameExtra,
-    makePrimary(category: CategoryLink, parent: Base) {
-      parent.categoryLinks?.forEach((o) => (o.primary = false));
-      category.primary = true;
+    makePrimary(category: EditorBase & CategoryLink, parent: Base) {
+      for (const cl of parent.categoryLinks || []) {
+        this.store.edit_node(cl as EditorBase & CategoryLink, { primary: false });
+      }
+      this.store.edit_node(category, { primary: true });
     },
-    makeSecondary(category: CategoryLink) {
-      category.primary = false;
+    makeSecondary(category: EditorBase & CategoryLink) {
+      this.store.edit_node(category, { primary: false });
     },
     context(event: Event, category: CategoryLink & EditorBase) {
       this.contextmenuopen = true;
@@ -247,7 +249,7 @@ export default defineComponent({
       const cl = this.addCategory(category);
       this.makePrimary(cl, this.item);
     },
-    removeCategory(parent: Base, category: Category) {
+    removeCategory(parent: Base, category: CategoryLink) {
       const links = parent.categoryLinks || [];
       const found = links.find((o) => o.targetId === category.getId());
       if (found) {

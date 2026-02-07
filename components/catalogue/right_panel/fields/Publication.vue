@@ -5,25 +5,25 @@
       <tr>
         <td>Short Name</td>
         <td>
-          <input type="text" v-model="item.shortName" @change="changed" />
+          <input type="text" v-model="item.shortName" />
         </td>
       </tr>
       <tr>
         <td>Publication:</td>
         <td>
-          <input type="text" v-model="item.publisher" @change="changed" />
+          <input type="text" v-model="item.publisher" />
         </td>
       </tr>
       <tr>
         <td>Publication Date:</td>
         <td>
-          <input type="text" v-model="item.publicationDate" @change="changed" />
+          <input type="text" v-model="item.publicationDate" />
         </td>
       </tr>
       <tr>
         <td>Publication URL:</td>
         <td>
-          <input type="text" v-model="item.publisherUrl" @change="changed" />
+          <input type="text" v-model="item.publisherUrl" />
         </td>
       </tr>
     </table>
@@ -34,17 +34,10 @@
 import { BSIPublication } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSIPublication>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

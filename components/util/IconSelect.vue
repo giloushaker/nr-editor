@@ -74,10 +74,16 @@ export default {
         selected: true,
       };
       this.$emit("update:modelValue", res);
-      this.$emit("change", opt.option);
+      this.emitNativeChangeEvent(opt.option);
       this.editing = false;
     },
-
+    emitNativeChangeEvent(a1: any) {
+      const event = new CustomEvent('change', {
+        bubbles: true,
+        detail: { value: a1 }
+      })
+      this.$el?.dispatchEvent(event)
+    },
     reset() {
       this.searchPattern = "";
       this.selectedOption = null;

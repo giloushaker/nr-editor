@@ -128,8 +128,6 @@ import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main
 import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
-import { set } from "nuxt/dist/app/compat/capi";
-import EditableDiv from "~/components/util/EditableDiv.vue";
 
 type FieldTypes =
   | "string"
@@ -202,7 +200,19 @@ const availableModifiers: Record<string, string[]> = {
   infoLink: ["name", "annotation", "page", "hidden"],
   infoGroup: ["name", "annotation", "page", "hidden"],
   infoGroupLink: ["name", "annotation", "page", "hidden"],
-  forceEntry: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info"],
+  forceEntry: ["name", "annotation", "page", "hidden", "constraints", "costs", "error", "warning", "info", "readme"],
+  forceEntryLink: [
+    "name",
+    "annotation",
+    "page",
+    "hidden",
+    "constraints",
+    "costs",
+    "error",
+    "warning",
+    "info",
+    "readme",
+  ],
   categoryEntry: ["name", "page", "hidden", "constraints"],
   categoryEntryLink: ["name", "page", "hidden", "constraints"],
   costType: ["hidden"],
@@ -210,7 +220,7 @@ const availableModifiers: Record<string, string[]> = {
 const availableTypes = {
   costs: "number",
   name: "string",
-  annotation: "string",
+  annotation: "string-or-number",
   page: "string",
   hidden: "boolean",
   description: "string",
@@ -235,162 +245,76 @@ type ModifierField = {
   type: FieldTypes;
   modifierType: string;
 };
+
+// Operation constants
+const OPERATION_SET: Operation = { id: "set", name: "Set", word: "to" };
+const OPERATION_MULTIPLY: Operation = { id: "multiply", name: "Multiply", word: "by" };
+const OPERATION_DIVIDE: Operation = { id: "divide", name: "Divide", word: "by" };
+const OPERATION_MODULO: Operation = { id: "modulo", name: "Modulo", word: "by" };
+const OPERATION_POWER: Operation = { id: "power", name: "Power", word: "by" };
+const OPERATION_INCREMENT: Operation = { id: "increment", name: "Increment", word: "by" };
+const OPERATION_DECREMENT: Operation = { id: "decrement", name: "Decrement", word: "by" };
+const OPERATION_CEIL: Operation = { id: "ceil", name: "Ceil", word: "to" };
+const OPERATION_FLOOR: Operation = { id: "floor", name: "Floor", word: "to" };
+const OPERATION_CUMULATIVE_ADD: Operation = { id: "cumulative-add", name: "Add (Cumulative)", word: "" };
+const OPERATION_CUMULATIVE_MULTIPLY: Operation = {
+  id: "cumulative-multiply",
+  name: "Multiply (Cumulative)",
+  word: "by",
+};
+const OPERATION_CUMULATIVE_POWER: Operation = { id: "cumulative-power", name: "Power (Cumulative)", word: "by" };
+const OPERATION_APPEND: Operation = { id: "append", name: "Append", word: "with" };
+const OPERATION_PREPEND: Operation = { id: "prepend", name: "Prepend", word: "with" };
+const OPERATION_REPLACE: Operation = { id: "replace", name: "Replace", word: "with" };
+const OPERATION_ADD: Operation = { id: "add", name: "Add", word: "" };
+const OPERATION_ADD_ERROR: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_ADD_WARNING: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_ADD_INFO: Operation = { id: "add", name: "Add", word: "message:" };
+const OPERATION_REMOVE: Operation = { id: "remove", name: "Remove", word: "" };
+const OPERATION_SET_PRIMARY: Operation = { id: "set-primary", name: "Set Primary", word: "to" };
+const OPERATION_UNSET_PRIMARY: Operation = { id: "unset-primary", name: "Unset Primary", word: "to" };
+const OPERRATION_HIDE: Operation = { id: "hide", name: "Hide", word: "" };
+
 const operations = {
   number: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "increment",
-      name: "Increment",
-      word: "by",
-    },
-    {
-      id: "decrement",
-      name: "Decrement",
-      word: "by",
-    },
-    {
-      id: "ceil",
-      name: "Ceil",
-      word: "to",
-    },
-    {
-      id: "floor",
-      name: "Floor",
-      word: "to",
-    },
+    OPERATION_SET,
+    OPERATION_INCREMENT,
+    OPERATION_DECREMENT,
+    OPERATION_MULTIPLY,
+    OPERATION_DIVIDE,
+    OPERATION_MODULO,
+    OPERATION_POWER,
+    OPERATION_CEIL,
+    OPERATION_FLOOR,
+    OPERATION_CUMULATIVE_ADD,
+    OPERATION_CUMULATIVE_MULTIPLY,
+    OPERATION_CUMULATIVE_POWER,
   ],
-  string: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "append",
-      name: "Append",
-      word: "with",
-    },
-    {
-      id: "prepend",
-      name: "Prepend",
-      word: "with",
-    },
-    {
-      id: "replace",
-      name: "Replace",
-      word: "with",
-    },
-  ],
+  string: [OPERATION_SET, OPERATION_APPEND, OPERATION_PREPEND, OPERATION_REPLACE],
   "string-or-number": [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-    {
-      id: "append",
-      name: "Append",
-      word: "with",
-    },
-    {
-      id: "prepend",
-      name: "Prepend",
-      word: "with",
-    },
-    {
-      id: "replace",
-      name: "Replace",
-      word: "with",
-    },
-    {
-      id: "increment",
-      name: "Increment",
-      word: "by",
-    },
-    {
-      id: "decrement",
-      name: "Decrement",
-      word: "by",
-    },
-    {
-      id: "ceil",
-      name: "Ceil",
-      word: "to",
-    },
-    {
-      id: "floor",
-      name: "Floor",
-      word: "to",
-    },
+    OPERATION_SET,
+    OPERATION_APPEND,
+    OPERATION_PREPEND,
+    OPERATION_REPLACE,
+    OPERATION_INCREMENT,
+    OPERATION_DECREMENT,
+    OPERATION_MULTIPLY,
+    OPERATION_DIVIDE,
+    OPERATION_MODULO,
+    OPERATION_POWER,
+    OPERATION_CEIL,
+    OPERATION_FLOOR,
+    OPERATION_CUMULATIVE_ADD,
+    OPERATION_CUMULATIVE_MULTIPLY,
+    OPERATION_CUMULATIVE_POWER,
   ],
-  boolean: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-  ],
-  defaultSelectionEntryId: [
-    {
-      id: "set",
-      name: "Set",
-      word: "",
-    },
-  ],
-  category: [
-    {
-      id: "add",
-      name: "Add",
-      word: "",
-    },
-    {
-      id: "remove",
-      name: "Remove",
-      word: "",
-    },
-    {
-      id: "set-primary",
-      name: "Set Primary",
-      word: "to",
-    },
-    {
-      id: "unset-primary",
-      name: "Unset Primary",
-      word: "to",
-    },
-  ],
-  defaultAmount: [
-    {
-      id: "set",
-      name: "Set",
-      word: "to",
-    },
-  ],
-  error: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
-  warning: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
-  info: [
-    {
-      id: "add",
-      name: "Add",
-      word: "message:",
-    },
-  ],
+  boolean: [OPERATION_SET],
+  defaultSelectionEntryId: [OPERATION_SET],
+  category: [OPERATION_ADD, OPERATION_REMOVE, OPERATION_SET_PRIMARY, OPERATION_UNSET_PRIMARY],
+  defaultAmount: [OPERATION_SET],
+  error: [OPERATION_ADD_ERROR],
+  warning: [OPERATION_ADD_WARNING],
+  info: [OPERATION_ADD_INFO],
 } as Record<string, Operation[]>;
 
 type PossibleTypes = keyof typeof availableTypes;
@@ -398,7 +322,6 @@ type PossibleTypes = keyof typeof availableTypes;
 export default {
   components: { ErrorIcon },
 
-  emits: ["catalogueChanged"],
   data() {
     return {
       value: "",
@@ -440,7 +363,6 @@ export default {
       if (this.selectedOperation) {
         this.item.type = this.selectedOperation.id;
       }
-      this.$emit("catalogueChanged");
     },
     getDefaultFieldValue(
       fieldType: PossibleTypes,
@@ -560,7 +482,6 @@ export default {
       if (!this.selectedField) {
         return [];
       }
-
       return operations[this.selectedField.type] || [];
     },
     errors() {

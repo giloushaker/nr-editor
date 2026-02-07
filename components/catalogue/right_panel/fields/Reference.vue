@@ -10,7 +10,6 @@
             :filterField="(o: Publication) => o.getName()"
             valueField="id"
             v-model="item.publicationId"
-            @change="changed"
             nullable
           >
             <template #option="{ option }">
@@ -33,7 +32,7 @@
       <tr>
         <td>Page:</td>
         <td>
-          <input type="text" v-model="item.page" @change="changed" />
+          <input type="text" v-model="item.page" />
         </td>
       </tr>
     </table>
@@ -47,7 +46,6 @@ import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -66,9 +64,6 @@ export default {
   methods: {
     getNameExtra,
     getName,
-    changed() {
-      this.$emit("catalogueChanged");
-    },
   },
 };
 </script>

@@ -7,18 +7,10 @@
       Feel free to offer feedback or ask questions on our <a href="https://discord.gg/cCtqGbugwb">Discord server</a>.
     </p>
 
-    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-    <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-    <CatalogueRightPanelFieldsQuery
-      :catalogue="catalogue"
-      childSelctions
-      :item="item"
-      @catalogueChanged="changed"
-      class="section"
-      childSelections
-      childForces
-    />
-    <FilterBy class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" hideshared />
+    <CatalogueRightPanelFieldsComment :item="item" />
+    <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+    <CatalogueRightPanelFieldsQuery :catalogue="catalogue" childSelctions :item="item" class="section" childSelections childForces />
+    <FilterBy class="section" :item="item" :catalogue="catalogue" hideshared />
     <fieldset class="section">
       <legend>Constraints</legend>
       <table class="editorTable">
@@ -54,7 +46,6 @@ import FilterBy from "./fields/FilterBy.vue";
 import { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<NRAssociation & EditorBase>,
@@ -73,11 +64,6 @@ export default {
       set(v: string) {
         this.item.ids = v.split(",").map((o) => o.trim());
       },
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   components: { FilterBy },

@@ -1,53 +1,24 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsReference
-    v-if="type != 'catalogue'"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+  <CatalogueRightPanelFieldsReference v-if="type != 'catalogue'" :item="item" :catalogue="catalogue" class="section" />
 
   <CatalogueRightPanelFieldsLink
     :item="item"
     :catalogue="catalogue"
-    @catalogueChanged="linkChanged"
     class="section"
     :type="type"
+    @change="linkChanged"
   />
 
-  <CatalogueRightPanelFieldsCosts
-    v-if="isEntry"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
-  <CatalogueRightPanelFieldsCreation
-    v-if="isEntry"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsCosts v-if="isEntry" :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsCreation v-if="isEntry" :item="item" :catalogue="catalogue" class="section" />
 
-  <CatalogueRightPanelFieldsBooleans
-    :item="item"
-    @catalogueChanged="changed"
-    class="section"
-    v-if="type != 'catalogue'"
-  >
+  <CatalogueRightPanelFieldsBooleans :item="item" class="section" v-if="type != 'catalogue'">
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
-  <CatalogueRightPanelFieldsCategories
-    v-if="isEntryOrGroup"
-    :item="item"
-    :catalogue="catalogue"
-    @catalogueChanged="changed"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsCategories v-if="isEntryOrGroup" :item="item" :catalogue="catalogue" class="section" />
 
   <CatalogueRightPanelFieldsCharacteristics
     class="mt-10px"
@@ -68,13 +39,11 @@
     v-if="item.target?.isRule()"
     :item="(item.target as EditorBase & Rule)"
     :catalogue="catalogue"
-    @catalogueChanged="changed"
     link
   />
 
   <CatalogueRightPanelFieldsQuickConstraints
     :item="item"
-    @catalogueChanged="changed"
     :withCategory="false"
     class="section"
     v-if="type == 'entry' || type == 'categoryEntry'"
@@ -84,18 +53,19 @@
     v-if="isEntryOrGroup"
     :item="item"
     :catalogue="catalogue"
-    @catalogueChanged="changed"
+    :get_items="getChilds"
   />
 </template>
 
 <script lang="ts">
+import { link } from "fs";
 import { PropType } from "vue";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Link, Profile, Rule } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useSettingsStore } from "~/stores/settingsState";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Link & EditorBase>,
@@ -118,15 +88,13 @@ export default {
   },
 
   methods: {
+    getChilds(item: Link) {
+      return sortByAscending([...item.iterateSelectionEntries()], (o) => o.getName());
+    },
     linkChanged() {
       if (this.settings.autoRenameInfoLinkParent && this.item.parent) {
         this.item.parent.name = this.item.name;
       }
-      this.changed();
-    },
-
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {

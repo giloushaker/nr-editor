@@ -48,7 +48,10 @@ export default {
       if (this.stringValue != null) {
         this.intValue = parseFloat(this.stringValue);
         this.$emit("update:modelValue", this.intValue);
-        this.$emit("change");
+        const event = new CustomEvent("change", {
+          bubbles: true,
+        });
+        this.$el?.dispatchEvent(event);
       }
     },
   },

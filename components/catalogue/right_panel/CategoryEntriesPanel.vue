@@ -1,41 +1,28 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+  <CatalogueRightPanelFieldsReference :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsHidden :item="item" class="section">
     Entry
   </CatalogueRightPanelFieldsHidden>
-
-  <CatalogueRightPanelFieldsQuickConstraints
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsDescription class="section" :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsQuickConstraints :item="item" :withCategory="false" class="section" />
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
 import { Category } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
-      type: Object as PropType<Category>,
+      type: Object as PropType<Category & EditorBase>,
       required: true,
     },
-
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

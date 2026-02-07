@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 
-import fixlinknames from "~/default-scripts/fix-link-names.js";
-import fixprofiles from "~/default-scripts/fix-profiles";
-import listrefs from "~/default-scripts/list-refs";
+import fixLinkNames from "~/default-scripts/fix-link-names.js";
+import fixProfiles from "~/default-scripts/fix-profiles";
+import listRefs from "~/default-scripts/list-refs";
 import select from "~/default-scripts/select";
-import listautomaticrefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
+import listAutomaticRefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_helpers";
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
@@ -13,6 +13,8 @@ import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 import t9a_import from "~/default-scripts/nrt9a/import_json";
 import t9a_rarity from "~/default-scripts/nrt9a/rarity_script";
+import findDuplicateIds from "~/default-scripts/find-duplicate-ids";
+import findDuplicatesProfiles from "~/default-scripts/find-duplicates-profiles";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -23,10 +25,14 @@ export const useScriptsStore = defineStore("scripts", {
   actions: {
     async get_scripts(system?: GameSystemFiles) {
       if (!system?.gameSystem) return [];
+      const result = [];
+      if (["The Ninth Age", "The 9th Age"].includes(system.gameSystem.name!)) {
+        result.push(t9a_import);
+        result.push(t9a_rarity);
+      }
       try {
         const path = getDataObject(system.gameSystem).fullFilePath;
         if (!path) return [];
-        const result = [];
         const dir = `${dirname(path)}/scripts`;
 
         for (const file of await getFolderFiles(dir)) {
@@ -68,13 +74,13 @@ export const useScriptsStore = defineStore("scripts", {
       testScripts.push(pasteWeapons);
       testScripts.push(pasteEquipment);
       return [
-        t9a_import,
-        t9a_rarity,
-        fixlinknames,
-        fixprofiles,
-        listrefs,
+        fixLinkNames,
+        fixProfiles,
+        listRefs,
         select,
-        listautomaticrefs,
+        findDuplicateIds,
+        findDuplicatesProfiles,
+        listAutomaticRefs,
         ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
     },
@@ -87,7 +93,7 @@ export const useScriptsStore = defineStore("scripts", {
         }
       }
     },
-    async run_hooks(key: string, event: any, arg: any[]) {
+    async run_hooks(key: string, event?: Event, arg?: any) {
       for (const cb of Object.values(this.hooks[key] || {})) {
         try {
           const returned = await cb(event, arg);
@@ -101,6 +107,24 @@ export const useScriptsStore = defineStore("scripts", {
         }
       }
       return arg;
+    },
+    run_hooks_sync(key: string, event?: Event, arg?: any): string[] {
+      const result = []
+      for (const [name, cb] of Object.entries(this.hooks[key] || {})) {
+        try {
+          const returned = cb(event, arg);
+          if (returned) {
+            result.push(name)
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return result
+    },
+    async run_script(script: string, ...args: any[]) {
+      console.log("Running script", script, "with args", args);
+      return await this.get_default_scripts().find((s) => s.name === script)?.run?.(...args);
     },
     add_hook(hook_key: string, func_key: string, func: Function) {
       if (!this.hooks[hook_key]) {

@@ -12,7 +12,6 @@
             valueField="id"
             filterField="name"
             :default="allScopes[0]"
-            @change="changed"
           >
             <template #option="opt">
               <div style="white-space: nowrap">
@@ -38,7 +37,6 @@
             :options="allAffects"
             valueField="value"
             filterField="name"
-            @change="changed"
           >
             <template #option="opt">
               <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName || 'bullet'}.png`" />
@@ -56,7 +54,6 @@
             :options="allFilterBy"
             valueField="id"
             filterField="name"
-            @change="changed"
             :default="filterBySelected"
             lazy
           >
@@ -143,7 +140,6 @@ interface ScopeChoice {
 
 export default defineComponent({
   components: { PopupDialog },
-  emits: ["catalogueChanged"],
   props: {
     item: { type: Object as PropType<BSIModifier & EditorBase>, required: true },
   },
@@ -167,9 +163,6 @@ export default defineComponent({
         return false;
       }
       return true;
-    },
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   mounted() {

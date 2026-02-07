@@ -48,7 +48,7 @@
             :options="availableTargets"
             valueField="id"
             filterField="name"
-            @change="targetIdChanged"
+            @change.native="targetIdChanged"
           >
             <template #option="opt">
               <div style="white-space: nowrap">
@@ -65,7 +65,7 @@
       <tr v-if="type === 'catalogue'">
         <td></td>
         <td>
-          <input @change="changedImportRootEntries" id="importRoot" type="checkbox" v-model="item.importRootEntries" />
+          <input id="importRoot" type="checkbox" v-model="item.importRootEntries" />
           <label for="importRoot">Import Root Entries</label>
         </td>
       </tr>
@@ -85,8 +85,6 @@ export default {
   setup() {
     return { store: useEditorStore() };
   },
-
-  emits: ["catalogueChanged", "targetChanged"],
 
   data() {
     return {
@@ -156,7 +154,6 @@ export default {
 
     targetIdChanged() {
       this.updateLink();
-      this.changed();
     },
 
     async updateLink() {
@@ -178,18 +175,15 @@ export default {
       } else {
         this.catalogue.updateLink(this.item);
         const target = this.item.target as EditorBase | undefined;
-        this.item.name = target?.name || "Unknown";
-        this.item.type = (target?.editorTypeName || this.item.type) as any;
+        if (target) {
+          this.item.name = target.name || "Unknown";
+          const type = target.editorTypeName || this.item.type;
+          if (type !== "categoryEntry") {
+            this.item.type = type;
+          }
+        }
       }
-      this.$emit("targetChanged");
     },
-    changedImportRootEntries() {
-      this.changed();
-    },
-    changed() {
-      this.$emit("catalogueChanged");
-    },
-
     getType(item: Link): string {
       if (!item.target) {
         return "bullet";

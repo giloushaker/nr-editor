@@ -2,7 +2,7 @@
   <fieldset>
     <legend>Condition</legend>
     <div class="condition">
-      <select v-model="item.type" @change="changed">
+      <select v-model="item.type">
         <template v-if="allowNonInstanceOf">
           <option value="lessThan">Less Than</option>
           <option value="greaterThan">Greater Than</option>
@@ -17,10 +17,13 @@
           <option value="instanceOf">Instance Of</option>
           <option value="notInstanceOf">Not Instance Of</option>
         </template>
+        <template v-if="allowPositional">
+          <option value="before">Is Before</option>
+        </template>
       </select>
-      <UtilNumberInput :disabled="instanceOf" v-model="item.value" @change="changed" />
+      <UtilNumberInput :disabled="instanceOf" v-model="item.value" />
       <div>
-        <input :disabled="instanceOf" id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
+        <input :disabled="instanceOf" id="percent" type="checkbox" v-model="item.percentValue" />
         <label :class="{ disabled: instanceOf }" for="percent">Percentage?</label>
       </div>
     </div>
@@ -28,14 +31,14 @@
 </template>
 
 <script lang="ts">
-import { Base, Condition } from "~/assets/shared/battlescribe/bs_main";
+import { findParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import NumberInput from "~/components/util/NumberInput.vue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<EditorBase & BSICondition>,
@@ -44,11 +47,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {
@@ -60,6 +58,11 @@ export default {
     allowInstanceOf() {
       if ((this.item as Base as EditorBase).editorTypeName === "localConditionGroup") return false;
       return true;
+    },
+    allowPositional() {
+      return Boolean(
+        findParentWhere(this.item as Base as EditorBase, (p) => p.editorTypeName === "localConditionGroup")
+      );
     },
     instanceOf() {
       return this.item.type?.includes("instance");

@@ -4,22 +4,22 @@
     <table class="editorTable">
       <tr>
         <td>Unique ID:</td>
-        <td><input type="text" v-model="item.id" @change="changed" /></td>
+        <td><input type="text" v-model="item.id" /></td>
       </tr>
     </table>
     <div class="constraint">
-      <select v-model="item.type" @change="changed">
+      <select v-model="item.type">
         <option value="min">Minimum</option>
         <option value="max">Maximum</option>
         <option value="exactly">Exactly</option>
       </select>
-      <UtilNumberInput v-model="item.value" @change="changed" />
+      <UtilNumberInput v-model="item.value" />
       <div>
-        <input id="percent" type="checkbox" v-model="item.percentValue" @change="changed" />
+        <input id="percent" type="checkbox" v-model="item.percentValue" />
         <label for="percent">Percentage</label>
-        <input id="negative" type="checkbox" v-model="item.negative" @change="changed" />
+        <input id="negative" type="checkbox" v-model="item.negative" />
         <label for="negative">Negative</label>
-        <input id="automatic" type="checkbox" v-model="item.automatic" @change="changed" />
+        <input id="automatic" type="checkbox" v-model="item.automatic" />
         <label for="automatic">Automatic</label>
       </div>
     </div>
@@ -30,17 +30,10 @@
 import { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSIConstraint>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

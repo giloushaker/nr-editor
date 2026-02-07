@@ -95,7 +95,20 @@ import { useSettingsStore } from "~/stores/settingsState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { GithubIntegration } from "~/assets/shared/battlescribe/github";
+function sanitizeFileName(fileName: string) {
+  // Remove invalid characters completely
+  let clean = fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, "");
 
+  // Trim leading/trailing spaces and dots (not allowed in Windows)
+  clean = clean.trim().replace(/^[. ]+|[. ]+$/g, "");
+
+  // If the filename becomes empty, fallback
+  if (clean.length === 0) {
+    return null;
+  }
+
+  return clean;
+}
 export default defineComponent({
   components: {
     UploadJson,
@@ -269,6 +282,11 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       const system = this.store.get_system(data.catalogue.gameSystemId);
       const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
       copy.catalogue.battleScribeVersion = "2.03";
+
+      const fileName = sanitizeFileName(copy.catalogue.name);
+      if (!fileName) {
+        throw new Error("Cannot create catalogue: couldn't create filename using provided name (only invalid chars)");
+      }
       if (electron) {
         if (!system.gameSystem) {
           throw new Error("Cannot create catalogue: no game system");
@@ -281,9 +299,13 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
         if (!name) {
           throw new Error("Cannot create catalogue: no name provided");
         }
+        const fileName = sanitizeFileName(name);
+        if (!fileName) {
+          throw new Error("Cannot create catalogue: couldn't create filename using provided name (invalid chars)");
+        }
         const folder = dirname(systemPath);
 
-        getDataObject(copy).fullFilePath = `${folder}/${name}.${this.getCatExtension(systemPath)}`;
+        getDataObject(copy).fullFilePath = `${folder}/${fileName}.${this.getCatExtension(systemPath)}`;
       }
       system.setCatalogue(copy);
       this.cataloguesStore.setEdited(getDataDbId(copy), true);

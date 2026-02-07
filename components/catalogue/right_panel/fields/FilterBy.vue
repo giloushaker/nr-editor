@@ -13,8 +13,9 @@
       </tr>
       <tr>
         <td>Child ID:</td>
-        <td><input type="text" v-model="childId" @change="changed" /></td>
-      </tr>
+        <td><input type="text" v-model="childId" /> </td
+      ></tr>
+
       <tr>
         <td>Child:</td>
         <td>
@@ -24,7 +25,6 @@
             :options="availableTargets"
             valueField="id"
             filterField="name"
-            @change="changed"
             :default="child"
             lazy
           >
@@ -47,7 +47,7 @@
       </tr>
     </table>
     <span v-if="!hideshared">
-      <input :disabled="noshared && item.shared" type="checkbox" v-model="item.shared" id="shared" @change="changed" />
+      <input :disabled="noshared && item.shared" type="checkbox" v-model="item.shared" id="shared" />
       <label
         :class="{ gray: noshared && item.shared }"
         class="hastooltip"
@@ -75,7 +75,6 @@ import {
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSICondition & EditorBase>,
@@ -99,10 +98,6 @@ export default {
 
   methods: {
     getNameExtra,
-    changed() {
-      this.$emit("catalogueChanged");
-    },
-
     showCatalogue(opt: EditorSearchItem): boolean {
       if (!opt.catalogue) {
         return false;

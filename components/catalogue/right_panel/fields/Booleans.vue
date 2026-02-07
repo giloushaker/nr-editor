@@ -5,26 +5,9 @@
     </legend>
     <div class="booleans">
       <div v-for="field of fields.filter((f) => f.status != -1)">
-        <img
-          v-if="!item[field.field] && item.target && item.target[field.field]"
-          :title="`${String(field.field)} is true on target`"
-          style="vertical-align: text-top; margin-left: 4px; margin-top: 1px"
-          class="typeIcon"
-          src="assets/bsicons/link.png"
-        />
-        <input
-          :class="{ 'cursor-pointer': field.status !== 0 }"
-          :id="(field.field as string)"
-          type="checkbox"
-          v-model="item[field.field]"
-          @change="changed"
-          :disabled="field.status == 0"
-        />
-        <label
-          :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0, hastooltip: Boolean(field.title) }"
-          :for="(field.field as string)"
-          :title="field.title"
-        >
+        <img v-if="isDifferentOnTarget(field)" :title="`${String(field.field)} is ${Boolean(item.target![field.field])} on target`" style="vertical-align: text-top; margin-left: 4px; margin-top: 1px" class="typeIcon" src="assets/bsicons/link.png" />
+        <input :class="{ 'cursor-pointer': field.status !== 0 }" :id="(field.field as string)" type="checkbox" :checked="getCheckedValue(field)" @change="handleChange($event, field)" :disabled="field.status == 0" />
+        <label :class="{ 'cursor-pointer': field.status !== 0, gray: field.status == 0, hastooltip: Boolean(field.title) }" :for="(field.field as string)" :title="field.title">
           {{ field.name }}
         </label>
       </div>
@@ -36,14 +19,20 @@
 import { PropType } from "vue";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+
+enum BOOLEAN_STATUS {
+  UNAVAILABLE = -1,
+  DISABLED = 0,
+  AVAILABLE = 1,
+}
 interface BooleanField {
   name: string;
-  status: number;
-  field: keyof (Base & EditorBase);
+  status: BOOLEAN_STATUS;
+  field: "hidden" | "exportable" | "import" | "flatten" | "collapsible" | "collective";
   title?: string;
+  default?: boolean;
 }
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<Base & EditorBase>,
@@ -52,8 +41,26 @@ export default {
   },
 
   methods: {
-    changed() {
-      this.$emit("catalogueChanged");
+    isDifferentOnTarget(field: BooleanField) {
+      if (!this.item.target) return false;
+      const selfValue = this.item[field.field] ?? field.default
+      const targetValue = this.item.target[field.field] ?? field.default
+      if (selfValue === targetValue) return false;
+      return targetValue !== field.default
+    },
+    getCheckedValue(field: BooleanField) {
+      if (this.item[field.field] === undefined) {
+        return field.default ?? false
+      }
+      return Boolean(this.item[field.field]);
+    },
+    handleChange(event: Event, field: BooleanField) {
+      const target = event.target as HTMLInputElement;
+      if (target.checked === field.default) {
+        delete this.item[field.field];
+      } else {
+        this.item[field.field] = target.checked;
+      }
     },
   },
 
@@ -70,25 +77,35 @@ export default {
           status: this.collective,
           field: "collective",
           title: "indicates that multiple instances of this entry may be combined into one entry with an amount",
+          default: false,
         },
         {
           name: "Import",
-          status: this.eimport,
+          status: this.import,
           field: "import",
-          title: "Indicates that this entry may be imported by other catalogues",
+          title: "If this is checked, may be imported by other catalogues",
+          default: true,
         },
         {
           name: "Flatten",
           status: this.flatten,
           field: "flatten",
-          title: "If this is checked, the group box for this entry/group will not be visible in the New Recruit UI.",
+          title: "If this is checked, the group box will not be displayed.",
+          default: false,
         },
         {
           name: "Collapsible",
           status: this.collapsible,
           field: "collapsible",
-          title:
-            "If this is checked, the group box for this entry/group will show as a collapsible box even if it has less than 5 items.",
+          title: "If this is checked, the group box will always be collapsible",
+          default: false,
+        },
+        {
+          name: "Exportable",
+          status: this.exportable,
+          field: "exportable",
+          title: "prevents from showing up in various exports if unchecked",
+          default: true,
         },
       ] as BooleanField[];
     },
@@ -98,19 +115,13 @@ export default {
     },
 
     flatten() {
-      if (this.item.editorTypeName === "selectionEntry") {
-        return 1;
-      }
-      if (this.item.editorTypeName === "selectionEntryLink") {
-        return 1;
-      }
       if (this.item.editorTypeName === "selectionEntryGroup") {
         return 1;
       }
       if (this.item.editorTypeName === "selectionEntryGroupLink") {
         return 1;
       }
-      return -1;
+      return BOOLEAN_STATUS.UNAVAILABLE;
     },
 
     collapsible() {
@@ -126,7 +137,7 @@ export default {
       if (this.item.editorTypeName === "selectionEntryGroupLink") {
         return 1;
       }
-      return -1;
+      return BOOLEAN_STATUS.UNAVAILABLE;
     },
 
     collective() {
@@ -144,23 +155,15 @@ export default {
           return 1;
         case "selectionEntryGroup":
           return 1;
-
-        case "categoryLink":
-          return -1;
-
-        case "infoLink":
-          return -1;
-        case "profileLink":
-          return -1;
-        case "ruleLink":
-          return -1;
-        case "infoGroupLink":
-          return -1;
       }
+      return BOOLEAN_STATUS.UNAVAILABLE;
+    },
+
+    exportable() {
       return 1;
     },
 
-    eimport() {
+    import() {
       if (this.item.parent?.isCatalogue()) {
         return 1;
       }
@@ -176,16 +179,15 @@ export default {
           return 0;
 
         case "categoryLink":
-          return -1;
-
+          return BOOLEAN_STATUS.UNAVAILABLE;
         case "infoLink":
-          return -1;
+          return BOOLEAN_STATUS.UNAVAILABLE;
         case "profileLink":
-          return -1;
+          return BOOLEAN_STATUS.UNAVAILABLE;
         case "ruleLink":
-          return -1;
+          return BOOLEAN_STATUS.UNAVAILABLE;
         case "infoGroupLink":
-          return -1;
+          return BOOLEAN_STATUS.UNAVAILABLE;
       }
       return 0;
     },

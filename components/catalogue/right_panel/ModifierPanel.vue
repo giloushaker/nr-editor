@@ -1,13 +1,8 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsModifier class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
-  <CatalogueRightPanelFieldsComplexQuery v-if="allowQuery" :item="item" @catalogueChanged="changed" class="section" />
-  <CatalogueRightPanelFieldsQuickConditions
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsModifier class="section" :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsComplexQuery v-if="allowQuery" :item="item" class="section" />
+  <CatalogueRightPanelFieldsQuickConditions :item="item" :withCategory="false" class="section" />
 </template>
 
 <script lang="ts">
@@ -17,7 +12,6 @@ import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_mo
 import { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     catalogue: {
       type: Object as PropType<Catalogue>,
@@ -26,12 +20,6 @@ export default {
     item: {
       type: Object as PropType<BSIModifier & EditorBase>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {

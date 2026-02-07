@@ -1,55 +1,20 @@
 <template>
-  <div
-    class="autocomplete relative"
-    @keydown.down.prevent="onDown"
-    @keydown.up.prevent="onUp"
-    @keydown.enter.prevent="onEnter"
-    @keyup.enter.prevent="onEnterUp"
-    @keydown.escape="blur()"
-  >
-    <input
-      class="input autocomplete-input"
-      type="text"
-      ref="edit"
-      autofocus
-      @input="suggest"
-      @click="maySuggest"
-      @focus="startEditing"
-      v-model="searchPattern"
-      :placeholder="placeholder"
-      v-click-outside="onClickOutside"
-      v-if="editing"
-    />
+  <div class="autocomplete relative" @keydown.down.prevent="onDown" @keydown.up.prevent="onUp" @keydown.enter.prevent="onEnter" @keyup.enter.prevent="onEnterUp" @keydown.escape="blur()">
+    <input class="input autocomplete-input" type="text" ref="edit" autofocus @input="suggest" @click="maySuggest" @focus="startEditing" v-model="searchPattern" :placeholder="placeholder" v-click-outside="onClickOutside" v-if="editing" />
     <div v-else @click="startEditing" class="autocomplete-input">
       <span class="gray">{{ placeholder }}</span>
       <span class="float-right bold">+</span>
     </div>
     <div class="suggestions" v-show="editing" :class="{ hidden: !editing }" ref="suggestions">
       <template v-for="(option, i) in foundOptions">
-        <div
-          class="suggestion selected"
-          v-if="i === boundedSelected"
-          @click.capture.stop="targetSelected(option)"
-          @contextmenu.capture="targetSelectedRightClick($event, option)"
-        >
+        <div class="suggestion selected" v-if="i === boundedSelected" @click.capture.stop="targetSelected(option)" @contextmenu.capture="targetSelectedRightClick($event, option)">
           <slot v-bind="{ ...option, selected: true }" name="option"></slot>
         </div>
-        <div
-          class="suggestion"
-          v-else
-          @click.stop="targetSelected(option)"
-          @contextmenu.prevent="targetSelectedRightClick($event, option)"
-        >
+        <div class="suggestion" v-else @click.stop="targetSelected(option)" @contextmenu.prevent="targetSelectedRightClick($event, option)">
           <slot v-bind="option" name="option"></slot>
         </div>
       </template>
-      <div
-        v-if="always"
-        class="suggestion"
-        :class="{ selected: selected === foundOptions.length }"
-        @click="$emit('always', searchPattern)"
-        @contextmenu.prevent="$emit('always-special', searchPattern)"
-      >
+      <div v-if="always" class="suggestion" :class="{ selected: selected === foundOptions.length }" @click="$emit('always', searchPattern)" @contextmenu.prevent="$emit('always-special', searchPattern)">
         <slot name="always" v-bind="{ input: searchPattern }"></slot>
       </div>
     </div>
@@ -57,8 +22,6 @@
 </template>
 
 <script lang="ts">
-import { start } from "repl";
-import { PropType } from "vue";
 import { inBounds } from "~/assets/shared/battlescribe/bs_helpers";
 
 export default {
@@ -218,7 +181,13 @@ export default {
       console.log("selected (right click)", opt);
       this.$emit("add-special", opt.option);
     },
-
+    emitNativeChangeEvent(a1: any, a2: any) {
+      const event = new CustomEvent('change', {
+        bubbles: true,
+        detail: { value: a1, old: a2 }
+      })
+      this.$el?.dispatchEvent(event)
+    },
     reset() {
       this.searchPattern = "";
     },

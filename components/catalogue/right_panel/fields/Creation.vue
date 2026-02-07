@@ -8,14 +8,7 @@
           stacks):
         </td>
         <td>
-          <input
-            class="input"
-            type="text"
-            v-model="item.defaultAmount"
-            @change="changed"
-            :placeholder="placeholder"
-            pattern="[0-9,]*"
-          />
+          <input class="input" type="text" v-model="item.defaultAmount" :placeholder="placeholder" pattern="[0-9,]*" />
         </td>
       </tr>
     </table>
@@ -24,7 +17,6 @@
 
 <script lang="ts">
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<{
@@ -33,12 +25,6 @@ export default {
         getDefaultAmount(): number | undefined;
       }>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {

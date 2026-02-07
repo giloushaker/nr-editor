@@ -3,11 +3,7 @@
     <legend><img src="assets/bsicons/condition.png" /> Quick Conditions</legend>
     <div class="columns">
       <div class="buttonList">
-        <button
-          class="bouton"
-          @click="add('self', 'selections', 'instanceOf', 1)"
-          v-if="item.editorTypeName === 'localConditionGroup'"
-        >
+        <button class="bouton" @click="add('self', 'selections', 'instanceOf', 1)" v-if="item.editorTypeName === 'localConditionGroup'">
           <img src="/assets/icons/iconeplus.png" />SELF INSTANCE OF
         </button>
         <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
@@ -24,11 +20,7 @@
         </button>
       </div>
       <div class="buttonList">
-        <button
-          class="bouton"
-          @click="add('self', 'selections', 'notInstanceOf', 1)"
-          v-if="item.editorTypeName === 'localConditionGroup'"
-        >
+        <button class="bouton" @click="add('self', 'selections', 'notInstanceOf', 1)" v-if="item.editorTypeName === 'localConditionGroup'">
           <img src="/assets/icons/iconeplus.png" />SELF NOT INSTANCE OF
         </button>
         <button class="bouton" @click="add('parent', 'selections', 'lessThan', 1)">
@@ -55,7 +47,6 @@ import { scopeIsId } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
-  emits: ["catalogueChanged"],
   setup() {
     return { store: useEditorStore() };
   },
@@ -79,9 +70,6 @@ export default {
     },
   },
   methods: {
-    changed() {
-      this.$emit("catalogueChanged");
-    },
     add(scope: string, field: string, type: string, value: string | number) {
       if (field === "id") {
         field = (this.item as EditorBase).id;

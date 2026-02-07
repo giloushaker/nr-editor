@@ -1,10 +1,8 @@
 <template>
   <div>
-    <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-    <CatalogueRightPanelFieldsBasics :item="item" @catalogueChanged="changed" class="section" />
-    <CatalogueRightPanelFieldsHidden :item="item" @catalogueChanged="changed" class="section">
-      Cost Types
-    </CatalogueRightPanelFieldsHidden>
+    <CatalogueRightPanelFieldsComment :item="item" />
+    <CatalogueRightPanelFieldsBasics :item="item" class="section" />
+    <CatalogueRightPanelFieldsHidden :item="item" class="section"> Cost Types </CatalogueRightPanelFieldsHidden>
 
     <div class="section">
       <fieldset>
@@ -13,7 +11,7 @@
           <tr>
             <td>Default Cost Limit: </td>
             <td>
-              <input type="number" v-model="item.defaultCostLimit" @change="changed" />
+              <input type="number" v-model="item.defaultCostLimit" />
               <span class="gray ml-10px">-1 = No limit</span>
             </td>
           </tr>
@@ -28,17 +26,10 @@ import { PropType } from "vue";
 import { BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<BSICostType>,
       required: true,
-    },
-  },
-
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
 };

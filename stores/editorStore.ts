@@ -60,7 +60,6 @@ import {
   filename,
   getFolderFiles,
   getFolderRemote,
-  unwatchFile,
   watchFile,
   writeFile,
 } from "~/electron/node_helpers";
@@ -516,7 +515,25 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = changedState;
       }
     },
-    changed(node: EditorBase | Catalogue) {
+    async changed(node: EditorBase | Catalogue) {
+      function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
+        const result = [] as NonNullable<T>[]
+        let cur = node as typeof node;
+        while (cur.parent) {
+          result.push(cur.parent)
+          cur = cur.parent as any as typeof node;
+        }
+        return result
+      }
+
+      if ((node as EditorBase).editorTypeName === "profileType" || getParents(node as EditorBase).find(o => o.editorTypeName === "profileType")) {
+        const system = this.get_system(node.getCatalogue().getSystemId());
+        await system.loadAll();
+        const catalogues = system.getAllLoadedCatalogues();
+        catalogues.map((o) => o.processForEditor());
+        console.log(await this.scripts.run_script("Fix profiles", catalogues));
+      }
+
       const catalogue = node.getCatalogue();
       if (catalogue) {
         this.set_catalogue_changed(catalogue);
@@ -803,13 +820,13 @@ export const useEditorStore = defineStore("editor", {
      * @param data the entries to set in the clipboard, do not use for copying text
      * @param event the event to use, if not provided a valid ClipboardEvent, will use the navigator.clipboard.writeText()
      */
-    async set_clipboard(data: EditorBase[], event?: ClipboardEvent) {
+    async set_clipboard(data: EditorBase[], event?: ClipboardEvent | MouseEvent) {
       if (this.clipboardmode === "json") {
         //@ts-ignore
         const shallowCopies = data.map((o) => ({ parentKey: o.parentKey, ...o, sortIndex: undefined })) as EditorBase[];
         const json = entriesToJson(shallowCopies, new Set(["parentKey"]), { forceArray: false, formatted: true });
-        if (event?.clipboardData) {
-          event.clipboardData.setData("text/plain", json);
+        if ((event as ClipboardEvent)?.clipboardData) {
+          (event as ClipboardEvent).clipboardData!.setData("text/plain", json);
         } else {
           await navigator.clipboard.writeText(json);
         }
@@ -868,16 +885,30 @@ export const useEditorStore = defineStore("editor", {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent, selections?: MaybeArray<EditorBase>) {
+    async copy(event: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
       const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections();
       await this.set_clipboard(toCopy, event);
     },
     async paste(event: ClipboardEvent) {
       const clip = await this.get_clipboard(event);
-      const script_result = await this.scripts.run_hooks("paste", {}, clip);
+      const script_result = await this.scripts.run_hooks("paste", event, clip);
       if (script_result) {
         this.add(script_result);
       }
+    },
+    get_script_args() {
+      const selections = this.get_selections();
+      if (!selections.length) return;
+      const system = selections[0].getCatalogue().getSystem()
+      const catalogues = [...new Set(selections.map(o => o.getCatalogue()))];
+      return {
+        selections,
+        system,
+        catalogues,
+      }
+    },
+    get_context_actions() {
+      return this.scripts.run_hooks_sync("context", undefined, this.get_script_args());
     },
     async pasteLink() {
       const obj = await this.get_clipboard();

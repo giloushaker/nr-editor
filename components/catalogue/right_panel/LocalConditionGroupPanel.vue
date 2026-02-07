@@ -1,21 +1,9 @@
 <template>
-  <CatalogueRightPanelFieldsComment :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsRepeat :catalogue="catalogue" :item="item" @catalogueChanged="changed" />
-  <CatalogueRightPanelFieldsCondition class="section" :item="item" @catalogueChanged="changed" :catalogue="catalogue" />
-  <CatalogueRightPanelFieldsQuery
-    class="section"
-    :item="item"
-    @catalogueChanged="changed"
-    :catalogue="catalogue"
-    childForces
-    childSelections
-  />
-  <CatalogueRightPanelFieldsQuickConditions
-    :item="item"
-    @catalogueChanged="changed"
-    :withCategory="false"
-    class="section"
-  />
+  <CatalogueRightPanelFieldsComment :item="item" />
+  <CatalogueRightPanelFieldsRepeat :catalogue="catalogue" :item="item" />
+  <CatalogueRightPanelFieldsCondition class="section" :item="item" :catalogue="catalogue" />
+  <CatalogueRightPanelFieldsQuery class="section" :item="item" :catalogue="catalogue" childForces childSelections />
+  <CatalogueRightPanelFieldsQuickConditions :item="item" :withCategory="false" class="section" />
 </template>
 
 <script lang="ts">
@@ -26,7 +14,6 @@ import { BSILocalConditionGroup } from "~/assets/shared/battlescribe/bs_types";
 import NumberInput from "~/components/util/NumberInput.vue";
 
 export default {
-  emits: ["catalogueChanged"],
   props: {
     item: {
       type: Object as PropType<LocalConditionGroup>,
@@ -35,11 +22,6 @@ export default {
     catalogue: {
       type: Object as PropType<Catalogue>,
       required: true,
-    },
-  },
-  methods: {
-    changed() {
-      this.$emit("catalogueChanged");
     },
   },
   computed: {

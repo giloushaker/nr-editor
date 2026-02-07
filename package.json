@@ -3,7 +3,7 @@
   "private": true,
   "description": "New Recruit Data Editor",
   "author": "New Recruit",
-  "version": "1.3.20",
+  "version": "1.3.30",
   "main": "main.js",
   "scripts": {
     "build": "nuxt generate --electron",
@@ -34,7 +34,7 @@
     },
     "linux": {
       "category": "Utility",
-      "icon": "dist/favicon.icns",
+      "icon": "dist/favicon.png",
       "target": "AppImage"
     },
     "files": [
