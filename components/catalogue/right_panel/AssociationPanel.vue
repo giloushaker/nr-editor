@@ -9,7 +9,14 @@
 
     <CatalogueRightPanelFieldsComment :item="item" />
     <CatalogueRightPanelFieldsBasics :item="item" class="section" />
-    <CatalogueRightPanelFieldsQuery :catalogue="catalogue" childSelctions :item="item" class="section" childSelections childForces />
+    <CatalogueRightPanelFieldsQuery
+      :catalogue="catalogue"
+      childSelctions
+      :item="item"
+      class="section"
+      childSelections
+      childForces
+    />
     <FilterBy class="section" :item="item" :catalogue="catalogue" hideshared />
     <fieldset class="section">
       <legend>Constraints</legend>
@@ -24,6 +31,8 @@
         </tr>
       </table>
     </fieldset>
+    <CatalogueRightPanelFieldsQuickConditions :item="item" class="section" />
+
     <!-- <fieldset class="section">
       <legend>Association</legend>
       <table class="editorTable">

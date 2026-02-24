@@ -110,7 +110,7 @@ export default {
 
   methods: {
     getNameExtra,
-
+    changed() {},
     scopeChanged() {
       if (this.item.scope === "roster") {
         this.item.includeChildSelections = true;

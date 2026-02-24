@@ -3,7 +3,7 @@
     <legend><img src="assets/bsicons/condition.png" /> Quick Conditions</legend>
     <div class="columns">
       <div class="buttonList">
-        <button class="bouton" @click="add('self', 'selections', 'instanceOf', 1)" v-if="item.editorTypeName === 'localConditionGroup'">
+        <button class="bouton" @click="add('self', 'selections', 'instanceOf', 1)" v-if="local">
           <img src="/assets/icons/iconeplus.png" />SELF INSTANCE OF
         </button>
         <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
@@ -20,7 +20,7 @@
         </button>
       </div>
       <div class="buttonList">
-        <button class="bouton" @click="add('self', 'selections', 'notInstanceOf', 1)" v-if="item.editorTypeName === 'localConditionGroup'">
+        <button class="bouton" @click="add('self', 'selections', 'notInstanceOf', 1)" v-if="local">
           <img src="/assets/icons/iconeplus.png" />SELF NOT INSTANCE OF
         </button>
         <button class="bouton" @click="add('parent', 'selections', 'lessThan', 1)">
@@ -67,6 +67,9 @@ export default {
     },
     parent() {
       return (this.item as EditorBase).parent;
+    },
+    local() {
+      return ["localConditionGroup", "association"].includes(this.item.editorTypeName);
     },
   },
   methods: {

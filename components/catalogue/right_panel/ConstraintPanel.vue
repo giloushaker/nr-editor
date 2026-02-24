@@ -1,8 +1,17 @@
 <template>
   <span @change="changed">
     <CatalogueRightPanelFieldsComment :item="item" />
+    <CatalogueRightPanelFieldsMessage :item="item" />
+
     <CatalogueRightPanelFieldsConstraint :catalogue="catalogue" :item="item" class="section" />
-    <CatalogueRightPanelFieldsQuery :catalogue="catalogue" :item="item" class="section" childForces childSelections shared />
+    <CatalogueRightPanelFieldsQuery
+      :catalogue="catalogue"
+      :item="item"
+      class="section"
+      childForces
+      childSelections
+      shared
+    />
     <FilterBy v-if="showFilterBy" class="section" :item="item" :catalogue="catalogue" />
     <CatalogueRightPanelFieldsQuickModifiers :item="item" :withCategory="false" class="section" />
   </span>
