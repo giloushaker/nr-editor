@@ -74,6 +74,7 @@ import {
 } from "@/assets/ts/catalogue/catalogue_helpers";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
+import { fieldToText } from "~/assets/shared/battlescribe/bs_modifiers";
 export default {
   props: {
     item: {
@@ -135,6 +136,7 @@ export default {
       set(id: string) {
         const old = this.item.childId;
         this.item.childId = id;
+        this.item.childName = fieldToText(this.item, id);
         this.catalogue.updateCondition(this.item, old);
       },
     },

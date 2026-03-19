@@ -1324,7 +1324,7 @@ export const useEditorStore = defineStore("editor", {
           in_characteristics.push({
             name: ct.name,
             typeId: ct.id,
-            $text: "",
+            $text: ct.defaultValue ?? "",
           });
         }
         for (const c of in_characteristics) {
