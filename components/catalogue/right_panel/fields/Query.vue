@@ -55,6 +55,12 @@
           <input id="childForces" type="checkbox" v-model="item.includeChildForces" />
           <label for="childForces">And all child Forces</label>
         </div>
+        <div v-if="associationParent">
+          <input id="evaluateAssociationParent" type="checkbox" v-model="relativeTo" />
+          <label for="evaluateAssociationParent"
+            >Evaluate in {{ associationParent.parent?.name ?? "association parent" }}</label
+          >
+        </div>
       </div>
     </div>
   </fieldset>
@@ -143,10 +149,21 @@ export default {
   },
 
   computed: {
+    relativeTo: {
+      get() {
+        return this.item.relativeTo === "association";
+      },
+      set(val: boolean) {
+        this.item.relativeTo = val ? "association" : undefined;
+      },
+    },
     association() {
       return this.item.editorTypeName == "association";
     },
-
+    associationParent() {
+      const parent = getModifierOrConditionParent(this.item);
+      if (parent?.editorTypeName === "association") return parent;
+    },
     sharedTooltip() {
       if (this.item.editorTypeName !== "constraint") {
         return `Its recommended to keep shared checked on ${this.item.editorTypeName}s`;

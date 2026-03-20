@@ -33,7 +33,7 @@
     <legend>
       Formatting Rules
       <InfoButton>
-        Formatting Rules have use match and replace regex, with modifications to the replace syntax in order to sign &
+        Formatting Rules use a match and replace regex, with modifications to the replace syntax in order to sign &
         sum(eval)
         <br />
         Example Rules:
