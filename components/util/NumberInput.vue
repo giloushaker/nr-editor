@@ -51,7 +51,7 @@ export default {
         const event = new CustomEvent("change", {
           bubbles: true,
         });
-        this.$el?.dispatchEvent(event);
+        this.$el?.parentElement?.dispatchEvent(event);
       }
     },
   },

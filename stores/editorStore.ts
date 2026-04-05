@@ -1219,6 +1219,7 @@ export const useEditorStore = defineStore("editor", {
             hidden: false,
             id: generateBattlescribeId(),
           };
+        case "associationLinks":
         case "entryLinks":
           return {
             import: true,
@@ -1226,6 +1227,7 @@ export const useEditorStore = defineStore("editor", {
             hidden: false,
             id: generateBattlescribeId(),
           };
+        case "sharedAssociations":
         case "associations":
           return {
             min: 1,

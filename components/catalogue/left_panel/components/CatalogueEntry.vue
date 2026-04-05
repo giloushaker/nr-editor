@@ -213,6 +213,10 @@
                   <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
                   InfoGroup
                 </div>
+                <div @click="store.create('associationLinks', { type: 'association' })">
+                  <img class="pr-4px" src="assets/bsicons/associationLink.png" />
+                  Association
+                </div>
               </template>
               <template v-if="allowed('forceEntryLinks')">
                 <div @click="store.create('forceEntryLinks')">
@@ -283,6 +287,7 @@
             <img class="pr-4px" src="assets/bsicons/constraint.png" />
             Constraint
           </div>
+          <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
           <div @click="store.create('modifiers')" v-if="allowed('modifiers')">
             <img class="pr-4px" src="assets/bsicons/modifier.png" />
             Modifier
@@ -370,7 +375,6 @@ import type { PropType } from "vue";
 import type { CatalogueEntryItem } from "@/stores/editorStore";
 import { useEditorStore } from "~/stores/editorStore";
 import {
-  type ItemKeys,
   type ItemTypes,
   getName,
   getTypeLabel,
@@ -447,7 +451,7 @@ const order: Record<string, number> = {
   association: 12,
 };
 const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
-const hiddenTypes = new Set(["characteristics", "attributes", "costs"]);
+const hiddenTypes = new Set(["costs", "formatRules"]);
 const avoidSorting = new Set([
   "forceEntry",
   "profileType",
@@ -665,7 +669,7 @@ export default {
     grouped_items(items: CatalogueEntryItem[]) {
       const result = sortByAscending(
         this.sorted(items),
-        (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000
+        (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000,
       );
       if (this.settings.display.sortIndex) {
         sortByAscendingInplace(result, (o) => o.item.sortIndex ?? 10000);

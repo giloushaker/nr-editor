@@ -78,19 +78,19 @@
     <div>
       <div class="checks">
         <div>
-          <input @change="changed" id="includeSelf" type="checkbox" v-model="fields.self" />
+          <input id="includeSelf" type="checkbox" v-model="fields.self" />
           <label for="includeSelf">Include self(scope)</label>
         </div>
         <div>
-          <input @change="changed" id="includeChildSelections" type="checkbox" v-model="fields.entries" />
+          <input id="includeChildSelections" type="checkbox" v-model="fields.entries" />
           <label for="includeChildSelections">Include child Selections</label>
         </div>
         <div>
-          <input @change="changed" id="includeChildForces" type="checkbox" v-model="fields.forces" />
+          <input id="includeChildForces" type="checkbox" v-model="fields.forces" />
           <label for="includeChildForces">Include child Forces</label>
         </div>
         <div>
-          <input @change="changed" id="recursive" type="checkbox" v-model="fields.recursive" />
+          <input id="recursive" type="checkbox" v-model="fields.recursive" />
           <label for="recursive">Recursive</label>
         </div>
       </div>

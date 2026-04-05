@@ -6,7 +6,13 @@
 
     <CatalogueRightPanelFieldsQuery class="section" :item="item" :catalogue="catalogue" childForces childSelections />
 
-    <FilterBy v-if="item.field?.startsWith('limit::') == false && item.editorTypeName !== 'localConditionGroup'" noshared class="section" :item="item" :catalogue="catalogue" />
+    <FilterBy
+      v-if="item.field?.startsWith('limit::') == false && item.editorTypeName !== 'localConditionGroup'"
+      noshared
+      class="section"
+      :item="item"
+      :catalogue="catalogue"
+    />
   </div>
 </template>
 
@@ -21,7 +27,7 @@ import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 export default {
   props: {
     item: {
-      type: Object as PropType<BSICondition & EditorBase>,
+      type: Object as PropType<Condition & EditorBase>,
       required: true,
     },
     catalogue: {

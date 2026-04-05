@@ -2,16 +2,12 @@
   <div>
     <CatalogueRightPanelFieldsComment :item="item" />
     <CatalogueRightPanelFieldsBasics :item="item" class="section" />
-    <CatalogueRightPanelFieldsQuery
-      :catalogue="catalogue"
-      childSelctions
+    <CatalogueRightPanelFieldsLink
       :item="item"
+      :catalogue="catalogue"
       class="section"
-      childSelections
-      childForces
+      type="association"
     />
-    <FilterBy class="section" :item="item" :catalogue="catalogue" hideshared />
-    <CatalogueRightPanelFieldsAssociations :item="item" class="section" />
     <CatalogueRightPanelFieldsQuickConditions :item="item" class="section" />
   </div>
 </template>

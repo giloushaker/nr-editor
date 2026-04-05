@@ -29,6 +29,7 @@
       <CatalogueRightPanelLinkPanel v-else-if="typeName == 'catalogueLink'" :item="item" :catalogue="catalogue" type="catalogue" />
       <CatalogueRightPanelCataloguePanel v-else-if="typeName == 'catalogue' || typeName == 'gameSystem'" :item="item" :catalogue="catalogue" type="catalogue" />
       <CatalogueRightPanelRepeatPanel v-else-if="typeName == 'repeat'" :item="item" :catalogue="catalogue" type="catalogue" />
+      <CatalogueRightPanelAssociationLinkPanel v-else-if="typeName == 'associationLink'" :item="item" :catalogue="catalogue" type="catalogue" />
       <CatalogueRightPanelAssociationPanel v-else-if="typeName == 'association'" :item="item" :catalogue="catalogue" type="catalogue" />
 
       <div class="min-h-100px"> </div>

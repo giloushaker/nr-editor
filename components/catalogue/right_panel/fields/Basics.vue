@@ -24,6 +24,13 @@
             </template>
           </td>
         </tr>
+        <!-- <tr>
+          <td>Color:</td>
+          <td class="flex gap-2px items-center">
+            <input type="color" v-model="item.color" />
+          
+          </td>
+        </tr> -->
         <tr v-if="item.editorTypeName === 'forceEntry'">
           <td>Child Forces Label:</td>
           <td><input type="text" v-model="(item as BSIForce).childForcesLabel" placeholder="Forces" /></td>

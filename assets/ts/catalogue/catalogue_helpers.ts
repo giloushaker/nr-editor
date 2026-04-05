@@ -1,7 +1,7 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { Base, getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICondition, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
+import { BSICondition, BSIConstraint, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { findSelfOrParentWhere, sortByAscendingInplace } from "~/assets/shared/battlescribe/bs_helpers";
 
@@ -231,7 +231,7 @@ export function getFirstAncestor(item: EditorBase): EditorBase {
   return parent;
 }
 
-export function getFilterSelections(item: BSICondition & EditorBase, catalogue: Catalogue): EditorSearchItem[] {
+export function getFilterSelections(item: (BSICondition | BSIConstraint) & EditorBase, catalogue: Catalogue): EditorSearchItem[] {
   const includeAllRootEntries = ["primary-catalogue", "roster", "force", "ancestor"];
   if (includeAllRootEntries.includes(item.scope)) {
     return getSearchSelections(catalogue, true);

@@ -249,6 +249,8 @@ type ModifierField = {
 // Operation constants
 const OPERATION_SET: Operation = { id: "set", name: "Set", word: "to" };
 const OPERATION_MULTIPLY: Operation = { id: "multiply", name: "Multiply", word: "by" };
+const OPERATION_EXPONENT: Operation = { id: "exponent", name: "Exponent", word: "by" };
+const OPERATION_TRIANGULAR: Operation = { id: "triangular", name: "Triangular", word: "by" };
 const OPERATION_DIVIDE: Operation = { id: "divide", name: "Divide", word: "by" };
 const OPERATION_MODULO: Operation = { id: "modulo", name: "Modulo", word: "by" };
 const OPERATION_POWER: Operation = { id: "power", name: "Power", word: "by" };
@@ -281,6 +283,8 @@ const operations = {
     OPERATION_INCREMENT,
     OPERATION_DECREMENT,
     OPERATION_MULTIPLY,
+    OPERATION_EXPONENT,
+    OPERATION_TRIANGULAR,
     OPERATION_DIVIDE,
     OPERATION_MODULO,
     OPERATION_POWER,
@@ -299,6 +303,8 @@ const operations = {
     OPERATION_INCREMENT,
     OPERATION_DECREMENT,
     OPERATION_MULTIPLY,
+    OPERATION_EXPONENT,
+    OPERATION_TRIANGULAR,
     OPERATION_DIVIDE,
     OPERATION_MODULO,
     OPERATION_POWER,

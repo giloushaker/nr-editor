@@ -19,13 +19,14 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { Base, Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
+import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import FilterBy from "./fields/FilterBy.vue";
 import QuickModifiers from "./fields/QuickModifiers.vue";
+import FilterBy from "./fields/FilterBy.vue";
 
 export default {
+  components: { FilterBy, QuickModifiers },
+
   props: {
     item: {
       type: Object as PropType<Constraint & EditorBase>,
@@ -38,8 +39,7 @@ export default {
   },
   computed: {
     showFilterBy() {
-      const key = getModifierOrConditionParent(this.item as EditorBase)?.parentKey;
-      return key === "associations";
+      return this.item.field === "associations";
     },
   },
   methods: {
@@ -47,6 +47,5 @@ export default {
       this.catalogue.updateCondition(this.item as EditorBase & Condition);
     },
   },
-  components: { FilterBy, QuickModifiers },
 };
 </script>

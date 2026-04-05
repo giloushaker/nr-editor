@@ -2,6 +2,7 @@
   <fieldset>
     <legend>Query</legend>
     <div class="query">
+      <div style="flex-grow: 6">
       <UtilIconSelect
         v-model="itemField"
         :fetch="() => fieldTypes"
@@ -16,51 +17,53 @@
           </div>
         </template>
       </UtilIconSelect>
+      </div>
+      <div class="inQuery" style="flex-grow: 4; gap: 8px;">
+        <span> in </span>
+        <UtilAutocomplete
+          style="flex-grow: 1"
+          v-model="item.scope"
+          :placeholder="`Search Scope...`"
+          :options="allScopes"
+          valueField="id"
+          filterField="name"
+          @change="scopeChanged"
+          :disabled="itemField?.value?.startsWith('limit::')"
+        >
+          <template #option="opt">
+            <div style="white-space: nowrap">
+              <template v-if="opt.option.indent >= 2 && !opt.selected">
+                <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
+              </template>
+              <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
+              {{ opt.option.name }}
+              <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
+              <span class="shared" v-if="opt.option.shared"> (shared)</span>
+              <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
+            </div>
+          </template>
+        </UtilAutocomplete>
+      </div>
+    </div>
 
-      <span> in </span>
-
-      <UtilAutocomplete
-        v-model="item.scope"
-        :placeholder="`Search Scope...`"
-        :options="allScopes"
-        valueField="id"
-        filterField="name"
-        @change="scopeChanged"
-        :disabled="itemField?.value?.startsWith('limit::')"
-      >
-        <template #option="opt">
-          <div style="white-space: nowrap">
-            <template v-if="opt.option.indent >= 2 && !opt.selected">
-              <span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span>
-            </template>
-            <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
-            {{ opt.option.name }}
-            <span class="gray">{{ getNameExtra(opt.option, false) }}</span>
-            <span class="shared" v-if="opt.option.shared"> (shared)</span>
-            <span class="catalogueName" v-if="showCatalogue(opt.option)"> [{{ opt.option.catalogue }}]</span>
-          </div>
-        </template>
-      </UtilAutocomplete>
-
-      <div class="checks" v-if="!isCostType">
-        <div v-if="shared">
-          <input id="shared" type="checkbox" v-model="item.shared" />
-          <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
-        </div>
-        <div v-if="childSelections">
-          <input id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
-          <label for="childSelections">And all child Selections</label>
-        </div>
-        <div v-if="childForces">
-          <input id="childForces" type="checkbox" v-model="item.includeChildForces" />
-          <label for="childForces">And all child Forces</label>
-        </div>
-        <div v-if="associationParent">
-          <input id="evaluateAssociationParent" type="checkbox" v-model="relativeTo" />
-          <label for="evaluateAssociationParent"
-            >Evaluate in {{ associationParent.parent?.name ?? "association parent" }}</label
-          >
-        </div>
+    <div class="checks" v-if="!isCostType">
+      <div v-if="shared">
+        <input id="shared" type="checkbox" v-model="item.shared" />
+        <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
+      </div>
+      <div v-if="childSelections">
+        <input id="childSelections" type="checkbox" v-model="item.includeChildSelections" />
+        <label for="childSelections">And all child Selections</label>
+      </div>
+      <div v-if="childForces">
+        <input id="childForces" type="checkbox" v-model="item.includeChildForces" />
+        <label for="childForces">And all child Forces</label>
+      </div>
+      <div v-if="parentAssociation">
+        <input id="queryFromSelf" type="checkbox" v-model="item.queryFromSelf" />
+        <label for="queryFromSelf">
+          Evaluate from self instead of target ({{ String(parentAssociationParent?.name) }})</label
+        >
       </div>
     </div>
   </fieldset>
@@ -133,7 +136,13 @@ export default {
       if (this.item.field.startsWith("limit::") && this.item.editorTypeName !== "constraint") {
         this.item.childId = "any";
       }
-
+      if (this.item.field === "associations") {
+        this.item.scope = "self";
+      } else {
+        if ("childId" in this.item) {
+          delete this.item.childId;
+        }
+      }
       this.changed();
     },
 
@@ -149,33 +158,24 @@ export default {
   },
 
   computed: {
-    relativeTo: {
-      get() {
-        return this.item.relativeTo === "association";
-      },
-      set(val: boolean) {
-        this.item.relativeTo = val ? "association" : undefined;
-      },
-    },
     association() {
       return this.item.editorTypeName == "association";
     },
-    associationParent() {
+    parentAssociation() {
+      if (this.association) return;
       const parent = getModifierOrConditionParent(this.item);
-      if (parent?.editorTypeName === "association") return parent;
+      if (parent?.editorTypeName !== "association") return;
+      return parent;
+    },
+    parentAssociationParent() {
+      const parent = this.parentAssociation?.parent;
+      if (parent && !parent.isCatalogue()) return parent;
     },
     sharedTooltip() {
-      if (this.item.editorTypeName !== "constraint") {
-        return `Its recommended to keep shared checked on ${this.item.editorTypeName}s`;
-      }
-      return `Indicates that constraints on links should be evaluated as if they are on their target, usually only relevant if the scope is above "parent"
-
-eg: a unit has a Leader and a Model which have a link to the same entry, with a max 1 constraint on the links scoped to the unit.
-assuming both have selected 1 of that entry:
-- a shared constraint would error as its evaluating the target of the links
-- a non-shared constraint would not error as it would be evaluating the amount of the links themselves
-
-note: shared=false on BS will also limit the constraint to it's parent rootSelectionEntry ID
+      return `Its generally recommended to keep shared checked
+If set to false, queries will be evaluated in a stricter way, usually only relevant if the scope is above "parent"
+on NR, this is mostly equivalent to just setting scope to self.
+note: shared=false on BS will limit the constraint to it's parent rootSelectionEntry ID
 `;
     },
     instanceOf() {
@@ -206,7 +206,12 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
       res.push({
         name: "Selections",
         value: "selections",
-        type: "bullet",
+        type: "selectionEntry",
+      });
+      res.push({
+        name: "Associations",
+        value: "associations",
+        type: "association",
       });
       res.push({
         name: "Forces",
@@ -219,13 +224,11 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
           value: costType.id,
           type: "cost",
         });
-        if (this.item.scope === "roster") {
-          res.push({
-            name: `${costType.name} Limit`,
-            value: `limit::${costType.id}`,
-            type: "cost",
-          });
-        }
+        res.push({
+          name: `${costType.name} Limit`,
+          value: `limit::${costType.id}`,
+          type: "cost",
+        });
       }
       return res;
     },
@@ -318,6 +321,9 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
         name: "Primary Category",
         editorTypeName: "bullet",
       };
+      if (this.item.field === "associations") {
+        return [SCOPE_SELF];
+      }
       if (this.isForceEntry) {
         return [SCOPE_SELF, SCOPE_PARENT, SCOPE_FORCE, SCOPE_ROSTER, SCOPE_PRIMARY_CATALOGUE, SCOPE_ANCESTOR];
       }
@@ -393,16 +399,17 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
 }
 
 .checks {
-  display: grid;
-  grid-gap: 10px;
-  grid-auto-flow: column;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 2px 4px;
 }
 
 .query {
-  display: grid;
-  grid-gap: 5px;
-  grid-template-columns: auto max-content 1fr;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  gap: 8px;
 }
 
 @import "@/shared_components/css/vars.scss";
@@ -415,5 +422,10 @@ note: shared=false on BS will also limit the constraint to it's parent rootSelec
 .shared {
   color: $gray;
   font-style: italic;
+}
+.inQuery {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 </style>

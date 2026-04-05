@@ -271,7 +271,7 @@ class SelectParser {
     for (let i = this.index + n; i < this.tokens.length; i++) {
       if (this.tokens[i] === '(') count++;
       if (this.tokens[i] === ')') count--;
-      if (count = 0) return i
+      if (count === 0) return i
     }
     throw Error(`SyntaxError: unmatched ( at ${this.index + n})`)
   }

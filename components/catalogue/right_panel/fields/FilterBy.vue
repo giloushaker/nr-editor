@@ -3,15 +3,6 @@
     <legend>Filter By</legend>
     <table class="editorTable">
       <tr>
-        <td>Of:</td>
-        <td>
-          <span v-if="child">
-            <img class="mr-1 align-middle" :src="`assets/bsicons/${child.editorTypeName}.png`" />
-            {{ child.name }}</span
-          >
-        </td>
-      </tr>
-      <tr>
         <td>Child ID:</td>
         <td><input type="text" v-model="childId" /> </td
       ></tr>
@@ -75,10 +66,11 @@ import {
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
 import { fieldToText } from "~/assets/shared/battlescribe/bs_modifiers";
+import { Base, Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 export default {
   props: {
     item: {
-      type: Object as PropType<BSICondition & EditorBase>,
+      type: Object as PropType<(Condition | Constraint) & EditorBase>,
       required: true,
     },
 
@@ -115,6 +107,7 @@ export default {
         ...this.allEntries,
         ...this.allForces,
         ...this.allCatalogues,
+        ...this.allAssociations
       ];
       return result;
     },
@@ -123,7 +116,7 @@ export default {
   watch: {
     "item.scope"() {
       if (!this.child) {
-        this.item.childId = this.availableTargets()[0]?.id || undefined;
+        (this.item as Partial<typeof this.item>).childId = this.availableTargets()[0]?.id || undefined;
       }
     },
   },
@@ -160,8 +153,10 @@ export default {
       if (!this.includeSelections) {
         return [];
       }
+
       return getFilterSelections(this.item, this.catalogue);
     },
+
     rootId() {
       let item = this.item as any;
       if (!item?.parent) return;
@@ -183,14 +178,25 @@ export default {
       }
       return getSearchElements(this.catalogue, "forceEntriesIterator");
     },
+    allAssociations(): EditorSearchItem[] {
+      if (!this.includeSelections) {
+        return [];
+      }
+      return getSearchElements(this.catalogue, "associationsIterator");
 
+    },
     allCatalogues(): EditorSearchItem[] {
       if (!this.includeCatalogues) {
         return [];
       }
       return getSearchCatalogues(this.catalogue);
     },
-
+    includeAssociatiosn(){
+      if (this.item.field !== "associations") {
+        return false;
+      }
+      return true;
+    },
     includeSelections() {
       if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;
@@ -222,6 +228,9 @@ export default {
       }
       if (this.item.scope == "ancestor") {
         return true;
+      }
+      if (this.item.field === "associations") {
+        return false;
       }
       if (this.instanceOf && this.item.scope === "primary-catalogue") {
         return false;

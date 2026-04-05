@@ -6,8 +6,9 @@
         <td>Link Type:</td>
         <td>
           <select @change="typeChanged" v-model="item.type">
-            <option v-if="allowEntries" value="selectionEntry">Selection Entry</option>
-            <option v-if="allowGroups" value="selectionEntryGroup"> Selection Entry Group </option>
+            <option v-if="allowed.includes('selectionEntry')" value="selectionEntry">Selection Entry</option>
+            <option v-if="allowed.includes('selectionEntryGroup')" value="selectionEntryGroup"> Selection Entry Group </option>
+            <option v-if="allowed.includes('association')" value="association"> Association </option>
           </select>
         </td>
       </tr>
@@ -109,16 +110,19 @@ export default {
   },
 
   computed: {
-    allowEntries() {
-      return true;
-    },
-
-    allowGroups() {
-      if (this.item.parent?.isCatalogue() && this.item.parentKey === "entryLinks") {
-        return false;
+    allowed(){
+      const result = []
+      if (!(this.item.parent?.isCatalogue() && this.item.parentKey === "entryLinks")) {
+        result.push("selectionEntryGroup")
       }
-      return true;
-    },
+      if (this.item.parentKey === "associationLinks") {
+        result.push("association")
+      }
+     if (this.item.parentKey === "entryLinks") {
+        result.push("selectionEntry")
+      }
+      return result;
+    }
   },
   methods: {
     getNameExtra,

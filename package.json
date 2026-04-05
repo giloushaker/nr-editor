@@ -15,7 +15,7 @@
     "generate": "nuxi generate",
     "preview": "electron dist",
     "postinstall": "nuxt prepare",
-    "electron": "npx nuxi generate --electron && npx electron dist",
+    "electron": "npx nuxi generate --electron && npx electron .output/public",
     "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
     "increment-version": "npm version patch --force"
   },
@@ -85,6 +85,7 @@
     "click-outside-vue3": "^4.0.1",
     "dexie": "^3.2.3",
     "electron-updater": "^6.1.1",
+    "expr-eval": "^2.0.2",
     "fast-xml-parser": "^4.2.2",
     "jszip": "^3.10.1",
     "lodash.merge": "^4.6.2",
