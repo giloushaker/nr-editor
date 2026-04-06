@@ -164,8 +164,10 @@ export default {
     parentAssociation() {
       if (this.association) return;
       const parent = getModifierOrConditionParent(this.item);
-      if (parent?.editorTypeName !== "association") return;
-      return parent;
+      if (!parent) return;
+      if (["association", "associationLink", "sharedAssociation"].includes(parent.editorTypeName)) {
+        return parent;
+      }
     },
     parentAssociationParent() {
       const parent = this.parentAssociation?.parent;
