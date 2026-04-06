@@ -213,8 +213,8 @@ const availableModifiers: Record<string, string[]> = {
     "info",
     "readme",
   ],
-  categoryEntry: ["name", "page", "hidden", "constraints"],
-  categoryEntryLink: ["name", "page", "hidden", "constraints"],
+  categoryEntry: ["name", "page", "hidden", "constraints", "costs"],
+  categoryEntryLink: ["name", "page", "hidden", "constraints", "costs"],
   costType: ["hidden"],
 };
 const availableTypes = {
