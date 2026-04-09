@@ -39,7 +39,7 @@ export default {
   },
   computed: {
     showFilterBy() {
-      return this.item.field === "associations";
+      return this.item.scope === "self";
     },
   },
   methods: {
