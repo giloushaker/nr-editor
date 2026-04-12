@@ -232,7 +232,7 @@ const availableTypes = {
   warning: "string",
   info: "string",
 } as Record<string, FieldTypes>;
-const nonBullet = new Set(["cost", "categories", "constraints", "characteristics", "error", "warning", "info"]);
+const nonBullet = new Set(["costs", "categories", "constraints", "characteristics", "error", "warning", "info"]);
 
 type Operation = {
   id: BSIModifierType;

@@ -7,6 +7,7 @@
       Constraints
     </CatalogueRightPanelFieldsHidden>
     <CatalogueRightPanelFieldsRevision :item="item" class="section" />
+    <CatalogueRightPanelFieldsGameSystem :item="item" class="section" v-if="catalogue.isGameSystem()"/>
     <CatalogueRightPanelFieldsCatalogue :item="item" class="section" />
     <CatalogueRightPanelFieldsInformation :item="item" class="section" />
   </div>
