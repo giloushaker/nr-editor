@@ -451,7 +451,7 @@ const order: Record<string, number> = {
   association: 12,
 };
 const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
-const hiddenTypes = new Set(["costs", "formatRules"]);
+const hiddenTypes = new Set(["costs", "formatRules", "characteristics", "attributes"]);
 const avoidSorting = new Set([
   "forceEntry",
   "profileType",
