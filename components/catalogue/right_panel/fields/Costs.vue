@@ -2,9 +2,15 @@
   <fieldset>
     <legend><img src="assets/bsicons/cost.png" /> Costs</legend>
     <div class="costs">
-      <div v-for="cost of costTypes">
-        <label>{{ cost.name }}: </label>
-        <UtilNumberInput v-if="selectedCosts[cost.id] != null" v-model="selectedCosts[cost.id].value" class="input" @change="changed" placeholder="unset" />
+      <div class="costs-cost" v-for="cost of costTypes" :key="cost.id">
+        <label :title="cost.name">{{ cost.name }}</label>
+        <UtilNumberInput
+          v-if="selectedCosts[cost.id] != null"
+          v-model="selectedCosts[cost.id].value"
+          class="input"
+          @change="changed"
+          placeholder="unset"
+        />
       </div>
     </div>
   </fieldset>
@@ -85,16 +91,28 @@ export default {
 
 <style scoped lang="scss">
 .costs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px 10px;
+  width: 100%;
+}
+.costs-cost {
   display: flex;
-  > div {
-    margin-right: 10px;
-    &:last-child {
-      margin-right: 0;
-    }
+  flex-direction: column;
+  min-width: 0;
+
+  label {
+    font-size: 0.85em;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
+
 .input {
-  max-width: 100px;
+  width: 100%;
+  box-sizing: border-box;
 }
 </style>
