@@ -36,11 +36,26 @@
             placeholder="Entries"
             :options="allAffects"
             valueField="value"
-            filterField="name"
+            :filterField="(option) => option.prefix ? `${option.prefix.name} > ${option.name}` : `${option.name}`"
           >
             <template #option="opt">
-              <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName || 'bullet'}.png`" />
-              <span style="white-space: nowrap"> {{ opt.option.name }} </span>
+              <div class="inline-flex gap-2 flex-row items-center">
+
+                <template v-if="opt.option.prefix">
+                  <div class="min-w-4 h-full flex items-center justify-center">
+                    <img :src="`assets/bsicons/${opt.option.prefix.editorTypeName || 'bullet'}.png`" />
+                  </div>
+                  <div style="white-space: nowrap"> {{ opt.option.prefix.name }}</div>
+                  <span class="gray">></span>
+                </template>
+        
+
+                <div class="min-w-4 h-full flex items-center justify-center">
+                  <img :src="`assets/bsicons/${opt.option.editorTypeName || 'bullet'}.png`" />
+                </div>
+                
+                <div style="white-space: nowrap"> {{ opt.option.name }} </div>
+              </div>
             </template>
           </UtilAutocomplete>
         </td>
@@ -79,15 +94,18 @@
       <div class="checks">
         <div>
           <input id="includeSelf" type="checkbox" v-model="fields.self" />
-          <label for="includeSelf">Include self(scope)</label>
+          <label for="includeSelf" v-if="fields.associations">Affect Associated Nodes</label>
+          <label for="includeSelf" v-else-if="scope === 'self'">Affect Self</label>
+          <label for="includeSelf" v-else>Affect Scope</label>
         </div>
         <div>
           <input id="includeChildSelections" type="checkbox" v-model="fields.entries" />
-          <label for="includeChildSelections">Include child Selections</label>
+          <label for="includeSelf" v-if="fields.associations">	Affect child Selections of Associated Nodes</label>
+          <label for="includeChildSelections" v-else>Affect child Selections</label>
         </div>
-        <div>
+        <div v-if="!fields.associations" >
           <input id="includeChildForces" type="checkbox" v-model="fields.forces" />
-          <label for="includeChildForces">Include child Forces</label>
+          <label for="includeChildForces">Affect child Forces</label>
         </div>
         <div>
           <input id="recursive" type="checkbox" v-model="fields.recursive" />
@@ -221,9 +239,9 @@ export default defineComponent({
     },
 
     allAffects(): Array<any> {
-      return [
+      const normal = [
         {
-          name: " Entries ",
+          name: "Entries",
           value: "entries",
         },
         ...[...this.catalogue.iterateProfileTypes()].map((type) => ({
@@ -237,6 +255,14 @@ export default defineComponent({
           editorTypeName: "rule",
         },
       ];
+      return [...normal, ...normal.map(elt => ({
+        ...elt, 
+        value: `associations.${elt.value}`,
+        prefix: {
+          name: "Associations",
+          editorTypeName: "association",
+        } 
+      }))];
     },
     allScopes(): Array<ScopeChoice | EditorSearchItem> {
       const result = [scopes.self, scopes.parent, scopes.force, scopes.roster, scopes.primaryCatalogue] as Array<
@@ -273,6 +299,9 @@ export default defineComponent({
     fields: {
       deep: true,
       handler(fields) {
+        if (this.fields.associations) {
+          this.fields.forces = false
+        }
         const built = construct_affects_query(fields);
         if (!built || built === "self") {
           delete this.item.affects;
