@@ -94,13 +94,13 @@
       <div class="checks">
         <div>
           <input id="includeSelf" type="checkbox" v-model="fields.self" />
-          <label for="includeSelf" v-if="fields.associations">Affect Associated Nodes</label>
+          <label for="includeSelf" v-if="fields.affectsWhat?.startsWith('associations')">Affect Associated Nodes</label>
           <label for="includeSelf" v-else-if="scope === 'self'">Affect Self</label>
           <label for="includeSelf" v-else>Affect Scope</label>
         </div>
         <div>
           <input id="includeChildSelections" type="checkbox" v-model="fields.entries" />
-          <label for="includeSelf" v-if="fields.associations">	Affect child Selections of Associated Nodes</label>
+          <label for="includeSelf" v-if="fields.affectsWhat?.startsWith('associations')">	Affect child Selections of Associated Nodes</label>
           <label for="includeChildSelections" v-else>Affect child Selections</label>
         </div>
         <div v-if="!fields.associations" >
