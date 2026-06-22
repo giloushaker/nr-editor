@@ -212,7 +212,7 @@ export function getParentSelections(item: EditorBase): EditorSearchItem[] {
   return parentElements;
 }
 
-export function scopeIsId(item: BSICondition) {
+export function scopeIsId(item: BSICondition | BSIConstraint) {
   return (
     ["self", "parent", "ancestor", "primary-category", "primary-catalogue", "force", "roster"].includes(item.scope) ==
     false
