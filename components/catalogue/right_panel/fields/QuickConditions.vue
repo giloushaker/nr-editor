@@ -3,38 +3,52 @@
     <legend><img src="assets/bsicons/condition.png" /> Quick Conditions</legend>
     <div class="columns">
       <div class="buttonList">
-        <button class="bouton" @click="add('self', 'selections', 'instanceOf', 1)" v-if="local">
-          <img src="/assets/icons/iconeplus.png" />SELF INSTANCE OF
-        </button>
-        <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
-          <img src="/assets/icons/iconeplus.png" />PARENT ATLEAST 1
-        </button>
-        <button class="bouton" @click="add('force', 'selections', 'atLeast', 1)">
-          <img src="/assets/icons/iconeplus.png" />FORCE ATLEAST 1
-        </button>
-        <button class="bouton" @click="add('roster', 'selections', 'atLeast', 1)">
-          <img src="/assets/icons/iconeplus.png" />ROSTER ATLEAST 1
-        </button>
-        <button class="bouton" @click="add('ancestor', 'selections', 'instanceOf', 1)">
-          <img src="/assets/icons/iconeplus.png" />ANCESTOR INSTANCE OF
-        </button>
+        <template v-if="local">
+          <button class="bouton" @click="add('self', 'selections', 'instanceOf', 1)" v-if="local">
+            <img src="/assets/icons/iconeplus.png" />SELF INSTANCE OF
+          </button>
+        </template>
+        <template v-if="group">
+          <button class="bouton" @click="addGroup('and')"> <img src="/assets/icons/iconeplus.png" />AND </button>
+        </template>
+        <template v-if="!local">
+          <button class="bouton" @click="add('parent', 'selections', 'atLeast', 1)">
+            <img src="/assets/icons/iconeplus.png" />PARENT ATLEAST 1
+          </button>
+          <button class="bouton" @click="add('force', 'selections', 'atLeast', 1)">
+            <img src="/assets/icons/iconeplus.png" />FORCE ATLEAST 1
+          </button>
+          <button class="bouton" @click="add('roster', 'selections', 'atLeast', 1)">
+            <img src="/assets/icons/iconeplus.png" />ROSTER ATLEAST 1
+          </button>
+          <button class="bouton" @click="add('ancestor', 'selections', 'instanceOf', 1)">
+            <img src="/assets/icons/iconeplus.png" />ANCESTOR INSTANCE OF
+          </button>
+        </template>
       </div>
       <div class="buttonList">
-        <button class="bouton" @click="add('self', 'selections', 'notInstanceOf', 1)" v-if="local">
-          <img src="/assets/icons/iconeplus.png" />SELF NOT INSTANCE OF
-        </button>
-        <button class="bouton" @click="add('parent', 'selections', 'lessThan', 1)">
-          <img src="/assets/icons/iconeplus.png" />PARENT LESS THAN 1
-        </button>
-        <button class="bouton" @click="add('force', 'selections', 'lessThan', 1)">
-          <img src="/assets/icons/iconeplus.png" />FORCE LESS THAN 1
-        </button>
-        <button class="bouton" @click="add('roster', 'selections', 'lessThan', 1)">
-          <img src="/assets/icons/iconeplus.png" />ROSTER LESS THAN 1
-        </button>
-        <button class="bouton" @click="add('ancestor', 'selections', 'notInstanceOf', 1)">
-          <img src="/assets/icons/iconeplus.png" />ANCESTOR NOT INSTANCE OF
-        </button>
+        <template v-if="local">
+          <button class="bouton" @click="add('self', 'selections', 'notInstanceOf', 1)">
+            <img src="/assets/icons/iconeplus.png" />SELF NOT INSTANCE OF
+          </button>
+          <template v-if="group">
+            <button class="bouton" @click="addGroup('or')"> <img src="/assets/icons/iconeplus.png" />OR </button>
+          </template>
+        </template>
+        <template v-if="!local">
+          <button class="bouton" @click="add('parent', 'selections', 'lessThan', 1)">
+            <img src="/assets/icons/iconeplus.png" />PARENT LESS THAN 1
+          </button>
+          <button class="bouton" @click="add('force', 'selections', 'lessThan', 1)">
+            <img src="/assets/icons/iconeplus.png" />FORCE LESS THAN 1
+          </button>
+          <button class="bouton" @click="add('roster', 'selections', 'lessThan', 1)">
+            <img src="/assets/icons/iconeplus.png" />ROSTER LESS THAN 1
+          </button>
+          <button class="bouton" @click="add('ancestor', 'selections', 'notInstanceOf', 1)">
+            <img src="/assets/icons/iconeplus.png" />ANCESTOR NOT INSTANCE OF
+          </button>
+        </template>
       </div>
     </div>
   </fieldset>
@@ -43,6 +57,7 @@
 <script lang="ts">
 import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { scopeIsId } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 
@@ -68,8 +83,14 @@ export default {
     parent() {
       return (this.item as EditorBase).parent;
     },
+    parenType() {
+      return getModifierOrConditionParent(this.item)?.editorTypeName ?? this.item.editorTypeName;
+    },
     local() {
-      return ["localConditionGroup", "association"].includes(this.item.editorTypeName);
+      return ["localConditionGroup", "association"].includes(this.parenType);
+    },
+    group() {
+      return this.type === "conditionGroup" || this.local;
     },
   },
   methods: {
@@ -86,6 +107,12 @@ export default {
         value: value,
         childId: "any",
         includeChildSelections: ["roster"].includes(scope) ? true : false,
+      });
+    },
+    addGroup(type: "and" | "or") {
+      let parent = this.item as EditorBase;
+      this.store.create_child("conditionGroups", parent, {
+        type: type,
       });
     },
   },
