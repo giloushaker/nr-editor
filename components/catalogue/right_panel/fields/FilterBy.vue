@@ -60,6 +60,7 @@ import {
   getSearchElements,
   getSearchCategories,
   getFilterSelections,
+  getSearchSelections,
   getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
@@ -154,7 +155,25 @@ export default {
         return [];
       }
 
+      // Conditions/constraints nested under an association evaluate against the
+      // associated node, which can be any entry in the catalogue, so offer all
+      // root selection entries instead of only those reachable from the scope.
+      if (this.inAssociation) {
+        return getSearchSelections(this.catalogue, true);
+      }
+
       return getFilterSelections(this.item, this.catalogue);
+    },
+
+    inAssociation(): boolean {
+      let parent: EditorBase | undefined = this.item as EditorBase;
+      while (parent) {
+        if (typeof parent.parentKey === "string" && parent.parentKey.toLowerCase().includes("association")) {
+          return true;
+        }
+        parent = parent.parent;
+      }
+      return false;
     },
 
     rootId() {
