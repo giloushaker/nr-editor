@@ -109,6 +109,8 @@ export default {
         "selectionEntryGroup",
         "selectionEntryLink",
         "selectionEntryGroupLink",
+        "association",
+        "associationLink",
       ].includes(this.typeName);
     },
   },

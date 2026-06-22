@@ -89,7 +89,7 @@ export default {
 
   methods: {
     getChilds(item: Link) {
-      return sortByAscending([...item.iterateSelectionEntries()], (o) => o.getName());
+      return sortByAscending([...item.iterateSelectionEntries(), ...item.associationsIterator()], (o) => o.getName());
     },
     linkChanged() {
       if (this.settings.autoRenameInfoLinkParent && this.item.parent) {

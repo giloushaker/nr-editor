@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     getChilds(item: EditorBase) {
-      return sortByAscending([...item.iterateSelectionEntries()], (o) => o.getName());
+      return sortByAscending([...item.iterateSelectionEntries(), ...item.associationsIterator()], (o) => o.getName());
     },
   },
 };
