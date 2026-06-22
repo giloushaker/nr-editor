@@ -2,6 +2,7 @@
   <div>
     <ConditionGroup :item="item" />
     <CatalogueRightPanelFieldsSortChilds :item="item" :catalogue="catalogue" :get_items="getChilds" :autosort="false" />
+    <QuickConditions :item="item"/>
   </div>
 </template>
 
@@ -10,9 +11,10 @@ import { PropType } from "vue";
 import { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ConditionGroup from "./fields/ConditionGroup.vue";
-
+import QuickConditions from "./fields/QuickConditions.vue";
+  
 export default {
-  components: { ConditionGroup },
+  components: { ConditionGroup, QuickConditions },
   props: {
     item: {
       type: Object as PropType<BSIConditionGroup & EditorBase>,
