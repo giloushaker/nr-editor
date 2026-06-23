@@ -10,6 +10,7 @@
       childSelections
       childForces
     />
+
     <FilterBy class="section" :item="item" :catalogue="catalogue" hideshared />
     <CatalogueRightPanelFieldsAssociations :item="item" class="section" />
     <CatalogueRightPanelFieldsQuickConditions :item="item" class="section" />

@@ -3,21 +3,19 @@
     <legend>Association</legend>
     <table class="editorTable">
       <tr>
-        <td>Label on target   <InfoButton>
-          <p>
-
-            This is the label that may appear on the target item when listing associated items.
-          </p>
-            Examples: 
+        <td
+          >Label on target
+          <InfoButton>
+            <p> This is the label that may appear on the target item when listing associated items. </p>
+            Examples:
             <ul>
               <li>for a "Leader" association, this could be "Leading"</li>
               <li>for a "Owned by" association, this could be "Granted Items"</li>
               <li>for a "Regiment" association, this could be "Units"</li>
-            </ul>
-          </InfoButton>:</td>
-        <td><input type="text" v-model="item.label" />
-       
-        </td>
+            </ul> </InfoButton
+          >:</td
+        >
+        <td><input type="text" v-model="item.label" /> </td>
       </tr>
       <tr>
         <td>Min</td>
@@ -26,6 +24,39 @@
       <tr>
         <td>Max</td>
         <td><input @input="changed" v-model="item.max" type="number" /></td>
+      </tr>
+      <tr>
+        <td>Default Selection</td>
+        <td>
+          <UtilAutocomplete
+            v-model="item.defaultSelectionEntryId"
+            :placeholder="`Search Children...`"
+            :options="[
+              {
+                name: 'Auto',
+                id: undefined,
+                editorTypeName: 'bullet',
+              },
+              {
+                name: 'None',
+                id: 'none',
+                editorTypeName: 'bullet',
+              },
+            ]"
+            valueField="id"
+            filterField="name"
+          >
+            <template #option="opt">
+              <div style="white-space: nowrap">
+                <template v-if="opt.option.indent >= 2 && !opt.selected"
+                  ><span v-for="n of opt.option.indent - 1">&nbsp;&nbsp;&nbsp;</span></template
+                >
+                <img class="mr-1 align-middle" :src="`assets/bsicons/${opt.option.editorTypeName}.png`" />
+                {{ opt.option.name }}
+              </div>
+            </template>
+          </UtilAutocomplete>
+        </td>
       </tr>
       <tr>
         <td>Ids</td>
