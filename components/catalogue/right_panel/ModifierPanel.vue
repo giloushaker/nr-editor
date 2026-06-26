@@ -35,6 +35,10 @@ export default {
           "selectionEntryGroup",
           "selectionEntryLink",
           "selectionEntryGroupLink",
+          "profile",
+          "infoLink",
+          "rule",
+          "infoGroup"
         ].includes(this.parent.editorTypeName)
       )
         return true;
