@@ -148,6 +148,7 @@ const scopes = {
   model: { id: "model", name: "Type: Model" },
   upgrade: { id: "upgrade", name: "Type: Upgrade" },
   modelOrUnit: { id: "model-or-unit", name: "Type: Model or Unit" },
+  entryNotUpgrade: { id: "non-upgrade-entry", name: "Entry & Type: Not Upgrade" },
 } as const;
 interface ScopeChoice {
   id: string;

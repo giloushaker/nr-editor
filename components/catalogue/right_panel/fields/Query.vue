@@ -359,6 +359,11 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
           name: "Type: Model or Unit",
           editorTypeName: "bullet",
         },
+        {
+          id: "non-upgrade-entry",
+          name: "Entry & Type: Not Upgrade",
+          editorTypeName: "bullet",
+        },
       ];
       if (this.item.field != "forces") {
         common.push(...common_non_forces_field);
