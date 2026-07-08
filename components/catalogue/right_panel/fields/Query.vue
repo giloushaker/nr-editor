@@ -59,6 +59,10 @@
         <input id="childForces" type="checkbox" v-model="item.includeChildForces" />
         <label for="childForces">And all child Forces</label>
       </div>
+      <div v-if="childForces">
+        <input id="childForces" type="checkbox" v-model="item.traverseAssociationGroup" />
+        <label for="childForces">And all grouped associations</label>
+      </div>
       <div v-if="parentAssociation">
         <input id="queryFromSelf" type="checkbox" v-model="item.queryFromSelf" />
         <label for="queryFromSelf">
@@ -357,6 +361,11 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
         {
           id: "model-or-unit",
           name: "Type: Model or Unit",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "non-upgrade-entry",
+          name: "Entry & Type: Not Upgrade",
           editorTypeName: "bullet",
         },
       ];

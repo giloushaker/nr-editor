@@ -103,6 +103,10 @@
           <label for="includeSelf" v-if="fields.affectsWhat?.startsWith('associations')">	Affect child Selections of Associated Nodes</label>
           <label for="includeChildSelections" v-else>Affect child Selections</label>
         </div>
+        <div>
+          <input id="includeChildForces" type="checkbox" v-model="fields.group"/>
+          <label for="includeChildForces">Affect group associations</label>
+        </div>
         <div v-if="!fields.associations" >
           <input id="includeChildForces" type="checkbox" v-model="fields.forces" />
           <label for="includeChildForces">Affect child Forces</label>
@@ -148,6 +152,7 @@ const scopes = {
   model: { id: "model", name: "Type: Model" },
   upgrade: { id: "upgrade", name: "Type: Upgrade" },
   modelOrUnit: { id: "model-or-unit", name: "Type: Model or Unit" },
+  entryNotUpgrade: { id: "non-upgrade-entry", name: "Entry & Type: Not Upgrade" },
 } as const;
 interface ScopeChoice {
   id: string;
@@ -167,6 +172,7 @@ export default defineComponent({
       entries: false,
       forces: false,
       recursive: false,
+      group: false,
       filterBy: "any",
       affectsWhat: "entries",
     } as AffectsQuery,
@@ -217,7 +223,6 @@ export default defineComponent({
       }
       return item.id;
     },
-
     allSelections(): EditorSearchItem[] {
       return getParentUnitHierarchy(this.item);
     },
