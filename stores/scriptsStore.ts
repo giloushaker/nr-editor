@@ -11,10 +11,9 @@ import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_he
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
 import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
-import t9a_import from "~/default-scripts/nrt9a/import_json";
-import t9a_rarity from "~/default-scripts/nrt9a/rarity_script";
 import findDuplicateIds from "~/default-scripts/find-duplicate-ids";
 import findDuplicatesProfiles from "~/default-scripts/find-duplicates-profiles";
+import towMatchedPlay from "~/default-scripts/tow/matched-play-constraints";
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -26,10 +25,6 @@ export const useScriptsStore = defineStore("scripts", {
     async get_scripts(system?: GameSystemFiles) {
       if (!system?.gameSystem) return [];
       const result = [];
-      if (["The Ninth Age", "The 9th Age"].includes(system.gameSystem.name!)) {
-        result.push(t9a_import);
-        result.push(t9a_rarity);
-      }
       try {
         const path = getDataObject(system.gameSystem).fullFilePath;
         if (!path) return [];
@@ -68,12 +63,12 @@ export const useScriptsStore = defineStore("scripts", {
         return [];
       }
     },
-    get_default_scripts() {
-      const testScripts = [] as Record<string, any>[];
-      testScripts.push(pasteSpecialRule);
-      testScripts.push(pasteWeapons);
-      testScripts.push(pasteEquipment);
-      return [
+    get_default_scripts(system?: GameSystemFiles) {
+      // const testScripts = [] as Record<string, any>[];
+      // testScripts.push(pasteSpecialRule);
+      // testScripts.push(pasteWeapons);
+      // testScripts.push(pasteEquipment);
+      const scripts = [
         fixLinkNames,
         fixProfiles,
         listRefs,
@@ -81,8 +76,17 @@ export const useScriptsStore = defineStore("scripts", {
         findDuplicateIds,
         findDuplicatesProfiles,
         listAutomaticRefs,
-        ...(electron ? [] : testScripts),
+        //  ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
+
+      // Scripts spécifiques à Warhammer: The Old World (filtré par nom de système,
+      // comme les scripts T9A l'étaient dans get_scripts). Nécessaire ici car ce script
+      // est en .ts : get_scripts ne charge que les .js du dossier de données, donc il le skip.
+      if ((system?.gameSystem?.name ?? "").includes("Old World")) {
+        scripts.push(towMatchedPlay);
+      }
+
+      return scripts;
     },
     async emit(key: string, ...args: any[]) {
       for (const cb of Object.values(this.hooks[key] || {})) {
@@ -109,22 +113,24 @@ export const useScriptsStore = defineStore("scripts", {
       return arg;
     },
     run_hooks_sync(key: string, event?: Event, arg?: any): string[] {
-      const result = []
+      const result = [];
       for (const [name, cb] of Object.entries(this.hooks[key] || {})) {
         try {
           const returned = cb(event, arg);
           if (returned) {
-            result.push(name)
+            result.push(name);
           }
         } catch (e) {
           continue;
         }
       }
-      return result
+      return result;
     },
     async run_script(script: string, ...args: any[]) {
       console.log("Running script", script, "with args", args);
-      return await this.get_default_scripts().find((s) => s.name === script)?.run?.(...args);
+      return await this.get_default_scripts()
+        .find((s) => s.name === script)
+        ?.run?.(...args);
     },
     add_hook(hook_key: string, func_key: string, func: Function) {
       if (!this.hooks[hook_key]) {

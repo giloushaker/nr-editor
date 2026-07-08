@@ -328,7 +328,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async load_systems_from_folder(
       folder: string,
-      progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>
+      progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
     ) {
       if (!globalThis.electron) {
         throw new Error("Not running in electron");
@@ -365,7 +365,7 @@ export const useEditorStore = defineStore("editor", {
           }
           result_files.push(json);
         } catch (e) {
-          console.error(`Error loading ${file.name}`, e);
+          console.error(`Error loading ${file.name} from folder: ${folder}`, e);
         }
       }
       progress && (await progress(result_files.length, allowed.length));
@@ -379,7 +379,7 @@ export const useEditorStore = defineStore("editor", {
             (await progress(
               0,
               0,
-              `An error occured while loading ${system.gameSystem?.gameSystem?.name ?? "this system"}:\n${e}`
+              `An error occured while loading ${system.gameSystem?.gameSystem?.name ?? "this system"}:\n${e}`,
             ));
           throw e;
         }
@@ -517,16 +517,19 @@ export const useEditorStore = defineStore("editor", {
     },
     async changed(node: EditorBase | Catalogue) {
       function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
-        const result = [] as NonNullable<T>[]
+        const result = [] as NonNullable<T>[];
         let cur = node as typeof node;
         while (cur.parent) {
-          result.push(cur.parent)
+          result.push(cur.parent);
           cur = cur.parent as any as typeof node;
         }
-        return result
+        return result;
       }
 
-      if ((node as EditorBase).editorTypeName === "profileType" || getParents(node as EditorBase).find(o => o.editorTypeName === "profileType")) {
+      if (
+        (node as EditorBase).editorTypeName === "profileType" ||
+        getParents(node as EditorBase).find((o) => o.editorTypeName === "profileType")
+      ) {
         const system = this.get_system(node.getCatalogue().getSystemId());
         await system.loadAll();
         const catalogues = system.getAllLoadedCatalogues();
@@ -552,7 +555,7 @@ export const useEditorStore = defineStore("editor", {
     async save_catalogue(
       system: GameSystemFiles,
       catalogue: Catalogue,
-      incrementRevision?: "github" | "yes" | "no"
+      incrementRevision?: "github" | "yes" | "no",
     ): Promise<boolean> {
       const state = this.get_catalogue_state(catalogue);
       const revision = catalogue.revision;
@@ -767,7 +770,7 @@ export const useEditorStore = defineStore("editor", {
       sortByAscendingInplace(result, (selection) =>
         getEntryPath(selection)
           .map((o) => `${o.key}[${o.index}]`)
-          .join("/")
+          .join("/"),
       );
       return result;
     },
@@ -899,13 +902,13 @@ export const useEditorStore = defineStore("editor", {
     get_script_args() {
       const selections = this.get_selections();
       if (!selections.length) return;
-      const system = selections[0].getCatalogue().getSystem()
-      const catalogues = [...new Set(selections.map(o => o.getCatalogue()))];
+      const system = selections[0].getCatalogue().getSystem();
+      const catalogues = [...new Set(selections.map((o) => o.getCatalogue()))];
       return {
         selections,
         system,
         catalogues,
-      }
+      };
     },
     get_context_actions() {
       return this.scripts.run_hooks_sync("context", undefined, this.get_script_args());
@@ -1028,7 +1031,7 @@ export const useEditorStore = defineStore("editor", {
     async add(
       data: MaybeArray<EditorBase | Record<string, any>>,
       childKey?: string & keyof typeof entries,
-      parents?: EditorBase | EditorBase[]
+      parents?: EditorBase | EditorBase[],
     ) {
       let parentsWithPayload = [] as Array<{ obj: EditorBase; payload?: string }>;
       if (!parents) {
@@ -1048,7 +1051,7 @@ export const useEditorStore = defineStore("editor", {
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const fixedEntries = foundEntries.map((o) =>
-        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined)
+        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined),
       );
       const sysId = catalogue.getSystemId();
 
@@ -1094,7 +1097,7 @@ export const useEditorStore = defineStore("editor", {
 
           scrambleIds(
             catalogue,
-            toAdd.map((o) => o.entry)
+            toAdd.map((o) => o.entry),
           );
 
           for (const { key, entry } of toAdd) {
@@ -1292,7 +1295,7 @@ export const useEditorStore = defineStore("editor", {
           .findOptionsByText(profile.typeName, true)
           .filter((o) => o instanceof ProfileType) as ProfileType[];
         sortByDescendingInplace(profileTypes, (o) =>
-          o.characteristicTypes?.length === profile.characteristics?.length ? 1 : 0
+          o.characteristicTypes?.length === profile.characteristics?.length ? 1 : 0,
         );
         profileType = profileTypes[0];
       }
@@ -1314,10 +1317,10 @@ export const useEditorStore = defineStore("editor", {
         }
       }
       const missing = profileType.characteristicTypes?.filter(
-        (ct) => !profile.characteristics.find((c) => c.typeId === ct.id)
+        (ct) => !profile.characteristics.find((c) => c.typeId === ct.id),
       );
       const badIndex = profile.characteristics.find(
-        (c, i) => i !== profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId)
+        (c, i) => i !== profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId),
       );
       if (missing?.length || badIndex) {
         const out_characteristics = [];
@@ -1343,7 +1346,7 @@ export const useEditorStore = defineStore("editor", {
       key: string & keyof typeof entries,
       data?: T,
       catalogue?: Catalogue,
-      parent?: EditorBase
+      parent?: EditorBase,
     ): T extends [] ? T[] : T {
       if (Array.isArray(data)) {
         //@ts-ignore
@@ -1362,7 +1365,7 @@ export const useEditorStore = defineStore("editor", {
         if ((arrayKeys as Set<string>).has(nested_key) && isObject(val)) {
           if (Array.isArray(val)) {
             obj[nested_key] = obj[nested_key].map((o: any) =>
-              this.fix_object(nested_key as keyof typeof entries, o, catalogue)
+              this.fix_object(nested_key as keyof typeof entries, o, catalogue),
             );
           } else {
             obj[nested_key] = [this.fix_object(nested_key as keyof typeof entries, val, catalogue)];
@@ -1383,7 +1386,7 @@ export const useEditorStore = defineStore("editor", {
       const added = await this.add(
         { select: true, ...data },
         key,
-        this.get_selections_with_payload().map((o) => o.obj)
+        this.get_selections_with_payload().map((o) => o.obj),
       );
       this.open_selected();
       return added;

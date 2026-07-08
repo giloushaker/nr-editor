@@ -60,16 +60,22 @@ export default defineComponent({
     return { store: useEditorStore() };
   },
   data() {
-    const store = useEditorStore();
     return {
       system: null as GameSystemFiles | null,
-      scripts: [...store.scripts.get_default_scripts()],
+      scripts: [] as Record<string, any>[],
     };
   },
   async mounted() {
     this.system = null;
     this.system = await this.store.get_or_load_system((this.$route.params as { id: string }).id);
-    this.scripts.push(...(await this.store.scripts.get_scripts(this.system)));
+    // On construit la liste une fois le système connu, pour que le filtrage par système
+    // (ex: scripts TOW) fonctionne, puis on trie par ordre alphabétique.
+    const scripts = [
+      ...this.store.scripts.get_default_scripts(this.system),
+      ...(await this.store.scripts.get_scripts(this.system)),
+    ];
+    scripts.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    this.scripts = scripts;
   },
   methods: {},
 });
