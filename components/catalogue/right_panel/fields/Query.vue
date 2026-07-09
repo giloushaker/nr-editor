@@ -22,7 +22,7 @@
         <span> in </span>
         <UtilAutocomplete
           style="flex-grow: 1"
-          v-model="item.scope"
+          v-model="scopeBase"
           :placeholder="`Search Scope...`"
           :options="allScopes"
           valueField="id"
@@ -47,6 +47,10 @@
     </div>
 
     <div class="checks" v-if="!isCostType">
+      <div v-if="canIncludeSelf">
+        <input id="includeSelfScope" type="checkbox" v-model="scopeIncludeSelf" />
+        <label for="includeSelfScope" class="hastooltip" title="Include the entry carrying this query as a candidate for the scope (findParentOrSelf) instead of only its ancestors">Include self</label>
+      </div>
       <div v-if="shared">
         <input id="shared" type="checkbox" v-model="item.shared" />
         <label for="shared" class="hastooltip" :title="sharedTooltip">Shared</label>
@@ -76,6 +80,7 @@
 <script lang="ts">
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
+import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
 import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
@@ -162,6 +167,31 @@ export default {
   },
 
   computed: {
+    // The scope autocomplete binds to the BASE scope (without "-self"); the "Include self"
+    // checkbox toggles the suffix. Both read (parse existing "-self") and write stay in sync.
+    scopeBase: {
+      get(): string {
+        return splitScopeSelf(this.item.scope ?? "self").base;
+      },
+      set(val: string) {
+        const includeSelf = splitScopeSelf(this.item.scope ?? "").self;
+        const base = val ?? "self";
+        this.item.scope = includeSelf && selfableScopes.has(base) ? `${base}-self` : base;
+      },
+    },
+    scopeIncludeSelf: {
+      get(): boolean {
+        return splitScopeSelf(this.item.scope ?? "").self;
+      },
+      set(val: boolean) {
+        const base = splitScopeSelf(this.item.scope ?? "self").base;
+        this.item.scope = val && selfableScopes.has(base) ? `${base}-self` : base;
+        this.scopeChanged();
+      },
+    },
+    canIncludeSelf(): boolean {
+      return selfableScopes.has(splitScopeSelf(this.item.scope ?? "self").base);
+    },
     association() {
       return this.item.editorTypeName == "association";
     },
@@ -365,7 +395,17 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
         },
         {
           id: "non-upgrade-entry",
-          name: "Entry & Type: Not Upgrade",
+          name: "Type: Not Upgrade",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "group",
+          name: "Type: Group",
+          editorTypeName: "bullet",
+        },
+        {
+          id: "link",
+          name: "Type: Link",
           editorTypeName: "bullet",
         },
       ];

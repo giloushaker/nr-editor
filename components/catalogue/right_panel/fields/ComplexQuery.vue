@@ -6,7 +6,7 @@
         <td>Scope:</td>
         <td>
           <UtilAutocomplete
-            v-model="item.scope"
+            v-model="scopeBase"
             placeholder="Search Scope..."
             :options="allScopes"
             valueField="id"
@@ -92,6 +92,10 @@
     </table>
     <div>
       <div class="checks">
+        <div v-if="canIncludeSelf">
+          <input id="includeSelfScope" type="checkbox" v-model="scopeIncludeSelf" />
+          <label for="includeSelfScope" class="hastooltip" title="Include the entry carrying this modifier as a candidate for the scope (findParentOrSelf) instead of only its ancestors">Include self</label>
+        </div>
         <div>
           <input id="includeSelf" type="checkbox" v-model="fields.self" />
           <label for="includeSelf" v-if="fields.affectsWhat?.startsWith('associations')">Affect Associated Nodes</label>
@@ -137,6 +141,7 @@ import {
   deconstruct_affects_query,
   Modifier,
 } from "~/assets/shared/battlescribe/bs_main";
+import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
 const scopes = {
   self: { id: undefined, name: "Self" },
   parent: { id: "parent", name: "Parent" },
@@ -152,7 +157,9 @@ const scopes = {
   model: { id: "model", name: "Type: Model" },
   upgrade: { id: "upgrade", name: "Type: Upgrade" },
   modelOrUnit: { id: "model-or-unit", name: "Type: Model or Unit" },
-  entryNotUpgrade: { id: "non-upgrade-entry", name: "Entry & Type: Not Upgrade" },
+  entryNotUpgrade: { id: "non-upgrade-entry", name: "Type: Not Upgrade" },
+  group: { id: "group", name: "Type: Group" },
+  link: { id: "link", name: "Type: Link" },
 } as const;
 interface ScopeChoice {
   id: string;
@@ -201,6 +208,37 @@ export default defineComponent({
         if (val === "self") delete this.item.scope;
         else this.item.scope = val;
       },
+    },
+    // The scope autocomplete binds to the BASE scope (without the "-self" suffix), while the
+    // "include self" checkbox toggles the suffix — so both read and write stay in sync.
+    scopeBase: {
+      get(): string | undefined {
+        const s = this.item.scope;
+        if (s == null) return undefined; // "self" option has an undefined id
+        return splitScopeSelf(s).base;
+      },
+      set(val: string | undefined) {
+        const includeSelf = this.item.scope ? splitScopeSelf(this.item.scope).self : false;
+        const base = val ?? "self";
+        const full = includeSelf && selfableScopes.has(base) ? `${base}-self` : base;
+        if (full === "self") delete this.item.scope;
+        else this.item.scope = full;
+      },
+    },
+    scopeIncludeSelf: {
+      get(): boolean {
+        return this.item.scope ? splitScopeSelf(this.item.scope).self : false;
+      },
+      set(val: boolean) {
+        const base = this.item.scope ? splitScopeSelf(this.item.scope).base : "self";
+        const full = val && selfableScopes.has(base) ? `${base}-self` : base;
+        if (full === "self") delete this.item.scope;
+        else this.item.scope = full;
+      },
+    },
+    canIncludeSelf(): boolean {
+      const base = this.item.scope ? splitScopeSelf(this.item.scope).base : "self";
+      return selfableScopes.has(base);
     },
     catalogue() {
       return this.item.getCatalogue();
@@ -274,7 +312,7 @@ export default defineComponent({
         ScopeChoice | EditorSearchItem
       >;
       if (this.type !== "forceEntry") {
-        result.push(scopes.rootEntry, scopes.unit, scopes.model, scopes.upgrade, scopes.modelOrUnit);
+        result.push(scopes.rootEntry, scopes.unit, scopes.model, scopes.upgrade, scopes.modelOrUnit, scopes.entryNotUpgrade, scopes.group, scopes.link);
       }
       result.push(...this.allParents);
       if (this.type !== "forceEntry") {
