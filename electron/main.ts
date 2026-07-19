@@ -1,5 +1,13 @@
 const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = require("electron");
 const path = require("path");
+
+// On Linux the chrome-sandbox helper must be root-owned with mode 4755, which
+// isn't the case for a plain `npm install` (especially on external drives).
+// Disable the sandbox here so `npm run electron` works out of the box.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("no-sandbox");
+}
+
 const simpleGit = require("simple-git");
 const { autoUpdater } = require("electron-updater");
 const os = require("os")
