@@ -22,7 +22,8 @@
       <CatalogueRightPanelConditionGroupPanel v-else-if="typeName == 'conditionGroup'" :item="item" :catalogue="catalogue" />
       <CatalogueRightPanelConditionPanel v-else-if="typeName == 'condition'" :item="item" :catalogue="catalogue" />
       <CatalogueRightPanelLocalConditionGroupPanel v-else-if="typeName === 'localConditionGroup'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'categoryLink'" :item="item" :catalogue="catalogue" type="category" />
+      <!-- resolved category links report their target's type + Link, so both names route here -->
+      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'categoryLink' || typeName == 'categoryEntryLink'" :item="item" :catalogue="catalogue" type="category" />
       <CatalogueRightPanelModifierGroupPanel v-else-if="typeName == 'modifierGroup'" :item="item" :catalogue="catalogue" />
       <CatalogueRightPanelInfoGroupPanel v-else-if="typeName == 'infoGroup'" :item="item" :catalogue="catalogue" />
       <CatalogueRightPanelSelectionEntryGroupPanel v-else-if="typeName == 'selectionEntryGroup'" :item="item" :catalogue="catalogue" />
