@@ -5,6 +5,7 @@
   <CatalogueRightPanelFieldsHidden :item="item" class="section">
     Entry
   </CatalogueRightPanelFieldsHidden>
+  <CatalogueRightPanelFieldsTracked :item="item" class="section" />
   <CatalogueRightPanelFieldsDescription class="section" :item="item" :catalogue="catalogue" />
   <CatalogueRightPanelFieldsQuickConstraints :item="item" :withCategory="false" class="section" />
 </template>

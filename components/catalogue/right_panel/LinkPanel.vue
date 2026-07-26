@@ -18,6 +18,8 @@
     Entry
   </CatalogueRightPanelFieldsBooleans>
 
+  <CatalogueRightPanelFieldsTracked v-if="type == 'category'" :item="item" class="section" />
+
   <CatalogueRightPanelFieldsCategories v-if="isEntryOrGroup" :item="item" :catalogue="catalogue" class="section" />
 
   <CatalogueRightPanelFieldsCharacteristics
