@@ -399,7 +399,8 @@ import {
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
 import { allowed_children } from "~/assets/shared/battlescribe/bs_convert";
-import { getModifiedField } from "~/assets/shared/battlescribe/bs_modifiers";
+import { getModifiedField, modifiersOrder } from "~/assets/shared/battlescribe/bs_modifiers";
+import type { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import CatalogueLabel from "~/components/catalogue/left_panel/components/CatalogueLabel.vue";
@@ -667,8 +668,16 @@ export default {
       }
     },
     grouped_items(items: CatalogueEntryItem[]) {
+      // modifiers run in type order rather than the order they are listed, so show them the way they apply.
+      // sortable() is false when the user picked sort "none", which is also the only mode offering move
+      // up/down, so that view keeps raw array order and stays consistent with reordering.
+      const ordered = this.sortable(this.item)
+        ? sortByAscending(this.sorted(items), (o) =>
+            o.item.editorTypeName === "modifier" ? (modifiersOrder[(o.item as unknown as BSIModifier).type] ?? 0) : 0,
+          )
+        : this.sorted(items);
       const result = sortByAscending(
-        this.sorted(items),
+        ordered,
         (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000,
       );
       if (this.settings.display.sortIndex) {

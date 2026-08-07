@@ -18,7 +18,14 @@
       </UtilIconSelect>
       <template v-if="selectedOperation?.id == 'replace'">
         <div>
-          <input @change="changed" type="text" v-model="item.arg" placeholder="text to replace" />
+          <input
+            @change="changed"
+            type="text"
+            v-model="item.arg"
+            :class="{ emptyArg: item.arg === undefined || item.arg === '' }"
+            placeholder="(empty)"
+            title="Text to replace. Left empty, the modifier instead sets the value only when the field is empty."
+          />
           <span v-if="selectedOperation" class="mx-5px whitespace-nowrap">
             {{ selectedOperation.word }}
             <input @change="changed" type="text" v-model="item.value" />
@@ -35,6 +42,16 @@
           <UtilEditableDiv class="inline-block" @change="changed" type="text" v-model="join" />
           (<span class="cost !m-0 whitespace-pre" v-if="join.length">{{ join.replace("\n", "\\n") }}</span>
           <span v-else>nothing</span>)
+        </div>
+        <div>
+          <span
+            class="hastooltip"
+            title="Cancels the modifier when the field already contains this text. Leave empty to always apply. Match on a partial keyword (Rapid Fire) to block every value of it, not just the one being added."
+          >
+            unless present:
+          </span>
+          <UtilEditableDiv class="inline-block" @change="changed" type="text" v-model="skipIfPresent" />
+          <span v-if="!skipIfPresent" class="grey">(always applies)</span>
         </div>
       </template>
       <template v-else>
@@ -438,6 +455,16 @@ export default {
         this.item.join = val;
       },
     },
+    // empty deletes the key so an unused opt-out doesn't get written to the xml
+    skipIfPresent: {
+      get() {
+        return this.item.skipIfPresent ?? "";
+      },
+      set(val: string) {
+        if (val === "") delete this.item.skipIfPresent;
+        else this.item.skipIfPresent = val;
+      },
+    },
     position: {
       get() {
         return this.item.position;
@@ -647,5 +674,14 @@ export default {
 .select {
   min-width: 200px;
   max-width: fit-content;
+}
+
+// an empty arg is a meaningful choice (set only when the field is empty), so show it instead of fading it out
+.emptyArg {
+  font-style: italic;
+  &::placeholder {
+    opacity: 1;
+    font-style: italic;
+  }
 }
 </style>
