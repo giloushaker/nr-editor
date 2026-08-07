@@ -102,8 +102,13 @@ export default {
       return true;
     },
     availableTargets() {
+      // Runtime aliases both types to this filter id (see getStaticFilters); association filters only
+      const modelOrUnit = this.inAssociation
+        ? [{ id: "model-or-unit", name: "Model or Unit", editorTypeName: "bullet", indent: 0, catalogue: null, shared: false }]
+        : [];
       const result = [
         ...filterByItems,
+        ...modelOrUnit,
         ...this.allCategories,
         ...this.allEntries,
         ...this.allForces,
