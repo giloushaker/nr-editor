@@ -14,6 +14,7 @@
               <option value="ability">Ability</option>
               <option value="rule">Rule</option>
               <option value="tag">Tag</option>
+              <option value="summary">Summary (describes its entry, name hidden)</option>
             </select>
           </td>
         </tr>
