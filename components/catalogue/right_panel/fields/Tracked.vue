@@ -1,6 +1,13 @@
 <template>
   <fieldset>
     <legend>Builder</legend>
+    <img
+      v-if="trackedOnTarget"
+      title="tracked is true on target"
+      style="vertical-align: text-top; margin-left: 4px; margin-top: 1px"
+      class="typeIcon"
+      src="assets/bsicons/link.png"
+    />
     <input id="tracked" type="checkbox" :checked="item.tracked ?? false" @change="setTracked" />
     <label for="tracked" title="If this is checked, the builder always shows this category with its count and limits, even when empty.">Show tracker</label>
   </fieldset>
@@ -17,6 +24,12 @@ export default {
     item: {
       type: Object as PropType<Base & EditorBase>,
       required: true,
+    },
+  },
+  computed: {
+    // same rule as Booleans.vue: flag it only when the target turns it on and self doesn't
+    trackedOnTarget() {
+      return Boolean(this.item.target) && !this.item.tracked && Boolean(this.item.target!.tracked);
     },
   },
   methods: {
