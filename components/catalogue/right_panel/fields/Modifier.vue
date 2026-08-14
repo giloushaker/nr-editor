@@ -231,7 +231,8 @@ const availableModifiers: Record<string, string[]> = {
     "readme",
   ],
   categoryEntry: ["name", "page", "hidden", "tracked", "constraints", "costs"],
-  // editorTypeName is categoryLink; categoryEntryLink never matched anything
+  // resolved links are named after their target (categoryEntryLink), unresolved ones keep categoryLink
+  categoryEntryLink: ["name", "page", "hidden", "tracked", "constraints", "costs"],
   categoryLink: ["name", "page", "hidden", "tracked", "constraints", "costs"],
   costType: ["hidden"],
 };
