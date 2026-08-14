@@ -230,8 +230,9 @@ const availableModifiers: Record<string, string[]> = {
     "info",
     "readme",
   ],
-  categoryEntry: ["name", "page", "hidden", "constraints", "costs"],
-  categoryEntryLink: ["name", "page", "hidden", "constraints", "costs"],
+  categoryEntry: ["name", "page", "hidden", "tracked", "constraints", "costs"],
+  // editorTypeName is categoryLink; categoryEntryLink never matched anything
+  categoryLink: ["name", "page", "hidden", "tracked", "constraints", "costs"],
   costType: ["hidden"],
 };
 const availableTypes = {
@@ -240,6 +241,7 @@ const availableTypes = {
   annotation: "string-or-number",
   page: "string",
   hidden: "boolean",
+  tracked: "boolean",
   description: "string",
   category: "category",
   defaultSelectionEntryId: "defaultSelectionEntryId",
