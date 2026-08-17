@@ -108,6 +108,24 @@
             </div>
           </template>
         </UtilAutocomplete>
+        <UtilAutocomplete
+          class="!max-w-350px"
+          v-if="inputType == 'add-info'"
+          placeholder="Search rule, profile or info group..."
+          :options="allInfoTargets"
+          :filterField="(o) => o.getName()"
+          valueField="id"
+          v-model="item.value"
+          @change="changed"
+        >
+          <template #option="{ option }">
+            <div class="flex align-items flex-row" style="white-space: nowrap">
+              <img class="mr-1 my-auto" :src="`assets/bsicons/${option.editorTypeName}.png`" /><span class="inline">
+                {{ getName(option) }} <span class="grey">[{{ option.catalogue?.name }}]</span>
+              </span>
+            </div>
+          </template>
+        </UtilAutocomplete>
       </template>
       <template
         v-if="
@@ -140,7 +158,8 @@
 import type { PropType } from "vue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import { Category, deconstruct_affects_query, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import { type Base, Category, deconstruct_affects_query, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
@@ -156,7 +175,8 @@ type FieldTypes =
   | "defaultAmount"
   | "error"
   | "warning"
-  | "info";
+  | "info"
+  | "add-info";
 const availableModifiers: Record<string, string[]> = {
   selectionEntry: [
     "costs",
@@ -170,6 +190,7 @@ const availableModifiers: Record<string, string[]> = {
     "error",
     "warning",
     "info",
+    "add-info",
   ],
   selectionEntryLink: [
     "costs",
@@ -183,6 +204,7 @@ const availableModifiers: Record<string, string[]> = {
     "error",
     "warning",
     "info",
+    "add-info",
   ],
   selectionEntryGroup: [
     "name",
@@ -195,6 +217,7 @@ const availableModifiers: Record<string, string[]> = {
     "error",
     "warning",
     "info",
+    "add-info",
   ],
   selectionEntryGroupLink: [
     "name",
@@ -207,9 +230,10 @@ const availableModifiers: Record<string, string[]> = {
     "error",
     "warning",
     "info",
+    "add-info",
   ],
   anyProfile: ["name", "annotation", "page", "hidden"],
-  anyEntry: ["name", "costs", "category", "annotation", "page", "hidden", "error", "warning", "info"],
+  anyEntry: ["name", "costs", "category", "annotation", "page", "hidden", "error", "warning", "info", "add-info"],
   profile: ["characteristics", "name", "annotation", "page", "hidden"],
   profileLink: ["characteristics", "name", "annotation", "description", "page", "hidden"],
   rule: ["name", "annotation", "description", "page", "hidden"],
@@ -252,7 +276,7 @@ const availableTypes = {
   warning: "string",
   info: "string",
 } as Record<string, FieldTypes>;
-const nonBullet = new Set(["costs", "categories", "constraints", "characteristics", "error", "warning", "info"]);
+const nonBullet = new Set(["costs", "categories", "constraints", "characteristics", "error", "warning", "info", "add-info"]);
 
 type Operation = {
   id: BSIModifierType;
@@ -292,6 +316,8 @@ const OPERATION_ADD: Operation = { id: "add", name: "Add", word: "" };
 const OPERATION_ADD_ERROR: Operation = { id: "add", name: "Add", word: "message:" };
 const OPERATION_ADD_WARNING: Operation = { id: "add", name: "Add", word: "message:" };
 const OPERATION_ADD_INFO: Operation = { id: "add", name: "Add", word: "message:" };
+// add-info: shows an existing rule/profile/infoGroup on the target's datasheet; the kind is inferred at runtime
+const OPERATION_ADD_INFOLINK: Operation = { id: "add", name: "Add", word: "" };
 const OPERATION_REMOVE: Operation = { id: "remove", name: "Remove", word: "" };
 const OPERATION_SET_PRIMARY: Operation = { id: "set-primary", name: "Set Primary", word: "to" };
 const OPERATION_UNSET_PRIMARY: Operation = { id: "unset-primary", name: "Unset Primary", word: "to" };
@@ -341,6 +367,7 @@ const operations = {
   error: [OPERATION_ADD_ERROR],
   warning: [OPERATION_ADD_WARNING],
   info: [OPERATION_ADD_INFO],
+  "add-info": [OPERATION_ADD_INFOLINK],
 } as Record<string, Operation[]>;
 
 type PossibleTypes = keyof typeof availableTypes;
@@ -421,6 +448,8 @@ export default {
         case "warning":
         case "info":
           return currentValue && typeof currentValue === "string" ? currentValue : "{this} is not allowed";
+        case "add-info":
+          return typeof currentValue === "string" ? currentValue : first(this.allInfoTargets)?.id;
         default:
           throw Error(`fieldType "${fieldType}" has no default value set"`);
       }
@@ -486,6 +515,9 @@ export default {
       if (this.selectedField.type === "defaultSelectionEntryId") {
         return "defaultSelectionEntryId";
       }
+      if (this.selectedField.type === "add-info") {
+        return "add-info";
+      }
       if (this.selectedField.type === "number") {
         return "number";
       }
@@ -509,6 +541,15 @@ export default {
     },
     allGroupEntries() {
       return [...(this.parent?.selectionsIterator() || [])];
+    },
+    // Shared rules/profiles/infoGroups reachable from this catalogue (own + imports); resolved by id at runtime.
+    allInfoTargets(): Array<Base & EditorBase> {
+      const result = [];
+      for (const entry of this.catalogue.iterateAllImported()) {
+        if (entry.isLink()) continue;
+        if (entry.isRule() || entry.isProfile() || entry.isInfoGroup()) result.push(entry);
+      }
+      return sortByAscending(result, (o) => o.name) as Array<Base & EditorBase>;
     },
     operations(): {
       id: BSIModifierType;
@@ -647,6 +688,14 @@ export default {
           name: "Info",
           type: "info",
           modifierType: "info",
+        });
+      }
+      if (available.includes("add-info")) {
+        additional.push({
+          id: "add-info",
+          name: "Info Link",
+          type: "add-info",
+          modifierType: "infoLink",
         });
       }
       // Filter out special fields
