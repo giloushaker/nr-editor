@@ -45,15 +45,14 @@
         <span class="chip browser" v-if="row.kind === 'db'">browser</span>
         <span class="chip github" v-if="row.github">{{ row.github }}</span>
         <span class="chip loadedchip" v-if="row.loaded">loaded</span>
-        <span class="meta" v-if="row.count !== undefined">{{ row.count }} catalogues</span>
         <span class="spacer"></span>
         <span class="meta">{{ rowTime(row) }}</span>
         <button
           class="open"
-          :class="{ re: row.loaded && row.kind === 'folder' }"
-          :title="row.loaded && row.kind === 'folder' ? 'Re-reads files from disk — use after git pull' : undefined"
+          :class="{ re: row.loaded }"
+          :title="row.loaded ? (row.kind === 'folder' ? 'Re-reads files from disk — use after git pull' : 'Re-reads the stored data') : undefined"
         >
-          {{ row.loaded && row.kind === "folder" ? "↻ Reload" : "Open ▸" }}
+          {{ row.loaded ? "↻ Reload" : "Open ▸" }}
         </button>
       </div>
     </div>
@@ -118,7 +117,6 @@ interface SystemRow {
   path?: string; // folder rows
   id?: string; // db rows
   metaId?: string; // folder rows: system id recovered from the db copy, used for recency/meta only
-  count?: number;
   github?: string;
   lastModified?: number; // folder rows: newest file mtime on disk
 }
@@ -228,7 +226,11 @@ export default defineComponent({
       this.progress_msg = "";
       try {
         if (row.kind === "db" && row.id) {
-          await this.store.get_or_load_system(row.id);
+          if (this.isLoaded(row)) {
+            await this.store.load_system_from_db(row.id);
+          } else {
+            await this.store.get_or_load_system(row.id);
+          }
           this.settings.activeSystems = [row.id];
           this.cataloguesStore.touchOpened(row.id);
           this.$router.push(`/?id=${row.id}`);
@@ -340,7 +342,6 @@ export default defineComponent({
           if (!gameSystem) continue;
           folderRow.metaId = gameSystem.id;
           folderRow.github = githubOf(gameSystem);
-          folderRow.count = await db.catalogues.where({ "content.catalogue.gameSystemId": gameSystem.id }).count();
         }
         if (!electron) {
           // systems stored only in the browser db (not present in the working folder)
@@ -350,13 +351,11 @@ export default defineComponent({
             if (!gameSystem) continue;
             const filePath = gameSystem.fullFilePath || row.path || "";
             if (filePath && folderPaths.some((p) => filePath.startsWith(p))) continue;
-            const count = await db.catalogues.where({ "content.catalogue.gameSystemId": gameSystem.id }).count();
             result.push({
               key: row.id,
               name: gameSystem.name,
               kind: "db",
               id: row.id,
-              count,
               github: githubOf(gameSystem),
             });
           }
@@ -389,6 +388,12 @@ export default defineComponent({
     }
     window.addEventListener("click", this.closeMenu);
     await this.update();
+  },
+  // keepalive: refresh the list when navigating back to this page
+  activated() {
+    if (!this.loading) {
+      this.update();
+    }
   },
   unmounted() {
     window.removeEventListener("click", this.closeMenu);
