@@ -1,56 +1,63 @@
 <template>
   <fieldset class="details">
-    <div>
-      <legend>{{ cataloguedata.name }}</legend>
-      <div v-if="is_catalogue">
-        <span
-          class="grey hastooltip"
-          title="indicates that this catalogue is used to store data, no forces may be created from it if true."
-        >
-          Library:
-        </span>
-        {{ (cataloguedata as BSICatalogue).library }}
+    <div class="dhead">
+      <span class="dname">{{ cataloguedata.name }}</span>
+      <span
+        v-if="is_catalogue && (cataloguedata as BSICatalogue).library"
+        class="libbadge"
+        title="This catalogue is used to store data; no forces may be created from it."
+        >library</span
+      >
+    </div>
+
+    <div class="meta">
+      <div class="mrow">
+        <span class="mlabel">Id</span>
+        <span class="mval mono">{{ cataloguedata.id }}</span>
       </div>
-      <div><span class="grey">Id:</span> {{ cataloguedata.id }}</div>
-      <div
-        ><span class="grey">path:</span> <span style="word-break: break-all">{{ cataloguedata.fullFilePath }}</span>
+      <div class="mrow" v-if="cataloguedata.fullFilePath">
+        <span class="mlabel">Path</span>
+        <span class="mval mono">{{ cataloguedata.fullFilePath }}</span>
       </div>
-      <div v-if="electron"> <span class="grey">authorUrl:</span> {{ cataloguedata.authorUrl }} </div>
-      <div>
-        <span class="grey">authorContact:</span>
-        {{ cataloguedata.authorContact }}
+      <div class="mrow" v-if="cataloguedata.authorName">
+        <span class="mlabel">Author</span>
+        <span class="mval">{{ cataloguedata.authorName }}</span>
       </div>
-      <div> <span class="grey">authorName:</span> {{ cataloguedata.authorName }} </div>
-      <div v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
-        <span class="bold">imports:</span>
-        <div class="ml-10px">
-          <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks">
-            <span :class="{ grey: !link.importRootEntries }">
-              {{ link.name }}
-            </span>
-          </div>
-        </div>
+      <div class="mrow" v-if="cataloguedata.authorContact">
+        <span class="mlabel">Contact</span>
+        <span class="mval">{{ cataloguedata.authorContact }}</span>
       </div>
-      <div v-if="refs.length && !isSystem">
-        <span class="bold">imported by:</span>
-        <div class="ml-10px">
-          <div v-for="ref in refs">
-            <span :class="{ grey: !ref.importRootEntries }">
-              {{ ref.sourceName }}
-            </span>
-          </div>
-        </div>
+      <div class="mrow" v-if="electron && cataloguedata.authorUrl">
+        <span class="mlabel">Url</span>
+        <span class="mval">{{ cataloguedata.authorUrl }}</span>
       </div>
     </div>
 
-    <div class="section boutons">
+    <div class="lsection" v-if="(cataloguedata as BSICatalogue).catalogueLinks?.length">
+      <div class="lhead">Imports</div>
+      <div v-for="link in (cataloguedata as BSICatalogue).catalogueLinks" class="lentry">
+        <span :class="{ grey: !link.importRootEntries }" :title="link.importRootEntries ? undefined : 'root entries not imported'">
+          {{ link.name }}
+        </span>
+      </div>
+    </div>
+    <div class="lsection" v-if="refs.length && !isSystem">
+      <div class="lhead">Imported by</div>
+      <div v-for="ref in refs" class="lentry">
+        <span :class="{ grey: !ref.importRootEntries }">
+          {{ ref.sourceName }}
+        </span>
+      </div>
+    </div>
+
+    <div class="actions boutons">
       <button class="bouton" @click="$emit('edit', catalogue)">Edit</button>
       <button class="bouton" @click="deletePopup = true">Delete</button>
       <button class="bouton" @click="download_file" v-if="!electron">Download</button>
       <button class="bouton" v-if="isSystem && electron" @click="popup_change_format">Change File Format</button>
       <button class="bouton" v-if="isSystem && electron" @click="popup_change_ids">Change Ids</button>
-      <p class="info"> To quickly edit a catalogue, you can double-click on it. </p>
     </div>
+    <p class="hint">Tip: double-click a catalogue to edit it.</p>
     <PopupDialog
       button="Confirm"
       text="Cancel"
@@ -259,12 +266,81 @@ export default {
 
 <style scoped lang="scss">
 .details {
-  h4 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: bold;
-  }
-
   overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.dhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  .dname {
+    font-size: 15px;
+    font-weight: 650;
+  }
+  .libbadge {
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 2px 5px;
+    background: rgba(128, 128, 128, 0.18);
+    color: gray;
+  }
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3px 10px;
+  font-size: 12.5px;
+  .mrow {
+    display: contents;
+  }
+  .mlabel {
+    color: gray;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-top: 1px;
+  }
+  .mval {
+    word-break: break-all;
+    &.mono {
+      font-family: monospace;
+      font-size: 12px;
+    }
+  }
+}
+
+.lsection {
+  margin-top: 12px;
+  .lhead {
+    font-size: 11px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: gray;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+  }
+  .lentry {
+    font-size: 13px;
+    padding: 1px 0;
+  }
+}
+
+.actions {
+  margin-top: 14px;
+}
+
+.hint {
+  font-size: 11.5px;
+  color: gray;
+  font-style: italic;
+  margin: 10px 0 0;
 }
 </style>
