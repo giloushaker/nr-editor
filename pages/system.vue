@@ -532,7 +532,7 @@ export default defineComponent({
   }
 }
 .subline {
-  font-size: 12.5px;
+  font-size: 13px;
   color: gray;
   margin: 4px 0 14px;
   u {
@@ -585,7 +585,7 @@ export default defineComponent({
   padding: 5px 12px;
   border-bottom: 1px solid $box_border;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 14oldpx;
   &:last-child {
     border-bottom: 0;
   }
@@ -593,7 +593,6 @@ export default defineComponent({
     background: var(--hover-darken-color, rgba(0, 0, 0, 0.08));
   }
   .nm {
-    font-weight: 600;
     white-space: nowrap;
   }
   .meta {
