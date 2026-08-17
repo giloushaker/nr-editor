@@ -34,6 +34,7 @@
               v-model="selectedItem"
             />
           </fieldset>
+          <div class="h-100px"></div>
         </div>
       </template>
       <template #right>

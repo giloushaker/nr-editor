@@ -13,15 +13,26 @@
         :class="{ active: layout === 'grid' }"
         title="Grid view"
         @click="settings.catalogueLayout = 'grid'"
-        >▦</button
       >
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor">
+          <rect x="1" y="1" width="5.5" height="5.5" rx="1" />
+          <rect x="7.5" y="1" width="5.5" height="5.5" rx="1" />
+          <rect x="1" y="7.5" width="5.5" height="5.5" rx="1" />
+          <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" />
+        </svg>
+      </button>
       <button
         class="viewbt"
         :class="{ active: layout === 'list' }"
         title="List view"
         @click="settings.catalogueLayout = 'list'"
-        >☰</button
       >
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor">
+          <rect x="1" y="2" width="12" height="2" rx="1" />
+          <rect x="1" y="6" width="12" height="2" rx="1" />
+          <rect x="1" y="10" width="12" height="2" rx="1" />
+        </svg>
+      </button>
     </div>
 
     <div class="items" v-if="layout === 'grid'">
@@ -69,16 +80,22 @@ You may want to reload the system through the Systems tab"
         >
           <img class="licon icon" :src="getType(item).icon" />
           <span class="lname">
-            <span class="prefix" v-if="rowPrefix(item, group)">
-              <template v-for="part in parts(rowPrefix(item, group))">
+            <span class="prefix" v-if="rowDisplay(item, group).head">
+              <template v-for="part in parts(rowDisplay(item, group).head)">
                 <mark v-if="part.m">{{ part.t }}</mark>
                 <template v-else>{{ part.t }}</template>
               </template>
             </span>
-            <template v-for="part in parts(leafOf(item))">
+            <template v-for="part in parts(rowDisplay(item, group).main)">
               <mark v-if="part.m">{{ part.t }}</mark>
               <template v-else>{{ part.t }}</template>
             </template>
+            <span class="prefix" v-if="rowDisplay(item, group).tail">
+              <template v-for="part in parts(rowDisplay(item, group).tail)">
+                <mark v-if="part.m">{{ part.t }}</mark>
+                <template v-else>{{ part.t }}</template>
+              </template>
+            </span>
           </span>
           <span class="lstatus">
             <span
@@ -145,10 +162,22 @@ export default {
       if (!this.q.trim()) return false;
       return this.name(item)?.toLowerCase().includes(this.q.trim().toLowerCase());
     },
-    // inside a prefix group the header already says the prefix; elsewhere keep it greyed inline
-    rowPrefix(item: BSIData, group: { label: string }): string {
-      if (group.label && group.label !== "Libraries") return "";
-      return this.prefixOf(item);
+    // decides which side of the name is greyed: inside a prefix group the header already carries
+    // the prefix; when the same leaf repeats across a group (e.g. "X - Library") the leaf is the
+    // generic part, so emphasis flips to the prefix
+    rowDisplay(
+      item: BSIData,
+      group: { label: string; genericLeaves?: Set<string> },
+    ): { head: string; main: string; tail: string } {
+      const prefix = this.prefixOf(item);
+      const leaf = this.leafOf(item);
+      if (group.label && group.label !== "Libraries") {
+        return { head: "", main: leaf, tail: "" };
+      }
+      if (prefix && group.genericLeaves?.has(leaf)) {
+        return { head: "", main: prefix.slice(0, -3), tail: ` - ${leaf}` };
+      }
+      return { head: prefix, main: leaf, tail: "" };
     },
     // "Imperium - Adeptus Astartes - Blood Angels" -> grey prefix + prominent leaf
     prefixOf(item: BSIData): string {
@@ -252,7 +281,15 @@ export default {
       );
     },
     // system + unprefixed first, prefix groups alphabetically, libraries last
-    groupedItems(): Array<{ label: string; items: BSIData[] }> {
+    groupedItems(): Array<{ label: string; items: BSIData[]; genericLeaves: Set<string> }> {
+      // group labels come from prefixes; a catalogue named exactly like a group belongs in it
+      const prefixKeys = new Set<string>();
+      for (const item of this.sortedItems) {
+        if (!(item as BSIData).gameSystem && !(item as BSIData).catalogue?.library) {
+          const prefix = this.prefixOf(item);
+          if (prefix) prefixKeys.add(prefix.slice(0, -3));
+        }
+      }
       const groups = new Map<string, BSIData[]>();
       for (const item of this.sortedItems) {
         let key = "";
@@ -260,14 +297,29 @@ export default {
           key = "Libraries";
         } else if (!(item as BSIData).gameSystem) {
           const prefix = this.prefixOf(item);
-          key = prefix ? prefix.slice(0, -3) : "";
+          if (prefix) {
+            key = prefix.slice(0, -3);
+          } else if (prefixKeys.has(this.name(item))) {
+            key = this.name(item);
+          }
         }
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key)!.push(item);
       }
       const labels = [...groups.keys()].filter((k) => k && k !== "Libraries").sort();
       const ordered = ["", ...labels, "Libraries"].filter((k) => groups.has(k));
-      return ordered.map((label) => ({ label, items: groups.get(label)! }));
+      return ordered.map((label) => {
+        const items = groups.get(label)!;
+        // the group's namesake catalogue leads its group
+        items.sort((a, b) => Number(this.name(b) === label) - Number(this.name(a) === label));
+        const leafCounts = new Map<string, number>();
+        for (const item of items) {
+          const leaf = this.leafOf(item);
+          leafCounts.set(leaf, (leafCounts.get(leaf) || 0) + 1);
+        }
+        const genericLeaves = new Set([...leafCounts.keys()].filter((leaf) => leafCounts.get(leaf)! >= 2));
+        return { label, items, genericLeaves };
+      });
     },
   },
   watch: {
@@ -305,10 +357,18 @@ export default {
   border-radius: 4px;
   padding: 3px 8px;
   cursor: pointer;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  svg {
+    display: block;
+    opacity: 0.75;
+  }
   &.active {
     background: rgba(40, 120, 250, 0.15);
     border-color: rgba(40, 120, 250, 0.5);
+    svg {
+      opacity: 1;
+    }
   }
 }
 
