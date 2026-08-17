@@ -164,7 +164,7 @@ export default defineComponent({
         return { ...row, loaded: this.isLoaded(row), lastOpened: info?.lastOpened, lastEdited: info?.lastEdited };
       });
       // loaded systems pinned on top (for reloading), then the chosen sort, then alphabetical
-      const editedOf = (r: (typeof decorated)[number]) => r.lastModified || r.lastEdited || 0;
+      const editedOf = (r: (typeof decorated)[number]) => r.lastModified || r.lastEdited || r.lastOpened || 0;
       const sorters: Record<string, (a: any, b: any) => number> = {
         edited: (a, b) => editedOf(b) - editedOf(a),
         opened: (a, b) => (b.lastOpened || 0) - (a.lastOpened || 0),
