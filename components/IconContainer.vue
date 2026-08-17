@@ -70,7 +70,7 @@ You may want to reload the system through the Systems tab"
     </div>
 
     <div class="lgroups" v-else>
-      <div class="lgroup" v-for="group in groupedItems">
+      <template v-for="group in groupedItems">
         <div class="ghead" v-if="group.label">{{ group.label }}</div>
         <div
           v-for="item of group.items"
@@ -110,11 +110,9 @@ You may want to reload the system through the Systems tab"
             <ErrorIcon :errors="errors(item)" />
           </span>
         </div>
-      </div>
-      <div class="lgroup">
-        <div class="lrow addrow unselectable" @click="add">
-          <span class="lname bold text-blue">+ New</span>
-        </div>
+      </template>
+      <div class="lrow addrow unselectable" @click="add">
+        <span class="lname bold text-blue">+ New</span>
       </div>
     </div>
   </div>
@@ -444,11 +442,9 @@ export default {
 .cname {
   max-width: 100%;
   .leaf {
+    /* wraps as a unit: stays on one line when it fits, breaks internally only when it can't */
     display: inline-block;
     max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     vertical-align: bottom;
   }
 }
@@ -456,17 +452,11 @@ export default {
   border-color: rgba(230, 180, 30, 0.9);
 }
 
-/* list layout: prefix groups flowing into responsive columns */
+/* list layout: newspaper flow — headers and rows share the columns, groups may
+   continue into the next column without looking broken */
 .lgroups {
   columns: 250px;
-  column-gap: 16px;
-}
-.lgroup {
-  break-inside: avoid;
-  margin-bottom: 10px;
-  border: 1px solid rgba(128, 128, 128, 0.25);
-  border-radius: 5px;
-  overflow: hidden;
+  column-gap: 18px;
 }
 .ghead {
   font-size: 11px;
@@ -474,21 +464,20 @@ export default {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: gray;
-  padding: 3px 8px;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
-  background: rgba(128, 128, 128, 0.08);
+  padding: 6px 4px 2px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+  break-inside: avoid;
+  break-after: avoid;
 }
 .lrow {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 3px 8px;
+  padding: 3px 4px;
   font-size: 13px;
   cursor: pointer;
   border-bottom: 1px solid rgba(128, 128, 128, 0.18);
-  &:last-child {
-    border-bottom: 0;
-  }
+  break-inside: avoid;
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
   }
