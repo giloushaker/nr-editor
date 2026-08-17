@@ -62,7 +62,6 @@
     <template v-else-if="!query">
       <div class="empty">
         <h2 class="empty-title">Where is your game data?</h2>
-        <p class="empty-sub">NR-Editor edits BattleScribe files. Pick a starting point — you can add more sources later.</p>
         <div class="guide">
           <div class="gcard">
             <div class="t">From GitHub</div>
@@ -657,7 +656,7 @@ export default defineComponent({
     color: #fff;
     font-weight: 400;
     font-size: 12.5px;
-    border: none;
+    border: none !important;
     border-radius: 5px;
     padding: 9px 13px;
     cursor: pointer;
