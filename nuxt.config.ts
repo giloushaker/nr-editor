@@ -37,16 +37,22 @@ export default defineNuxtConfig({
       baseURL: `/${pkg.build.publish[0].repo}/`,
       head: {
         title: "New Recruit - Editor",
-        ...(ghpages
-          ? {
-            base: {
-              href: `/${getGitHubRepo()}/`,
-            },
-          }
-          : {}),
+        base: {
+          href: `/${getGitHubRepo()}/`,
+        },
       },
     }
-    : undefined,
+    : electron
+      ? undefined
+      : {
+        // relative asset paths (assets/icons/...) rely on a <base>; ghpages sets its own,
+        // dev and root-domain web builds need one too or icons 404 on nested routes
+        head: {
+          base: {
+            href: "/",
+          },
+        },
+      },
   // @ts-ignore
   plugins: [
     ...(electron
