@@ -3,7 +3,10 @@
     <div class="roster">
     <div class="head">
       <h1 class="brand">Systems</h1>
-      <input class="search" type="search" v-model="query" placeholder="Search systems…" />
+      <span class="searchwrap">
+        <input class="search" type="search" v-model="query" placeholder="Search systems…" />
+        <button v-if="query" class="clearbt" title="Clear" @click="query = ''">✕</button>
+      </span>
       <select class="sortsel" v-model="settings.systemsSort" title="Sort systems">
         <option value="edited">Recently edited</option>
         <option value="opened">Recently opened</option>
@@ -430,11 +433,32 @@ export default defineComponent({
   letter-spacing: 0.03em;
   margin: 0;
 }
-.search {
+.searchwrap {
+  position: relative;
+  display: inline-flex;
   flex: 1;
   max-width: 340px;
-  padding: 6px 10px;
+}
+.search {
+  width: 100%;
+  padding: 6px 26px 6px 10px;
   font-size: 13px;
+}
+.clearbt {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  &:hover {
+    opacity: 1;
+  }
 }
 .sortsel {
   padding: 5px 8px;
