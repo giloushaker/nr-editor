@@ -27,13 +27,16 @@
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
               <span class="legendLine"></span>
               <span class="legendTools">
-                <input
-                  class="csearch"
-                  type="search"
-                  v-model="queries[gst.getId() || '']"
-                  placeholder="Find catalogue…"
-                  @keydown.enter="openFirst(gst)"
-                />
+                <span class="searchwrap">
+                  <input
+                    class="csearch"
+                    type="search"
+                    v-model="queries[gst.getId() || '']"
+                    placeholder="Find catalogue…"
+                    @keydown.enter="openFirst(gst)"
+                  />
+                  <button v-if="queries[gst.getId() || '']" class="clearbt" title="Clear" @click="queries[gst.getId() || ''] = ''">✕</button>
+                </span>
                 <button
                   class="viewbt"
                   :class="{ active: settings.catalogueLayout !== 'list' }"
@@ -420,10 +423,30 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
   align-items: center;
 }
 
+.searchwrap {
+  position: relative;
+  display: inline-flex;
+}
 .csearch {
-  padding: 3px 8px;
+  padding: 3px 24px 3px 8px;
   font-size: 12.5px;
   width: 200px;
+}
+.clearbt {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+}
+.clearbt:hover {
+  opacity: 1;
 }
 
 .viewbt {
