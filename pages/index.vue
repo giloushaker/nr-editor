@@ -5,7 +5,7 @@
     Returning to this page will not cause you to lose your changes.
   </p>
   <div class="mx-10px box h-full pb-200px">
-    <SplitView showMiddle showRight :rightWidth="400" id="systemView">
+    <SplitView showMiddle :showRight="!isNarrow || !!selectedItem" :rightWidth="400" id="systemView">
       <template #middle>
         <div class="scrollable">
           <fieldset v-for="gst in systems" class="section">
@@ -24,10 +24,12 @@
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
-              {{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}
+              <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
+              <span class="legendTools" :id="`ictools-${gst.getId()}`"></span>
             </legend>
             <IconContainer
               :items="systemAndCatalogues(gst)"
+              :toolbar-id="`ictools-${gst.getId()}`"
               @itemClicked="itemClicked"
               @itemDoubleClicked="itemDoubleClicked"
               @new="newCatalogue(gst)"
@@ -39,6 +41,7 @@
       </template>
       <template #right>
         <div v-if="selectedItem" class="scrollable">
+          <button v-if="isNarrow" class="bouton closePane" @click="selectedItem = null">✕ Close</button>
           <template v-if="mode === 'create'">
             <CataloguesCreate @create="createCatalogue" :catalogue="selectedItem" />
           </template>
@@ -113,7 +116,21 @@ export default defineComponent({
       mode: "edit",
       editingItem: null as BSIData | null,
       failed: false,
+      isNarrow: false,
+      narrowQuery: null as MediaQueryList | null,
+      onNarrowChange: null as ((e: MediaQueryListEvent) => void) | null,
     };
+  },
+  mounted() {
+    this.narrowQuery = window.matchMedia("(max-width: 700px)");
+    this.isNarrow = this.narrowQuery.matches;
+    this.onNarrowChange = (e: MediaQueryListEvent) => (this.isNarrow = e.matches);
+    this.narrowQuery.addEventListener("change", this.onNarrowChange);
+  },
+  unmounted() {
+    if (this.narrowQuery && this.onNarrowChange) {
+      this.narrowQuery.removeEventListener("change", this.onNarrowChange);
+    }
   },
   setup() {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
@@ -343,8 +360,38 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 }
 
 .systemLegend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+
   img {
     vertical-align: middle;
+  }
+}
+
+.legendTools {
+  margin-left: auto;
+}
+
+.closePane {
+  margin: 6px;
+}
+
+@media (max-width: 700px) {
+  .systemLegend {
+    flex-wrap: wrap;
+  }
+  /* detail pane becomes a slide-over instead of squeezing the list off screen */
+  #systemView :deep(.right) {
+    position: fixed;
+    top: 50px;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 100vw) !important;
+    z-index: 6;
+    background: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
+    box-shadow: -6px 0 18px rgba(0, 0, 0, 0.25);
   }
 }
 </style>

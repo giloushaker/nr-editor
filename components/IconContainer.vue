@@ -1,6 +1,7 @@
 <template>
   <div class="icwrap">
-    <div class="toolbar">
+    <Teleport :to="`#${toolbarId}`" :disabled="!toolbarId" v-if="ready">
+    <div class="toolbar" :class="{ inline: !toolbarId }">
       <input
         class="csearch"
         type="text"
@@ -34,6 +35,7 @@
         </svg>
       </button>
     </div>
+    </Teleport>
 
     <div class="items" v-if="layout === 'grid'">
       <div
@@ -133,7 +135,11 @@ export default {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
   },
   data() {
-    return { q: "" };
+    return { q: "", ready: false };
+  },
+  mounted() {
+    // teleport target (the legend span) exists once the parent finished mounting
+    this.ready = true;
   },
   props: {
     items: {
@@ -142,6 +148,10 @@ export default {
     },
     modelValue: {
       required: true,
+    },
+    toolbarId: {
+      type: String,
+      required: false,
     },
   },
   methods: {
@@ -336,18 +346,16 @@ export default {
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
 
-.icwrap {
-  position: relative;
-}
-
-/* sits on the fieldset legend row, mirroring the icons on the left */
+/* teleported into the fieldset legend, mirroring the icons on the left */
 .toolbar {
-  position: absolute;
-  right: 0;
-  top: -34px;
-  display: flex;
-  justify-content: flex-end;
+  display: inline-flex;
   gap: 4px;
+  vertical-align: middle;
+  &.inline {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+  }
 }
 
 .csearch {
