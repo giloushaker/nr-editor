@@ -44,7 +44,6 @@
         <span class="chip folder" v-if="row.kind === 'folder'">folder</span>
         <span class="chip browser" v-if="row.kind === 'db'">browser</span>
         <span class="chip github" v-if="row.github">{{ row.github }}</span>
-        <span class="chip loadedchip" v-if="row.loaded">loaded</span>
         <span class="spacer"></span>
         <span class="meta">{{ rowTime(row) }}</span>
         <button
@@ -565,10 +564,6 @@ export default defineComponent({
     background: rgba(130, 90, 190, 0.15);
     color: #5b3a86;
     text-transform: none;
-  }
-  &.loadedchip {
-    background: rgba(60, 150, 90, 0.18);
-    color: #1d5c38;
   }
 }
 .open {
