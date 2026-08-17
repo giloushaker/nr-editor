@@ -3,7 +3,7 @@
     <div class="roster">
     <div class="head">
       <h1 class="brand">Systems</h1>
-      <input class="search" type="text" v-model="query" placeholder="Search systems…" />
+      <input class="search" type="search" v-model="query" placeholder="Search systems…" />
       <select class="sortsel" v-model="settings.systemsSort" title="Sort systems">
         <option value="edited">Recently edited</option>
         <option value="opened">Recently opened</option>
