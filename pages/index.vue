@@ -11,6 +11,9 @@
       <div v-if="electron">
         Note: if you modify an already imported file in another program, you will need to import it again
       </div>
+      <div v-else>
+        Previously loaded systems are available from the <NuxtLink to="/system">Systems</NuxtLink> page.
+      </div>
     </div>
   </div>
   <p class="info">
@@ -88,6 +91,7 @@ import { useEditorStore } from "~/stores/editorStore";
 import ImportFromGithub from "~/components/ImportFromGithub.vue";
 import SelectFile from "~/components/SelectFile.vue";
 import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
+import { hasRoot } from "~/electron/web_fs";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
 import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
@@ -139,7 +143,11 @@ export default defineComponent({
   created() {
     this.store.init(this.$router);
     if (!electron) {
-      this.store.load_systems_from_db();
+      // restore the systems that were in use, not the whole db
+      const ids = this.filter || this.settings.activeSystems || [];
+      for (const id of ids) {
+        this.store.get_or_load_system(id).catch(() => this.store.delete_system(id));
+      }
     }
   },
   activated() {
@@ -278,7 +286,7 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
           return "cat";
       }
     },
-    createCatalogue(data: BSIDataCatalogue) {
+    async createCatalogue(data: BSIDataCatalogue) {
       const system = this.store.get_system(data.catalogue.gameSystemId);
       const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
       copy.catalogue.battleScribeVersion = "2.03";
@@ -287,24 +295,15 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       if (!fileName) {
         throw new Error("Cannot create catalogue: couldn't create filename using provided name (only invalid chars)");
       }
-      if (electron) {
-        if (!system.gameSystem) {
-          throw new Error("Cannot create catalogue: no game system");
-        }
-        const systemPath = getDataObject(system.gameSystem).fullFilePath;
-        if (!systemPath) {
-          throw new Error("Cannot create catalogue: game system has no path set");
-        }
-        const name = copy.catalogue.name;
-        if (!name) {
-          throw new Error("Cannot create catalogue: no name provided");
-        }
-        const fileName = sanitizeFileName(name);
-        if (!fileName) {
-          throw new Error("Cannot create catalogue: couldn't create filename using provided name (invalid chars)");
-        }
+      if (electron && !system.gameSystem) {
+        throw new Error("Cannot create catalogue: no game system");
+      }
+      const systemPath = system.gameSystem ? getDataObject(system.gameSystem).fullFilePath : undefined;
+      if (electron && !systemPath) {
+        throw new Error("Cannot create catalogue: game system has no path set");
+      }
+      if (systemPath && (electron || (await hasRoot(systemPath)))) {
         const folder = dirname(systemPath);
-
         getDataObject(copy).fullFilePath = `${folder}/${fileName}.${this.getCatExtension(systemPath)}`;
       }
       system.setCatalogue(copy);
@@ -338,6 +337,7 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
         db.catalogues.delete(getDataDbId(sys.gameSystem!));
         db.systems.delete(getDataDbId(sys.gameSystem!));
         this.store.delete_system(systemId);
+        this.settings.activeSystems = this.settings.activeSystems.filter((id) => id !== systemId);
       }
       this.selectedItem = null;
     },
@@ -365,6 +365,11 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
         }
         this.cataloguesStore.updateCatalogue(catalogue.catalogue);
         this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
+      }
+      for (const system of systems) {
+        if (!this.settings.activeSystems.includes(system.gameSystem.id)) {
+          this.settings.activeSystems.push(system.gameSystem.id);
+        }
       }
       delete this.$route.query.id;
     },

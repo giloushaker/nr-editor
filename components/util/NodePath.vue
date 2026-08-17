@@ -2,7 +2,7 @@
   <div class="-indent-16px pl-16px">
     <div v-for="(node, i) in path" class="inline hover-darken cursor-pointer" @click="onClick(node, i)">
       <span class="whitespace-nowrap">
-        <img class="typeIcon" :src="`/assets/bsicons/${node.type}.png`" />
+        <img class="typeIcon" :src="`assets/bsicons/${node.type}.png`" />
         <template v-if="i == path.length - 1">
           <template v-if="node.display?.length && node.display.length <= maxLength">
             <span>{{ node.display }}</span>

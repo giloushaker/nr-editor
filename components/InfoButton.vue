@@ -1,6 +1,6 @@
 <template>
   <span @click.stop="show = true" class="infoButton hover-darken clickable iconWrapper" v-if="icon !== 'none'">
-    <img :src="`/assets/icons/${icon}.png`" :class="{ icon: icon !== 'i' }" />
+    <img :src="`assets/icons/${icon}.png`" :class="{ icon: icon !== 'i' }" />
   </span>
   <PopupDialog v-if="show" v-model="show" :x="x" :noclose="x">
     <template #header v-if="title">{{ title }}</template>

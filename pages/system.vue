@@ -10,6 +10,9 @@
         <SelectFolder @selected="selectedFolder" />
         <CreateSystem @created="update" />
         <button class="bouton" @click="update()"> Refresh </button>
+        <button v-if="needsPermission" class="bouton" @click="grantAccess">
+          Grant access to "{{ settings.systemsFolder }}"
+        </button>
       </div>
 
       <p
@@ -24,7 +27,7 @@
         :class="{ highlight: system.highlight }"
         @click="selected(system)"
       >
-        {{ system.name }}
+        {{ system.name }} <span v-if="system.id" class="gray">(browser storage)</span>
       </div>
     </div>
   </div>
@@ -36,6 +39,7 @@ import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getFolderFolders, getPath } from "~/electron/node_helpers";
+import { hasRoot, permissionState, requestPermission, restoreHandles } from "~/electron/web_fs";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
@@ -53,7 +57,8 @@ export default defineComponent({
   data() {
     return {
       loading: true,
-      systems: [] as Array<{ name: string; path: string; highlight?: boolean }>,
+      needsPermission: false,
+      systems: [] as Array<{ name: string; path?: string; id?: string; highlight?: boolean }>,
       progress: 0,
       progress_max: 0,
       progress_msg: "",
@@ -69,21 +74,36 @@ export default defineComponent({
       this.settings.systemsFolder = Array.isArray(folder) ? folder[0] : folder;
       this.update();
     },
-    async selected(item: { name: string; path: string }) {
-      if (electron) {
-        this.loading = true;
-        this.progress_msg = "";
-        const loaded = await this.store.load_systems_from_folder(item.path, async (cur, max, msg) => {
+    async selected(item: { name: string; path?: string; id?: string }) {
+      this.loading = true;
+      this.progress_msg = "";
+      try {
+        if (item.id) {
+          await this.store.get_or_load_system(item.id);
+          this.settings.activeSystems = [item.id];
+          this.$router.push(`/?id=${item.id}`);
+          return;
+        }
+        const loaded = await this.store.load_systems_from_folder(item.path!, async (cur, max, msg) => {
           this.progress = cur;
           this.progress_max = max;
           this.progress_msg = msg ? msg.replaceAll("\\", "/").split("/").slice(-1)[0] : "";
           const promise = new Promise((resolve) => setTimeout(resolve, 1));
           return promise;
         });
-        this.loading = false;
         if (loaded?.length) {
+          if (!electron) {
+            this.settings.activeSystems = loaded;
+          }
           this.$router.push(`/?id=${loaded.join(",")}`);
         }
+      } finally {
+        this.loading = false;
+      }
+    },
+    async grantAccess() {
+      if (this.settings.systemsFolder && (await requestPermission(this.settings.systemsFolder))) {
+        await this.update();
       }
     },
     async uploaded(files: any[]) {
@@ -116,6 +136,9 @@ export default defineComponent({
         const sys = this.store.get_system(system.gameSystem.id);
         this.store.load_system(sys);
       }
+      if (!electron) {
+        this.settings.activeSystems = ids;
+      }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
     onBeforeRouteUpdate() {
@@ -127,6 +150,7 @@ export default defineComponent({
     },
     async update(highlight?: GameSystemFiles) {
       try {
+        this.needsPermission = false;
         const result = [] as Array<{ name: string; path: string }>;
         if (electron) {
           if (this.settings.systemsFolder) {
@@ -141,6 +165,26 @@ export default defineComponent({
               result.push(...systems);
             }
           }
+        } else if (this.settings.systemsFolder && (await hasRoot(this.settings.systemsFolder))) {
+          if ((await permissionState(this.settings.systemsFolder)) !== "granted") {
+            this.needsPermission = true;
+          } else {
+            const systems = await getFolderFolders(this.settings.systemsFolder);
+            if (systems) {
+              result.push(...systems);
+            }
+          }
+        }
+        if (!electron) {
+          // systems stored in the browser db, unless already listed via the working folder
+          const folderPaths = result.map((o) => `${o.path}/`);
+          for (const row of await db.systems.toArray()) {
+            const gameSystem = row.content?.gameSystem;
+            if (!gameSystem) continue;
+            const filePath = gameSystem.fullFilePath || row.path || "";
+            if (filePath && folderPaths.some((p) => filePath.startsWith(p))) continue;
+            result.push({ name: gameSystem.name, id: row.id });
+          }
         }
         this.systems = sortByAscending(result, (o) => o.name);
         this.systems.forEach((o) => {
@@ -153,11 +197,13 @@ export default defineComponent({
   },
 
   async mounted() {
-    if (!this.settings.systemsFolder) {
+    if (electron && !this.settings.systemsFolder) {
       const home = await getPath("home");
       this.settings.systemsFolder = `${home}/BattleScribe/data`;
     }
-
+    if (!electron) {
+      await restoreHandles();
+    }
     await this.update();
   },
 });

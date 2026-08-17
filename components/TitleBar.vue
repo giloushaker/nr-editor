@@ -16,7 +16,7 @@
         <img class="icon" src="/assets/icons/filtre.png" />
         <span class="icontext">Settings</span>
       </div>
-      <NuxtLink v-if="electron" class="iconbox no-underline unselectable" to="/system">
+      <NuxtLink class="iconbox no-underline unselectable" to="/system">
         <img class="icon" src="/assets/icons/system2.png" />
         <span class="icontext">Systems</span>
       </NuxtLink>
