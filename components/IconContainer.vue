@@ -45,9 +45,9 @@
         @click.middle="debug(item)"
       >
         <img class="icon" :src="getType(item).icon" />
-        <div>
+        <div class="cname" :title="name(item)">
           <span class="prefix" v-if="prefixOf(item)">{{ prefixOf(item) }}</span>
-          {{ leafOf(item) }}
+          <span class="leaf">{{ leafOf(item) }}</span>
         </div>
         <div class="error flex flex-row">
           <span
@@ -426,6 +426,17 @@ export default {
 .prefix {
   color: gray;
   opacity: 0.85;
+}
+.cname {
+  max-width: 100%;
+  .leaf {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
 }
 .item.match {
   border-color: rgba(230, 180, 30, 0.9);
