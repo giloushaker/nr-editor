@@ -129,6 +129,11 @@ input[type="radio"] {
   }
 }
 
+html.dark .inputstyle,
+html.dark .bouton {
+  color: #ffffff;
+}
+
 .bouton > img {
   position: absolute;
   left: 5px;
