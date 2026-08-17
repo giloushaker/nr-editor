@@ -372,6 +372,10 @@ export const useEditorStore = defineStore("editor", {
           if (catalogueId) {
             const systemFiles = this.get_system(json.catalogue.gameSystemId);
             systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
+            if (!globalThis.electron) {
+              // cache in the browser db so refreshing the index restores the full system
+              db.catalogues.put({ content: json, path: obj.fullFilePath, id: getDataDbId(json) });
+            }
           }
           result_files.push(json);
         } catch (e) {
