@@ -338,11 +338,11 @@ export default {
 }
 
 .item:hover {
-  background-color: rgba($color: #000000, $alpha: 0.05);
+  background-color: var(--hover-darken-color, rgba(0, 0, 0, 0.05));
 }
 /* cards only: on list rows a size-changing border reflows the columns */
 .item.selected {
-  border: solid black 2px;
+  border: solid currentColor 2px;
   padding: 2px;
 }
 
@@ -400,13 +400,13 @@ export default {
   border-bottom: 1px solid rgba(128, 128, 128, 0.18);
   break-inside: avoid;
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-darken-color, rgba(0, 0, 0, 0.05));
   }
   &.opened {
     background-color: rgba(40, 120, 250, 0.15);
   }
   &.selected {
-    outline: 1.5px solid black;
+    outline: 1.5px solid currentColor;
     outline-offset: -1.5px;
   }
   .licon {
@@ -423,12 +423,16 @@ export default {
       border-radius: 2px;
     }
   }
-  .lstatus {
-    margin-left: auto;
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
+}
+:global(html.dark) .lname mark {
+  background: rgba(200, 160, 30, 0.4);
+  color: inherit;
+}
+.lrow .lstatus {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 .addrow {
   border-top: 1px solid rgba(45, 190, 45, 0.6);
