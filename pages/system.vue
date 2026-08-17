@@ -8,6 +8,8 @@
       <div class="boutons">
         <SelectFile @uploaded="uploaded" />
         <SelectFolder @selected="selectedFolder" />
+        <UploadJson v-if="!isElectron" @uploaded="uploaded" />
+        <ImportFromGithub v-if="!isElectron" @uploaded="uploaded" />
         <CreateSystem @created="update" />
         <button class="bouton" @click="update()"> Refresh </button>
         <button v-if="needsPermission" class="bouton" @click="grantAccess">
@@ -45,10 +47,12 @@ import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 import CreateSystem from "~/components/CreateSystem.vue";
 import Loading from "~/components/Loading.vue";
+import UploadJson from "~/components/UploadJson.vue";
+import ImportFromGithub from "~/components/ImportFromGithub.vue";
 import { getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 export default defineComponent({
-  components: { CreateSystem, Loading },
+  components: { CreateSystem, Loading, UploadJson, ImportFromGithub },
   head() {
     return {
       title: "NR-Editor",
@@ -68,7 +72,11 @@ export default defineComponent({
   setup() {
     return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
   },
-
+  computed: {
+    isElectron() {
+      return Boolean(globalThis.electron);
+    },
+  },
   methods: {
     async selectedFolder(folder: string[]) {
       this.settings.systemsFolder = Array.isArray(folder) ? folder[0] : folder;

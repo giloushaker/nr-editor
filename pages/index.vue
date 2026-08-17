@@ -1,21 +1,4 @@
 <template>
-  <div class="p-10px" v-if="!electron">
-    <div class="box">
-      <h3>My Catalogues</h3>
-      <div class="boutons">
-        <SelectFile v-if="electron" @uploaded="filesUploaded" />
-        <UploadJson @uploaded="filesUploaded" />
-        <ImportFromGithub @uploaded="filesUploaded" />
-        <CreateSystem />
-      </div>
-      <div v-if="electron">
-        Note: if you modify an already imported file in another program, you will need to import it again
-      </div>
-      <div v-else>
-        Previously loaded systems are available from the <NuxtLink to="/system">Systems</NuxtLink> page.
-      </div>
-    </div>
-  </div>
   <p class="info">
     To return to this page, simply click on the 'New Recruit' icon located in the top-left corner of the screen.
     <br />
@@ -81,15 +64,12 @@
 <script lang="ts">
 import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
-import UploadJson from "~/components/UploadJson.vue";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 
 import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
-import ImportFromGithub from "~/components/ImportFromGithub.vue";
-import SelectFile from "~/components/SelectFile.vue";
 import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
 import { hasRoot } from "~/electron/web_fs";
 import IconContainer from "~/components/IconContainer.vue";
@@ -115,11 +95,8 @@ function sanitizeFileName(fileName: string) {
 }
 export default defineComponent({
   components: {
-    UploadJson,
     CataloguesDetail,
-    ImportFromGithub,
     CataloguesCreate,
-    SelectFile,
     IconContainer,
     SplitView,
   },
@@ -342,37 +319,6 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       this.selectedItem = null;
     },
 
-    filesUploaded(files: any[]) {
-      console.log("Uploaded", files.length, "files", files);
-      const systems = files.filter((o) => o.gameSystem) as BSIDataSystem[];
-      for (const system of systems) {
-        const systemId = system.gameSystem.id;
-        const dbId = getDataDbId(system);
-        this.store.get_system(systemId).setSystem(system);
-        if (!electron) {
-          db.systems.put({ content: system, id: dbId });
-        }
-        this.cataloguesStore.updateCatalogue(system.gameSystem);
-        this.cataloguesStore.setEdited(dbId, false);
-      }
-
-      const catalogues = files.filter((o) => o.catalogue) as BSIDataCatalogue[];
-      for (const catalogue of catalogues) {
-        const systemId = catalogue.catalogue.gameSystemId;
-        this.store.get_system(systemId).setCatalogue(catalogue);
-        if (!electron) {
-          db.catalogues.put({ content: catalogue, id: getDataDbId(catalogue) });
-        }
-        this.cataloguesStore.updateCatalogue(catalogue.catalogue);
-        this.cataloguesStore.setEdited(getDataDbId(catalogue), false);
-      }
-      for (const system of systems) {
-        if (!this.settings.activeSystems.includes(system.gameSystem.id)) {
-          this.settings.activeSystems.push(system.gameSystem.id);
-        }
-      }
-      delete this.$route.query.id;
-    },
     async editCatalogue(file: BSIData) {
       const id = getDataObject(file).id;
       const systemId = getDataObject(file).gameSystemId || id;
