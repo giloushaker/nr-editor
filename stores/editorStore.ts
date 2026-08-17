@@ -157,6 +157,25 @@ export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorB
   return p3.item;
 }
 
+// Serializes a catalogue/system to the bytes its fullFilePath extension dictates (json / xml / zipped xml).
+export async function serializeCatalogueFile(
+  data: Catalogue | BSICatalogue | BSIGameSystem,
+): Promise<string | Uint8Array | undefined> {
+  const path = data.fullFilePath;
+  if (!path) return;
+  if (path.endsWith(".json")) {
+    return rootToJson(data);
+  }
+  const xml = convertToXml(data);
+  const extension = getExtension(path);
+  if (isZipExtension(extension)) {
+    const name = filename(path);
+    const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
+    return await zipCompress(nameInZip, xml, "uint8array");
+  }
+  return xml;
+}
+
 function markSaving(file: CatalogueState) {
   file.isSaving = true;
 }
@@ -300,24 +319,12 @@ export const useEditorStore = defineStore("editor", {
     },
 
     async saveCatalogueInFiles(data: Catalogue | BSICatalogue | BSIGameSystem) {
-      const path = data.fullFilePath;
-      if (!path) {
+      const content = await serializeCatalogueFile(data);
+      if (content === undefined) {
         console.error(`No path included in the catalogue ${data.name} to save at`);
         return;
       }
-
-      const extension = getExtension(path);
-      if (path.endsWith(".json")) {
-        const content = rootToJson(data);
-        await writeFile(path, content);
-      } else {
-        const xml = convertToXml(data);
-        const shouldZip = isZipExtension(extension);
-        const name = filename(path);
-        const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
-        const content = shouldZip ? await zipCompress(nameInZip, xml, "uint8array") : xml;
-        await writeFile(path, content);
-      }
+      await writeFile(data.fullFilePath!, content);
     },
 
     saveCatalogue(data: Catalogue | BSIData) {
