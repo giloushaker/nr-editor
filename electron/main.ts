@@ -66,12 +66,20 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
     }
   }
   handle("isDirectory", async (event: null | any, ...args: any) => {
-    const stats = fs.statSync(...args);
-    return stats.isDirectory();
+    try {
+      const stats = fs.statSync(...args);
+      return stats.isDirectory();
+    } catch {
+      return false;
+    }
   });
   handle("isFile", async (event: null | any, ...args: any) => {
-    const stats = fs.statSync(...args);
-    return stats.isFile();
+    try {
+      const stats = fs.statSync(...args);
+      return stats.isFile();
+    } catch {
+      return false;
+    }
   });
   handle("showOpenDialog", async (event: null | { sender: Electron.WebContents; }, ...args: any[]) => {
     if (event) {

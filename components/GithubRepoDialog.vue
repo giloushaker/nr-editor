@@ -38,10 +38,6 @@
     </div>
 
     <div v-if="error" class="text-red mt-4px">{{ error }}</div>
-    <div class="dfoot">
-      Repo list maintained in <span class="mono">assets/data/repos.json</span>. A GitHub token in Settings raises the
-      API rate limit and enables pull requests.
-    </div>
   </PopupDialog>
 </template>
 
@@ -142,13 +138,18 @@ export default {
       try {
         const [owner, name] = this.selected.github.split("/");
         const entries = await getRepoZip(owner, name, this.ref);
+        // electron: import into a subfolder of the working folder so files exist on disk
+        const base =
+          globalThis.electron && this.settings.systemsFolder
+            ? `${this.settings.systemsFolder.replaceAll("\\", "/").replace(/\/$/, "")}/${name}`
+            : "";
         const files = [] as object[];
         for (const [path, entry] of entries) {
           if (!isAllowedExtension(path)) continue;
           try {
             const data = isZipExtension(path) ? await entry.arrayBuffer() : await entry.text();
             const json = await convertToJson(data, getExtension(path));
-            getDataObject(json).fullFilePath = path;
+            getDataObject(json).fullFilePath = base ? `${base}/${path}` : path;
             files.push(json);
           } catch (e) {
             console.error(`Skipping ${path}`, e);

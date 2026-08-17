@@ -17,7 +17,7 @@
         <div v-if="menuOpen" class="menu" @click.stop>
           <button class="mitem" @click="githubOpen = true; menuOpen = false">Import from GitHub</button>
           <button class="mitem" v-if="folderSupported" @click="chooseFolder(); menuOpen = false">Choose folder</button>
-          <UploadJson class="mitem" @uploaded="uploaded" />
+          <UploadJson v-if="!isElectron" class="mitem" @uploaded="uploaded" />
           <CreateSystem class="mitem" @created="update" />
           <SelectFile v-if="isElectron" class="mitem" @uploaded="uploaded" />
         </div>
@@ -84,7 +84,7 @@
             <span class="hiddenTrigger"><CreateSystem ref="createSystem" @created="update" /></span>
           </div>
         </div>
-        <div class="subline mt-10px">
+        <div class="subline mt-10px" v-if="!isElectron">
           …or import individual files (.gst, .cat, .gstz, .catz, .json): <UploadJson @uploaded="uploaded" />
         </div>
       </div>
@@ -110,7 +110,7 @@ import Loading from "~/components/Loading.vue";
 import UploadJson from "~/components/UploadJson.vue";
 import SelectFile from "~/components/SelectFile.vue";
 import GithubRepoDialog from "~/components/GithubRepoDialog.vue";
-import { getDataDbId } from "~/assets/shared/battlescribe/bs_main";
+import { getDataDbId, getDataObject } from "~/assets/shared/battlescribe/bs_main";
 
 interface SystemRow {
   key: string;
@@ -292,7 +292,14 @@ export default defineComponent({
         const sys = this.store.get_system(system.gameSystem.id);
         this.store.load_system(sys);
       }
-      if (!electron) {
+      if (electron) {
+        // write imported files to disk (github imports carry working-folder paths)
+        for (const file of files) {
+          if (getDataObject(file).fullFilePath) {
+            this.store.saveCatalogue(file);
+          }
+        }
+      } else {
         this.settings.activeSystems = ids;
       }
       for (const id of ids) {
@@ -381,20 +388,25 @@ export default defineComponent({
   },
 
   async mounted() {
-    if (electron && !this.settings.systemsFolder) {
-      // keep the BattleScribe folder only if it already exists, otherwise use our own
-      const home = await getPath("home");
-      const battlescribe = `${home}/BattleScribe/data`;
-      if (await isDirectory(battlescribe)) {
-        this.settings.systemsFolder = battlescribe;
-      } else {
-        const documents = await getPath("documents");
-        this.settings.systemsFolder = `${documents}/NewRecruit/data`;
-        await createFolder(this.settings.systemsFolder);
+    try {
+      if (electron && (!this.settings.systemsFolder || !(await isDirectory(this.settings.systemsFolder)))) {
+        // unset or pointing at a folder that no longer exists: keep the BattleScribe
+        // folder only if it actually exists, otherwise use our own
+        const home = await getPath("home");
+        const battlescribe = `${home}/BattleScribe/data`;
+        if (await isDirectory(battlescribe)) {
+          this.settings.systemsFolder = battlescribe;
+        } else {
+          const documents = await getPath("documents");
+          this.settings.systemsFolder = `${documents}/NewRecruit/data`;
+          await createFolder(this.settings.systemsFolder);
+        }
       }
-    }
-    if (!electron) {
-      await restoreHandles();
+      if (!electron) {
+        await restoreHandles();
+      }
+    } catch (e) {
+      console.error("Failed to initialize the working folder", e);
     }
     window.addEventListener("click", this.closeMenu);
     await this.update();
@@ -486,17 +498,30 @@ export default defineComponent({
   border: 1px solid $box_border;
   border-radius: 8px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-  padding: 6px;
+  padding: 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   min-width: 200px;
   z-index: 5;
-  :deep(.bouton),
-  .mitem {
+  // flat menu entries: strip the button chrome from .mitem and embedded .bouton alike
+  .mitem,
+  :deep(.bouton) {
     width: 100%;
-    text-align: left;
+    text-align: left !important;
     font-weight: 400;
+    font-size: 13px;
+    border: none !important;
+    border-radius: 4px;
+    background: transparent;
+    background-image: none !important;
+    box-shadow: none;
+    color: inherit;
+    padding: 8px 10px;
+    cursor: pointer;
+    &:hover {
+      background: var(--hover-darken-color, rgba(0, 0, 0, 0.08));
+    }
   }
 }
 .subline {
