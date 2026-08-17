@@ -1,7 +1,7 @@
 <template>
   <PopupDialog v-if="modelValue" :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" x>
     <template #header>Import from GitHub</template>
-    <p class="dsub">Browse known data repos, or paste any <b>owner/repo</b>.</p>
+    <p class="dsub">Browse community data repos, or paste any <b>owner/repo</b>.</p>
     <input class="w-full" type="text" v-model="query" placeholder='Search, or paste "owner/repo"' />
 
     <div v-if="selected" class="picked">
@@ -39,8 +39,8 @@
 
     <div v-if="error" class="text-red mt-4px">{{ error }}</div>
     <div class="dfoot">
-      Repo list: BSData gallery + <span class="mono">assets/data/extra_repos.json</span>. A GitHub token in Settings
-      raises the API rate limit and enables pull requests.
+      Repo list maintained in <span class="mono">assets/data/repos.json</span>. A GitHub token in Settings raises the
+      API rate limit and enables pull requests.
     </div>
   </PopupDialog>
 </template>
@@ -51,21 +51,11 @@ import { convertToJson, getExtension, isAllowedExtension, isZipExtension } from 
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { getRepoZip } from "~/assets/shared/battlescribe/github";
 import { useSettingsStore } from "~/stores/settingsState";
-import extraRepos from "~/assets/data/extra_repos.json";
+import repoList from "~/assets/data/repos.json";
 
 interface RepoEntry {
   github: string; // owner/repo
   label?: string;
-  archived?: boolean;
-}
-
-const GALLERY_URL = "https://bsdata.github.io/gallery/bsdata.catpkg-gallery.json";
-const GALLERY_CACHE_KEY = "nr-editor-gallery";
-const GALLERY_TTL = 24 * 3600 * 1000;
-
-function parseOwnerRepo(url: string): string | undefined {
-  const match = /github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/.exec(url || "");
-  return match ? `${match[1]}/${match[2]}` : undefined;
 }
 
 export default {
@@ -88,29 +78,8 @@ export default {
   setup() {
     return { settings: useSettingsStore() };
   },
-  async created() {
-    this.repos = [...(extraRepos as RepoEntry[])];
-    try {
-      const cached = JSON.parse(localStorage.getItem(GALLERY_CACHE_KEY) || "null");
-      if (cached && Date.now() - cached.time < GALLERY_TTL) {
-        this.mergeRepos(cached.repos);
-        return;
-      }
-    } catch {}
-    try {
-      const index = await (await fetch(GALLERY_URL)).json();
-      const repos = (index.repositories || [])
-        .map((r: any) => ({
-          github: parseOwnerRepo(r.githubUrl),
-          label: r.description || r.name,
-          archived: r.archived,
-        }))
-        .filter((r: RepoEntry) => r.github && !r.archived);
-      localStorage.setItem(GALLERY_CACHE_KEY, JSON.stringify({ time: Date.now(), repos }));
-      this.mergeRepos(repos);
-    } catch (e) {
-      console.error("Failed to load BSData gallery", e);
-    }
+  created() {
+    this.repos = [...(repoList as RepoEntry[])];
   },
   computed: {
     filtered(): RepoEntry[] {
@@ -128,16 +97,20 @@ export default {
     },
   },
   methods: {
-    mergeRepos(repos: RepoEntry[]) {
-      const known = new Set(this.repos.map((r) => r.github.toLowerCase()));
-      for (const repo of repos) {
-        if (!known.has(repo.github.toLowerCase())) this.repos.push(repo);
-      }
-    },
     ghHeaders(): Record<string, string> {
       const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
       if (this.settings.githubToken) headers["Authorization"] = `Bearer ${this.settings.githubToken}`;
       return headers;
+    },
+    // direct github api call, falling back to the newrecruit proxy when blocked
+    async ghGet(url: string): Promise<any> {
+      try {
+        const resp = await fetch(url, { headers: this.ghHeaders() });
+        return await resp.json();
+      } catch {
+        const resp = await fetch(`https://www.newrecruit.eu/api/proxy?url=${encodeURIComponent(url)}`);
+        return await resp.json();
+      }
     },
     async select(repo: RepoEntry) {
       this.selected = repo;
@@ -148,12 +121,8 @@ export default {
       this.ref = "";
       try {
         const [branches, tags] = await Promise.all([
-          fetch(`https://api.github.com/repos/${repo.github}/branches?per_page=100`, { headers: this.ghHeaders() }).then(
-            (r) => r.json(),
-          ),
-          fetch(`https://api.github.com/repos/${repo.github}/tags?per_page=100`, { headers: this.ghHeaders() }).then(
-            (r) => r.json(),
-          ),
+          this.ghGet(`https://api.github.com/repos/${repo.github}/branches?per_page=100`),
+          this.ghGet(`https://api.github.com/repos/${repo.github}/tags?per_page=100`),
         ]);
         if (branches.message) throw new Error(branches.message);
         this.branches = branches.map((b: any) => b.name);
