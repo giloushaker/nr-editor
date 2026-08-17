@@ -4,7 +4,7 @@
     class="collapsible-box"
     @contextmenu="do_rightcllick_select"
   >
-    <h3
+    <div
       ref="title"
       v-if="!notitle"
       class="title"
@@ -34,7 +34,7 @@
       </div>
 
       <slot name="title" />
-    </h3>
+    </div>
     <div v-if="initiated" v-show="!collapsed || !collapsible" class="content">
       <slot name="content" />
     </div>
@@ -293,7 +293,7 @@ export default {
   background-image: linear-gradient(to left, transparent 95%, #88888888 5%);
   background-size: 20px;
 }
-h3 {
+.title {
   font-size: 16px;
   font-weight: normal;
 }
