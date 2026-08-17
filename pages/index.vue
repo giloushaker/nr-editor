@@ -142,7 +142,10 @@ export default defineComponent({
       // restore the systems that were in use, not the whole db
       const ids = this.filter || this.settings.activeSystems || [];
       for (const id of ids) {
-        this.store.get_or_load_system(id).catch(() => this.store.delete_system(id));
+        this.store.get_or_load_system(id).catch((e) => {
+          console.error(`Failed to restore system ${id}`, e);
+          this.store.delete_system(id);
+        });
       }
     }
   },
