@@ -1,0 +1,78 @@
+@use "@/shared_components/css/vars.scss" as *;
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1px solid $box_border;
+  background-color: $input_background;
+  cursor: pointer;
+  position: relative;
+  border-radius: calc($input_radius / 2);
+  margin-top:0;
+  margin-bottom:0;
+  vertical-align: -1px;
+}
+
+input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 4px;
+  top: 0px;
+  width: 4px;
+  height: 8px;
+  border: solid $input_background;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:checked {
+  background-color: $checkbox_background;
+  border-color: $input_highlights;
+}
+
+input[type="checkbox"]:disabled {
+  background-color: $gray;
+  border-color: $gray;
+}
+
+
+input[type="checkbox"]:checked::after {
+  display: block;
+}
+
+// Large checkbox for menus (always visible)
+input[type="checkbox"].menu-checkbox {
+  min-width: 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+input[type="checkbox"].menu-checkbox::after {
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border-width: 0 2.5px 2.5px 0;
+}
+
+@media screen and (max-width: $mobile_mode) {
+  input[type="checkbox"].large {
+    min-width: 25px;
+    width: 25px;
+    height: 25px;
+    margin: 0;
+  }
+
+  input[type="checkbox"].large::after {
+    left: 8px;
+    top: 4px;
+    width: 4px;
+    height: 10px;
+    border-width: 0 3px 3px 0;
+  }
+}

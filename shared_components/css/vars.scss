@@ -1,0 +1,55 @@
+$margin: 10px;
+$small_margin: 5px;
+$box_shadow: 0px 1px 4px 0px rgb(0 0 0 / 40%);
+// $box_border: 1px #aaa solid;
+$box_border: var(--box-border, #aaa);
+$borderColor: var(--box-border, #aaa);
+$mobile_mode: 486px;
+$large_mode: 770px;
+$very_large_mode: 1200px;
+$triple_split_view: 1200px;
+
+$background_color: var(--bg);
+$background: var(--bg), var(--bg-texture);
+$popups_background: var(--popups_background);
+$popups_header: var(--popups_header);
+
+$popups_hover: var(--popups-hover);
+
+$checkbox_background: var(--checkbox-background);
+
+$gray: var(--color-gray);
+$blue: var(--color-blue);
+$red: var(--color-red);
+$green: var(--color-green);
+$fontColor: var(--font-color);
+$light_blue: var(--color-lightblue);
+$cost_color: var(--cost-color);
+$dotted_border: 1px #555 dotted;
+
+$title_background: var(--title);
+$forces_background: var(--forces_background);
+$units_background: var(--units_background);
+$costs_background: var(--costs_background);
+
+$input_highlights: var(--input-highlights, #0063fb);
+$input_background: var(--input-background);
+$input_radius: var(--input-radius);
+$orange: #805300;
+
+$font: var(--font, sans-serif);
+$fontSize: min(max(var(--fontSize, 16px), 12px), 40px);
+$fontHeader: var(--fontHeader, sans-serif);
+$fontHeaderSize: min(max(var(--fontHeaderSize, 16px), 12px), 40px);
+$fontHeaderTransform: var(--fontHeaderTransform, "none");
+$fontButton: var(--fontButton, sans-serif);
+$fontButtonSize: min(max(var(--fontButtonSize, 16px), 12px), 40px);
+$italic: var(--italic, "italic");
+
+$hoverColor: var(--hover-darken-color, rgba(0, 0, 0, 0.15));
+
+$header_radius: 5px;
+
+$fontColorUnits: var(--font-color-units);
+$fontColorTitle: var(--font-color-title);
+$fontColorForces: var(--font-color-forces);

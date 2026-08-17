@@ -424,10 +424,6 @@ export default {
     }
   }
 }
-:global(html.dark) .lname mark {
-  background: rgba(200, 160, 30, 0.4);
-  color: inherit;
-}
 .lrow .lstatus {
   margin-left: auto;
   display: flex;
@@ -436,5 +432,12 @@ export default {
 }
 .addrow {
   border-top: 1px solid rgba(45, 190, 45, 0.6);
+}
+</style>
+<style lang="scss">
+/* unscoped: :global() in the scoped block miscompiles to a bare html.dark rule */
+html.dark .icwrap .lname mark {
+  background: rgba(200, 160, 30, 0.4);
+  color: inherit;
 }
 </style>
