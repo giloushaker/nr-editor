@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="icwrap">
     <div class="toolbar">
       <input
         class="csearch"
@@ -336,18 +336,24 @@ export default {
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
 
+.icwrap {
+  position: relative;
+}
+
+/* sits on the fieldset legend row, mirroring the icons on the left */
 .toolbar {
+  position: absolute;
+  right: 0;
+  top: -34px;
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-  margin-bottom: 6px;
 }
 
 .csearch {
-  padding: 4px 8px;
+  padding: 3px 8px;
   font-size: 12.5px;
-  max-width: 220px;
-  flex: 1;
+  width: 200px;
 }
 
 .viewbt {
