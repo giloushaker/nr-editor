@@ -5,7 +5,7 @@
     Returning to this page will not cause you to lose your changes.
   </p>
   <div class="mx-10px box">
-    <SplitView showMiddle :showRight="!isNarrow || !!selectedItem" :rightWidth="400" id="systemView">
+    <SplitView showMiddle :showRight="!isNarrow || !!selectedItem" :rightWidth="300" id="systemView">
       <template #middle>
         <div class="scrollable">
           <fieldset v-for="gst in systems" class="section">
@@ -485,7 +485,7 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 
 /* the detail pane holds nothing critical: shrink it before it crushes the list */
 @media (max-width: 1150px) {
-  #systemView :deep(.right) {
+  #systemView .right {
     width: 280px !important;
   }
 }
@@ -495,12 +495,12 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
     flex-wrap: wrap;
   }
   /* detail pane becomes a slide-over instead of squeezing the list off screen */
-  #systemView :deep(.right) {
+  #systemView .right {
     position: fixed;
     top: 50px;
     right: 0;
     bottom: 0;
-    width: min(400px, 100vw) !important;
+    width: min(300px, 100vw) !important;
     z-index: 6;
     background: rgb(var(--bg-r), var(--bg-g), var(--bg-b));
     box-shadow: -6px 0 18px rgba(0, 0, 0, 0.25);
