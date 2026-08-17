@@ -242,6 +242,7 @@ name`;
 const defaultState = {
   systemsFolder: "" as string | undefined,
   activeSystems: [] as string[],
+  systemsSort: "edited" as "edited" | "opened" | "name",
   showOnlyEnabledCategories: false,
   globalDuplicateIdError: false,
   useNewCategoriesUI: false,
