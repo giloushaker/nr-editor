@@ -653,7 +653,7 @@ export default defineComponent({
   .act,
   :deep(.bouton) {
     background: #16294a;
-    color: #fff;
+    color: #fff !important;
     font-weight: 400;
     font-size: 12.5px;
     border: none !important;
