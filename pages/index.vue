@@ -25,6 +25,7 @@
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
+              <span class="legendLine"></span>
               <span class="legendTools" :id="`ictools-${gst.getId()}`"></span>
             </legend>
             <IconContainer
@@ -370,8 +371,12 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
   }
 }
 
-.legendTools {
-  margin-left: auto;
+/* legend spans the full top line, so it draws the border segment the fieldset can no longer show */
+.legendLine {
+  flex: 1;
+  border-top: 1px solid var(--box-border, #aaaaaa);
+  align-self: center;
+  margin: 0 4px;
 }
 
 .closePane {
