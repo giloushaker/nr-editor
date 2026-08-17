@@ -243,7 +243,7 @@ const defaultState = {
   systemsFolder: "" as string | undefined,
   activeSystems: [] as string[],
   systemsSort: "edited" as "edited" | "opened" | "name",
-  catalogueLayout: "grid" as "grid" | "list",
+  catalogueLayout: "list" as "grid" | "list",
   showOnlyEnabledCategories: false,
   globalDuplicateIdError: false,
   useNewCategoriesUI: false,
