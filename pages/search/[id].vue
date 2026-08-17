@@ -29,7 +29,7 @@
 
             <span>
               <span class="typeIcon-wrapper">
-                <img class="typeIcon mr-4px" :src="`/assets/bsicons/${item.editorTypeName}.png`" />
+                <img class="typeIcon mr-4px" :src="`assets/bsicons/${item.editorTypeName}.png`" />
               </span>
               <!-- <span v-if="primary" class="text-orange">{{ primary }}</span> -->
               <span>

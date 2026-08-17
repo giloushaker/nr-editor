@@ -1,5 +1,6 @@
 import type { Stats } from "fs";
 import type { OpenDialogOptions, OpenDialogReturnValue, MessageBoxSyncOptions } from "electron";
+import * as web_fs from "./web_fs";
 export function dirname(path: string) {
   return path.replaceAll("\\", "/").split("/").slice(0, -1).join("/");
 }
@@ -8,7 +9,7 @@ export function filename(path: string) {
   return split[split.length - 1];
 }
 export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
-  if (!electron) return [];
+  if (!electron) return web_fs.getFolderFiles(folderPath, recursive, skip);
   return (await electron.invoke("getFolderFiles", folderPath, recursive, skip)) as Array<{
     name: string;
     path: string;
@@ -53,7 +54,7 @@ export async function getFolderFiles(folderPath: string, recursive = false, skip
 //   }
 // }
 export async function getFolderFolders(folderPath: string) {
-  if (!electron) return;
+  if (!electron) return web_fs.getFolderFolders(folderPath);
   try {
     const fileObjects = [];
     const pathIsDir = (await electron.invoke("isDirectory", folderPath)) as boolean;
@@ -87,17 +88,17 @@ export async function getFolderFolders(folderPath: string) {
 }
 
 export async function writeFile(filePath: string, data: string | Blob | Buffer | Uint8Array) {
-  if (!electron) return;
+  if (!electron) return web_fs.writeFile(filePath, data as string | Blob | Uint8Array);
   const dirPath = dirname(filePath);
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
   await electron.invoke("saveFile", filePath, data);
 }
 export async function deleteFile(filePath: string) {
-  if (!electron) return;
+  if (!electron) return web_fs.deleteFile(filePath);
   return await electron.invoke("unlinkSync", filePath);
 }
 export async function readFile(filePath: string) {
-  if (!electron) return;
+  if (!electron) return web_fs.readFile(filePath);
   return (await electron.invoke("getFile", filePath)) as {
     name: string;
     path: string;
@@ -139,13 +140,13 @@ export async function getPath(
   return (await electron.invoke("getPath", name)) as string;
 }
 export async function createFolder(dirPath: string) {
-  if (!electron) return;
+  if (!electron) return web_fs.createFolder(dirPath);
   await electron.invoke("mkdirSync", dirPath, { recursive: true });
 }
 let initialized = false;
 const watchers = {} as Record<string, (path: string, stats: Stats) => unknown>;
 export async function watchFile(path: string, callback: (path: string, stats: Stats) => unknown) {
-  if (!electron) return;
+  if (!electron) return web_fs.watchFile(path, callback as (path: string) => unknown);
   if (!initialized) {
     initialized = true;
     electron.on("fileChanged", (_: any, _path: string, _stats: Stats) => {
@@ -157,7 +158,7 @@ export async function watchFile(path: string, callback: (path: string, stats: St
   watchers[path] = callback;
 }
 export async function unwatchFile(path: string) {
-  if (!electron) return;
+  if (!electron) return web_fs.unwatchFile(path);
   delete watchers[path];
   await electron.invoke("chokidarUnwatchFile", path);
 }

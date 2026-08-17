@@ -97,6 +97,10 @@ export default defineNuxtConfig({
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
     plugins: [require("vite-plugin-commonjs")()],
+    build: {
+      // electron 24 ships chromium ~112: transpile syntax so web-dev code can't silently break the desktop build
+      target: "chrome112",
+    },
   },
   ignore: [".release/**"],
   hooks: {

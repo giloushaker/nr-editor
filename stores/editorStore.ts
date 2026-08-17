@@ -63,6 +63,7 @@ import {
   watchFile,
   writeFile,
 } from "~/electron/node_helpers";
+import { hasRoot } from "~/electron/web_fs";
 import {
   allowed_children,
   clean,
@@ -212,12 +213,16 @@ export const useEditorStore = defineStore("editor", {
       console.log("Creating system with name:", name);
       const id = `sys-${generateBattlescribeId()}`;
       const files = this.get_system(id);
-      const folder = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}` : "";
+      let folder = path ? `${removeSuffix(path.replaceAll("\\", "/"), "/")}/${name}` : "";
       if (electron) {
         if (!folder) {
           throw new Error("No folder specified");
         }
         createFolder(folder);
+      } else if (folder && (await hasRoot(folder))) {
+        await createFolder(folder);
+      } else {
+        folder = "";
       }
       const data: BSIDataSystem = {
         gameSystem: {
@@ -322,6 +327,11 @@ export const useEditorStore = defineStore("editor", {
       if (electron) {
         this.saveCatalogueInFiles(obj);
       } else {
+        if (obj.fullFilePath) {
+          hasRoot(obj.fullFilePath).then((ok) => {
+            if (ok) this.saveCatalogueInFiles(obj);
+          });
+        }
         this.saveCatalogueInDb(obj);
       }
       unmarkChangedOnDisk(state);
@@ -330,8 +340,8 @@ export const useEditorStore = defineStore("editor", {
       folder: string,
       progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
     ) {
-      if (!globalThis.electron) {
-        throw new Error("Not running in electron");
+      if (!globalThis.electron && !(await hasRoot(folder))) {
+        throw new Error(`No file access for folder ${folder}`);
       }
       const files = await getFolderFiles(folder, true, [".git", ".github"]);
       if (!files?.length) return;

@@ -1,13 +1,14 @@
 <template>
-  <button @click="popFileInput" class="bouton" :disabled="uploading" v-if="electron">
+  <button @click="popFileInput" class="bouton" :disabled="uploading" v-if="available">
     <template v-if="!uploading">Set Working Folder</template>
     <template v-else> ... </template>
   </button>
-  <span v-else>&lt;SelectFolder&gt; is only available in electron app</span>
+  <span v-else>Folder access requires the desktop app, or a browser supporting the File System Access API (Chrome, Edge)</span>
 </template>
 
 <script lang="ts">
 import { showOpenDialog } from "~/electron/node_helpers";
+import { pickFolder, supported } from "~/electron/web_fs";
 export default {
   emits: ["selected"],
   data() {
@@ -16,22 +17,26 @@ export default {
     };
   },
   computed: {
-    electron() {
-      return Boolean(global.electron);
+    available() {
+      return Boolean(globalThis.electron) || supported();
     },
   },
   methods: {
     async popFileInput() {
-      if (!globalThis.electron) {
-        throw new Error("SelectFile is for use in electron app only");
-      }
       try {
         this.uploading = true;
-        const result = await showOpenDialog({
-          properties: ["openDirectory"],
-        });
-        if (result?.filePaths?.length) {
-          this.$emit("selected", result.filePaths);
+        if (globalThis.electron) {
+          const result = await showOpenDialog({
+            properties: ["openDirectory"],
+          });
+          if (result?.filePaths?.length) {
+            this.$emit("selected", result.filePaths);
+          }
+        } else {
+          const name = await pickFolder();
+          if (name) {
+            this.$emit("selected", [name]);
+          }
         }
       } catch (e) {
         console.error(e);

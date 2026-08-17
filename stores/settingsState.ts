@@ -241,6 +241,7 @@ name`;
 
 const defaultState = {
   systemsFolder: "" as string | undefined,
+  activeSystems: [] as string[],
   showOnlyEnabledCategories: false,
   globalDuplicateIdError: false,
   useNewCategoriesUI: false,
