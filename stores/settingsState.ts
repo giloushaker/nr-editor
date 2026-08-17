@@ -270,7 +270,8 @@ export const useSettingsStore = defineStore("settings", {
     storage: globalThis.localStorage,
     deserialize(text: string) {
       const parsed = JSON.parse(text);
-      return merge(parsed, defaultState);
+      // defaults first, stored values win — the reverse order reset every setting on each load
+      return merge({}, defaultState, parsed);
     },
     serialize: JSON.stringify,
   } as any, // It makes an error without any but it works fine so idc.
