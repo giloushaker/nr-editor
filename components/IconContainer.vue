@@ -67,7 +67,7 @@ You may want to reload the system through the Systems tab"
           @dblclick="elementDoubleClicked(item)"
           @click.middle="debug(item)"
         >
-          <img class="licon" :src="getType(item).icon" />
+          <img class="licon icon" :src="getType(item).icon" />
           <span class="lname">
             <span class="prefix" v-if="rowPrefix(item, group)">
               <template v-for="part in parts(rowPrefix(item, group))">
