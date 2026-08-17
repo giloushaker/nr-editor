@@ -26,11 +26,45 @@
               </NuxtLink>
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
               <span class="legendLine"></span>
-              <span class="legendTools" :id="`ictools-${gst.getId()}`"></span>
+              <span class="legendTools">
+                <input
+                  class="csearch"
+                  type="text"
+                  v-model="queries[gst.getId() || '']"
+                  placeholder="Find catalogue…"
+                  @keydown.enter="openFirst(gst)"
+                />
+                <button
+                  class="viewbt"
+                  :class="{ active: settings.catalogueLayout !== 'list' }"
+                  title="Grid view"
+                  @click="settings.catalogueLayout = 'grid'"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor">
+                    <rect x="1" y="1" width="5.5" height="5.5" rx="1" />
+                    <rect x="7.5" y="1" width="5.5" height="5.5" rx="1" />
+                    <rect x="1" y="7.5" width="5.5" height="5.5" rx="1" />
+                    <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" />
+                  </svg>
+                </button>
+                <button
+                  class="viewbt"
+                  :class="{ active: settings.catalogueLayout === 'list' }"
+                  title="List view"
+                  @click="settings.catalogueLayout = 'list'"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor">
+                    <rect x="1" y="2" width="12" height="2" rx="1" />
+                    <rect x="1" y="6" width="12" height="2" rx="1" />
+                    <rect x="1" y="10" width="12" height="2" rx="1" />
+                  </svg>
+                </button>
+              </span>
             </legend>
             <IconContainer
+              :ref="`ic-${gst.getId()}`"
               :items="systemAndCatalogues(gst)"
-              :toolbar-id="`ictools-${gst.getId()}`"
+              :query="queries[gst.getId() || ''] || ''"
               @itemClicked="itemClicked"
               @itemDoubleClicked="itemDoubleClicked"
               @new="newCatalogue(gst)"
@@ -118,6 +152,7 @@ export default defineComponent({
       editingItem: null as BSIData | null,
       failed: false,
       isNarrow: false,
+      queries: {} as Record<string, string>,
       narrowQuery: null as MediaQueryList | null,
       onNarrowChange: null as ((e: MediaQueryListEvent) => void) | null,
     };
@@ -250,6 +285,11 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       this.selectedItem = item;
       this.mode = "edit";
     },
+    openFirst(gst: GameSystemFiles) {
+      const ref = this.$refs[`ic-${gst.getId()}`] as any;
+      const container = Array.isArray(ref) ? ref[0] : ref;
+      container?.openFirstMatch();
+    },
 
     itemDoubleClicked(item: BSIDataCatalogue) {
       const id = getDataObject(item).id;
@@ -372,6 +412,40 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
   img {
     vertical-align: middle;
   }
+}
+
+.legendTools {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.csearch {
+  padding: 3px 8px;
+  font-size: 12.5px;
+  width: 200px;
+}
+
+.viewbt {
+  border: 1px solid var(--box-border, #aaaaaa);
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.viewbt svg {
+  display: block;
+  opacity: 0.75;
+}
+.viewbt.active {
+  background: rgba(40, 120, 250, 0.15);
+  border-color: rgba(40, 120, 250, 0.5);
+}
+.viewbt.active svg {
+  opacity: 1;
 }
 
 /* legend spans the full top line, so it draws the border segment the fieldset can no longer show */
