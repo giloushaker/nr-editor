@@ -87,6 +87,10 @@ export async function getFolderFolders(folderPath: string) {
   }
 }
 
+export async function getFolderMtime(folderPath: string): Promise<number | undefined> {
+  if (!electron) return web_fs.getFolderMtime(folderPath);
+  return (await electron.invoke("getFolderMtime", folderPath)) as number | undefined;
+}
 export async function writeFile(filePath: string, data: string | Blob | Buffer | Uint8Array) {
   if (!electron) return web_fs.writeFile(filePath, data as string | Blob | Uint8Array);
   const dirPath = dirname(filePath);

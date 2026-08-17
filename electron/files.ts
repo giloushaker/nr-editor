@@ -23,6 +23,34 @@ export async function isFile(f: any) {
   return stats.isFile();
 }
 
+// newest file mtime in a folder tree (no content reads), skipping git folders
+export async function getFolderMtime(folderPath: string): Promise<number | undefined> {
+  let max = 0;
+  const stack = [folderPath];
+  while (stack.length) {
+    const current = stack.pop()!;
+    let entries;
+    try {
+      entries = await readdir(current, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry.name === ".git" || entry.name === ".github") continue;
+      const path = `${current}/${entry.name}`;
+      if (entry.isDirectory()) {
+        stack.push(path);
+      } else {
+        try {
+          const stats = await stat(path);
+          if (stats.mtimeMs > max) max = stats.mtimeMs;
+        } catch {}
+      }
+    }
+  }
+  return max || undefined;
+}
+
 var AdmZip = require("adm-zip");
 export async function readAndUnzipFile(path: string) {
   try {
