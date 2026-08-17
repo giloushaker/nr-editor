@@ -4,6 +4,11 @@
     <div class="head">
       <h1 class="brand">Systems</h1>
       <input class="search" type="text" v-model="query" placeholder="Search systems…" />
+      <select class="sortsel" v-model="settings.systemsSort" title="Sort systems">
+        <option value="edited">Recently edited</option>
+        <option value="opened">Recently opened</option>
+        <option value="name">Name</option>
+      </select>
       <div class="addwrap">
         <button class="add" @click.stop="menuOpen = !menuOpen">+ Add system ▾</button>
         <div v-if="menuOpen" class="menu" @click.stop>
@@ -161,33 +166,37 @@ export default defineComponent({
           : Object.values(this.cataloguesStore.systemInfo).find((o) => o.folderPath === row.path);
         return { ...row, loaded: this.isLoaded(row), lastOpened: info?.lastOpened, lastEdited: info?.lastEdited };
       });
-      // loaded systems pinned on top (for reloading), then recently opened, then recently edited, then alphabetical
+      // loaded systems pinned on top (for reloading), then the chosen sort, then alphabetical
+      const editedOf = (r: (typeof decorated)[number]) => r.lastModified || r.lastEdited || 0;
+      const sorters: Record<string, (a: any, b: any) => number> = {
+        edited: (a, b) => editedOf(b) - editedOf(a),
+        opened: (a, b) => (b.lastOpened || 0) - (a.lastOpened || 0),
+        name: () => 0,
+      };
+      const sorter = sorters[this.settings.systemsSort] || sorters.edited;
       return decorated.sort(
-        (a, b) =>
-          Number(b.loaded) - Number(a.loaded) ||
-          (b.lastOpened || 0) - (a.lastOpened || 0) ||
-          (b.lastModified || b.lastEdited || 0) - (a.lastModified || a.lastEdited || 0) ||
-          a.name.localeCompare(b.name),
+        (a, b) => Number(b.loaded) - Number(a.loaded) || sorter(a, b) || a.name.localeCompare(b.name),
       );
     },
   },
   methods: {
     rowTime(row: SystemRow & { lastOpened?: number; lastEdited?: number }): string {
       const edited = row.lastModified || row.lastEdited;
-      if (edited) return `edited ${this.ago(edited)}`;
+      if (edited) return this.ago(edited);
       if (row.lastOpened) return `opened ${this.ago(row.lastOpened)}`;
       return "";
     },
     ago(ts: number): string {
+      const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"} ago`;
       const s = (Date.now() - ts) / 1000;
       if (s < 90) return "just now";
-      if (s < 5400) return `${Math.round(s / 60)}m ago`;
-      if (s < 129600) return `${Math.round(s / 3600)}h ago`;
+      if (s < 3600) return plural(Math.round(s / 60), "minute");
+      if (s < 129600) return plural(Math.round(s / 3600), "hour");
       const days = Math.round(s / 86400);
-      if (days <= 70) return `${days} days ago`;
+      if (days <= 70) return plural(days, "day");
       const months = Math.round(days / 30);
-      if (months <= 18) return `${months} months ago`;
-      return `${Math.round(days / 365)} years ago`;
+      if (months <= 18) return plural(months, "month");
+      return plural(Math.round(days / 365), "year");
     },
     isLoaded(row: SystemRow): boolean {
       if (row.id) {
@@ -414,6 +423,10 @@ export default defineComponent({
   max-width: 340px;
   padding: 6px 10px;
   font-size: 13px;
+}
+.sortsel {
+  padding: 5px 8px;
+  font-size: 12.5px;
 }
 .addwrap {
   margin-left: auto;
