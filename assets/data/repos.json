@@ -1,0 +1,446 @@
+﻿[
+    {
+        "github":  "BSData/at-2018",
+        "label":  "Adeptus Titanicus 2018"
+    },
+    {
+        "github":  "OnePageRules/AgeOfFantasy",
+        "label":  "Age of Fantasy"
+    },
+    {
+        "github":  "BSData/warhammer-age-of-sigmar",
+        "label":  "Age of Sigmar 3.0"
+    },
+    {
+        "github":  "BSData/age-of-sigmar-4th",
+        "label":  "Age of Sigmar 4.0"
+    },
+    {
+        "github":  "acebaur/Anima-Tactics-",
+        "label":  "Anima Tactics"
+    },
+    {
+        "github":  "BSData/argatoria",
+        "label":  "Argatoria (EN)"
+    },
+    {
+        "github":  "Sneki-snek/Armoured_Clash",
+        "label":  "Armoured Clash"
+    },
+    {
+        "github":  "blackhol/BaronsWar2nd",
+        "label":  "Barons war 2nd edition"
+    },
+    {
+        "github":  "BSData/battlefleetgothic",
+        "label":  "Battlefleet Gothic"
+    },
+    {
+        "github":  "BSData/gates-of-antares",
+        "label":  "Beyond the Gates of Antares"
+    },
+    {
+        "github":  "BSData/black-seas",
+        "label":  "Black Seas by Warlord Games"
+    },
+    {
+        "github":  "BSData/bloodbowl",
+        "label":  "Blood Bowl 2nd season"
+    },
+    {
+        "github":  "BSData/bloodbowl-third-season",
+        "label":  "Blood Bowl 3rd season"
+    },
+    {
+        "github":  "BSData/boltaction",
+        "label":  "Bolt Action 2.0"
+    },
+    {
+        "github":  "Westy661/Burrows-Badgers-Second-Edition",
+        "label":  "Burrows \u0026 Badgers: Second Edition"
+    },
+    {
+        "github":  "AvinChaos/Burrows-and-Badgers",
+        "label":  "Burrows and Badgers"
+    },
+    {
+        "github":  "BSData/bushido",
+        "label":  "Bushido: Risen Sun"
+    },
+    {
+        "github":  "alexstratford/carnevale",
+        "label":  "Carnevale"
+    },
+    {
+        "github":  "BSData/cav-strike-operations",
+        "label":  "CAV:SO"
+    },
+    {
+        "github":  "BSData/conquest-the-last-argument-of-kings",
+        "label":  "Conquest: Last Argument of Kings"
+    },
+    {
+        "github":  "BSData/deadzone",
+        "label":  "Deadzone 3rd Edition"
+    },
+    {
+        "github":  "BSData/dropfleet-commander",
+        "label":  "Dropfleet Commander"
+    },
+    {
+        "github":  "BSData/dropfleet-commander-2024",
+        "label":  "Dropfleet Commander (2024)"
+    },
+    {
+        "github":  "alexstratford/dropzone-commander-v2",
+        "label":  "Dropzone Commander v2.2.0"
+    },
+    {
+        "github":  "BSData/dystopianwars",
+        "label":  "Dystopian Wars 3.0"
+    },
+    {
+        "github":  "Riandro/Dystopian-Wars",
+        "label":  "Dystopian Wars 4.0"
+    },
+    {
+        "github":  "BSData/tes-call-to-arms",
+        "label":  "Elder Scrolls Call to Arms"
+    },
+    {
+        "github":  "BSData/wh40k-epic-armageddon",
+        "label":  "Epic Armageddon"
+    },
+    {
+        "github":  "BSData/f28",
+        "label":  "F28"
+    },
+    {
+        "github":  "BSData/flamesofwar",
+        "label":  "Flames of War v4"
+    },
+    {
+        "github":  "NewRecruitEU/frostgrave",
+        "label":  "Frostgrave"
+    },
+    {
+        "github":  "thelazyone/FSD_BattleScribe",
+        "label":  "Full Spectrum Dominance"
+    },
+    {
+        "github":  "BSData/gamma-wolves",
+        "label":  "Gamma Wolves"
+    },
+    {
+        "github":  "BSData/gaslands",
+        "label":  "Gaslands"
+    },
+    {
+        "github":  "BSData/tanks-the-modern-age",
+        "label":  "GF9 Tanks: The Modern Age"
+    },
+    {
+        "github":  "NewRecruitEU/tanks",
+        "label":  "GF9: Tanks"
+    },
+    {
+        "github":  "OnePageRules/GrimdarkFuture",
+        "label":  "Grimdark Future"
+    },
+    {
+        "github":  "BSData/halo-fleet-battles",
+        "label":  "Halo Fleet Battles"
+    },
+    {
+        "github":  "NewRecruitEU/halo-ground-command",
+        "label":  "Halo Ground Command"
+    },
+    {
+        "github":  "BSData/heavy-gear-blitz",
+        "label":  "Heavy Gear Blitz LRB"
+    },
+    {
+        "github":  "BSData/horus-heresy-2nd-edition",
+        "label":  "Horus Heresy (2022)"
+    },
+    {
+        "github":  "BSData/horus-heresy-3rd-edition",
+        "label":  "Horus Heresy 3rd Edition"
+    },
+    {
+        "github":  "BSData/Horus-Heresy-Legions-Imperialis",
+        "label":  "Horus Heresy: Legions Imperialis"
+    },
+    {
+        "github":  "BSData/judge-dredd",
+        "label":  "Judge Dredd Miniatures Game (MP2014)"
+    },
+    {
+        "github":  "BSData/kingsofwar",
+        "label":  "Kings of War: 3rd Edition"
+    },
+    {
+        "github":  "BSData/konflikt47",
+        "label":  "Konflikt_47"
+    },
+    {
+        "github":  "BSData/war-of-the-ring",
+        "label":  "Lord of the Rings - War of the Ring"
+    },
+    {
+        "github":  "GoldenDragonGames/MarcherEAW",
+        "label":  "Marcher: Empires At War v1.7.1"
+    },
+    {
+        "github":  "BSData/marvel-crisis-protocol",
+        "label":  "Marvel Crisis Protocol"
+    },
+    {
+        "github":  "NewRecruitEU/mayhem",
+        "label":  "Mayhem Battle Chest"
+    },
+    {
+        "github":  "BSData/middle-earth",
+        "label":  "Middle-Earth Strategy Battle Game"
+    },
+    {
+        "github":  "Hukoseft/middle-earth-v2-War-of-the-Rohirrim",
+        "label":  "Middle-Earth Strategy Battle Game v2 - War of the Rohirrim"
+    },
+    {
+        "github":  "BSData/modulorka",
+        "label":  "Modulorka"
+    },
+    {
+        "github":  "BSData/mordheim",
+        "label":  "Mordheim"
+    },
+    {
+        "github":  "BSData/necromunda-gang-war",
+        "label":  "Necromunda Gang War"
+    },
+    {
+        "github":  "inqb/BSData-Promised-Land",
+        "label":  "Promised Land"
+    },
+    {
+        "github":  "EudaldSans/punka_v2",
+        "label":  "punka_v2"
+    },
+    {
+        "github":  "JimmethJambo/Quar-Clash-Of-Rhyfles-NewRecruit-Data",
+        "label":  "Quar"
+    },
+    {
+        "github":  "WWAGame/RAID",
+        "label":  "RAID"
+    },
+    {
+        "github":  "BSData/reign-in-hell",
+        "label":  "Reign in Hell"
+    },
+    {
+        "github":  "ctdavids/RiftwayCataclysmDataFiles",
+        "label":  "RiftwayCataclysm"
+    },
+    {
+        "github":  "BSData/wh40k-shadow-war-armageddon",
+        "label":  "Shadow War: Armageddon"
+    },
+    {
+        "github":  "BSData/sharp-practice",
+        "label":  "Sharp Practice"
+    },
+    {
+        "github":  "BSData/sludge",
+        "label":  "Sludge"
+    },
+    {
+        "github":  "Perwahl/SOVLDataCatalogue",
+        "label":  "SOVL"
+    },
+    {
+        "github":  "BSData/space-station-zero",
+        "label":  "Space Station Zero"
+    },
+    {
+        "github":  "BSData/star-wars-legion",
+        "label":  "Star Wars: Legion"
+    },
+    {
+        "github":  "BSData/star-wars-armada",
+        "label":  "Star_Wars_Armada"
+    },
+    {
+        "github":  "loicmusy/StarcraftTMG-NR",
+        "label":  "Starcraft The Miniature Game"
+    },
+    {
+        "github":  "NewRecruitEU/stargrave",
+        "label":  "Stargrave"
+    },
+    {
+        "github":  "BSData/the-9th-age-essence-of-war",
+        "label":  "T9A: Essence of War"
+    },
+    {
+        "github":  "BSData/team-yankee",
+        "label":  "Team Yankee WW3"
+    },
+    {
+        "github":  "vflam/t9a",
+        "label":  "The 9th Age (Test)"
+    },
+    {
+        "github":  "BSData/the-doomed",
+        "label":  "The Doomed"
+    },
+    {
+        "github":  "vflam/nr-t9a",
+        "label":  "The Ninth Age"
+    },
+    {
+        "github":  "Revworksminiatures/RemnantsChronicles",
+        "label":  "The Remnant Chronicles"
+    },
+    {
+        "github":  "BSData/the-silver-bayonet",
+        "label":  "The Silver Bayonet"
+    },
+    {
+        "github":  "BSData/the-walking-dead",
+        "label":  "The Walking Dead: All Out War"
+    },
+    {
+        "github":  "Fawkstrot11/TrenchCrusade",
+        "label":  "Trench Crusade"
+    },
+    {
+        "github":  "BSData/kings-of-war-vanguard",
+        "label":  "Vanguard"
+    },
+    {
+        "github":  "chacolah/VolkskriegNRdata",
+        "label":  "Volkskrieg"
+    },
+    {
+        "github":  "BSData/horus-heresy",
+        "label":  "Warhammer 30,000 - The Horus Heresy (HH V1)"
+    },
+    {
+        "github":  "BSData/wh40k-10e",
+        "label":  "Warhammer 40,000 10th Edition"
+    },
+    {
+        "github":  "BSData/wh40k-11e",
+        "label":  "Warhammer 40,000 11th Edition"
+    },
+    {
+        "github":  "BSData/wh40k-2nd-edition",
+        "label":  "Warhammer 40,000 2nd Edition"
+    },
+    {
+        "github":  "ksnyder1986/Warhammer-40k-3rd-Edition",
+        "label":  "Warhammer 40,000 3rd Edition"
+    },
+    {
+        "github":  "Kothra/Warhammer-40-000-4th-Edition-for-NewRecruit",
+        "label":  "Warhammer 40,000 4th Edition"
+    },
+    {
+        "github":  "AnonymousCheese/WH40K5E",
+        "label":  "Warhammer 40,000 5th Edition"
+    },
+    {
+        "github":  "NewRecruitEU/wh40k-7th-edition",
+        "label":  "Warhammer 40,000 7th Edition"
+    },
+    {
+        "github":  "BSData/wh40k-8th-edition",
+        "label":  "Warhammer 40,000 8th Edition"
+    },
+    {
+        "github":  "BSData/wh40k-9e",
+        "label":  "Warhammer 40,000 9th Edition"
+    },
+    {
+        "github":  "th3proj3ct/wh40k-apocalypse-10e",
+        "label":  "Warhammer 40,000 Apocalypse 10th Edition"
+    },
+    {
+        "github":  "KettleEngine/40k-Reforged",
+        "label":  "Warhammer 40,000 Reforged (Homebrew)"
+    },
+    {
+        "github":  "BSData/aeronautica-imperialis",
+        "label":  "Warhammer 40,000: Aeronautica Imperialis"
+    },
+    {
+        "github":  "BSData/wh40k-apocalypse",
+        "label":  "Warhammer 40,000: Apocalypse"
+    },
+    {
+        "github":  "BSData/wh40k-heralds-of-ruin",
+        "label":  "Warhammer 40,000: Heralds of Ruin 8th Edition"
+    },
+    {
+        "github":  "BSData/wh40k-killteam",
+        "label":  "Warhammer 40,000: Kill Team (2018)"
+    },
+    {
+        "github":  "BSData/warhammer-age-of-sigmar-warcry",
+        "label":  "Warhammer Age of Sigmar: Warcry"
+    },
+    {
+        "github":  "BSData/warhammer-armies-project",
+        "label":  "Warhammer Armies Project"
+    },
+    {
+        "github":  "sbh427/wap-2.3",
+        "label":  "Warhammer Armies Project WAP 2.32"
+    },
+    {
+        "github":  "NewRecruitEU/whfb",
+        "label":  "Warhammer Fantasy 4th ed"
+    },
+    {
+        "github":  "vflam/Warhammer-Fantasy-6th-edition",
+        "label":  "Warhammer Fantasy Battle 6th edition"
+    },
+    {
+        "github":  "lexicanum-imperialis/Warhammer-Fantasy-Battles-6th-Definitive-edition",
+        "label":  "Warhammer Fantasy Battles (6th definitive edition)"
+    },
+    {
+        "github":  "vflam/Warhammer-The-Old-World",
+        "label":  "Warhammer The Old World"
+    },
+    {
+        "github":  "BSData/warpath-firefight",
+        "label":  "Warpath: Firefight"
+    },
+    {
+        "github":  "SpecialAgent45954/warzone-eternal",
+        "label":  "Warzone Eternal"
+    },
+    {
+        "github":  "BSData/warzone-resurrection",
+        "label":  "Warzone: Resurrection"
+    },
+    {
+        "github":  "BSData/world-of-tanks-miniatures-game",
+        "label":  "World of Tanks Miniatures"
+    },
+    {
+        "github":  "WWAGame/WWA",
+        "label":  "World War Apocalypse"
+    },
+    {
+        "github":  "BSData/xenos-rampant",
+        "label":  "Xenos Rampant"
+    },
+    {
+        "github":  "BSData/zone-raiders",
+        "label":  "Zone Raiders"
+    }
+]
