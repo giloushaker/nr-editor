@@ -24,9 +24,14 @@
       </div>
     </div>
 
-    <div class="subline" v-if="folderSupported && settings.systemsFolder">
-      Working folder: <b>{{ settings.systemsFolder }}</b> · <u @click="chooseFolder">change</u> ·
-      <u @click="update()">refresh</u>
+    <div class="subline" v-if="folderSupported">
+      <template v-if="settings.systemsFolder">
+        Working folder: <b>{{ settings.systemsFolder }}</b> · <u @click="chooseFolder">change</u> ·
+        <u @click="update()">refresh</u>
+      </template>
+      <template v-else>
+        No working folder — <u @click="chooseFolder">choose your data folder</u> to edit files directly from disk.
+      </template>
     </div>
 
     <div class="banner info" v-if="!isElectron && !fsaSupported">
@@ -315,7 +320,9 @@ export default defineComponent({
         if (electron && folder) {
           const folders = await getFolderFolders(folder);
           for (const f of folders || []) {
-            result.push({ key: f.path, name: f.name, kind: "folder", path: f.path });
+            // normalize: settings paths may carry backslashes, loaded fullFilePaths never do
+            const path = f.path.replaceAll("\\", "/");
+            result.push({ key: path, name: f.name, kind: "folder", path });
           }
         } else if (folder && (await hasRoot(folder))) {
           let granted = (await permissionState(folder)) === "granted";

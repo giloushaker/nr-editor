@@ -312,7 +312,7 @@ export default {
   &:last-child {
     margin-right: 0;
   }
-  font-size: 12px;
+  font-size: 13px;
   border: 1px $box_border solid;
   padding: 3px;
   border-radius: 5px;
@@ -380,7 +380,7 @@ export default {
   column-gap: 18px;
 }
 .ghead {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -395,7 +395,7 @@ export default {
   align-items: center;
   gap: 7px;
   padding: 3px 4px;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   border-bottom: 1px solid rgba(128, 128, 128, 0.18);
   break-inside: avoid;
