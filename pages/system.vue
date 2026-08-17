@@ -580,8 +580,22 @@ export default defineComponent({
   &.re {
     background: transparent;
     color: inherit;
-    border: 1px solid #16294a;
+    border: 1px solid currentColor;
   }
+}
+
+/* dark theme: the chip colors above are tuned for a light background */
+:global(html.dark) .chip.folder {
+  background: rgba(110, 170, 80, 0.28);
+  color: #a9d88d;
+}
+:global(html.dark) .chip.browser {
+  background: rgba(110, 135, 240, 0.28);
+  color: #b3c1f7;
+}
+:global(html.dark) .chip.github {
+  background: rgba(165, 125, 225, 0.28);
+  color: #cdb6f0;
 }
 .empty-title {
   font-size: 20px;
