@@ -87,6 +87,10 @@ export async function getFolderFolders(folderPath: string) {
   }
 }
 
+export async function isDirectory(path: string) {
+  if (!electron) return false;
+  return (await electron.invoke("isDirectory", path)) as boolean;
+}
 export async function getFolderMtime(folderPath: string): Promise<number | undefined> {
   if (!electron) return web_fs.getFolderMtime(folderPath);
   return (await electron.invoke("getFolderMtime", folderPath)) as number | undefined;
