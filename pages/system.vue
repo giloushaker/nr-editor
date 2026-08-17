@@ -358,15 +358,16 @@ export default defineComponent({
             });
           }
         }
-        this.rows = sortByAscending(result, (o) => o.name);
-        // disk mtimes fill in asynchronously; rows re-render as they arrive
-        for (const row of this.rows) {
-          if (row.kind === "folder" && row.path) {
-            getFolderMtime(row.path).then((mtime) => {
+        // gather disk mtimes before rendering so the sort order doesn't shuffle after paint
+        await Promise.all(
+          result
+            .filter((row) => row.kind === "folder" && row.path)
+            .map(async (row) => {
+              const mtime = await getFolderMtime(row.path!);
               if (mtime) row.lastModified = mtime;
-            });
-          }
-        }
+            }),
+        );
+        this.rows = sortByAscending(result, (o) => o.name);
       } finally {
         this.loading = false;
       }
