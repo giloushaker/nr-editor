@@ -1,30 +1,88 @@
 <template>
-  <div class="items">
-    <div
-      v-for="item of sortedItems"
-      class="relative item unselectable"
-      :class="{ highlight: opened(item), selected: item === modelValue }"
-      @click="elementClicked(item)"
-      @dblclick="elementDoubleClicked(item)"
-      @click.middle="debug(item)"
-    >
-      <img class="icon" :src="getType(item).icon" />
-      <div>{{ name(item) }}</div>
-      <div class="error flex flex-row">
-        <span
-          class="my-auto"
-          v-if="changed(item)"
-          title="This file was changed by another program.
+  <div>
+    <div class="toolbar">
+      <input
+        class="csearch"
+        type="text"
+        v-model="q"
+        placeholder="Find catalogue…"
+        @keydown.enter="openFirstMatch"
+      />
+      <button
+        class="viewbt"
+        :class="{ active: layout === 'grid' }"
+        title="Grid view"
+        @click="settings.catalogueLayout = 'grid'"
+        >▦</button
+      >
+      <button
+        class="viewbt"
+        :class="{ active: layout === 'list' }"
+        title="List view"
+        @click="settings.catalogueLayout = 'list'"
+        >☰</button
+      >
+    </div>
+
+    <div class="items" v-if="layout === 'grid'">
+      <div
+        v-for="item of sortedItems"
+        class="relative item unselectable"
+        :class="{ highlight: opened(item), selected: item === modelValue, match: q && isMatch(item), dim: q && !isMatch(item) }"
+        @click="elementClicked(item)"
+        @dblclick="elementDoubleClicked(item)"
+        @click.middle="debug(item)"
+      >
+        <img class="icon" :src="getType(item).icon" />
+        <div>{{ name(item) }}</div>
+        <div class="error flex flex-row">
+          <span
+            class="my-auto"
+            v-if="changed(item)"
+            title="This file was changed by another program.
 You may want to reload the system through the Systems tab"
-        >
-          <img class="my-auto align-text-bottom" src="/assets/icons/warning_sign.png" />
-        </span>
-        <ErrorIcon :errors="errors(item)" />
+          >
+            <img class="my-auto align-text-bottom" src="/assets/icons/warning_sign.png" />
+          </span>
+          <ErrorIcon :errors="errors(item)" />
+        </div>
+      </div>
+      <div class="relative item add unselectable" @click="add">
+        <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
+        <div class="bold text-blue">New</div>
       </div>
     </div>
-    <div class="relative item add unselectable" @click="add">
-      <img class="w-40px h-40px" src="/assets/icons/iconeplus.png" />
-      <div class="bold text-blue">New</div>
+
+    <div class="lrows" v-else>
+      <div
+        v-for="item of sortedItems"
+        class="lrow unselectable"
+        :class="{ opened: opened(item), selected: item === modelValue, match: q && isMatch(item), dim: q && !isMatch(item) }"
+        @click="elementClicked(item)"
+        @dblclick="elementDoubleClicked(item)"
+        @click.middle="debug(item)"
+      >
+        <img class="licon" :src="getType(item).icon" />
+        <span class="lname">
+          <template v-for="part in nameParts(item)">
+            <mark v-if="part.m">{{ part.t }}</mark>
+            <template v-else>{{ part.t }}</template>
+          </template>
+        </span>
+        <span class="lstatus">
+          <span
+            v-if="changed(item)"
+            title="This file was changed by another program.
+You may want to reload the system through the Systems tab"
+          >
+            <img class="align-text-bottom" src="/assets/icons/warning_sign.png" />
+          </span>
+          <ErrorIcon :errors="errors(item)" />
+        </span>
+      </div>
+      <div class="lrow addrow unselectable" @click="add">
+        <span class="lname bold text-blue">+ New</span>
+      </div>
     </div>
   </div>
 </template>
@@ -37,10 +95,14 @@ import ErrorIcon, { IErrorMessage } from "./ErrorIcon.vue";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
+import { useSettingsStore } from "~/stores/settingsState";
 export default {
   emits: ["new", "itemClicked", "itemDoubleClicked"],
   setup() {
-    return { cataloguesStore: useCataloguesStore(), store: useEditorStore() };
+    return { cataloguesStore: useCataloguesStore(), store: useEditorStore(), settings: useSettingsStore() };
+  },
+  data() {
+    return { q: "" };
   },
   props: {
     items: {
@@ -63,6 +125,33 @@ export default {
         return { icon: "assets/icons/library.png", order: 2 };
       } else {
         return { icon: "assets/icons/book.png", order: 3 };
+      }
+    },
+    isMatch(item: BSIData) {
+      if (!this.q.trim()) return false;
+      return this.name(item)?.toLowerCase().includes(this.q.trim().toLowerCase());
+    },
+    // splits the name into plain/matching parts so the query can be highlighted without v-html
+    nameParts(item: BSIData): Array<{ t: string; m: boolean }> {
+      const name = this.name(item) || "";
+      const query = this.q.trim().toLowerCase();
+      if (!query) return [{ t: name, m: false }];
+      const parts = [];
+      let rest = name;
+      let idx = rest.toLowerCase().indexOf(query);
+      while (idx !== -1) {
+        if (idx > 0) parts.push({ t: rest.slice(0, idx), m: false });
+        parts.push({ t: rest.slice(idx, idx + query.length), m: true });
+        rest = rest.slice(idx + query.length);
+        idx = rest.toLowerCase().indexOf(query);
+      }
+      if (rest) parts.push({ t: rest, m: false });
+      return parts;
+    },
+    openFirstMatch() {
+      const first = this.sortedItems.find((o: BSIData) => this.isMatch(o));
+      if (first) {
+        this.$emit("itemDoubleClicked", first);
       }
     },
     elementDoubleClicked(item: BSIData) {
@@ -124,11 +213,21 @@ export default {
     },
   },
   computed: {
+    layout(): "grid" | "list" {
+      return this.settings.catalogueLayout || "grid";
+    },
     sortedItems() {
       return sortByAscending(
         sortByAscending(this.items, (o) => this.name(o)),
         (o) => this.getType(o).order
       );
+    },
+  },
+  watch: {
+    q() {
+      this.$nextTick(() => {
+        (this.$el as HTMLElement)?.querySelector(".match")?.scrollIntoView({ block: "nearest" });
+      });
     },
   },
   components: { ErrorIcon },
@@ -137,6 +236,34 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.csearch {
+  padding: 4px 8px;
+  font-size: 12.5px;
+  max-width: 220px;
+  flex: 1;
+}
+
+.viewbt {
+  border: 1px solid $box_border;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  &.active {
+    background: rgba(40, 120, 250, 0.15);
+    border-color: rgba(40, 120, 250, 0.5);
+  }
+}
 
 .item {
   display: grid;
@@ -184,5 +311,64 @@ export default {
 }
 .add {
   border: solid rgb(45, 190, 45) 2px;
+}
+
+.dim {
+  opacity: 0.45;
+}
+.item.match {
+  border-color: rgba(230, 180, 30, 0.9);
+}
+
+/* list layout */
+.lrows {
+  border: 1px solid $box_border;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+  &:last-child {
+    border-bottom: 0;
+  }
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  &.opened {
+    background-color: rgba(40, 120, 250, 0.15);
+  }
+  &.selected {
+    outline: 1.5px solid black;
+    outline-offset: -1.5px;
+  }
+  .licon {
+    width: 16px;
+    height: 16px;
+  }
+  .lname {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    mark {
+      background: rgba(250, 220, 70, 0.75);
+      color: inherit;
+      border-radius: 2px;
+    }
+  }
+  .lstatus {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+}
+.addrow {
+  border-top: 1px solid rgba(45, 190, 45, 0.6);
 }
 </style>
