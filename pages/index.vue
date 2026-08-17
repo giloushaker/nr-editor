@@ -483,6 +483,13 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
   margin: 6px;
 }
 
+/* the detail pane holds nothing critical: shrink it before it crushes the list */
+@media (max-width: 1150px) {
+  #systemView :deep(.right) {
+    width: 280px !important;
+  }
+}
+
 @media (max-width: 700px) {
   .systemLegend {
     flex-wrap: wrap;
