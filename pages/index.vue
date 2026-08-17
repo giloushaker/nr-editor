@@ -4,7 +4,7 @@
     <br />
     Returning to this page will not cause you to lose your changes.
   </p>
-  <div class="mx-10px box h-full pb-200px">
+  <div class="mx-10px box">
     <SplitView showMiddle :showRight="!isNarrow || !!selectedItem" :rightWidth="400" id="systemView">
       <template #middle>
         <div class="scrollable">
