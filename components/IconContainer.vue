@@ -56,41 +56,46 @@ You may want to reload the system through the Systems tab"
       </div>
     </div>
 
-    <div class="lrows" v-else>
-      <div
-        v-for="item of sortedItems"
-        class="lrow unselectable"
-        :class="{ opened: opened(item), selected: item === modelValue, match: q && isMatch(item), dim: q && !isMatch(item) }"
-        @click="elementClicked(item)"
-        @dblclick="elementDoubleClicked(item)"
-        @click.middle="debug(item)"
-      >
-        <img class="licon" :src="getType(item).icon" />
-        <span class="lname">
-          <span class="prefix" v-if="prefixOf(item)">
-            <template v-for="part in parts(prefixOf(item))">
+    <div class="lgroups" v-else>
+      <div class="lgroup" v-for="group in groupedItems">
+        <div class="ghead" v-if="group.label">{{ group.label }}</div>
+        <div
+          v-for="item of group.items"
+          class="lrow unselectable"
+          :class="{ opened: opened(item), selected: item === modelValue, match: q && isMatch(item), dim: q && !isMatch(item) }"
+          @click="elementClicked(item)"
+          @dblclick="elementDoubleClicked(item)"
+          @click.middle="debug(item)"
+        >
+          <img class="licon" :src="getType(item).icon" />
+          <span class="lname">
+            <span class="prefix" v-if="rowPrefix(item, group)">
+              <template v-for="part in parts(rowPrefix(item, group))">
+                <mark v-if="part.m">{{ part.t }}</mark>
+                <template v-else>{{ part.t }}</template>
+              </template>
+            </span>
+            <template v-for="part in parts(leafOf(item))">
               <mark v-if="part.m">{{ part.t }}</mark>
               <template v-else>{{ part.t }}</template>
             </template>
           </span>
-          <template v-for="part in parts(leafOf(item))">
-            <mark v-if="part.m">{{ part.t }}</mark>
-            <template v-else>{{ part.t }}</template>
-          </template>
-        </span>
-        <span class="lstatus">
-          <span
-            v-if="changed(item)"
-            title="This file was changed by another program.
+          <span class="lstatus">
+            <span
+              v-if="changed(item)"
+              title="This file was changed by another program.
 You may want to reload the system through the Systems tab"
-          >
-            <img class="align-text-bottom" src="/assets/icons/warning_sign.png" />
+            >
+              <img class="align-text-bottom" src="/assets/icons/warning_sign.png" />
+            </span>
+            <ErrorIcon :errors="errors(item)" />
           </span>
-          <ErrorIcon :errors="errors(item)" />
-        </span>
+        </div>
       </div>
-      <div class="lrow addrow unselectable" @click="add">
-        <span class="lname bold text-blue">+ New</span>
+      <div class="lgroup">
+        <div class="lrow addrow unselectable" @click="add">
+          <span class="lname bold text-blue">+ New</span>
+        </div>
       </div>
     </div>
   </div>
@@ -139,6 +144,11 @@ export default {
     isMatch(item: BSIData) {
       if (!this.q.trim()) return false;
       return this.name(item)?.toLowerCase().includes(this.q.trim().toLowerCase());
+    },
+    // inside a prefix group the header already says the prefix; elsewhere keep it greyed inline
+    rowPrefix(item: BSIData, group: { label: string }): string {
+      if (group.label && group.label !== "Libraries") return "";
+      return this.prefixOf(item);
     },
     // "Imperium - Adeptus Astartes - Blood Angels" -> grey prefix + prominent leaf
     prefixOf(item: BSIData): string {
@@ -240,6 +250,24 @@ export default {
         sortByAscending(this.items, (o) => this.name(o)),
         (o) => this.getType(o).order
       );
+    },
+    // system + unprefixed first, prefix groups alphabetically, libraries last
+    groupedItems(): Array<{ label: string; items: BSIData[] }> {
+      const groups = new Map<string, BSIData[]>();
+      for (const item of this.sortedItems) {
+        let key = "";
+        if ((item as BSIData).catalogue?.library) {
+          key = "Libraries";
+        } else if (!(item as BSIData).gameSystem) {
+          const prefix = this.prefixOf(item);
+          key = prefix ? prefix.slice(0, -3) : "";
+        }
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(item);
+      }
+      const labels = [...groups.keys()].filter((k) => k && k !== "Libraries").sort();
+      const ordered = ["", ...labels, "Libraries"].filter((k) => groups.has(k));
+      return ordered.map((label) => ({ label, items: groups.get(label)! }));
     },
   },
   watch: {
@@ -343,11 +371,27 @@ export default {
   border-color: rgba(230, 180, 30, 0.9);
 }
 
-/* list layout */
-.lrows {
-  border: 1px solid $box_border;
+/* list layout: prefix groups flowing into responsive columns */
+.lgroups {
+  columns: 250px;
+  column-gap: 16px;
+}
+.lgroup {
+  break-inside: avoid;
+  margin-bottom: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 5px;
   overflow: hidden;
+}
+.ghead {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: gray;
+  padding: 3px 8px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+  background: rgba(128, 128, 128, 0.08);
 }
 .lrow {
   display: flex;
