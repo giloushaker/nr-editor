@@ -292,6 +292,10 @@ export default {
   filter: brightness(95%);
 }
 
+h3 {
+  margin: 0;
+}
+
 .titleClickCollapsible:hover {
   filter: brightness(95%) !important;
 }
