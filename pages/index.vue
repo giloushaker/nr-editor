@@ -29,7 +29,7 @@
               <span class="legendTools">
                 <input
                   class="csearch"
-                  type="text"
+                  type="search"
                   v-model="queries[gst.getId() || '']"
                   placeholder="Find catalogue…"
                   @keydown.enter="openFirst(gst)"
