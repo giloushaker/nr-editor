@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/ts/appearance";
 import { AppearanceTheme } from "~/assets/ts/appearance_types";
-import merge from "lodash.merge";
 export interface RGB {
   r: number;
   g: number;
@@ -266,15 +265,12 @@ const defaultState = {
 export const useSettingsStore = defineStore("settings", {
   state: () => ({ ...defaultState }),
 
+  // note: custom serializers go under a nested `serializer: {serialize, deserialize}` key —
+  // top-level ones are silently ignored by the plugin. Plain JSON + pinia's partial $patch
+  // already gives "stored values win, new fields get defaults", so none is needed.
   persist: {
     storage: globalThis.localStorage,
-    deserialize(text: string) {
-      const parsed = JSON.parse(text);
-      // defaults first, stored values win — the reverse order reset every setting on each load
-      return merge({}, defaultState, parsed);
-    },
-    serialize: JSON.stringify,
-  } as any, // It makes an error without any but it works fine so idc.
+  } as any,
   getters: {
     isDarkTheme(): boolean {
       return this.theme === "dark";
