@@ -98,7 +98,7 @@
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
-import { getFolderFolders, getFolderMtime, getPath, showOpenDialog } from "~/electron/node_helpers";
+import { createFolder, getFolderFolders, getFolderMtime, getPath, isDirectory, showOpenDialog } from "~/electron/node_helpers";
 import { hasRoot, permissionState, pickFolder, requestPermission, restoreHandles, supported } from "~/electron/web_fs";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
@@ -303,9 +303,8 @@ export default defineComponent({
         this.needsPermission = false;
         const result = [] as SystemRow[];
         const folder = this.settings.systemsFolder;
-        if (electron) {
-          const path = folder || `${await getPath("home")}/BattleScribe/data`;
-          const folders = await getFolderFolders(path);
+        if (electron && folder) {
+          const folders = await getFolderFolders(folder);
           for (const f of folders || []) {
             result.push({ key: f.path, name: f.name, kind: "folder", path: f.path });
           }
@@ -380,8 +379,16 @@ export default defineComponent({
 
   async mounted() {
     if (electron && !this.settings.systemsFolder) {
+      // keep the BattleScribe folder only if it already exists, otherwise use our own
       const home = await getPath("home");
-      this.settings.systemsFolder = `${home}/BattleScribe/data`;
+      const battlescribe = `${home}/BattleScribe/data`;
+      if (await isDirectory(battlescribe)) {
+        this.settings.systemsFolder = battlescribe;
+      } else {
+        const documents = await getPath("documents");
+        this.settings.systemsFolder = `${documents}/NR-Editor/data`;
+        await createFolder(this.settings.systemsFolder);
+      }
     }
     if (!electron) {
       await restoreHandles();
