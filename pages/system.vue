@@ -506,6 +506,11 @@ export default defineComponent({
   u {
     cursor: pointer;
   }
+  :deep(.bouton) {
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 400;
+  }
 }
 .banner {
   display: flex;
@@ -628,6 +633,9 @@ export default defineComponent({
   border: 1px solid $box_border;
   border-radius: 8px;
   padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   &.off {
     opacity: 0.75;
     border-style: dashed;
@@ -641,6 +649,7 @@ export default defineComponent({
     margin: 0 0 12px;
     font-size: 13px;
     color: gray;
+    flex: 1;
   }
   .act,
   :deep(.bouton) {
