@@ -80,7 +80,8 @@
           <div class="gcard">
             <div class="t">Start fresh</div>
             <p>Create a new game system from scratch. It lives in your browser until you give it a folder or repo.</p>
-            <CreateSystem class="act" @created="update" />
+            <button class="act" @click="($refs.createSystem as any)?.click()">Create System</button>
+            <span class="hiddenTrigger"><CreateSystem ref="createSystem" @created="update" /></span>
           </div>
         </div>
         <div class="subline mt-10px">
@@ -671,6 +672,9 @@ export default defineComponent({
     display: block;
     margin-top: 10px;
     line-height: 1.45;
+  }
+  .hiddenTrigger {
+    display: none;
   }
 }
 
