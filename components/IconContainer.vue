@@ -307,7 +307,7 @@ export default {
         groups.get(key)!.push(item);
       }
       const labels = [...groups.keys()].filter((k) => k && k !== "Libraries").sort();
-      const ordered = ["", ...labels, "Libraries"].filter((k) => groups.has(k));
+      const ordered = ["", "Libraries", ...labels].filter((k) => groups.has(k));
       return ordered.map((label) => {
         const items = groups.get(label)!;
         // the group's namesake catalogue leads its group
