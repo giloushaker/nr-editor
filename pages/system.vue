@@ -584,19 +584,6 @@ export default defineComponent({
   }
 }
 
-/* dark theme: the chip colors above are tuned for a light background */
-:global(html.dark) .chip.folder {
-  background: rgba(110, 170, 80, 0.28);
-  color: #a9d88d;
-}
-:global(html.dark) .chip.browser {
-  background: rgba(110, 135, 240, 0.28);
-  color: #b3c1f7;
-}
-:global(html.dark) .chip.github {
-  background: rgba(165, 125, 225, 0.28);
-  color: #cdb6f0;
-}
 .empty-title {
   font-size: 20px;
   font-weight: 700;
@@ -659,5 +646,21 @@ export default defineComponent({
   .row .meta {
     display: none;
   }
+}
+</style>
+<style lang="scss">
+/* unscoped: the chip colors above are tuned for a light background.
+   (:global() inside the scoped block miscompiles to a bare html.dark rule) */
+html.dark .roster .chip.folder {
+  background: rgba(110, 170, 80, 0.28);
+  color: #a9d88d;
+}
+html.dark .roster .chip.browser {
+  background: rgba(110, 135, 240, 0.28);
+  color: #b3c1f7;
+}
+html.dark .roster .chip.github {
+  background: rgba(165, 125, 225, 0.28);
+  color: #cdb6f0;
 }
 </style>
