@@ -34,7 +34,10 @@
         @click.middle="debug(item)"
       >
         <img class="icon" :src="getType(item).icon" />
-        <div>{{ name(item) }}</div>
+        <div>
+          <span class="prefix" v-if="prefixOf(item)">{{ prefixOf(item) }}</span>
+          {{ leafOf(item) }}
+        </div>
         <div class="error flex flex-row">
           <span
             class="my-auto"
@@ -64,7 +67,13 @@ You may want to reload the system through the Systems tab"
       >
         <img class="licon" :src="getType(item).icon" />
         <span class="lname">
-          <template v-for="part in nameParts(item)">
+          <span class="prefix" v-if="prefixOf(item)">
+            <template v-for="part in parts(prefixOf(item))">
+              <mark v-if="part.m">{{ part.t }}</mark>
+              <template v-else>{{ part.t }}</template>
+            </template>
+          </span>
+          <template v-for="part in parts(leafOf(item))">
             <mark v-if="part.m">{{ part.t }}</mark>
             <template v-else>{{ part.t }}</template>
           </template>
@@ -131,22 +140,32 @@ export default {
       if (!this.q.trim()) return false;
       return this.name(item)?.toLowerCase().includes(this.q.trim().toLowerCase());
     },
-    // splits the name into plain/matching parts so the query can be highlighted without v-html
-    nameParts(item: BSIData): Array<{ t: string; m: boolean }> {
+    // "Imperium - Adeptus Astartes - Blood Angels" -> grey prefix + prominent leaf
+    prefixOf(item: BSIData): string {
       const name = this.name(item) || "";
+      const idx = name.lastIndexOf(" - ");
+      return idx === -1 ? "" : name.slice(0, idx + 3);
+    },
+    leafOf(item: BSIData): string {
+      const name = this.name(item) || "";
+      const idx = name.lastIndexOf(" - ");
+      return idx === -1 ? name : name.slice(idx + 3);
+    },
+    // splits text into plain/matching parts so the query can be highlighted without v-html
+    parts(text: string): Array<{ t: string; m: boolean }> {
       const query = this.q.trim().toLowerCase();
-      if (!query) return [{ t: name, m: false }];
-      const parts = [];
-      let rest = name;
+      if (!query) return [{ t: text, m: false }];
+      const result = [];
+      let rest = text;
       let idx = rest.toLowerCase().indexOf(query);
       while (idx !== -1) {
-        if (idx > 0) parts.push({ t: rest.slice(0, idx), m: false });
-        parts.push({ t: rest.slice(idx, idx + query.length), m: true });
+        if (idx > 0) result.push({ t: rest.slice(0, idx), m: false });
+        result.push({ t: rest.slice(idx, idx + query.length), m: true });
         rest = rest.slice(idx + query.length);
         idx = rest.toLowerCase().indexOf(query);
       }
-      if (rest) parts.push({ t: rest, m: false });
-      return parts;
+      if (rest) result.push({ t: rest, m: false });
+      return result;
     },
     openFirstMatch() {
       const first = this.sortedItems.find((o: BSIData) => this.isMatch(o));
@@ -315,6 +334,10 @@ export default {
 
 .dim {
   opacity: 0.45;
+}
+.prefix {
+  color: gray;
+  opacity: 0.85;
 }
 .item.match {
   border-color: rgba(230, 180, 30, 0.9);
