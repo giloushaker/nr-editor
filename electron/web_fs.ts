@@ -150,6 +150,29 @@ export async function getFolderFolders(folderPath: string) {
   return result;
 }
 
+// newest file lastModified in a folder tree (no content reads), skipping git folders
+export async function getFolderMtime(folderPath: string): Promise<number | undefined> {
+  try {
+    const dir = await resolveFolder(folderPath, false, false);
+    let max = 0;
+    const walk = async (d: FileSystemDirectoryHandle) => {
+      for await (const entry of (d as any).values()) {
+        if (entry.name === ".git" || entry.name === ".github") continue;
+        if (entry.kind === "file") {
+          const file = await entry.getFile();
+          if (file.lastModified > max) max = file.lastModified;
+        } else {
+          await walk(entry);
+        }
+      }
+    };
+    await walk(dir);
+    return max || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
   const dir = await resolveFolder(folderPath);
   const base = folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/");

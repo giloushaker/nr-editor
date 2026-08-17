@@ -584,6 +584,7 @@ export const useEditorStore = defineStore("editor", {
       const id = getDataDbId(catalogue);
       cataloguesStore.updateCatalogue(catalogue);
       cataloguesStore.setEdited(id, true);
+      cataloguesStore.touchEdited(catalogue.gameSystemId || catalogue.id);
       if (state?.unsaved) {
         this.unsavedCount--;
         state.unsaved = false;

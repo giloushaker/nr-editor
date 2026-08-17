@@ -20,6 +20,8 @@ export interface Dependency {
 export const useCataloguesStore = defineStore("catalogues", {
   state: () => ({
     dict: {} as Record<string, ICatalogueState>,
+    // per-system recency, keyed by gameSystemId; folderPath lets folder rows match before the system is loaded
+    systemInfo: {} as Record<string, { lastOpened?: number; lastEdited?: number; folderPath?: string }>,
     version: 1,
   }),
 
@@ -35,6 +37,15 @@ export const useCataloguesStore = defineStore("catalogues", {
     },
     setEdited(id: string, bool: boolean) {
       this.get(id).edited = bool;
+    },
+    touchOpened(systemId: string, folderPath?: string) {
+      const info = this.systemInfo[systemId] || (this.systemInfo[systemId] = {});
+      info.lastOpened = Date.now();
+      if (folderPath) info.folderPath = folderPath;
+    },
+    touchEdited(systemId: string) {
+      const info = this.systemInfo[systemId] || (this.systemInfo[systemId] = {});
+      info.lastEdited = Date.now();
     },
     getEdited(id: string) {
       return this.get(id).edited;

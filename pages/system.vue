@@ -1,5 +1,6 @@
 <template>
-  <div class="scrollable roster" v-if="!loading">
+  <div class="scrollable" v-if="!loading">
+    <div class="roster">
     <div class="head">
       <h1 class="brand">Systems</h1>
       <input class="search" type="text" v-model="query" placeholder="Search systems…" />
@@ -41,6 +42,7 @@
         <span class="chip loadedchip" v-if="row.loaded">loaded</span>
         <span class="meta" v-if="row.count !== undefined">{{ row.count }} catalogues</span>
         <span class="spacer"></span>
+        <span class="meta">{{ rowTime(row) }}</span>
         <button
           class="open"
           :class="{ re: row.loaded && row.kind === 'folder' }"
@@ -82,6 +84,7 @@
       </div>
     </template>
     <div v-else class="subline">No systems match "{{ query }}".</div>
+    </div>
   </div>
   <Loading v-else :progress_msg="progress_msg" :progress_max="progress_max" :progress="progress" />
   <GithubRepoDialog v-model="githubOpen" @uploaded="uploaded" />
@@ -91,7 +94,7 @@
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
-import { getFolderFolders, getPath, showOpenDialog } from "~/electron/node_helpers";
+import { getFolderFolders, getFolderMtime, getPath, showOpenDialog } from "~/electron/node_helpers";
 import { hasRoot, permissionState, pickFolder, requestPermission, restoreHandles, supported } from "~/electron/web_fs";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
@@ -109,8 +112,10 @@ interface SystemRow {
   kind: "folder" | "db";
   path?: string; // folder rows
   id?: string; // db rows
+  metaId?: string; // folder rows: system id recovered from the db copy, used for recency/meta only
   count?: number;
   github?: string;
+  lastModified?: number; // folder rows: newest file mtime on disk
 }
 
 export default defineComponent({
@@ -146,13 +151,44 @@ export default defineComponent({
     folderSupported() {
       return this.isElectron || this.fsaSupported;
     },
-    filteredRows(): Array<SystemRow & { loaded: boolean }> {
+    filteredRows(): Array<SystemRow & { loaded: boolean; lastOpened?: number; lastEdited?: number }> {
       const q = this.query.trim().toLowerCase();
       const rows = q ? this.rows.filter((row) => row.name.toLowerCase().includes(q)) : this.rows;
-      return rows.map((row) => ({ ...row, loaded: this.isLoaded(row) }));
+      const decorated = rows.map((row) => {
+        const infoId = row.id || row.metaId;
+        const info = infoId
+          ? this.cataloguesStore.systemInfo[infoId]
+          : Object.values(this.cataloguesStore.systemInfo).find((o) => o.folderPath === row.path);
+        return { ...row, loaded: this.isLoaded(row), lastOpened: info?.lastOpened, lastEdited: info?.lastEdited };
+      });
+      // loaded systems pinned on top (for reloading), then recently opened, then recently edited, then alphabetical
+      return decorated.sort(
+        (a, b) =>
+          Number(b.loaded) - Number(a.loaded) ||
+          (b.lastOpened || 0) - (a.lastOpened || 0) ||
+          (b.lastModified || b.lastEdited || 0) - (a.lastModified || a.lastEdited || 0) ||
+          a.name.localeCompare(b.name),
+      );
     },
   },
   methods: {
+    rowTime(row: SystemRow & { lastOpened?: number; lastEdited?: number }): string {
+      const edited = row.lastModified || row.lastEdited;
+      if (edited) return `edited ${this.ago(edited)}`;
+      if (row.lastOpened) return `opened ${this.ago(row.lastOpened)}`;
+      return "";
+    },
+    ago(ts: number): string {
+      const s = (Date.now() - ts) / 1000;
+      if (s < 90) return "just now";
+      if (s < 5400) return `${Math.round(s / 60)}m ago`;
+      if (s < 129600) return `${Math.round(s / 3600)}h ago`;
+      const days = Math.round(s / 86400);
+      if (days <= 70) return `${days} days ago`;
+      const months = Math.round(days / 30);
+      if (months <= 18) return `${months} months ago`;
+      return `${Math.round(days / 365)} years ago`;
+    },
     isLoaded(row: SystemRow): boolean {
       if (row.id) {
         return Boolean(this.store.gameSystems[row.id]?.gameSystem);
@@ -182,9 +218,10 @@ export default defineComponent({
       this.loading = true;
       this.progress_msg = "";
       try {
-        if (row.id) {
+        if (row.kind === "db" && row.id) {
           await this.store.get_or_load_system(row.id);
           this.settings.activeSystems = [row.id];
+          this.cataloguesStore.touchOpened(row.id);
           this.$router.push(`/?id=${row.id}`);
           return;
         }
@@ -197,6 +234,9 @@ export default defineComponent({
         if (loaded?.length) {
           if (!electron) {
             this.settings.activeSystems = loaded;
+          }
+          for (const id of loaded) {
+            this.cataloguesStore.touchOpened(id, row.path);
           }
           this.$router.push(`/?id=${loaded.join(",")}`);
         }
@@ -242,6 +282,9 @@ export default defineComponent({
       if (!electron) {
         this.settings.activeSystems = ids;
       }
+      for (const id of ids) {
+        this.cataloguesStore.touchOpened(id);
+      }
       this.$router.push(`/?id=${ids.join(",")}`);
     },
     async update() {
@@ -271,15 +314,33 @@ export default defineComponent({
             }
           }
         }
+
+        const dbSystems = await db.systems.toArray();
+        const githubOf = (gameSystem: any) => {
+          const pub = gameSystem.publications?.find((o: any) => o.name?.trim().toLowerCase() === "github");
+          return pub?.shortName?.includes("/") ? pub.shortName : undefined;
+        };
+        // decorate folder rows from their db copy (repo chip, counts, recency) — works on both platforms
+        for (const folderRow of result) {
+          const prefix = `${folderRow.path}/`;
+          const dbRow = dbSystems.find((row) => {
+            const filePath = row.content?.gameSystem?.fullFilePath || row.path || "";
+            return filePath.startsWith(prefix) || filePath.replace(/\\/g, "/").startsWith(prefix);
+          });
+          const gameSystem = dbRow?.content?.gameSystem;
+          if (!gameSystem) continue;
+          folderRow.metaId = gameSystem.id;
+          folderRow.github = githubOf(gameSystem);
+          folderRow.count = await db.catalogues.where({ "content.catalogue.gameSystemId": gameSystem.id }).count();
+        }
         if (!electron) {
-          // systems stored in the browser db, unless already listed via the working folder
+          // systems stored only in the browser db (not present in the working folder)
           const folderPaths = result.map((o) => `${o.path}/`);
-          for (const row of await db.systems.toArray()) {
+          for (const row of dbSystems) {
             const gameSystem = row.content?.gameSystem;
             if (!gameSystem) continue;
             const filePath = gameSystem.fullFilePath || row.path || "";
             if (filePath && folderPaths.some((p) => filePath.startsWith(p))) continue;
-            const github = gameSystem.publications?.find((o: any) => o.name?.trim().toLowerCase() === "github");
             const count = await db.catalogues.where({ "content.catalogue.gameSystemId": gameSystem.id }).count();
             result.push({
               key: row.id,
@@ -287,11 +348,19 @@ export default defineComponent({
               kind: "db",
               id: row.id,
               count,
-              github: github?.shortName?.includes("/") ? github.shortName : undefined,
+              github: githubOf(gameSystem),
             });
           }
         }
         this.rows = sortByAscending(result, (o) => o.name);
+        // disk mtimes fill in asynchronously; rows re-render as they arrive
+        for (const row of this.rows) {
+          if (row.kind === "folder" && row.path) {
+            getFolderMtime(row.path).then((mtime) => {
+              if (mtime) row.lastModified = mtime;
+            });
+          }
+        }
       } finally {
         this.loading = false;
       }
@@ -323,8 +392,8 @@ export default defineComponent({
 
 
 .roster {
-  padding: 22px 26px 40px;
-  max-width: 1000px;
+  padding: 18px 26px 100px;
+  max-width: 720px;
   margin: 0 auto;
 }
 .head {
@@ -334,17 +403,17 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 .brand {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   margin: 0;
 }
 .search {
   flex: 1;
   max-width: 340px;
-  padding: 9px 12px;
-  font-size: 13.5px;
+  padding: 6px 10px;
+  font-size: 13px;
 }
 .addwrap {
   margin-left: auto;
@@ -353,11 +422,11 @@ export default defineComponent({
 .add {
   background: #16294a;
   color: #fff;
-  font-weight: 650;
-  font-size: 13.5px;
+  font-weight: 400;
+  font-size: 13px;
   border: none;
   border-radius: 6px;
-  padding: 11px 16px;
+  padding: 8px 13px;
   cursor: pointer;
 }
 .menu {
@@ -378,6 +447,7 @@ export default defineComponent({
   .mitem {
     width: 100%;
     text-align: left;
+    font-weight: 400;
   }
 }
 .subline {
@@ -409,7 +479,7 @@ export default defineComponent({
     margin-left: auto;
     background: #8a6210;
     color: #fff;
-    font-weight: 650;
+    font-weight: 400;
     font-size: 12.5px;
     border: none;
     border-radius: 5px;
@@ -425,11 +495,11 @@ export default defineComponent({
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 5px 12px;
   border-bottom: 1px solid $box_border;
   cursor: pointer;
-  font-size: 14.5px;
+  font-size: 13.5px;
   &:last-child {
     border-bottom: 0;
   }
@@ -437,11 +507,11 @@ export default defineComponent({
     background: var(--hover-darken-color, rgba(0, 0, 0, 0.08));
   }
   .nm {
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
   }
   .meta {
-    font-size: 12px;
+    font-size: 11.5px;
     color: gray;
     white-space: nowrap;
   }
@@ -451,12 +521,12 @@ export default defineComponent({
 }
 .chip {
   font-family: monospace;
-  font-size: 10.5px;
-  font-weight: 650;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border-radius: 3px;
-  padding: 4px 6px;
+  padding: 2px 5px;
   white-space: nowrap;
   &.folder {
     background: rgba(90, 140, 60, 0.18);
@@ -477,25 +547,24 @@ export default defineComponent({
   }
 }
 .open {
-  font-weight: 650;
-  font-size: 12.5px;
+  font-weight: 400;
+  font-size: 12px;
   color: #fff;
   background: #16294a;
   border: none;
   border-radius: 5px;
-  padding: 8px 14px;
+  padding: 4px 10px;
   white-space: nowrap;
   cursor: pointer;
   &.re {
     background: transparent;
     color: inherit;
-    border: 1.5px solid #16294a;
+    border: 1px solid #16294a;
   }
 }
 .empty-title {
-  font-size: 24px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: 20px;
+  font-weight: 700;
   margin: 14px 0 4px;
 }
 .empty-sub {
@@ -518,8 +587,7 @@ export default defineComponent({
     border-style: dashed;
   }
   .t {
-    font-weight: 750;
-    text-transform: uppercase;
+    font-weight: 650;
     font-size: 14px;
     margin-bottom: 6px;
   }
@@ -532,7 +600,7 @@ export default defineComponent({
   :deep(.bouton) {
     background: #16294a;
     color: #fff;
-    font-weight: 650;
+    font-weight: 400;
     font-size: 12.5px;
     border: none;
     border-radius: 5px;
