@@ -386,7 +386,7 @@ export default defineComponent({
         this.settings.systemsFolder = battlescribe;
       } else {
         const documents = await getPath("documents");
-        this.settings.systemsFolder = `${documents}/NR-Editor/data`;
+        this.settings.systemsFolder = `${documents}/NewRecruit/data`;
         await createFolder(this.settings.systemsFolder);
       }
     }
