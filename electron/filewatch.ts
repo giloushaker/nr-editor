@@ -4,6 +4,14 @@ const chokidar = require("chokidar");
 const chokidar_watchers = {} as Record<string, any>;
 const watchers = {} as Record<string, Record<string, (p: string, stats: Stats) => unknown>>;
 export let persistent = false;
+
+// A save we made ourselves still fires change events; ignore them for a moment after the write
+// so the editor does not report its own save as an external change.
+const SELF_WRITE_GRACE_MS = 2000;
+const self_writes = {} as Record<string, number>;
+export function mark_self_write(path: string) {
+  self_writes[fix_path(path)] = Date.now() + SELF_WRITE_GRACE_MS;
+}
 export function fix_path(str: string) {
   return str.replace(/\\/g, "/");
 }
@@ -11,8 +19,14 @@ export function initialize(path: string | number) {
   if (chokidar_watchers[path]) {
     return chokidar_watchers[path];
   }
-  const watcher = chokidar.watch(path, { persistent });
+  // awaitWriteFinish: one slow write emits several OS events, and a single grace window cannot
+  // cover events that keep arriving; waiting for the size to settle collapses them into one.
+  const watcher = chokidar.watch(path, {
+    persistent,
+    awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
+  });
   watcher.on("change", (p: string, stats: Stats) => {
+    if (Date.now() < (self_writes[fix_path(p)] || 0)) return;
     if (path in watchers) {
       for (const cb of Object.values(watchers[path])) {
         cb(p, stats);

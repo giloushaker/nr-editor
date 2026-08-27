@@ -13,8 +13,8 @@ const { autoUpdater } = require("electron-updater");
 const os = require("os")
 import * as node_helpers from "./node_helpers";
 import * as bs_helpers from "../assets/shared/battlescribe/bs_helpers";
-import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
-import { getFile, getFolderFiles, getFolderMtime } from "./files";
+import { add_watcher, mark_self_write, remove_watcher, remove_watchers } from "./filewatch";
+import { getFile, getFolderFiles, getFolderFolders, getFolderMtime } from "./files";
 import { entry, options } from "./entry";
 import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
 import { stripHtml } from "./electron_helpers";
@@ -111,6 +111,9 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
   handle("getFolderFiles", async (event: null | any, path: any, recursive: boolean, skip?: string[]) => {
     return await getFolderFiles(path, recursive, skip);
   });
+  handle("getFolderFolders", async (event: null | any, path: any) => {
+    return await getFolderFolders(path);
+  });
   handle("getFile", async (event: null | any, path: any) => {
     return await getFile(path);
   });
@@ -121,7 +124,10 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
     if (typeof data === "string" && os.platform().includes('win')) {
       data = data.replace(/\n/g, "\r\n")
     }
-    return await writeFileSync(path, data, options);
+    const result = writeFileSync(path, data, options);
+    // the watcher is about to see this write: tell it the change came from us
+    mark_self_write(path);
+    return result;
   });
   handle("chokidarWatchFile", async (event: null | { sender: Electron.WebContents; }, path: string) => {
     if (event) {

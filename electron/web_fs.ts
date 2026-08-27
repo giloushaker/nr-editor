@@ -126,6 +126,8 @@ export async function writeFile(path: string, data: string | Blob | Uint8Array) 
   const writable = await (handle as any).createWritable();
   await writable.write(data);
   await writable.close();
+  // same idea as the electron side: keep the poller from reporting our own write as an external change
+  if (watchers.has(path)) lastModified.set(path, (await handle.getFile()).lastModified);
 }
 
 export async function deleteFile(path: string) {

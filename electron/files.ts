@@ -74,6 +74,14 @@ export async function getFile(filePath: any) {
   return await readAndUnzipFile(filePath).then((data) => ({ data, name: filename(filePath), path: filePath }));
 }
 
+export async function getFolderFolders(folderPath: string) {
+  const entries = await readdir(folderPath, { withFileTypes: true }).catch(() => []);
+  const base = replaceSlashes(folderPath);
+  return entries
+    .filter((entry: any) => entry.isDirectory())
+    .map((entry: any) => ({ name: entry.name, path: `${base}/${entry.name}` }));
+}
+
 export async function getFolderFiles(folderPath: any, recursive = false, skip?: string[]) {
   const toSkip = new Set(skip ?? [])
   const fileObjects = [];
