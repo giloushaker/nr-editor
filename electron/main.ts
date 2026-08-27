@@ -174,13 +174,12 @@ init_handlers(ipcMain.handle)
 //   console.log("Found", found.length, "results", found.map(o => o.toString()));
 // }
 // test()
-let mainWindow: {
-  webContents: { executeJavaScript: (arg0: string) => void };
-  setProgressBar: (arg0: number) => void;
-  setTitle: (arg0: string) => void;
-};
+
+let mainWindow: Electron.BrowserWindow | null = null;
 let previousTitle = "";
-function askForUpdate() {
+function setupUpdater() {
+  // electron-updater emits "error"; with no listener node throws it as an unhandled error
+  autoUpdater.on("error", (e: Error) => console.error("updater:", e));
   autoUpdater.on("update-available", (info: any) => {
     dialog
       .showMessageBox({
@@ -192,6 +191,8 @@ function askForUpdate() {
       })
       .then((result: { response: number }) => {
         if (result.response === 0) {
+          // taken here, not at startup: right after load the window still has its default title
+          previousTitle = mainWindow ? mainWindow.getTitle() : "";
           // User clicked 'Install', start downloading and installing the update
           autoUpdater.downloadUpdate();
         }
@@ -201,7 +202,7 @@ function askForUpdate() {
     "download-progress",
     (progress: { bytesPerSecond: string; percent: string | number; transferred: string; total: string }) => {
       try {
-        if (mainWindow && mainWindow.webContents) {
+        if (mainWindow) {
           mainWindow.webContents.executeJavaScript(`
           if (!globalThis.styleElement){
             globalThis.styleElement = document.createElement('style');
@@ -209,11 +210,6 @@ function askForUpdate() {
             globalThis.styleElement.textContent = '* { cursor: progress !important; }';
             document.head.appendChild(globalThis.styleElement);
           }`);
-        }
-        if (mainWindow) {
-          let log_message = "Download speed: " + progress.bytesPerSecond;
-          log_message = log_message + " - Downloaded " + progress.percent + "%";
-          log_message = log_message + " (" + progress.transferred + "/" + progress.total + ")";
           const progress_percent = Math.round(Number(progress.percent) * 10) / 10;
           mainWindow.setProgressBar(progress_percent / 100);
           mainWindow.setTitle(progress_percent + "%");
@@ -224,47 +220,26 @@ function askForUpdate() {
     }
   );
   autoUpdater.on("update-downloaded", () => {
-    if (mainWindow && mainWindow.webContents) {
+    if (mainWindow) {
       mainWindow.webContents.executeJavaScript(`
       if (globalThis.styleElement) globalThis.styleElement.remove();
       `);
-    }
-    if (mainWindow) {
+      mainWindow.setProgressBar(-1);
       mainWindow.setTitle(previousTitle);
     }
+    // quitAndInstall goes through app.quit(), which the unsaved-changes prompt can cancel;
+    // autoInstallOnAppQuit below then installs it on the next normal quit instead of losing it.
     autoUpdater.quitAndInstall(true, true);
-    // Put a delay on the install step?  https://github.com/electron-userland/electron-builder/issues/7054#issuecomment-1215289966
-    setTimeout(() => {
-      autoUpdater.quitAndInstall(true, true);
-    }, 6000);
   });
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoRunAppAfterInstall = true;
-  autoUpdater.autoInstallOnAppQuit = false;
-  autoUpdater.checkForUpdates();
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.checkForUpdates().catch((e: Error) => console.error("updater:", e));
 }
 
-const createSecondaryWindow = () => {
-  const win = new BrowserWindow({
-    autoHideMenuBar: true,
-    width: 1200,
-    height: 900,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-    },
-  });
-
-
-  win.on("close", () => {
-    remove_watchers(win.id);
-  });
-
-  win.loadFile(entry, options);
-};
-const createMainWindow = () => {
-  askForUpdate();
-
+// One-time session setup; running it per window would fail the protocol intercept and stack the header hooks.
+function setupSession() {
   // Intercept file protocol to fix loading images
   const imageRegex = /(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i;
   const cleanDirName = __dirname.replaceAll("\\", "/");
@@ -277,13 +252,13 @@ const createMainWindow = () => {
       }
 
       if (request.url.includes("app.asar")) {
-        request.url = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+        request.url = request.url.replace(/^[a-zA-Zf:/\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
         callback(request);
         return;
       }
       //  move what comes after /assets to correct path
       if (request.url.includes("/assets/")) {
-        const ressource = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+        const ressource = request.url.replace(/^[a-zA-Zf:/\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
         request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
         request.path = ressource;
       }
@@ -311,34 +286,55 @@ const createMainWindow = () => {
       callback({ responseHeaders: details.responseHeaders });
     }
   );
+}
 
-  const userDataPath = app.getPath("userData")
-  console.log(userDataPath)
-  const win = new BrowserWindow({
+function restoreBounds(win: Electron.BrowserWindow, iniPath: string) {
+  try {
+    const saved = JSON.parse(readFileSync(iniPath, { encoding: "utf-8" }));
+    // a position saved on a monitor that is no longer plugged in would open the window offscreen,
+    // which looks exactly like a running app with no window
+    const area = require("electron").screen.getDisplayMatching(saved).workArea;
+    const onScreen =
+      saved.x < area.x + area.width &&
+      saved.x + saved.width > area.x &&
+      saved.y < area.y + area.height &&
+      saved.y + saved.height > area.y;
+    if (onScreen) win.setBounds(saved);
+    if (saved.maximized) win.maximize();
+  } catch (e) {
+    // no saved bounds (or unreadable): keep the constructor defaults
+  }
+}
+
+const createWindow = () => {
+  const iniPath = `${app.getPath("userData")}/ini.json`;
+  const win: Electron.BrowserWindow = new BrowserWindow({
     autoHideMenuBar: true,
+    width: 1200,
+    height: 900,
     webPreferences: {
       nodeIntegration: true,
       preload: path.join(__dirname, "preload.js"),
     },
   });
+  const id = win.id;
 
-  mainWindow = win;
+  restoreBounds(win, iniPath);
+
   win.on("close", () => {
-    remove_watchers(win.id);
-    writeFileSync(`${userDataPath}/ini.json`, JSON.stringify({ ...win.getBounds(), maximized: win.isMaximized() }));
+    try {
+      // getNormalBounds, or maximizing once would permanently save the maximized size as the restored size
+      writeFileSync(iniPath, JSON.stringify({ ...win.getNormalBounds(), maximized: win.isMaximized() }));
+    } catch (e) {
+      console.error(e);
+    }
   });
-
-  win.isFullScreen()
-  try {
-    const existing = JSON.parse(readFileSync(`${userDataPath}/ini.json`, { encoding: 'utf-8' }))
-    win.setBounds(existing)
-    if (existing.maximized) win.maximize()
-  } catch (e) {
-    win.setBounds({
-      width: 1200,
-      height: 900,
-    })
-  }
+  // "close" also fires when the renderer cancels the close (unsaved changes), which would kill
+  // file watching on a window that is still open, so drop the watchers only once it is really gone.
+  win.on("closed", () => {
+    remove_watchers(id);
+    if (mainWindow === win) mainWindow = null;
+  });
 
   // Use the user's primary browser when opening links
   win.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
@@ -351,13 +347,36 @@ const createMainWindow = () => {
   });
 
   win.loadFile(entry, options);
-  previousTitle = win.getTitle();
+  return win;
 };
-app.whenReady().then(() => {
-  if (app.requestSingleInstanceLock()) {
-    createMainWindow();
-    app.on("second-instance", () => {
-      createSecondaryWindow();
-    });
-  }
-});
+
+// Losing the lock used to fall through to nothing: the extra process stayed alive with no window,
+// holding the installed files so the updater could not replace them until every one was killed.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    const win = mainWindow ?? BrowserWindow.getAllWindows()[0];
+    if (!win) {
+      mainWindow = createWindow();
+      return;
+    }
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+  });
+
+  app.on("activate", () => {
+    if (!BrowserWindow.getAllWindows().length) mainWindow = createWindow();
+  });
+
+  app.whenReady().then(() => {
+    setupSession();
+    mainWindow = createWindow();
+    setupUpdater();
+  });
+}
