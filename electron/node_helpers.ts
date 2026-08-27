@@ -16,6 +16,14 @@ export async function getFolderFiles(folderPath: string, recursive = false, skip
     data: string;
   }>;
 }
+export async function listFolder(folderPath: string, recursive = false, skip?: string[]) {
+  if (!electron) return web_fs.listFolder(folderPath, recursive, skip);
+  return (await electron.invoke("listFolder", folderPath, recursive, skip)) as Array<{
+    name: string;
+    path: string;
+    directory: boolean;
+  }>;
+}
 export async function getFolderFolders(folderPath: string) {
   if (!electron) return web_fs.getFolderFolders(folderPath);
   return (await electron.invoke("getFolderFolders", folderPath)) as Array<{ name: string; path: string }>;

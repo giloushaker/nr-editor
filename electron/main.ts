@@ -14,7 +14,7 @@ const os = require("os")
 import * as node_helpers from "./node_helpers";
 import * as bs_helpers from "../assets/shared/battlescribe/bs_helpers";
 import { add_watcher, mark_self_write, remove_watcher, remove_watchers } from "./filewatch";
-import { getFile, getFolderFiles, getFolderFolders, getFolderMtime } from "./files";
+import { getFile, getFolderFiles, getFolderFolders, getFolderMtime, listFolder } from "./files";
 import { entry, options } from "./entry";
 import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
 import { stripHtml } from "./electron_helpers";
@@ -110,6 +110,9 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
   });
   handle("getFolderFiles", async (event: null | any, path: any, recursive: boolean, skip?: string[]) => {
     return await getFolderFiles(path, recursive, skip);
+  });
+  handle("listFolder", async (event: null | any, path: any, recursive: boolean, skip?: string[]) => {
+    return await listFolder(path, recursive, skip);
   });
   handle("getFolderFolders", async (event: null | any, path: any) => {
     return await getFolderFolders(path);

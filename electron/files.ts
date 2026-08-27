@@ -74,12 +74,33 @@ export async function getFile(filePath: any) {
   return await readAndUnzipFile(filePath).then((data) => ({ data, name: filename(filePath), path: filePath }));
 }
 
+// Listing only: no reads, no extension filter. getFolderFiles is the batch loader that
+// wants every catalogue's content in one round trip; anything else wants names.
+export async function listFolder(folderPath: string, recursive = false, skip?: string[]) {
+  const toSkip = new Set(skip ?? []);
+  const result = [] as Array<{ name: string; path: string; directory: boolean }>;
+  const stack = [replaceSlashes(folderPath)];
+  while (stack.length) {
+    const curPath = stack.pop()!;
+    let entries;
+    try {
+      entries = await readdir(curPath, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const path = `${curPath}/${entry.name}`;
+      const directory = entry.isDirectory();
+      if (directory && recursive && !toSkip.has(entry.name)) stack.push(path);
+      result.push({ name: entry.name, path, directory });
+    }
+  }
+  return result;
+}
+
 export async function getFolderFolders(folderPath: string) {
-  const entries = await readdir(folderPath, { withFileTypes: true }).catch(() => []);
-  const base = replaceSlashes(folderPath);
-  return entries
-    .filter((entry: any) => entry.isDirectory())
-    .map((entry: any) => ({ name: entry.name, path: `${base}/${entry.name}` }));
+  const entries = await listFolder(folderPath);
+  return entries.filter((entry) => entry.directory).map(({ name, path }) => ({ name, path }));
 }
 
 export async function getFolderFiles(folderPath: any, recursive = false, skip?: string[]) {

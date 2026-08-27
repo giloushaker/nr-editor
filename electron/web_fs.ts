@@ -140,6 +140,21 @@ export async function createFolder(path: string) {
   await resolveFolder(path, true);
 }
 
+export async function listFolder(folderPath: string, recursive = false, skip?: string[]) {
+  const dir = await resolveFolder(folderPath);
+  const result = [] as Array<{ name: string; path: string; directory: boolean }>;
+  const walk = async (d: FileSystemDirectoryHandle, base: string) => {
+    for await (const entry of (d as any).values()) {
+      if (skip?.includes(entry.name)) continue;
+      const directory = entry.kind === "directory";
+      result.push({ name: entry.name, path: `${base}/${entry.name}`, directory });
+      if (directory && recursive) await walk(entry, `${base}/${entry.name}`);
+    }
+  };
+  await walk(dir, folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/"));
+  return result;
+}
+
 export async function getFolderFolders(folderPath: string) {
   const dir = await resolveFolder(folderPath);
   const base = folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/");

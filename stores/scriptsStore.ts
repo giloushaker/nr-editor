@@ -7,7 +7,7 @@ import listRefs from "~/default-scripts/list-refs";
 import select from "~/default-scripts/select";
 import listAutomaticRefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
-import { dirname, getFolderFiles, readFile, watchFile } from "~/electron/node_helpers";
+import { dirname, listFolder, watchFile } from "~/electron/node_helpers";
 import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
 import pasteWeapons from "~/default-scripts/tow/paste-weapons";
 import pasteEquipment from "~/default-scripts/tow/paste-equipment";
@@ -30,16 +30,14 @@ export const useScriptsStore = defineStore("scripts", {
         if (!path) return [];
         const dir = `${dirname(path)}/scripts`;
 
-        for (const file of await getFolderFiles(dir)) {
+        for (const file of await listFolder(dir)) {
           try {
             if (!file.path.endsWith(".js")) continue;
             const obj = reactive({
               path: file.path,
             }) as Record<string, any>;
-            const loadScript = async (path: string) => {
+            const loadScript = async () => {
               try {
-                const updated_file = await readFile(path);
-                if (!updated_file) return;
                 const module = await import(/* @vite-ignore */ file.path + `?v=${count++}`);
                 for (const key in module.default) {
                   obj[key] = module.default[key];
@@ -50,7 +48,7 @@ export const useScriptsStore = defineStore("scripts", {
                 obj.error = e;
               }
             };
-            loadScript(file.path);
+            loadScript();
             watchFile(file.path, loadScript);
             result.push(obj);
           } catch (e) {
