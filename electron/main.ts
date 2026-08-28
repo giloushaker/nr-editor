@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog, net } = require("electron");
 const path = require("path");
+const { pathToFileURL } = require("url");
 
 // On Linux the chrome-sandbox helper must be root-owned with mode 4755, which
 // isn't the case for a plain `npm install` (especially on external drives).
@@ -16,7 +17,7 @@ import * as bs_helpers from "../assets/shared/battlescribe/bs_helpers";
 import { add_watcher, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles, getFolderMtime } from "./files";
 import { entry, options } from "./entry";
-import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
+import type { IpcMainInvokeEvent } from "electron";
 import { stripHtml } from "./electron_helpers";
 import { readFileSync, WriteFileOptions, writeFileSync } from "fs";
 
@@ -265,31 +266,25 @@ const createSecondaryWindow = () => {
 const createMainWindow = () => {
   askForUpdate();
 
-  // Intercept file protocol to fix loading images
+  // Remap image requests so `assets/...` resolves next to the app instead of against
+  // whatever directory the current route made the renderer guess.
+  //
+  // This used protocol.interceptFileProtocol. Electron 44 still exposes it, but it no
+  // longer passes requests through: it swallowed index.html itself and the window came
+  // up blank (39 characters of document). protocol.handle is the supported replacement;
+  // net.fetch needs bypassCustomProtocolHandlers so it does not re-enter this handler.
   const imageRegex = /(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i;
   const cleanDirName = __dirname.replaceAll("\\", "/");
-  protocol.interceptFileProtocol(
-    "file",
-    (request: ProtocolRequest & { path?: string }, callback: (arg0: any) => void) => {
-      if (!request.url.match(imageRegex)) {
-        callback(request);
-        return;
+  protocol.handle("file", (request: { url: string }) => {
+    let url = request.url;
+    if (imageRegex.test(url)) {
+      const remapped = url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+      if (remapped !== url) {
+        url = remapped.includes("file://") ? remapped : pathToFileURL(remapped).toString();
       }
-
-      if (request.url.includes("app.asar")) {
-        request.url = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
-        callback(request);
-        return;
-      }
-      //  move what comes after /assets to correct path
-      if (request.url.includes("/assets/")) {
-        const ressource = request.url.replace(/^[a-zA-Zf:/\\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
-        request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
-        request.path = ressource;
-      }
-      callback(request);
     }
-  );
+    return net.fetch(url, { bypassCustomProtocolHandlers: true });
+  });
 
   // Bypass cors
   const filter = { urls: ["https://*/*"] };

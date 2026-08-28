@@ -115,8 +115,10 @@ export default defineNuxtConfig({
   vite: {
     plugins: [commonjs()],
     build: {
-      // electron 24 ships chromium ~112: transpile syntax so web-dev code can't silently break the desktop build
-      target: "chrome112",
+      // electron 44 ships chromium 152: transpile syntax so web-dev code can't silently break the desktop build.
+      // The web build keeps the older floor on purpose, so raising Electron does not drop
+      // browsers that were supported before.
+      target: electron ? "chrome152" : "chrome112",
     },
   },
   ignore: [".release/**"],
