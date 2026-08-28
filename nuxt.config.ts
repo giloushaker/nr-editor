@@ -66,6 +66,15 @@ export default defineNuxtConfig({
       ]
       : []),
   ],
+  // nuxt-electron sets router.options.hashMode with `??=`, but Nuxt >= 3.15 ships an
+  // explicit `hashMode: false` default, so its assignment never fires. Electron loads
+  // index.html over file://, where path routing resolves to the filesystem path and
+  // every route falls through to the [...slugs] catch-all.
+  router: {
+    options: {
+      hashMode: electron,
+    },
+  },
   typescript: {
     strict: true,
   },
