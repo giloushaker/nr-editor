@@ -23,7 +23,8 @@
           :class="[category.type, category.links, `depth-${depth}`]"
           nobox
           :defcollapsed="!should_be_open(category.type)"
-          :path="[{ key: category.type, index: 0 }]"
+          @open="remember_open(true, category.type)"
+          @close="remember_open(false, category.type)"
         >
           <template #title>
             <span>
@@ -75,6 +76,8 @@
         :class="[item.parentKey, `depth-${depth}`]"
         :defcollapsed="!open"
         nobox
+        @open="remember_open(true)"
+        @close="remember_open(false)"
       >
         <template #title>
           <CatalogueLeftPanelEntry :item="item" :imported="imported" :highlight="item.highlight" :grouped="grouped" />
@@ -111,260 +114,7 @@
 
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
       <template #default="{ payload }">
-        <template v-if="!payload && item">
-          <div v-if="store.can_follow(item)" @click="store.follow(link)">
-            Follow
-            <span class="gray" v-if="link.target.getCatalogue() !== item.getCatalogue()">
-              &nbsp;[{{ link.target.getCatalogue()?.getName() || link.target.getName() }}]
-            </span>
-            <span class="gray right">Alt+Click</span>
-          </div>
-          <div v-if="imported" @click="store.goto(item)">
-            Goto
-            <span class="gray"> &nbsp;({{ item.getCatalogue()?.getName() }}) </span>
-            <span class="gray right">Alt+Click</span>
-          </div>
-          <div
-            v-if="item.isProfile() && item.typeId && item.getCatalogue().findOptionById(item.typeId)"
-            @click="store.goto(item.getCatalogue().findOptionById(item.typeId) as EditorBase & ProfileType)"
-          >
-            Goto {{ item.typeName }}
-            <span class="gray">
-              &nbsp;[{{ item.getCatalogue().findOptionById(item.typeId)!.getCatalogue().getName() }}]
-            </span>
-            <span class="gray right">Alt+Click</span>
-          </div>
-          <div v-if="child && store.can_goto(child)" @click="store.goto(child)">
-            Goto {{ child.getName() }}
-            <span class="gray" v-if="item.getCatalogue() !== child.getCatalogue()">
-              &nbsp;[{{ child.getCatalogue().getName() }}]
-            </span>
-            <span class="gray right">Alt+Click</span>
-          </div>
-          <div v-if="(item.refs?.length ?? 0) + (item.other_refs?.length ?? 0)" @click="store.mode = 'references'">
-            References ({{ (item.refs?.length ?? 0) + (item.other_refs?.length ?? 0) }})
-          </div>
-          <div v-if="store.filter && !item.showChildsInEditor" @click="store.toggle_selections">
-            Show All Childs<span class="gray right">Space</span>
-          </div>
-          <Separator v-if="item.isLink() || item.refs || imported" />
-        </template>
-        <template v-if="payload">
-          <div @click="store.create(payload)">
-            <img class="pr-4px" :src="`assets/bsicons/${getTypeName(payload)}.png`" />
-            {{ getTypeLabel(getTypeName(payload)) }}
-          </div>
-          <div @click="store.create('entryLinks', { type: 'selectionEntry' })" v-if="payload === 'selectionEntries'">
-            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
-            Link
-          </div>
-          <div @click="store.create('infoLinks', { type: 'rule' })" v-if="payload === 'rules'">
-            <img class="pr-4px" :src="`assets/bsicons/link.png`" />
-            Link
-          </div>
-          <Separator />
-        </template>
-        <template v-else>
-          <div @click="store.create('forceEntries')" v-if="allowed('forceEntries')">
-            <img class="pr-4px" src="assets/bsicons/forceEntry.png" />
-            Force
-          </div>
-          <div @click="store.create('categoryLinks')" v-if="allowed('categoryLinks') && item.isForce()">
-            <img class="pr-4px" src="assets/bsicons/categoryEntryLink.png" />
-            Category
-          </div>
-          <Separator v-if="allowed(['forces', 'categoryLinks'])" />
-          <div @click="store.create('selectionEntries')" v-if="allowed('selectionEntries')">
-            <img class="pr-4px" src="assets/bsicons/selectionEntry.png" />
-            Entry
-          </div>
-          <div @click="store.create('selectionEntryGroups')" v-if="allowed('selectionEntryGroups')">
-            <img class="pr-4px" src="assets/bsicons/selectionEntryGroup.png" />
-            Group
-          </div>
-          <div
-            @click="store.create('entryLinks', { type: 'selectionEntry' })"
-            v-if="allowed(['entryLinks', 'infoLinks', 'forceEntryLinks'])"
-          >
-            <img class="pr-4px" src="assets/bsicons/link.png" />
-            Link
-            <span class="right">❯</span>
-            <ContextMenu id="link_contextmenu">
-              <template v-if="allowed('entryLinks')">
-                <div @click="store.create('entryLinks', { type: 'selectionEntry' })">
-                  <img class="pr-4px" src="assets/bsicons/selectionEntryLink.png" />
-                  Entry
-                </div>
-                <div @click="store.create('entryLinks', { type: 'selectionEntryGroup' })">
-                  <img class="pr-4px" src="assets/bsicons/selectionEntryGroupLink.png" />
-                  Group
-                </div>
-              </template>
-              <template v-if="allowed('infoLinks')">
-                <div @click="store.create('infoLinks', { type: 'profile' })">
-                  <img class="pr-4px" src="assets/bsicons/profileLink.png" />
-                  Profile
-                </div>
-                <div @click="store.create('infoLinks', { type: 'rule' })">
-                  <img class="pr-4px" src="assets/bsicons/ruleLink.png" />
-                  Rule
-                </div>
-                <div @click="store.create('infoLinks', { type: 'infoGroup' })">
-                  <img class="pr-4px" src="assets/bsicons/infoGroupLink.png" />
-                  InfoGroup
-                </div>
-                <div @click="store.create('associationLinks', { type: 'association' })">
-                  <img class="pr-4px" src="assets/bsicons/associationLink.png" />
-                  Association
-                </div>
-              </template>
-              <template v-if="allowed('forceEntryLinks')">
-                <div @click="store.create('forceEntryLinks')">
-                  <img class="pr-4px" src="assets/bsicons/forceEntryLink.png" />
-                  Force
-                </div>
-              </template>
-            </ContextMenu>
-          </div>
-          <Separator v-if="allowed(['selectionEntries', 'selectionEntryGroups', 'entryLinks'])" />
-          <div @click="store.create_child('profiles', item)" v-if="allowed('profiles')">
-            <img class="pr-4px" src="assets/bsicons/profile.png" />
-            Profile
-            <template v-if="profileTypes.length">
-              <span class="right">❯</span>
-              <ContextMenu id="profile_contextmenu">
-                <div
-                  v-for="type of profileTypes"
-                  @click="store.create_child('profiles', item, { typeId: type.id, typeName: type.name })"
-                >
-                  <img class="pr-4px" src="assets/bsicons/profile.png" />
-                  <span>{{ type.getName() }}</span>
-                  <span v-if="getNameExtra(type)" class="gray"> &nbsp;{{ getNameExtra(type, false) }}</span>
-                </div>
-              </ContextMenu>
-            </template>
-          </div>
-          <div @click="store.create('rules')" v-if="allowed('rules')">
-            <img class="pr-4px" src="assets/bsicons/rule.png" />
-            Rule
-          </div>
-          <div @click="store.create('infoGroups')" v-if="allowed('infoGroups')">
-            <img class="pr-4px" src="assets/bsicons/infoGroup.png" />
-            Info Group
-          </div>
-          <div @click="store.create('associations')" v-if="allowed('associations')">
-            <img class="pr-4px" src="assets/bsicons/association.png" />
-            Association
-          </div>
-          <Separator v-if="allowed(['profiles', 'rules', 'infoGroups', 'infoLinks'])" />
-          <div @click="store.create('characteristicTypes')" v-if="allowed('characteristicTypes')">
-            <img class="pr-4px" src="assets/bsicons/characteristicType.png" />
-            Characteristic Type
-          </div>
-          <div @click="store.create('attributeTypes')" v-if="allowed('attributeTypes')">
-            <img class="pr-4px" src="assets/bsicons/attributeType.png" />
-            Attribute Type
-          </div>
-          <Separator v-if="allowed(['attributeTypes', 'characteristicTypes'])" />
-          <div @click="store.create('conditions')" v-if="allowed('conditions')">
-            <img class="pr-4px" src="assets/bsicons/condition.png" />
-            Condition
-          </div>
-          <div @click="store.create('conditionGroups')" v-if="allowed('conditionGroups')">
-            <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
-            Condition Group
-          </div>
-          <div @click="store.create('localConditionGroups')" v-if="allowed('localConditionGroups')">
-            <img class="pr-4px" src="assets/bsicons/conditionGroup.png" />
-            Local Condition Group
-          </div>
-          <div @click="store.create('repeats')" v-if="allowed('repeats')">
-            <img class="pr-4px" src="assets/bsicons/repeat.png" />
-            Repeat
-          </div>
-          <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
-          <div @click="store.create_child('constraints', item)" v-if="allowed('constraints')">
-            <img class="pr-4px" src="assets/bsicons/constraint.png" />
-            Constraint
-          </div>
-          <Separator v-if="allowed(['conditions', 'conditionGroups', 'repeats'])" />
-          <div @click="store.create('modifiers')" v-if="allowed('modifiers')">
-            <img class="pr-4px" src="assets/bsicons/modifier.png" />
-            Modifier
-          </div>
-          <div
-            v-if="item.editorTypeName === 'constraint' && item.parent"
-            @click="store.create_child('modifiers', item.parent, { field: item.id, value: 0 })"
-          >
-            <img class="pr-4px" src="assets/bsicons/modifier.png" />
-            Modifier
-          </div>
-          <div @click="store.create('modifierGroups')" v-if="allowed('modifierGroups')">
-            <img class="pr-4px" src="assets/bsicons/modifierGroup.png" />
-            Modifier Group
-          </div>
-          <Separator
-            v-if="allowed(['constraints', 'modifiers', 'modifierGroups']) || item.editorTypeName === 'constraint'"
-          />
-        </template>
-
-        <div @click="store.cut" v-if="!payload">Cut<span class="gray right">Ctrl+X</span> </div>
-        <div @click="store.copy" v-if="!payload">Copy<span class="gray right">Ctrl+C</span> </div>
-        <div @click="store.paste">Paste<span class="gray right">Ctrl+V</span> </div>
-        <div @click="store.duplicate" v-if="!payload">Duplicate<span class="gray right">Ctrl+D</span></div>
-
-        <div v-if="!sortable(item.parent)" @click="store.move_up(item)">
-          <span> Move Up </span>
-          <span class="gray right">Alt+⭡</span>
-        </div>
-        <div v-if="!sortable(item.parent)" @click="store.move_down(item)">
-          <span> Move Down </span>
-          <span class="gray right">Alt+⭣</span>
-        </div>
-        <template v-if="!payload && store.get_move_targets(item)?.length">
-          <div>
-            <span> Move To </span>
-            <span class="right">❯</span>
-            <ContextMenu id="moveto_contextmenu">
-              <div
-                v-for="target of store.get_move_targets(item)"
-                @click="store.move(item, catalogue, target.target, target.type)"
-              >
-                <img class="pr-4px" src="assets/bsicons/catalogue.png" />
-                {{ target.target.name }} -
-                {{ target.type }}
-              </div>
-            </ContextMenu>
-          </div>
-        </template>
-        <template v-if="!payload && store.get_context_actions().length">
-          <div>
-            <span> Scripts </span>
-            <span class="right">❯</span>
-            <ContextMenu id="moveto_contextmenu">
-              <div v-for="action of store.get_context_actions()">
-                <img class="pr-4px" src="assets/icons/right2.png" />
-                {{ action }}
-              </div>
-            </ContextMenu>
-          </div>
-        </template>
-        <div
-          @click="
-            store.create_child('entryLinks', catalogue, {
-              targetId: item.id,
-              type: 'selectionEntry',
-              name: item.getName(),
-            })
-          "
-          v-if="item.parentKey === 'sharedSelectionEntries'"
-        >
-          Add Root Link<span class="gray" v-if="hasRootLink(catalogue, item)">&nbsp;(already has one)</span>
-        </div>
-        <Separator v-if="!payload" />
-        <div @click="store.remove()" v-if="!payload">
-          <img class="w-12px pr-4px" src="/assets/icons/redcross.png" />Remove<span class="gray right">Del</span>
-        </div>
+        <ContextMenuItems :groups="buildMenu(payload)" />
       </template>
     </ContextMenu>
   </div>
@@ -383,7 +133,8 @@ import {
   catalogueCategories,
   getNameExtra,
   getEntryPath,
-} from "~/assets/shared/battlescribe/bs_editor";
+  type ItemKeys,
+} from "~/assets/editor/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Base, Condition, Link, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import {
@@ -403,9 +154,12 @@ import { getModifiedField, modifiersOrder } from "~/assets/shared/battlescribe/b
 import type { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
+import ContextMenuItems from "~/components/dialog/ContextMenuItems.vue";
+import type { MenuItem } from "~/components/dialog/menu";
+import { buildEntryMenu } from "./entry_menu";
 import CatalogueLabel from "~/components/catalogue/left_panel/components/CatalogueLabel.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
-import { entries } from "~/assets/shared/battlescribe/entries";
+import { entries, types } from "~/assets/shared/battlescribe/entries";
 export interface ICost {
   name: string;
   value: number;
@@ -431,40 +185,18 @@ export function formatCosts(costs: ICost[]): string {
   }
   return `<span class="costList">${res}</span>`;
 }
-const order: Record<string, number> = {
-  link: 1,
-  selectionEntry: 1,
-  entryLink: 1,
-  characteristicType: 1,
-  attributeType: 2,
-  selectionEntryGroup: 2,
-  entryGroupLink: 2,
-  constraint: 3,
-  forceEntry: 4,
-  forceEntryLink: 4,
-  profile: 5,
-  rule: 6,
-  infoGroup: 7,
-  infoLink: 8,
-  modifier: 9,
-  modifierGroup: 10,
-  categoryLink: 11,
-  association: 12,
-};
-const preferOpen = new Set(["modifierGroups", "conditionGroups", "localConditionGroups"]);
-const hiddenTypes = new Set(["costs", "formatRules", "characteristics", "attributes"]);
-const avoidSorting = new Set([
-  "forceEntry",
-  "profileType",
-  "condition",
-  "conditionGroup",
-  "repeat",
-  "localConditionGroup",
-]);
+/** Tree display metadata lives with the node definitions in entries.ts. */
+function typeMeta(type: string): { sortOrder?: number; noSort?: boolean } {
+  return (types as Record<string, { sortOrder?: number; noSort?: boolean }>)[type] ?? {};
+}
+function entryMeta(key: string): { hiddenInTree?: boolean; preferOpen?: boolean } {
+  return (entries as Record<string, { hiddenInTree?: boolean; preferOpen?: boolean }>)[key] ?? {};
+}
 export default {
   name: "CatalogueEntry",
   components: {
     ContextMenu,
+    ContextMenuItems,
     EditorCollapsibleBox,
     CatalogueLabel,
   },
@@ -567,12 +299,22 @@ export default {
       if (category) {
         return this.open_categories !== undefined && this.open_categories.has(category);
       }
-      return preferOpen.has(this.item.parentKey) || this.state.get(this.catalogue.id, getEntryPath(this.item));
+      return entryMeta(this.item.parentKey).preferOpen || this.state.get(this.catalogue.id, getEntryPath(this.item));
+    },
+    /**
+     * Write side of should_be_open. Imported entries belong to another catalogue, so their
+     * paths would be meaningless under this one -- created() skips reading them for the same
+     * reason.
+     */
+    remember_open(open: boolean, category?: string) {
+      if (this.imported || !this.catalogue) return;
+      if (category) this.state.set_root_open(this.catalogue.id, category, open);
+      else this.state.set_open(this.catalogue.id, getEntryPath(this.item), open);
     },
     sortable(entry?: EditorBase) {
       if (this.settings.sort === "none") return false;
       if (!entry) return true;
-      if (avoidSorting.has(entry.editorTypeName)) {
+      if (typeMeta(entry.editorTypeName).noSort) {
         return false;
       }
       return true;
@@ -594,9 +336,6 @@ export default {
       (globalThis as any).$debugOption = this.item;
       (globalThis as any).$debugElement = this;
       (globalThis as any).$debugGroup = this.$parent;
-    },
-    hasRootLink(catalogue: Catalogue, item: Base) {
-      return catalogue.entryLinks?.find((o) => o.targetId === item.id);
     },
     getTypedArray(item: Catalogue, type: ItemKeys, output: CatalogueEntryItem[]) {
       if (!type) return;
@@ -678,7 +417,7 @@ export default {
         : this.sorted(items);
       const result = sortByAscending(
         ordered,
-        (o) => order[(o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName] ?? 1000,
+        (o) => typeMeta((o.item?.target as EditorBase)?.editorTypeName ?? o.item.editorTypeName).sortOrder ?? 1000,
       );
       if (this.settings.display.sortIndex) {
         sortByAscendingInplace(result, (o) => o.item.sortIndex ?? 10000);
@@ -709,9 +448,13 @@ export default {
         return (this.item.target as any)[field];
       }
     },
+    /** See entry_menu.ts; this component supplies the context that builds it. */
+    buildMenu(payload?: ItemKeys): MenuItem[][] {
+      return buildEntryMenu(this, payload);
+    },
     hideType(type: string) {
       if (type === "categoryLinks" && !this.item.isForce()) return true;
-      if (hiddenTypes.has(type)) return true;
+      if (entryMeta(type).hiddenInTree) return true;
     },
   },
 
@@ -759,6 +502,10 @@ export default {
     },
     contextmenu() {
       return this.menu("contextmenu");
+    },
+    /** Menu entries contributed by scripts. Computed once instead of per template read. */
+    scriptActions() {
+      return this.store.get_context_actions();
     },
     catalogue() {
       return this.item.getCatalogue() as Catalogue & EditorBase;
@@ -841,6 +588,7 @@ export default {
 
 .typeIcon {
   max-width: 18px;
+  vertical-align: middle;
 }
 
 .typeIcon-wrapper {

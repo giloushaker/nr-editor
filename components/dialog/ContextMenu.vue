@@ -16,6 +16,17 @@
 </template>
 
 <script lang="ts">
+/**
+ * A ContextMenu seen from another ContextMenu. The options-API instance type is not nameable
+ * (and `typeof this` inside data() does not match `this` inside mounted()), so this spells out
+ * the three members the nesting code actually touches.
+ */
+type ContextMenuInstance = {
+  show: (e: MouseEvent, payload?: any) => void;
+  close: (e?: Event) => void;
+  nestedContextMenus: Record<string, ContextMenuInstance>;
+};
+
 export default {
   name: "ContextMenu",
   data() {
@@ -31,7 +42,7 @@ export default {
       isRight: false,
       payload: undefined,
       hoveredElement: null as Element | null,
-      nestedContextMenus: {} as Record<string, typeof this>,
+      nestedContextMenus: {} as Record<string, ContextMenuInstance>,
     };
   },
   props: {
@@ -45,7 +56,8 @@ export default {
     },
   },
   methods: {
-    hover(event: Event, e: Element | null) {
+    hover(event: MouseEvent, target: EventTarget | null) {
+      const e = target instanceof Element ? target : null;
       if (this.hoveredElement !== e) {
         const div = e?.closest(".context-menu > *");
         for (const nested of div?.querySelectorAll("[context-menu-id]") || []) {
@@ -73,7 +85,7 @@ export default {
         const avoidLeft = avoid.offsetLeft;
         this.left = avoidLeft + avoid.offsetWidth;
         const target = e.target as HTMLDivElement;
-        var targetPos = target.getBoundingClientRect();
+        const targetPos = target.getBoundingClientRect();
         this.top = targetPos.top - 1;
       }
 
@@ -102,7 +114,7 @@ export default {
     get_parent_context() {
       let parent = this.$parent;
       while (parent) {
-        if (parent.$options.name === this.$options.name) return parent;
+        if (parent.$options.name === this.$options.name) return parent as unknown as ContextMenuInstance;
         parent = parent.$parent;
       }
       return null;

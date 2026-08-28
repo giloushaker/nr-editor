@@ -8,12 +8,20 @@ import select from "~/default-scripts/select";
 import listAutomaticRefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { dirname, listFolder, watchFile } from "~/electron/node_helpers";
-import pasteSpecialRule from "~/default-scripts/tow/paste-special-rule";
-import pasteWeapons from "~/default-scripts/tow/paste-weapons";
-import pasteEquipment from "~/default-scripts/tow/paste-equipment";
 import findDuplicateIds from "~/default-scripts/find-duplicate-ids";
 import findDuplicatesProfiles from "~/default-scripts/find-duplicates-profiles";
 import towMatchedPlay from "~/default-scripts/tow/matched-play-constraints";
+
+/** What a script's `context` hook may hand back for one menu entry. */
+export interface HookResult {
+  label?: string;
+  /** Which group of the asking menu to sit in; unknown names fall back to the Scripts submenu. */
+  group?: string;
+  /** Path under /assets, without a leading slash. */
+  icon?: string;
+  run?: () => unknown;
+}
+export type HookAction = HookResult & { label: string; run: () => unknown };
 
 let count = 0;
 export const useScriptsStore = defineStore("scripts", {
@@ -110,16 +118,33 @@ export const useScriptsStore = defineStore("scripts", {
       }
       return arg;
     },
-    run_hooks_sync(key: string, event?: Event, arg?: any): string[] {
-      const result = [];
+    /**
+     * Collects menu entries contributed by scripts.
+     *
+     * A script's `context` hook is handed the current selection and returns what it wants to
+     * offer: a label, an object, an array of either, or nothing to stay hidden. It used to
+     * return bare script names with no way to invoke them, so the menu rendered items that
+     * did nothing when clicked.
+     */
+    run_hooks_sync(key: string, event?: Event, arg?: any): HookAction[] {
+      const result: HookAction[] = [];
       for (const [name, cb] of Object.entries(this.hooks[key] || {})) {
         try {
-          const returned = cb(event, arg);
-          if (returned) {
-            result.push(name);
+          const returned = cb(event, arg) as string | HookResult | HookResult[] | undefined;
+          if (!returned) continue;
+          for (const one of Array.isArray(returned) ? returned : [returned]) {
+            if (!one) continue;
+            if (typeof one === "object") {
+              // `group` names a group in whatever menu is asking; an unknown one just means
+              // "wherever you put things you don't have a place for".
+              result.push({ ...one, label: one.label ?? name, run: () => one.run?.() });
+            } else {
+              // A bare label means "offer me, then run the script itself".
+              result.push({ label: String(one) || name, run: () => this.run_script(name, arg) });
+            }
           }
         } catch (e) {
-          continue;
+          console.error(`Script "${name}" failed contributing a "${key}" action`, e);
         }
       }
       return result;

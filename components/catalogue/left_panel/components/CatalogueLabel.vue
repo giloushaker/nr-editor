@@ -17,26 +17,7 @@
       </template>
     </EditorCollapsibleBox>
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
-      <template #default="{ payload }">
-        <template v-if="typeItem">
-          <div v-if="typeItem" @click="store.goto(typeItem)"> Goto ({{ typeItem.getName() }} </div>
-          <Separator />
-          <div
-            @click="
-              store.create_child('sharedProfiles', catalogue as EditorBase, {
-                typeName: typeItem?.getName(),
-                typeId: typeItem?.getId(),
-              })
-            "
-          >
-            <img class="pr-4px" src="assets/bsicons/profile.png" />
-            Profile <span class="gray">&nbsp;({{ typeItem?.getName() }})</span>
-          </div>
-        </template>
-        <template v-else>
-          <div> Nothing </div>
-        </template>
-      </template>
+      <ContextMenuItems :groups="buildMenu()" />
     </ContextMenu>
   </div>
 </template>
@@ -44,16 +25,21 @@
 <script lang="ts">
 import { useEditorStore } from "~/stores/editorStore";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
+import ContextMenuItems from "~/components/dialog/ContextMenuItems.vue";
+import type { MenuItem } from "~/components/dialog/menu";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
-import { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import { EntryPathEntry } from "~/assets/editor/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
-  name: "CatalogueEntry",
+  // Was "CatalogueEntry", which is the name of a different component in this same folder:
+  // anything resolving a component by name from here reached the wrong one.
+  name: "CatalogueLabel",
   components: {
     ContextMenu,
+    ContextMenuItems,
     EditorCollapsibleBox,
   },
   setup() {
@@ -118,6 +104,27 @@ export default {
       ] as EntryPathEntry[];
       this.open = this.state.get(this.catalogue.id, fullPath);
     },
+    /** See CatalogueEntry.buildMenu: the menu is data, and separators fall out of the groups. */
+    buildMenu(): MenuItem[][] {
+      const type = this.typeItem;
+      // Untyped profiles get a label with no type behind it; an item with no run() is inert.
+      if (!type) return [[{ label: "Nothing" }]];
+      return [
+        [{ label: `Goto (${type.getName()})`, run: () => this.store.goto(type) }],
+        [
+          {
+            label: "Profile",
+            icon: "assets/bsicons/profile.png",
+            note: `(${type.getName()})`,
+            run: () =>
+              this.store.create_child("sharedProfiles", this.catalogue as EditorBase, {
+                typeName: type.getName(),
+                typeId: type.getId(),
+              }),
+          },
+        ],
+      ];
+    },
     debug() {
       console.log(this.typeItem?.name, this.typeItem?.editorTypeName, toRaw(this.typeItem));
       (globalThis as any).$debugOption = this.typeItem;
@@ -150,6 +157,7 @@ export default {
 
 .typeIcon {
   max-width: 18px;
+  vertical-align: middle;
 }
 
 .typeIcon-wrapper {
