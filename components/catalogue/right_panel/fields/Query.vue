@@ -445,6 +445,7 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
 </script>
 
 <style scoped lang="scss">
+@use "@/shared_components/css/vars.scss" as *;
 .constraint {
   display: grid;
   grid-template-columns: 1fr 50px max-content;
@@ -463,8 +464,6 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
   align-items: center;
   gap: 8px;
 }
-
-@import "@/shared_components/css/vars.scss";
 
 .catalogueName {
   color: rgb(144, 152, 197);

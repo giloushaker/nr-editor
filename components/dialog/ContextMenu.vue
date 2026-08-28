@@ -148,7 +148,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 .fixed {
   position: fixed;
 }

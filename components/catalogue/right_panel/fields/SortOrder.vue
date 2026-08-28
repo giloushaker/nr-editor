@@ -241,7 +241,7 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .drop-target-is-above {
   border-top: 4px solid rgb(101, 161, 101);

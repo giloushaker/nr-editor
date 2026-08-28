@@ -430,7 +430,7 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 
 

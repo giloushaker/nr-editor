@@ -59,7 +59,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 #app {
   padding: 0 !important;
