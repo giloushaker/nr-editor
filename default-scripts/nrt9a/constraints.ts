@@ -285,7 +285,7 @@ export async function armyConstraints(importer: T9AImporter) {
           console.log("Could not find category for ref: " + ref);
         } else {
           await $store.add(constraint, "constraints", cat as any);
-          await $store.add(modifiers, "modifiers", cat as any);
+          await $store.add(modifiers, "modifiers", cat);
         }
       }
     }

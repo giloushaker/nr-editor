@@ -482,7 +482,7 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
           },
         ];
 
-        $store.edit_node(rootEntry as EditorBase, {
+        $store.edit_node(rootEntry, {
           constraints: [...(rootEntry.constraints || []), newConstraint],
           modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
         });

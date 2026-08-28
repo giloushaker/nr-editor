@@ -26,6 +26,7 @@ import {
   addObj,
   type MaybeArray,
   isObject,
+  isDefaultObject,
   sortByDescendingInplace,
   sortByAscendingInplace,
 } from "~/assets/shared/battlescribe/bs_helpers";
@@ -43,7 +44,18 @@ import {
   arrayKeys,
   ProfileType,
 } from "~/assets/shared/battlescribe/bs_main";
-import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
+import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
+import { initializeSubtree } from "~/assets/editor/bs_initialize";
+
+/**
+ * Initializes a subtree the editor is inserting. The shared setPrototypeRecursive stops at the
+ * first node that already has a prototype, which is right for freshly parsed JSON but wrong here:
+ * fix_object merges defaults over caller data, so an insert can arrive part live and part plain,
+ * and everything plain below the first live node used to stay that way until the system reloaded.
+ */
+function initializeInserted(wrapper: object): number {
+  return initializeSubtree(wrapper, { initialized: (node) => !isDefaultObject(node), initialize: setPrototype });
+}
 // Side-effect import: grafts the editor half onto Catalogue.prototype and registers the
 // per-parentKey prototype hook. Must be in place before any catalogue is loaded, and this
 // store is where they all come from.
@@ -1000,7 +1012,7 @@ export const useEditorStore = defineStore("editor", {
           if (!Array.isArray(arr)) {
             throw new Error(`Couldn't duplicate: parent[${item.parentKey}] is not an array`);
           }
-          setPrototypeRecursive({ [item.parentKey]: copy });
+          initializeInserted({ [item.parentKey]: copy });
           scrambleIds(catalogue, copy);
           arr.push(copy);
           onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
@@ -1134,7 +1146,7 @@ export const useEditorStore = defineStore("editor", {
             delete copy.parentKey;
 
             // Initialize classes from the json
-            setPrototypeRecursive({ [key]: copy });
+            initializeInserted({ [key]: copy });
             toAdd.push({ key, entry: copy });
           }
 
@@ -1480,7 +1492,6 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
-        // @ts-ignore
         ...this.fix_object(key, data, catalogue),
         ...data,
       };
@@ -1499,7 +1510,7 @@ export const useEditorStore = defineStore("editor", {
       delete obj.parentKey;
 
       // Initialize classes from the json
-      setPrototypeRecursive({ [key]: obj });
+      initializeInserted({ [key]: obj });
 
       // Add it to its parent
       arr.push(obj as EditorBase);
@@ -1606,7 +1617,7 @@ export const useEditorStore = defineStore("editor", {
 
             // @ts-ignore
             const fixed_obj = this.fix_object(key, val, catalogue);
-            setPrototypeRecursive({ [key]: fixed_obj });
+            initializeInserted({ [key]: fixed_obj });
 
             // @ts-ignore
             entry[key] = fixed_obj;
@@ -1701,7 +1712,7 @@ export const useEditorStore = defineStore("editor", {
         onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
-        setPrototypeRecursive({ [catalogueKey]: copy });
+        initializeInserted({ [catalogueKey]: copy });
         // @ts-ignore
         if (!to[catalogueKey]) to[catalogueKey] = [];
 
@@ -1727,7 +1738,7 @@ export const useEditorStore = defineStore("editor", {
             link.collective = obj.collective;
           }
           const linkKey = obj.isGroup() || obj.isEntry() ? "entryLinks" : "infoLinks";
-          setPrototypeRecursive({ [linkKey]: link });
+          initializeInserted({ [linkKey]: link });
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
           onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
