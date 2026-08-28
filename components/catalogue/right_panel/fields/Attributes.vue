@@ -14,7 +14,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getName, getNameExtra } from "~/assets/editor/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
@@ -43,12 +43,9 @@ export default {
     changedType(newType: ProfileType & EditorBase, oldOption: ProfileType & EditorBase): void {
       this.item.getCatalogue().refreshErrors(this.item as EditorBase & (Profile | Link<Profile>));
 
-      if (oldOption) {
-        this.catalogue.removeRef(this.item as Profile & EditorBase, oldOption);
-      }
-      if (newType) {
-        this.catalogue.addRef(this.item as Profile & EditorBase, newType);
-      }
+      // typeId is a reference the index derives, so reindexing covers both the old
+      // and the new profile type.
+      this.item.getCatalogue().reindexReferences(this.item as EditorBase);
       this.item.attributes = this.attributes;
     },
 

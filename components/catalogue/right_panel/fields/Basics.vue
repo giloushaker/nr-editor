@@ -3,6 +3,7 @@
     <legend>Basics</legend>
     <div class="mr-8px">
       <table class="editorTable">
+        <!-- The id isn't a plain field write: it has to move the node in the catalogue index. -->
         <tr>
           <td>Unique ID:</td>
           <td class="flex gap-2px">
@@ -14,41 +15,41 @@
             </button>
           </td>
         </tr>
-        <tr>
-          <td>Name:</td>
-          <td class="flex gap-2px items-center">
-            <input type="text" v-model="item.name" />
+
+        <EditorField :item="item" field="name" label="Name">
+          <div class="flex gap-2px items-center">
+            <EditorFieldControl :item="item" field="name" />
             <template v-if="sortable">
-              <span> Position: </span>
-              <input type="number" class="w-50px inline-block" v-model="item.sortIndex" />
+              <span>Position:</span>
+              <EditorFieldControl :item="item" field="sortIndex" type="number" class="w-50px inline-block" />
             </template>
-          </td>
-        </tr>
-        <!-- <tr>
-          <td>Color:</td>
-          <td class="flex gap-2px items-center">
-            <input type="color" v-model="item.color" />
-          
-          </td>
-        </tr> -->
-        <tr v-if="item.editorTypeName === 'forceEntry'">
-          <td>Child Forces Label:</td>
-          <td><input type="text" v-model="(item as BSIForce).childForcesLabel" placeholder="Forces" /></td>
-        </tr>
+          </div>
+        </EditorField>
+
+        <EditorField
+          v-if="item.editorTypeName === 'forceEntry'"
+          :item="item"
+          field="childForcesLabel"
+          label="Child Forces Label"
+          placeholder="Forces"
+        />
+
         <template v-if="aliases">
-          <tr>
-            <td class="hastooltip" title="Additional Aliases for in-text reference matching, case insensitive.
-one per line">
-              Aliases:
-            </td>
-            <td>
-              <InputStringArray v-model="item.alias" />
-            </td>
-          </tr>
-          <tr>
-            <td class="hastooltip" title="Disable indexing the name of this node for in-text references.">No Index</td>
-            <td><input type="checkbox" v-model="item.noindex" /></td>
-          </tr>
+          <EditorField
+            :item="item"
+            field="alias"
+            label="Aliases"
+            title="Additional Aliases for in-text reference matching, case insensitive.&#10;one per line"
+          >
+            <InputStringArray v-model="item.alias" />
+          </EditorField>
+          <EditorField
+            :item="item"
+            field="noindex"
+            type="checkbox"
+            label="No Index"
+            title="Disable indexing the name of this node for in-text references."
+          />
         </template>
       </table>
     </div>
@@ -58,18 +59,19 @@ one per line">
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIOption, BSINamed, BSIAliasable, BSIForce } from "~/assets/shared/battlescribe/bs_types";
 import InputStringArray from "./InputStringArray.vue";
-import { Force } from "~/assets/shared/battlescribe/bs_main";
+import EditorField from "./EditorField.vue";
+import EditorFieldControl from "./EditorFieldControl.vue";
+import { itemProp } from "./props";
+import { useEditorStore } from "~/stores/editorStore";
 
 export default {
-  components: { InputStringArray },
-  emits: ["idchanged"],
+  components: { InputStringArray, EditorField, EditorFieldControl },
+  setup() {
+    return { store: useEditorStore() };
+  },
   props: {
-    item: {
-      type: Object as PropType<EditorBase & Partial<BSIAliasable>>,
-      required: true,
-    },
+    ...itemProp,
     aliases: {
       type: Boolean,
       default: false,
@@ -77,6 +79,16 @@ export default {
   },
 
   methods: {
+    /**
+     * Marks the catalogue unsaved. These edits deliberately bypass store.set_field -- the id
+     * has to move the node in the index, min/max are raw v-model, categories mutate a links
+     * array -- and set_field is what otherwise reports the change, so without this the edit
+     * lands but the save indicator never lights up. Was calling a `changed()` that no
+     * component defined, so it threw.
+     */
+    changed() {
+      this.store.changed(this.item as EditorBase);
+    },
     idchanged() {
       this.changed();
     },

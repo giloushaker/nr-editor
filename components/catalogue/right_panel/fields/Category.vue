@@ -23,7 +23,7 @@
       </label>
     </div>
     <ContextMenu v-if="contextmenuopen" v-model="contextmenuopen" ref="contextmenu">
-      <div @click="store.goto(category)">
+      <div @click="store.goto(category as unknown as EditorBase)">
         Goto {{ category.getName() }}
         <span class="gray"> &nbsp;({{ category.catalogue?.getName() }}) </span>
       </div>
@@ -43,7 +43,7 @@ export default defineComponent({
       type: Object as PropType<Category>,
     },
     item: {
-      type: Object as PropType<Link & EditorBase>,
+      type: Object as PropType<EditorBase>,
       required: true,
     },
   },
@@ -69,7 +69,7 @@ export default defineComponent({
       };
     },
     hasCategory(cat: Category) {
-      let link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
+      const link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
       if (!link) {
         return 0;
       }

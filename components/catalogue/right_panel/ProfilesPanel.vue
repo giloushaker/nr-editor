@@ -28,18 +28,17 @@
 </template>
 
 <script lang="ts">
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIProfile } from "~/assets/shared/battlescribe/bs_types";
+import { Profile } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   props: {
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
     item: {
-      type: Object as PropType<BSIProfile>,
+      type: Object as PropType<Profile & EditorBase>,
       required: true,
     },
   },

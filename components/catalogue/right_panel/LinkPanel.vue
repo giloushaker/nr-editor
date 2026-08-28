@@ -61,6 +61,7 @@
 
 <script lang="ts">
 import { link } from "fs";
+import { catalogueProp } from "./fields/props";
 import { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Link, Profile, Rule } from "~/assets/shared/battlescribe/bs_main";
@@ -74,10 +75,7 @@ export default {
       required: true,
     },
 
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
 
     type: {
       type: String,

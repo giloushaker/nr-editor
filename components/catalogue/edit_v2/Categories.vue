@@ -117,7 +117,7 @@ import AutocompleteTags from "~/components/util/AutocompleteTags.vue";
 import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getNameExtra } from "~/assets/editor/bs_editor";
 import { useEditorStore } from "~/stores/editorStore";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useSettingsStore } from "~/stores/settingsState";
@@ -247,7 +247,7 @@ export default defineComponent({
     },
     addCategoryAndMakePrimary(category: Category) {
       const cl = this.addCategory(category);
-      this.makePrimary(cl, this.item);
+      if (cl) this.makePrimary(cl as EditorBase & CategoryLink, this.item);
     },
     removeCategory(parent: Base, category: CategoryLink) {
       const links = parent.categoryLinks || [];

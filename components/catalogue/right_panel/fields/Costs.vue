@@ -45,8 +45,8 @@ export default {
 
   computed: {
     costTypes() {
-      let res: BSICostType[] = [];
-      for (let elt of this.catalogue.iterateCostTypes()) {
+      const res: BSICostType[] = [];
+      for (const elt of this.catalogue.iterateCostTypes()) {
         res.push(elt);
       }
       return res;
@@ -61,7 +61,7 @@ export default {
     update() {
       this.selectedCosts = {};
       const defaultValue = ((this.item as EditorBase).isLink() ? undefined : 0) as number;
-      for (let cost of Object.values(this.costTypes)) {
+      for (const cost of Object.values(this.costTypes)) {
         this.selectedCosts[cost.id] = {
           name: cost.name,
           typeId: cost.id,
@@ -70,7 +70,7 @@ export default {
       }
 
       if (this.item.costs) {
-        for (let cost of this.item.costs) {
+        for (const cost of this.item.costs) {
           this.selectedCosts[cost.typeId] = {
             name: cost.name,
             typeId: cost.typeId,

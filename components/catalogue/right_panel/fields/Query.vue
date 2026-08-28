@@ -78,10 +78,12 @@
 </template>
 
 <script lang="ts">
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import type { QueryNode } from "./props";
+import { getNameExtra } from "~/assets/editor/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
-import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { getAllPossibleParents } from "~/assets/editor/catalogue_editor";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
@@ -105,7 +107,7 @@ export default {
   },
   props: {
     item: {
-      type: Object as PropType<EditorBase & (BSIConstraint | BSICondition)>,
+      type: Object as PropType<QueryNode>,
       required: true,
     },
     catalogue: {
@@ -142,7 +144,7 @@ export default {
     },
     fieldChanged() {
       this.item.field = this.itemField.value;
-      if (this.item.field.startsWith("limit::") && this.item.editorTypeName !== "constraint") {
+      if (this.item.field?.startsWith("limit::") && this.item.editorTypeName !== "constraint") {
         this.item.childId = "any";
       }
       if (this.item.field === "associations") {
@@ -215,7 +217,7 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
 `;
     },
     instanceOf() {
-      return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
+      return ["instanceOf", "notInstanceOf"].includes(this.item?.type ?? "");
     },
     parent() {
       return getModifierOrConditionParent(this.item as EditorBase);
@@ -288,8 +290,8 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
     },
 
     costTypes() {
-      let res: BSICostType[] = [];
-      for (let elt of this.catalogue.iterateCostTypes()) {
+      const res: BSICostType[] = [];
+      for (const elt of this.catalogue.iterateCostTypes()) {
         res.push(elt);
       }
       return res;

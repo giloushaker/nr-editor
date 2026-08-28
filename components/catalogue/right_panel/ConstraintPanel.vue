@@ -19,6 +19,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import QuickModifiers from "./fields/QuickModifiers.vue";
@@ -32,10 +33,7 @@ export default {
       type: Object as PropType<Constraint & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
   computed: {
     showFilterBy() {
@@ -44,7 +42,7 @@ export default {
   },
   methods: {
     changed() {
-      this.catalogue.updateCondition(this.item as EditorBase & Condition);
+      this.catalogue.updateCondition(this.item as unknown as EditorBase & Condition);
     },
   },
 };

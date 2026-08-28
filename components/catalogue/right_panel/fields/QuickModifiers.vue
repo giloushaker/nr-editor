@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemTypes } from "~/assets/editor/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 

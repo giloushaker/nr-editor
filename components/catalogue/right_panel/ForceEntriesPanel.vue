@@ -12,6 +12,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Force } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
@@ -22,10 +23,7 @@ export default {
       required: true,
     },
 
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
 };
 </script>

@@ -25,7 +25,8 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { catalogueProp } from "./fields/props";
+import { ItemTypes } from "~/assets/editor/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -33,14 +34,11 @@ import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe
 export default {
   props: {
     item: {
-      type: Object as PropType<ItemTypes & EditorBase & (Base | Link<Group>)>,
+      type: Object as PropType<Group & EditorBase>,
       required: true,
     },
 
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
   methods: {
     getChilds(item: EditorBase & Link<Group>) {

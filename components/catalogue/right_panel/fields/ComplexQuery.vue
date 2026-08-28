@@ -134,7 +134,7 @@ import {
   getSearchElements,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
-import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { filterByItems, getNameExtra } from "~/assets/editor/bs_editor";
 import {
   AffectsQuery,
   construct_affects_query,
@@ -247,8 +247,8 @@ export default defineComponent({
       return this.item.editorTypeName;
     },
     costTypes() {
-      let res: BSICostType[] = [];
-      for (let elt of this.catalogue.iterateCostTypes()) {
+      const res: BSICostType[] = [];
+      for (const elt of this.catalogue.iterateCostTypes()) {
         res.push(elt);
       }
       return res;

@@ -25,7 +25,7 @@
 
         <div v-for="lnk of badLinks" class="category" :key="lnk.id">
           <div>
-            <input name="primary" type="radio" :checked="hasCategory(lnk) == 2" @change="primaryChanged(lnk)" />
+            <input name="primary" type="radio" :checked="lnk.primary" @change="primaryChangedLink(lnk)" />
             Primary?
           </div>
           <div>
@@ -44,6 +44,7 @@ import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { useSettingsStore } from "~/stores/settingsState";
+import { useEditorStore } from "~/stores/editorStore";
 import CategoryVue from "~/components/catalogue/right_panel/fields/Category.vue";
 import Tag from "../../edit_v2/Tag.vue";
 
@@ -57,11 +58,11 @@ export default {
     };
   },
   setup() {
-    return { settings: useSettingsStore() };
+    return { settings: useSettingsStore(), store: useEditorStore() };
   },
   props: {
     item: {
-      type: Object as PropType<Link & EditorBase>,
+      type: Object as PropType<EditorBase>,
       required: true,
     },
     catalogue: {
@@ -71,8 +72,18 @@ export default {
   },
 
   methods: {
+    /**
+     * Marks the catalogue unsaved. These edits deliberately bypass store.set_field -- the id
+     * has to move the node in the index, min/max are raw v-model, categories mutate a links
+     * array -- and set_field is what otherwise reports the change, so without this the edit
+     * lands but the save indicator never lights up. Was calling a `changed()` that no
+     * component defined, so it threw.
+     */
+    changed() {
+      this.store.changed(this.item as EditorBase);
+    },
     hasCategory(cat: Category) {
-      let link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
+      const link = this.item.categoryLinks?.find((elt) => elt.target?.id === cat.id);
       if (!link) {
         return 0;
       }
@@ -89,7 +100,19 @@ export default {
       this.refreshCategories(this.item, cat, false);
     },
 
-    refreshCategories(item: Link & EditorBase, cat: Category | null, primary: boolean) {
+    /**
+     * A bad link has no target, so it cannot go through refreshCategories: that looks links up by
+     * category id, never matches (targetId holds the missing category's id, not the link's), and
+     * falls through to addLink -- which throws on isCategory(). Flip the link itself instead.
+     * hasCategory() had the mirror problem and always reported 0, so the radio never showed as set.
+     */
+    primaryChangedLink(link: CategoryLink) {
+      for (const o of this.item.categoryLinks || []) o.primary = false;
+      link.primary = true;
+      this.changed();
+    },
+
+    refreshCategories(item: EditorBase, cat: Category | null, primary: boolean) {
       if (!item.categoryLinks) item.categoryLinks = [];
       const links = item.categoryLinks;
       if (primary) {
@@ -137,18 +160,15 @@ export default {
         "categoryLinks"
       );
       links.push(cl);
+      // addToIndex records the link's targetId, which is what makes it a ref of the
+      // category -- there is no array to append to any more.
       this.catalogue.addToIndex(cl);
-      const target = cat as Category & EditorBase;
-      if (!target.refs) {
-        target.refs = [];
-      }
-      target.refs?.push(cl as CategoryLink & EditorBase);
       return cl;
     },
     noPrimary() {
-      let res = true;
+      const res = true;
       if (this.item.categoryLinks) {
-        for (let cat of this.item.categoryLinks) {
+        for (const cat of this.item.categoryLinks) {
           if (cat.primary) {
             return false;
           }
@@ -176,9 +196,9 @@ export default {
       return this.item.categoryLinks?.length || 0;
     },
     categories() {
-      let res: Category[] = [];
+      const res: Category[] = [];
 
-      for (let cat of this.catalogue.iterateCategoryEntries()) {
+      for (const cat of this.catalogue.iterateCategoryEntries()) {
         if (this.settings.showOnlyEnabledCategories && this.hasCategory(cat) == 0) {
           continue;
         }

@@ -18,6 +18,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import ConditionVue from "./fields/Condition.vue";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
@@ -30,10 +31,7 @@ export default {
       type: Object as PropType<Condition & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
   components: { Condition: ConditionVue, FilterBy },
 };

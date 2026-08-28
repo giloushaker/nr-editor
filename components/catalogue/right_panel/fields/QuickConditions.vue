@@ -55,7 +55,7 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemTypes } from "~/assets/editor/bs_editor";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { scopeIsId } from "~/assets/ts/catalogue/catalogue_helpers";
@@ -99,7 +99,7 @@ export default {
         field = (this.item as EditorBase).id;
       }
 
-      let parent = this.item as EditorBase;
+      const parent = this.item as EditorBase;
       this.store.create_child("conditions", parent, {
         scope: scope,
         field: field,
@@ -110,7 +110,7 @@ export default {
       });
     },
     addGroup(type: "and" | "or") {
-      let parent = this.item as EditorBase;
+      const parent = this.item as EditorBase;
       this.store.create_child("conditionGroups", parent, {
         type: type,
       });

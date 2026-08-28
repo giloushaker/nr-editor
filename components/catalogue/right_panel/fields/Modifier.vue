@@ -157,10 +157,10 @@
 <script lang="ts">
 import type { PropType } from "vue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getName, getNameExtra } from "~/assets/editor/bs_editor";
 import { type Base, Category, deconstruct_affects_query, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { type EditorBase, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { type EditorBase, type IErrorMessage, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIModifier, BSIModifierType } from "~/assets/shared/battlescribe/bs_types";
 import ErrorIcon from "~/components/ErrorIcon.vue";
 import { first } from "~/assets/shared/battlescribe/bs_helpers";
@@ -321,7 +321,6 @@ const OPERATION_ADD_INFOLINK: Operation = { id: "add", name: "Add", word: "" };
 const OPERATION_REMOVE: Operation = { id: "remove", name: "Remove", word: "" };
 const OPERATION_SET_PRIMARY: Operation = { id: "set-primary", name: "Set Primary", word: "to" };
 const OPERATION_UNSET_PRIMARY: Operation = { id: "unset-primary", name: "Unset Primary", word: "to" };
-const OPERRATION_HIDE: Operation = { id: "hide", name: "Hide", word: "" };
 
 const operations = {
   number: [
@@ -533,8 +532,8 @@ export default {
       return getModifierOrConditionParent(this.item as any as EditorBase);
     },
     allCategories(): Category[] {
-      let res: Category[] = [];
-      for (let elt of this.catalogue.iterateCategoryEntries()) {
+      const res: Category[] = [];
+      for (const elt of this.catalogue.iterateCategoryEntries()) {
         res.push(elt);
       }
       return res;
@@ -561,7 +560,7 @@ export default {
       }
       return operations[this.selectedField.type] || [];
     },
-    errors() {
+    errors(): IErrorMessage[] {
       return [];
     },
     costs(): ModifierField[] {

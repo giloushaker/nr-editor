@@ -14,20 +14,18 @@
 
 <script lang="ts">
 import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
-import { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
+import { AssociationLink } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   props: {
     item: {
-      type: Object as PropType<NRAssociation & EditorBase>,
+      type: Object as PropType<AssociationLink & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
   components: { FilterBy },
 };
