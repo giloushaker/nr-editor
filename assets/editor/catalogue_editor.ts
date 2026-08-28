@@ -520,11 +520,14 @@ class CatalogueEditor extends Catalogue {
   }
 
   updateLink(link: Link & EditorBase) {
-    const target = resolveId(link.targetId, this.getIndexes()) as EditorBase;
-    link.target = target;
-    if (link.target) {
+    const target = resolveId(link.targetId, this.getIndexes());
+    // Written through Base, where `target` is already declared optional. Link narrows it to
+    // always-present because everywhere but here a link has been resolved already -- this is the
+    // code that resolves it, so it is the one place that legitimately stores a miss.
+    (link as Base).target = target;
+    if (target) {
       link.name = target.name;
-      const targetType = link.target.editorTypeName;
+      const targetType = target.editorTypeName;
       if (targetType == "categoryEntry") {
         delete link.type;
       } else {
