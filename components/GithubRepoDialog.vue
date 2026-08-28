@@ -8,7 +8,7 @@
       <div class="rn">{{ selected.github }}</div>
       <div class="rd" v-if="selected.label">{{ selected.label }}</div>
       <div class="refrow" v-if="!refsLoading">
-        <select v-model="ref">
+        <select v-model="gitRef">
           <optgroup label="Branches" v-if="branches.length">
             <option v-for="b in branches" :key="'b' + b" :value="b">{{ b }}</option>
           </optgroup>
@@ -16,7 +16,7 @@
             <option v-for="t in tags" :key="'t' + t" :value="t">{{ t }}</option>
           </optgroup>
         </select>
-        <button class="bouton" :disabled="busy || !ref" @click="doImport">
+        <button class="bouton" :disabled="busy || !gitRef" @click="doImport">
           {{ busy ? "Importing..." : "Import" }}
         </button>
       </div>
@@ -65,7 +65,7 @@ export default {
       selected: null as RepoEntry | null,
       branches: [] as string[],
       tags: [] as string[],
-      ref: "",
+      gitRef: "",
       refsLoading: false,
       busy: false,
       error: "",
@@ -114,7 +114,7 @@ export default {
       this.refsLoading = true;
       this.branches = [];
       this.tags = [];
-      this.ref = "";
+      this.gitRef = "";
       try {
         const [branches, tags] = await Promise.all([
           this.ghGet(`https://api.github.com/repos/${repo.github}/branches?per_page=100`),
@@ -123,7 +123,7 @@ export default {
         if (branches.message) throw new Error(branches.message);
         this.branches = branches.map((b: any) => b.name);
         this.tags = Array.isArray(tags) ? tags.map((t: any) => t.name) : [];
-        this.ref =
+        this.gitRef =
           this.branches.find((b) => b === "main" || b === "master") || this.branches[0] || this.tags[0] || "";
       } catch (e: any) {
         this.error = `Couldn't list branches: ${e?.message || e}`;
@@ -132,12 +132,12 @@ export default {
       }
     },
     async doImport() {
-      if (!this.selected || !this.ref) return;
+      if (!this.selected || !this.gitRef) return;
       this.busy = true;
       this.error = "";
       try {
         const [owner, name] = this.selected.github.split("/");
-        const entries = await getRepoZip(owner, name, this.ref);
+        const entries = await getRepoZip(owner, name, this.gitRef);
         // electron: import into a subfolder of the working folder so files exist on disk
         const base =
           globalThis.electron && this.settings.systemsFolder

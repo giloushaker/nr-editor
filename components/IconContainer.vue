@@ -120,7 +120,7 @@ export default {
       } else if (item.catalogue?.library) {
         return { icon: "assets/icons/library.png", order: 2 };
       } else {
-        return { icon: "assets/icons/book.png", order: 3 };
+        return { icon: "assets/icons/book.svg", order: 3 };
       }
     },
     isMatch(item: BSIData) {
@@ -207,7 +207,7 @@ export default {
           }
         }
 
-        let msgPieces = [];
+        const msgPieces = [];
         for (const key in counts) {
           msgPieces.push(`${counts[key]} ${capitalize(key)}${counts[key] === 1 ? "" : "s"}`);
         }
@@ -303,6 +303,11 @@ export default {
 
 <style scoped lang="scss">
 @import "@/shared_components/css/vars.scss";
+
+.item .icon {
+  width: 48px;
+  height: 48px;
+}
 
 .item {
   display: grid;
@@ -410,8 +415,8 @@ export default {
     outline-offset: -1.5px;
   }
   .licon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
   .lname {
     white-space: nowrap;

@@ -60,9 +60,9 @@ export default {
       return error.extra;
     },
     getErrorImage(o: IErrorMessage): string {
-      let hasWarnings = o.severity === "warning";
-      let hasErrors = !o.severity || o.severity === "error";
-      let hasInfos = !o.severity || o.severity === "info";
+      const hasWarnings = o.severity === "warning";
+      const hasErrors = !o.severity || o.severity === "error";
+      const hasInfos = !o.severity || o.severity === "info";
       if (hasErrors) return "assets/icons/error_exclamation.png";
       if (hasWarnings) return "assets/icons/warning_exclamation.png";
       if (hasInfos) return "assets/icons/info_exclamation.png";
@@ -84,9 +84,9 @@ export default {
       return true;
     },
     getImage(): string {
-      let hasWarnings = this.errors!.find((o) => o.severity === "warning");
-      let hasErrors = this.errors!.find((o) => !o.severity || o.severity === "error");
-      let hasInfos = this.errors!.find((o) => !o.severity || o.severity === "info");
+      const hasWarnings = this.errors!.find((o) => o.severity === "warning");
+      const hasErrors = this.errors!.find((o) => !o.severity || o.severity === "error");
+      const hasInfos = this.errors!.find((o) => !o.severity || o.severity === "info");
       if (hasErrors) return "assets/icons/error_exclamation.png";
       if (hasWarnings) return "assets/icons/warning_exclamation.png";
       if (hasInfos) return "assets/icons/info_exclamation.png";

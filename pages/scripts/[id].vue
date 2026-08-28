@@ -3,11 +3,10 @@
     <template v-if="system">
       <div v-for="script in scripts"> <RunScript :script="script" :system="system" /> </div>
     </template>
-    <CollapsibleBox>
-      <template #title>Info</template>
-      <template #content>
-        <div class="info">
-          <pre style="margin: 10px">
+    <details class="box">
+      <summary class="titreCategory">Info</summary>
+      <div class="info">
+        <pre style="margin: 10px">
 Note: this feature is not finished To add a new script: Create a folder named `scripts` in your data folder and
 add a .js file with content like this:
 <code>
@@ -41,10 +40,9 @@ Available actions are in <a target="_blank" href="https://github.com/giloushaker
 Example scripts (in typescript but only js is supported for non-default scripts): <a target="_blank" href="https://github.com/giloushaker/nr-editor/tree/master/default-scripts">https://github.com/giloushaker/nr-editor/tree/master/default-scripts</a>
 If you want to use imports you have to bundle them into one js file with rollup/webpack
 If you want to read/write local files you can use the functions in the global `$node`
-          </pre>
-        </div>
-      </template>
-    </CollapsibleBox>
+        </pre>
+      </div>
+    </details>
   </div>
 </template>
 
@@ -80,3 +78,13 @@ export default defineComponent({
   methods: {},
 });
 </script>
+
+<style scoped lang="scss">
+details.box {
+  padding: 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+</style>

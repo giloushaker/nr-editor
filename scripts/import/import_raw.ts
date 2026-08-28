@@ -1,4 +1,4 @@
-import type { ParsedUnitText, Weapon, SpecialRule, Unit } from "./import_types";
+import type { Weapon, SpecialRule, Unit } from "./import_types";
 
 export function parseUnitText(text: string): Unit {
     function lastItem<T>(array: Array<T>): T | undefined {
@@ -112,7 +112,7 @@ export function parseUnitText(text: string): Unit {
     const pattern = /(?:^|\n)([A-Za-z\s]+):\s*(.*?)(?=\n[A-Za-z\s]+:|$)/gs;
     const matches = [...startSection.matchAll(pattern)];
     matches.forEach(match => {
-        const key = match[1].trim() + ":";
+        const key = (match[1].trim() + ":") as keyof typeof result.Subheadings;
         const value = match[2].trim()
         result.Subheadings[key] = value;
     });

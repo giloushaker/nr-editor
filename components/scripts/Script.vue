@@ -1,9 +1,7 @@
 <template>
-  <CollapsibleBox class="script mx-4px">
-    <template #title>
-      {{ script.name }}
-    </template>
-    <template #content>
+  <details class="script mx-4px" @toggle="opened = true">
+    <summary>{{ script.name }}</summary>
+    <div v-if="opened" class="content">
       <span v-if="script.description">Description:</span><span class="gray">{{ script.description }}</span>
       <div v-for="(arg, i) in script.arguments || []">
         <ScriptArgument :arg="arg" :args="args" :system="system" :index="i" ref="args" />
@@ -29,10 +27,10 @@
           <template v-else-if="Array.isArray(piece) && isEntryList(piece)">
             <div v-for="node in piece" class="node">
               <template v-if="Array.isArray(node)">
-                <NodePath :path="path(node[0])" @click="store.goto(node[0])" class="hover-darken cursor-pointer p-1px" :text="node[1]" @click.middle="debug(node[0].editorTypeName, node[0])" />
+                <NodePath :path="path(node[0])" @click="store.goto(node[0])" class="hover-darken cursor-pointer p-1px" :text="node[1]"/>
               </template>
               <template v-else>
-                <NodePath :path="path(node)" @click="store.goto(node)" class="hover-darken cursor-pointer p-1px" @click.middle="debug(node.editorTypeName, node)" />
+                <NodePath :path="path(node)" @click="store.goto(node)" class="hover-darken cursor-pointer p-1px" />
               </template>
             </div>
             <!-- <div v-if="piece.length > 100">
@@ -40,12 +38,12 @@
             </div> -->
           </template>
           <template v-else-if="isEntry(piece)">
-            <NodePath :path="path(piece)" @click="store.goto(piece)" class="hover-darken cursor-pointer p-1px" @click.middle="debug(piece.editorTypeName, piece)" />
+            <NodePath :path="path(piece)" @click="store.goto(piece)" class="hover-darken cursor-pointer p-1px" />
           </template>
           <template v-else-if="isError(piece)">
             <div class="error">{{ piece }}</div>
           </template>
-          <template v-else="piece">
+          <template v-else>
             <pre>
               {{ JSON.stringify(piece, null, 2) }}
             </pre>
@@ -55,8 +53,8 @@
           <span class="gray">None</span>
         </div>
       </template>
-    </template>
-  </CollapsibleBox>
+    </div>
+  </details>
 </template>
 <script lang="ts">
 import { PropType } from "nuxt/dist/app/compat/capi";
@@ -64,7 +62,7 @@ import ScriptArgument from "./ScriptArgument.vue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { getEntryPathInfo } from "~/assets/shared/battlescribe/bs_editor";
+import { getEntryPathInfo } from "~/assets/editor/bs_editor";
 import { useEditorStore } from "~/stores/editorStore";
 import NodePath from "../util/NodePath.vue";
 export default defineComponent({
@@ -93,22 +91,19 @@ export default defineComponent({
     return { store: useEditorStore() };
   },
   data() {
-    return { result: null as any, args: [], running: false };
+    return { result: null as unknown, args: [], running: false, opened: false };
   },
   methods: {
-    debug(...args: any[]) {
-      console.log(...args);
-    },
-    isEntry(entry: any) {
+    isEntry(entry: unknown): entry is EditorBase {
       return entry instanceof Base;
     },
-    isError(piece: any) {
+    isError(piece: unknown): piece is Error {
       return piece instanceof Error;
     },
-    isEntryWithDesc(arr: any) {
+    isEntryWithDesc(arr: unknown) {
       return Array.isArray(arr) && arr.length === 2 && this.isEntry(arr[0]);
     },
-    isEntryList(lst: Array<any>) {
+    isEntryList(lst: unknown[]): lst is EditorBase[] {
       if (lst.find((o) => !this.isEntry(o) && !this.isEntryWithDesc(o))) {
         return false;
       }
@@ -134,7 +129,6 @@ export default defineComponent({
         console.log(typeof e, e instanceof Error);
         this.result = e;
       } finally {
-        globalThis.$result = this.result;
         this.running = false;
       }
     },
@@ -166,8 +160,15 @@ export default defineComponent({
 .script {
   margin-top: 2px;
   border: 1px solid $box_border;
-}
-:deep(.title) {
-  background-color: blue;
+
+  > summary {
+    cursor: pointer;
+    padding: 5px;
+    font-size: $fontHeaderSize;
+  }
+
+  > .content {
+    padding: 5px;
+  }
 }
 </style>

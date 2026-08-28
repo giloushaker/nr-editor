@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { getEntryPathInfo, getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getEntryPathInfo, getName, getNameExtra } from "~/assets/editor/bs_editor";
 import { sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import NodePath from "~/components/util/NodePath.vue";
@@ -174,7 +174,7 @@ export default defineComponent({
           return;
         }
         this.more = found.more;
-        this.results = found.grouped;
+        this.results = found.grouped as Record<string, EditorBase[]>;
         this.count = found.all.length;
       } catch (e) {
         console.error(e);

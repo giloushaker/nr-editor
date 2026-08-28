@@ -274,7 +274,7 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
       return false;
     },
     systemAndCatalogues(gst: GameSystemFiles) {
-      let res = [];
+      const res = [];
       if (gst.gameSystem) {
         res.push(gst.gameSystem);
       }

@@ -1,11 +1,10 @@
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSICategoryLink, BSIConstraint, BSICost, BSIEntryLink, BSIInfoGroup, BSIInfoLink, BSIModifier, BSIProfile, BSISelectionEntry, BSISelectionEntryGroup } from "~/assets/shared/battlescribe/bs_types";
-import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, SpecialRule, Unit, Weapon } from "./import_types"
-import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix, parseSpecialRule, toTitleCase } from "./import_helpers"
+import type { Equipment, NoId, Page, Profile, Unit } from "./import_types"
+import { id, isSameCharacteristics, splitAnd, splitByCenterDot, removeSuffix, extractTextAndDetails, parseSpecialRule, toTitleCase } from "./import_helpers"
 import { getGroup, getPerModelCostModifier, parseDetails, toCategoryLink, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
-import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { OptionsEntry, optionsToGroups } from "./import_options";
-import { Base, Entry, InfoGroup } from "~/assets/shared/battlescribe/bs_main";
+import { optionsToGroups } from "./import_options";
+import { Entry } from "~/assets/shared/battlescribe/bs_main";
 import { parseUnitText } from "./import_raw";
 
 function cmpItems(a: string, b: string) {
@@ -91,7 +90,7 @@ function findRootUnit(cat: Catalogue & EditorBase, name: string) {
 
 
 function splitSpecialRules(str: string) {
-    let result = [];
+    const result = [];
     let start = 0;
     let level = 0; // To keep track of parentheses depth
     for (let i = 0; i < str.length; i++) {
@@ -223,7 +222,7 @@ function getEquipment(cat: Catalogue & EditorBase, name: string, profileName: st
 
         for (const equipment of foundEquipment) {
             for (const item of splitAnd(equipment.text)) {
-                let target = findImportedEntry(cat, item, "upgrade")
+                const target = findImportedEntry(cat, item, "upgrade")
                 if (!target) {
                     if (!equipment.details) {
                         console.log(`[EQUIPMENT] Couldn't find Entry ${item}`)
@@ -233,7 +232,7 @@ function getEquipment(cat: Catalogue & EditorBase, name: string, profileName: st
             }
             if (!equipment.details) continue;
             for (const item of splitAnd(equipment.details)) {
-                let target = findImportedEntry(cat, item, "upgrade")
+                const target = findImportedEntry(cat, item, "upgrade")
                 if (!target) {
                     console.log(`[EQUIPMENT] Couldn't find Entry(${item}) From: ${equipment.text}/${equipment.details} ${item}`)
                 }
@@ -444,6 +443,9 @@ function updateWeapons(cat: Catalogue & EditorBase, pages: Page[]) {
             if (create) {
                 findSharedEntries(cat, wep.Name, "upgrade").map(o => $store.del_node(o))
                 const sharedProfile = updateProfile(cat, profile)
+                // add_node bails out (returning nothing) on an invalid key or a non-array target,
+                // so this can be undefined; reading .name off it threw rather than skipping.
+                if (!sharedProfile) continue;
                 $store.add_node("sharedSelectionEntries", cat, {
                     name: sharedProfile.name,
                     id: id(`${cat.name}/weapon/${wep.Name}`),
@@ -566,7 +568,7 @@ async function modifyUnit(cat: Catalogue & EditorBase, unit: Unit, source: Edito
 
     const modelEntries = [] as BSISelectionEntry[]
     for (const child of source.localSelectionsIterator()) {
-        if (child.type === "model") {
+        if ((child as { type?: string }).type === "model") {
             const modelEntry = {
                 costs: [],
                 entryLinks: [],
@@ -696,7 +698,7 @@ async function modifyUnit(cat: Catalogue & EditorBase, unit: Unit, source: Edito
                     const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0
 
                     const text = parsedEntry.what!
-                    let ruleText = parsedEntry.what!.replace(/special rule(s)?/, "").replace(/^The /, "")
+                    const ruleText = parsedEntry.what!.replace(/special rule(s)?/, "").replace(/^The /, "")
                     const { ruleName, param } = parseSpecialRule(ruleText);
                     const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, baseCost)
 

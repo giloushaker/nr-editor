@@ -44,7 +44,9 @@ You may want to reload the system through the Systems tab"
       <template v-else>
         <span class="status mx-2">saved</span>
       </template>
-      <template v-if="systemFiles && !systemFiles.allLoaded">
+      <!-- a load already pulls in the whole system, so during one this is both useless and a
+           duplicate of the counter on the loading screen -->
+      <template v-if="systemFiles && !systemFiles.allLoaded && !loading">
         <button class="bouton load ml-10px" @click="load_all"
           >Load all
           <span v-if="loading_all">({{ loading_progress }} / {{ loading_progress_max }})</span>
@@ -59,12 +61,26 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { ItemTypes } from "~/assets/editor/bs_editor";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
+
+/**
+ * Shortest gap between two yields while loading a system, and how much slower than the yield
+ * itself we are willing to be. Yielding is what lets the loading screen repaint, so it has to
+ * happen often enough for the counter to move; behind the loading screen a repaint is cheap,
+ * but the "Load all" button runs this same pass with the whole tree on screen, where a repaint
+ * costs whatever the expanded tree costs.
+ *
+ * ponytail: measuring the last yield and working COST x RATIO before the next one keeps paint
+ * overhead near 1/RATIO either way. A fixed interval fails exactly where it matters, on the
+ * big trees. Swap for scheduler.yield() when Electron ships it.
+ */
+const LOAD_YIELD_MIN_MS = 100;
+const LOAD_YIELD_RATIO = 5;
 
 export default defineComponent({
   components: { LeftPanel },
@@ -78,7 +94,6 @@ export default defineComponent({
       loading_progress: 0,
       loading_progress_max: 0,
       loading_progress_msg: "" as string,
-      initial: true,
       saving: false,
       failed: false,
       id: "",
@@ -169,7 +184,6 @@ export default defineComponent({
         this.store.unselect();
         try {
           await this.load(gameSystemId, this.id);
-          this.systemFiles?.loadAll();
           this.error = null;
 
           // Resolve a promise in the store so that code elsewhere can wait for this to load
@@ -189,23 +203,33 @@ export default defineComponent({
       return this.store.get_catalogue_state(catalogue).isChangedOnDisk;
     },
     async load_all() {
-      if (this.systemFiles) {
+      if (this.systemFiles && !this.systemFiles.allLoaded) {
         try {
           this.loading_all = true;
           await new Promise((resolve) => setTimeout(resolve, 0));
-          await this.systemFiles.loadAll(async (current, max, msg) => {
-            this.loading_progress = current;
-            this.loading_progress_max = max;
-            this.loading_progress_msg = msg ?? "";
-            await new Promise((resolve) => setTimeout(resolve, 0));
-          });
-          this.loading_progress = 0;
-          this.loading_progress_max = 0;
-          this.loading_progress_msg = "";
+          let last_yield = performance.now();
+          let yield_cost = 0;
+          // loadAll reports twice per catalogue, so this runs a few hundred times on a big
+          // system. Only the calls that end in a paint do any work: a value written between
+          // two yields is overwritten before anyone can see it, and each write costs a
+          // re-render. Deliberately not async either, so the calls that do nothing cost
+          // nothing rather than a promise and a microtask each.
+          const on_load_progress = (current: number, max: number, msg?: string) => {
+            const gap = Math.max(LOAD_YIELD_MIN_MS, yield_cost * LOAD_YIELD_RATIO);
+            if (performance.now() - last_yield < gap) return;
+            this.set_progress(current, max, msg ?? "");
+            const before = performance.now();
+            return new Promise<void>((resolve) => setTimeout(resolve)).then(() => {
+              // Time inside the timeout is the browser's: layout, paint, input handlers.
+              yield_cost = performance.now() - before;
+              last_yield = performance.now();
+            });
+          };
+          await this.systemFiles.loadAll(on_load_progress);
         } catch (e) {
           console.error(e);
         } finally {
-          this.loading_all = true;
+          this.loading_all = false;
         }
       }
     },
@@ -283,21 +307,56 @@ export default defineComponent({
       }
       try {
         this.loading = true;
-        if (this.initial) {
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          this.initial = false;
+        this.set_progress(0, 0, "");
+        if (!this.opens_instantly(systemId, catalogueId)) {
+          // rAF then a task: rAF runs after Vue has flushed the DOM, the timeout after the
+          // browser has painted it. Without this the loading screen never reaches the screen,
+          // because open_catalogue blocks the thread and clears `loading` in the same frame.
+          //
+          // Skipped when there is nothing to wait for: this is the one thing that forces the
+          // loading screen to paint, so paying for it unconditionally made an already-loaded
+          // catalogue flash a frame of it on the way to opening.
+          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
         }
-        const { system, catalogue } = await this.store.open_catalogue(systemId, catalogueId);
+        const { system, catalogue } = await this.store.open_catalogue(systemId, catalogueId, this.on_progress);
         this.systemFiles = system;
-        this.cat = catalogue;
         if (catalogue) {
           (catalogue as any).opened = true;
           const data = this.uistate.get_data(catalogue.id);
           this.load_state(data);
         }
+        // Finish the whole system before handing over the editor. The tree renders imported
+        // entries, so showing it half-loaded means a tree that keeps shifting under the user,
+        // and every catalogue that lands repaints however much of it is expanded.
+        await this.load_all();
+        this.cat = catalogue;
       } finally {
         this.loading = false;
+        this.set_progress(0, 0, "");
       }
+    },
+
+    /**
+     * Whether this open will finish in one frame, with nothing to read and nothing to process.
+     *
+     * `allLoaded` covers the processing: loadAll runs processForEditor over the whole system,
+     * and both that and init are guarded, so everything is already done for the catalogue and
+     * for its imports.
+     */
+    opens_instantly(systemId: string, catalogueId?: string) {
+      const system = this.store.gameSystems[systemId];
+      if (!system?.allLoaded) return false;
+      return Boolean(system.getLoadedCatalogue({ targetId: catalogueId || systemId }));
+    },
+    set_progress(current: number, max: number, msg: string) {
+      this.loading_progress = current;
+      this.loading_progress_max = max;
+      this.loading_progress_msg = msg;
+    },
+    /** Yields so the progress it just set gets painted before the next blocking step. */
+    async on_progress(current: number, max: number, msg?: string) {
+      this.set_progress(current, max, msg ?? "");
+      await new Promise((resolve) => setTimeout(resolve));
     },
   },
 });
