@@ -8,17 +8,17 @@ export function filename(path: string) {
   const split = path.replaceAll("\\", "/").split("/");
   return split[split.length - 1];
 }
-export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
-  if (!electron) return web_fs.getFolderFiles(folderPath, recursive, skip);
-  return (await electron.invoke("getFolderFiles", folderPath, recursive, skip)) as Array<{
+export async function getFolderFiles(folderPath: string, depth = 0, skip?: string[]) {
+  if (!electron) return web_fs.getFolderFiles(folderPath, depth, skip);
+  return (await electron.invoke("getFolderFiles", folderPath, depth, skip)) as Array<{
     name: string;
     path: string;
     data: string;
   }>;
 }
-export async function listFolder(folderPath: string, recursive = false, skip?: string[]) {
-  if (!electron) return web_fs.listFolder(folderPath, recursive, skip);
-  return (await electron.invoke("listFolder", folderPath, recursive, skip)) as Array<{
+export async function listFolder(folderPath: string, depth = 0, skip?: string[]) {
+  if (!electron) return web_fs.listFolder(folderPath, depth, skip);
+  return (await electron.invoke("listFolder", folderPath, depth, skip)) as Array<{
     name: string;
     path: string;
     directory: boolean;

@@ -140,18 +140,18 @@ export async function createFolder(path: string) {
   await resolveFolder(path, true);
 }
 
-export async function listFolder(folderPath: string, recursive = false, skip?: string[]) {
+export async function listFolder(folderPath: string, depth = 0, skip?: string[]) {
   const dir = await resolveFolder(folderPath);
   const result = [] as Array<{ name: string; path: string; directory: boolean }>;
-  const walk = async (d: FileSystemDirectoryHandle, base: string) => {
+  const walk = async (d: FileSystemDirectoryHandle, base: string, level: number) => {
     for await (const entry of (d as any).values()) {
       if (skip?.includes(entry.name)) continue;
       const directory = entry.kind === "directory";
       result.push({ name: entry.name, path: `${base}/${entry.name}`, directory });
-      if (directory && recursive) await walk(entry, `${base}/${entry.name}`);
+      if (directory && level < depth) await walk(entry, `${base}/${entry.name}`, level + 1);
     }
   };
-  await walk(dir, folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/"));
+  await walk(dir, folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/"), 0);
   return result;
 }
 
@@ -190,24 +190,14 @@ export async function getFolderMtime(folderPath: string): Promise<number | undef
   }
 }
 
-export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
-  const dir = await resolveFolder(folderPath);
-  const base = folderPath.replaceAll("\\", "/").split("/").filter(Boolean).join("/");
+export async function getFolderFiles(folderPath: string, depth = 0, skip?: string[]) {
+  const entries = await listFolder(folderPath, depth, skip);
   const result = [] as Array<{ name: string; path: string; data: string }>;
-  const walk = async (dir: FileSystemDirectoryHandle, base: string) => {
-    for await (const entry of (dir as any).values()) {
-      if (skip?.includes(entry.name)) continue;
-      if (entry.kind === "file") {
-        // ponytail: only reads catalogue extensions — electron reads everything, but no caller uses the rest
-        if (!isAllowedExtension(entry.name)) continue;
-        const file = await entry.getFile();
-        result.push({ name: entry.name, path: `${base}/${entry.name}`, data: await readFileData(file) });
-      } else if (recursive) {
-        await walk(entry, `${base}/${entry.name}`);
-      }
-    }
-  };
-  await walk(dir, base);
+  for (const entry of entries) {
+    if (entry.directory || !isAllowedExtension(entry.name)) continue;
+    const handle = await resolveFile(entry.path);
+    result.push({ name: entry.name, path: entry.path, data: await readFileData(await handle.getFile()) });
+  }
   return result;
 }
 
