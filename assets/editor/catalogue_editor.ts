@@ -39,6 +39,7 @@ import { DIAGNOSTICS } from "./bs_diagnostics";
 import { DiagnosticStore, runDiagnostics, type DiagnosticContext } from "./bs_diagnostics_engine";
 import { ReferenceIndex } from "./bs_reference_index";
 import { CycleIndex } from "./bs_link_cycles";
+import type { entries, types } from "~/assets/shared/battlescribe/entries";
 import { outgoingReferences } from "./bs_references";
 import { getName, getTypeName } from "./bs_editor";
 
@@ -769,6 +770,33 @@ Object.defineProperty(Catalogue.prototype, "refs", {
  * so a declaration here that disagrees with the implementation above is a compile error
  * rather than something that shows up at runtime.
  */
+/**
+ * What the editor adds to every node, for the type system.
+ *
+ * These used to be declared on Base in assets/shared. Nothing in shared reads them -- checked
+ * one by one -- so all that did was put editor concepts in the roster app's copy of the type.
+ * They are installed at runtime from this file: `parentKey` by the onSetPrototype hook above,
+ * `editorTypeName`/`other_refs`/`errors` by the accessors below, and the display flags by the
+ * store and the tree.
+ *
+ * Declared on Base rather than only on EditorBase because every node in the editor genuinely
+ * has them, and requiring `as EditorBase` for values that already are one was what pushed those
+ * casts into ~50 call sites.
+ */
+declare module "~/assets/shared/battlescribe/bs_main" {
+  interface Base {
+    /** Which array this node was found in -- always one of the keys entries.ts defines. */
+    parentKey: string & keyof typeof entries;
+    readonly editorTypeName: string & keyof typeof types;
+    readonly other_refs?: EditorBase[];
+    readonly errors?: IErrorMessage[];
+    showInEditor?: boolean;
+    showChildsInEditor?: boolean;
+    highlightInEditor?: boolean;
+    highlight?: boolean;
+  }
+}
+
 declare module "~/assets/shared/battlescribe/bs_main_catalogue" {
   interface Catalogue {
     readonly idClaims: Record<string, EditorBase[]>;
