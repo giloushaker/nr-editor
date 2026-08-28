@@ -305,17 +305,18 @@ export default defineComponent({
       if (!catalogueId && !systemId) {
         throw new Error("couldn't load catalogue: no id");
       }
+      // Nothing to read and nothing to process: this open must not enter the loading state at
+      // all. Skipping only the forced repaint below was not enough -- `loading` still flipped,
+      // so the loading screen mounted and the editor waited on it, and re-opening a catalogue
+      // that was already in memory showed a bar where it used to be instant.
+      const instant = this.opens_instantly(systemId, catalogueId);
       try {
-        this.loading = true;
-        this.set_progress(0, 0, "");
-        if (!this.opens_instantly(systemId, catalogueId)) {
+        if (!instant) {
+          this.loading = true;
+          this.set_progress(0, 0, "");
           // rAF then a task: rAF runs after Vue has flushed the DOM, the timeout after the
           // browser has painted it. Without this the loading screen never reaches the screen,
           // because open_catalogue blocks the thread and clears `loading` in the same frame.
-          //
-          // Skipped when there is nothing to wait for: this is the one thing that forces the
-          // loading screen to paint, so paying for it unconditionally made an already-loaded
-          // catalogue flash a frame of it on the way to opening.
           await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
         }
         const { system, catalogue } = await this.store.open_catalogue(systemId, catalogueId, this.on_progress);
