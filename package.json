@@ -15,7 +15,7 @@
     "generate": "nuxi generate",
     "preview": "electron dist",
     "postinstall": "nuxt prepare",
-    "electron": "npx nuxi generate --electron && npx electron .output/public",
+    "electron": "npx nuxi generate --electron && node scripts/run-electron.cjs",
     "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
     "increment-version": "npm version patch --force"
   },
