@@ -15,7 +15,7 @@
  */
 import { Condition, Constraint, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
 import type { Link } from "~/assets/shared/battlescribe/bs_main";
-import { isScopeValid, validScopes } from "~/assets/shared/battlescribe/bs_condition";
+import { splitScopeSelf, validScopes } from "~/assets/shared/battlescribe/bs_condition";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { Diagnostic } from "./bs_diagnostics_engine";
@@ -38,6 +38,32 @@ const SHARED_KEYS = new Set([
   "sharedForceEntries",
   "sharedAssociations",
 ]);
+
+/**
+ * Whether a condition's `scope` names something it could actually be evaluated against.
+ *
+ * Lived in assets/shared until it was the last thing there needing EditorBase: it walks `refs`
+ * to follow a node to whatever links at it, which only exists in the editor. Nothing in shared
+ * called it -- bs_main_catalogue imported it and never used it.
+ */
+export function isScopeValid(parent: EditorBase, scope: string) {
+  if (validScopes.has(splitScopeSelf(scope).base)) return true;
+  const catalogue = parent.catalogue;
+  const found = catalogue.findOptionById(scope);
+  if (found) {
+    if (found.isForce() && !parent.isForce()) return true;
+    if (found.isCategory()) return true;
+    if (found.isCatalogue()) return true;
+  }
+  const stack = [parent];
+  while (stack.length) {
+    const current = stack.pop()!;
+    if (current.id === scope) return true;
+    if (current.parent) stack.push(current.parent);
+    if (current.refs) stack.push(...current.refs);
+  }
+  return false;
+}
 
 export const DIAGNOSTICS: Diagnostic[] = [
   {

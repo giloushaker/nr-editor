@@ -788,8 +788,16 @@ declare module "~/assets/shared/battlescribe/bs_main" {
     /** Which array this node was found in -- always one of the keys entries.ts defines. */
     parentKey: string & keyof typeof entries;
     readonly editorTypeName: string & keyof typeof types;
-    readonly other_refs?: EditorBase[];
-    readonly errors?: IErrorMessage[];
+    /**
+     * Declared here, and required, which is the point: shared leaves these off entirely, so
+     * there is no optional declaration to merge against. Every node in the editor really does
+     * have all three -- refs and other_refs from accessors over the reference index, errors
+     * from the catalogue's diagnostic store -- so an editor Base has the same shape as an
+     * EditorBase and the two are mutually assignable.
+     */
+    readonly refs: EditorBase[];
+    readonly other_refs: EditorBase[];
+    readonly errors: IErrorMessage[];
     showInEditor?: boolean;
     showChildsInEditor?: boolean;
     highlightInEditor?: boolean;
@@ -812,12 +820,6 @@ declare module "~/assets/shared/battlescribe/bs_main_catalogue" {
      */
     readonly refs: EditorBase[];
     readonly other_refs: EditorBase[];
-    /**
-     * Restated so a Catalogue still satisfies EditorBase. Base declares `parent` as the weaker
-     * `Base`, because that is all bs_condition's walk needs; narrowing it here rather than there
-     * keeps shared from naming the editor's node type.
-     */
-    readonly parent?: EditorBase;
     errorCount(severity?: IErrorMessage["severity"]): number;
     reindexReferences(node: EditorBase): void;
     unindexReferences(node: EditorBase): void;
