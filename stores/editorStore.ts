@@ -133,7 +133,6 @@ export interface CatalogueState {
   incremented?: boolean;
   savingPromise?: Promise<any>;
   isChangedOnDisk?: boolean;
-  isSaving?: boolean;
 }
 
 export function get_ctx(el: any): any {
@@ -157,25 +156,10 @@ export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorB
   return p3.item;
 }
 
-function markSaving(file: CatalogueState) {
-  file.isSaving = true;
-}
-function markChangedOnDisk(file: CatalogueState) {
-  if (file.isSaving) {
-    file.isSaving = false;
-    return;
-  }
-  file.isChangedOnDisk = true;
-}
-function unmarkChangedOnDisk(file: CatalogueState) {
-  if (file.isChangedOnDisk) {
-    file.isChangedOnDisk = false;
-  }
-  if (file.isSaving === undefined) {
-    file.isSaving = false;
-  }
-}
 type VueComponent = any;
+// ponytail: data folders keep catalogues at the root or one folder down; deeper is where
+// backups, exports and vendor copies live. Raise if someone nests legitimately.
+const LOAD_FOLDER_DEPTH = 1;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorStore => ({
@@ -323,7 +307,6 @@ export const useEditorStore = defineStore("editor", {
     saveCatalogue(data: Catalogue | BSIData) {
       const state = this.get_catalogue_state(data);
       const obj = getDataObject(data);
-      markSaving(state);
       if (electron) {
         this.saveCatalogueInFiles(obj);
       } else {
@@ -334,7 +317,7 @@ export const useEditorStore = defineStore("editor", {
         }
         this.saveCatalogueInDb(obj);
       }
-      unmarkChangedOnDisk(state);
+      state.isChangedOnDisk = false;
     },
     async load_systems_from_folder(
       folder: string,
@@ -343,7 +326,7 @@ export const useEditorStore = defineStore("editor", {
       if (!globalThis.electron && !(await hasRoot(folder))) {
         throw new Error(`No file access for folder ${folder}`);
       }
-      const files = await getFolderFiles(folder, true, [".git", ".github"]);
+      const files = await getFolderFiles(folder, LOAD_FOLDER_DEPTH, [".git", ".github"]);
       if (!files?.length) return;
 
       console.log("Loading", files.length, "files");
@@ -351,7 +334,12 @@ export const useEditorStore = defineStore("editor", {
       const result_files = [];
       const systems = [] as GameSystemFiles[];
 
-      const allowed = files.filter((o) => isAllowedExtension(o.name));
+      const allowed = files
+        .filter((o) => isAllowedExtension(o.name))
+        // a backup keeps the id of the file it copied, and catalogueFiles is keyed by id, so the
+        // deeper copy used to silently replace the real one. Shallowest path wins, rest are skipped.
+        .sort((a, b) => a.path.split("/").length - b.path.split("/").length);
+      const seen = new Set<string>();
       for (const file of allowed) {
         try {
           progress && (await progress(result_files.length, allowed.length, file.path));
@@ -363,6 +351,14 @@ export const useEditorStore = defineStore("editor", {
           obj.fullFilePath = file.path.replaceAll("\\", "/");
           const systemId = json?.gameSystem?.id;
           const catalogueId = json?.catalogue?.id;
+          const id = systemId ?? catalogueId;
+          if (id) {
+            if (seen.has(id)) {
+              console.warn(`Skipping ${file.path}: ${obj.name} is already loaded from a shallower file`);
+              continue;
+            }
+            seen.add(id);
+          }
           if (systemId) {
             const systemFiles = this.get_system(systemId);
             systemFiles.setSystem(shallowReactive(json));
@@ -487,7 +483,7 @@ export const useEditorStore = defineStore("editor", {
     },
     on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
       console.log(getDataObject(file).name, "changed");
-      markChangedOnDisk(this.get_catalogue_state(file));
+      this.get_catalogue_state(file).isChangedOnDisk = true;
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
