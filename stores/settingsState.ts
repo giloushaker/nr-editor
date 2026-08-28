@@ -18,7 +18,7 @@ function hexToRgb(hex: string): RGB | null {
     : null;
 }
 
-export async function updateCssVars(appearence: Record<string, any>, algo: { unitColor?: any; armyColor?: any }) {
+export async function updateCssVars(appearence: AppearanceTheme, algo: { unitColor?: any; armyColor?: any }) {
   const htmlElement = document.documentElement;
 
   if (appearence.dark) {
@@ -248,6 +248,7 @@ const defaultState = {
   useNewCategoriesUI: false,
   sort: "asc" as string,
   theme: "" as "" | "dark" | "light",
+  githubToken: "",
   githubAutoIncrement: true,
   autosort: {
     config: defaultSortConfiguration,
@@ -318,6 +319,7 @@ export const useSettingsStore = defineStore("settings", {
           sortIndex: true,
           references: true,
           costs: true,
+          primaryCategory: false,
         };
       }
     },
