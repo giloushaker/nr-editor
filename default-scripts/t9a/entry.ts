@@ -1,4 +1,4 @@
-import { ArmyListEntry, Loc } from "./types";
+import { ArmyListEntry } from "./types";
 import categories from "./categories";
 import { cost } from "./costs";
 import { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
@@ -82,7 +82,7 @@ export function toEntry(json: ArmyListEntry, loc: Record<string, string>): Recor
     };
     res.selectionEntryGroups.push(commandEntryGroup);
 
-    for (let param of json.commandgroup.parameters.list || []) {
+    for (const param of json.commandgroup.parameters.list || []) {
       commandEntryGroup.selectionEntries.push({
         constraints: [
           {

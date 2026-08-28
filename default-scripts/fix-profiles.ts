@@ -1,4 +1,4 @@
-import type { Modifier, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
+import type { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 export function findParentWhere<T extends { parent?: T }>(self: T, fn: (node: T) => any): T | undefined {
     let current = self.parent;
@@ -34,7 +34,7 @@ export default {
                         const ct = type.characteristicTypes?.find(ct => ct.name === c.name)!
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
-                            $store.edit_node(c, { typeId: ct.id })
+                            $store.edit_node(c as unknown as EditorBase, { typeId: ct.id })
                         }
                     }
                     // Fix attribute with wrong typeId
@@ -42,7 +42,7 @@ export default {
                         const ct = type.attributeTypes?.find(ct => ct.name === c.name)!
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
-                            $store.edit_node(c, { typeId: ct.id })
+                            $store.edit_node(c as unknown as EditorBase, { typeId: ct.id })
                         }
                     }
 
@@ -51,7 +51,7 @@ export default {
                         const ct = type.characteristicTypes?.find(ct => ct.id === c.typeId)!
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed characteristic name: ${c.name} -> ${ct.name}`])
-                            $store.edit_node(c, { name: ct.name })
+                            $store.edit_node(c as unknown as EditorBase, { name: ct.name })
                         }
                     }
 
@@ -60,7 +60,7 @@ export default {
                         const ct = type.attributeTypes?.find(ct => ct.id === c.typeId)!
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed attribute name: ${c.name} -> ${ct.name}`])
-                            $store.edit_node(c, { name: ct.name })
+                            $store.edit_node(c as unknown as EditorBase, { name: ct.name })
                         }
                     }
                     // Fix characteristic order & remove extra characteristics

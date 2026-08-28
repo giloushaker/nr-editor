@@ -68,7 +68,7 @@ export default {
     },
 
     targetSelected(opt: any) {
-      let res = opt.option;
+      const res = opt.option;
       this.selectedOption = {
         option: opt.option,
         selected: true,

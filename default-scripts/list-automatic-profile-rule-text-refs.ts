@@ -47,14 +47,14 @@ export default {
     for (const catalogue of catalogues) {
       catalogue.forEachObjectWhitelist((obj) => {
         if (!obj.isLink()) {
-          let added = false;
+          const added = false;
           if (obj.isProfile()) {
             (obj as Profile).characteristics?.forEach(o => {
               index.match(o.$text).forEach(m => {
                 if (m.match?.length && m.match[0].getName() !== obj.getName()) {
                   results[m.match[0].getName()] = (results[m.match[0].getName()] || 0) + 1
                   map[m.match[0].getName()] = m.match
-                  if (filter && !added) references.push(o)
+                  if (filter && !added) references.push(o as unknown as EditorBase)
                 }
               })
             })
@@ -63,7 +63,7 @@ export default {
               if (m.match?.length && m.match[0].getName() !== obj.getName()) {
                 results[m.match[0].getName()] = (results[m.match[0].getName()] || 0) + 1
                 map[m.match[0].getName()] = m.match
-                if (filter && !added) references.push(obj)
+                if (filter && !added) references.push(obj as EditorBase)
               }
             })
           }

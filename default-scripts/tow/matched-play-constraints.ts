@@ -28,7 +28,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
   forEachEntry(
     catalogues,
     (catalogue, rootEntry) => {
-      let newConstraint: BSIConstraint = {
+      const newConstraint: BSIConstraint = {
         comment: "Grand melee",
         type: "max",
         value: -1,
@@ -41,7 +41,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
         percentValue: false,
       };
 
-      let newModifiers: BSIModifier[] = [
+      const newModifiers: BSIModifier[] = [
         {
           comment: "Grand melee",
           conditionGroups: [
@@ -263,8 +263,8 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
         },
       ];
       $store.edit_node(rootEntry as EditorBase, {
-        constraints: (rootEntry.constraints || []).concat([newConstraint]),
-        modifiers: (rootEntry.modifiers || []).concat(newModifiers),
+        constraints: [...(rootEntry.constraints || []), newConstraint],
+        modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
       });
     },
     { nested: false, categories: false },
@@ -277,8 +277,8 @@ function removeCombinedArmsConstraints(catalogues: Catalogue[]) {
 
 function alreadyHasLimitation(rootEntry: Entry) {
   // Check if there are limitations on categories
-  for (let link of rootEntry.categoryLinks || []) {
-    for (let constraint of link.target.constraints || []) {
+  for (const link of rootEntry.categoryLinks || []) {
+    for (const constraint of link.target.constraints || []) {
       if (constraint.scope == "roster" || constraint.scope == "force") {
         if (constraint.type === "max" && constraint.comment != "Combined arms") {
           console.log(
@@ -290,7 +290,7 @@ function alreadyHasLimitation(rootEntry: Entry) {
     }
   }
 
-  for (let constraint of rootEntry.constraints || []) {
+  for (const constraint of rootEntry.constraints || []) {
     if (constraint.scope == "roster" || constraint.scope == "force") {
       if (constraint.comment != "Combined arms" && constraint.type === "max") {
         console.log(
@@ -483,8 +483,8 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
         ];
 
         $store.edit_node(rootEntry as EditorBase, {
-          constraints: (rootEntry.constraints || []).concat([newConstraint]),
-          modifiers: (rootEntry.modifiers || []).concat(newModifiers),
+          constraints: [...(rootEntry.constraints || []), newConstraint],
+          modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
         });
       }
     },
@@ -497,11 +497,11 @@ function editModifierConditions(catalogues: Catalogue[]) {
     catalogues,
     (catalogue, rootEntry) => {
       console.log(rootEntry);
-      for (let modifier of rootEntry.modifiers || []) {
+      for (const modifier of rootEntry.modifiers || []) {
         if (modifier.conditions) {
           let foundCondition: BSICondition | null = null;
 
-          for (let firstCondition of modifier.conditions || []) {
+          for (const firstCondition of modifier.conditions || []) {
             if (
               firstCondition.childId === OPEN_WAR_ID &&
               firstCondition.field === "selections" &&
@@ -565,7 +565,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
 
             $store.edit_node(modifier as any, {
               conditions: modifier.conditions!.filter((elt) => elt != foundCondition),
-              conditionGroups: (modifier.conditionGroups || []).concat(newConditionGroup),
+              conditionGroups: [...(modifier.conditionGroups || []), newConditionGroup],
             });
           }
         }
@@ -635,7 +635,7 @@ function removeBattleMarchFloorNoCondition(catalogues: Catalogue[]) {
   forEachEntry(
     catalogues,
     (catalogue, rootEntry) => {
-      for (let modifier of rootEntry.modifiers || []) {
+      for (const modifier of rootEntry.modifiers || []) {
         if (modifier.comment === "Battle march" && (modifier.conditions || []).length == 0) {
           $store.del_node(modifier as any);
         }
@@ -647,7 +647,7 @@ function removeBattleMarchFloorNoCondition(catalogues: Catalogue[]) {
 
 function addBattleMarchFloor(catalogues: Catalogue[]) {
   forEachEntry(catalogues, (catalogue, rootEntry) => {
-    for (let modifier of rootEntry.modifiers || []) {
+    for (const modifier of rootEntry.modifiers || []) {
       if (modifier.type === "increment" && modifier.comment != "Combined arms") {
         const repeats = modifier.repeats || [];
         if (repeats.length) {
@@ -671,7 +671,7 @@ function addBattleMarchFloor(catalogues: Catalogue[]) {
               ],
             };
             $store.edit_node(rootEntry as EditorBase, {
-              modifiers: rootEntry.modifiers?.concat([newModifie]),
+              modifiers: [...(rootEntry.modifiers || []), newModifie],
             });
             console.log("Modifier detected on entry: [" + catalogue.name + "] " + rootEntry.name, rootEntry.modifiers);
           }
@@ -682,7 +682,7 @@ function addBattleMarchFloor(catalogues: Catalogue[]) {
 }
 
 function hasPerThousandModifier(rootEntry: EditorBase) {
-  for (let modifier of rootEntry.modifiers || []) {
+  for (const modifier of rootEntry.modifiers || []) {
     if (modifier.type === "increment" && modifier.comment != "Combined arms") {
       const repeats = modifier.repeats || [];
       if (repeats.length) {
@@ -701,7 +701,7 @@ function addPerThousandCategory(catalogues: Catalogue[]) {
     (catalogue, rootEntry) => {
       let found = hasPerThousandModifier(rootEntry as EditorBase);
 
-      for (let categoryLink of rootEntry.categoryLinks || []) {
+      for (const categoryLink of rootEntry.categoryLinks || []) {
         if (hasPerThousandModifier(categoryLink.target as unknown as EditorBase)) {
           found = true;
         }
@@ -738,7 +738,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
   forEachEntry(
     catalogues,
     (catalogue, rootEntry) => {
-      let newConstraint: BSIConstraint = {
+      const newConstraint: BSIConstraint = {
         comment: "Battle March points",
         type: "max",
         value: -1,
@@ -772,7 +772,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
           break;
       }
 
-      let newModifiers: BSIModifier[] = [
+      const newModifiers: BSIModifier[] = [
         {
           comment: "Battle March points",
           conditionGroups: [
@@ -958,8 +958,8 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
         },
       ];
       $store.edit_node(rootEntry as EditorBase, {
-        constraints: (rootEntry.constraints || []).concat([newConstraint]),
-        modifiers: (rootEntry.modifiers || []).concat(newModifiers),
+        constraints: [...(rootEntry.constraints || []), newConstraint],
+        modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
       });
     },
     { nested: false, categories: false, root: true },

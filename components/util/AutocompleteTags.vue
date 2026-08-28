@@ -106,7 +106,7 @@ export default {
       const end = this.max || data.length;
       for (let i = 0; i < data.length; i++) {
         const cur = data[i];
-        let val = this.getField(cur);
+        const val = this.getField(cur);
         if (val && val.match && val.match(regex)) {
           result.push({ option: cur });
           if (result.length >= end - 1) break;

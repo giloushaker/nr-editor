@@ -3,7 +3,7 @@ const chokidar = require("chokidar");
 
 const chokidar_watchers = {} as Record<string, any>;
 const watchers = {} as Record<string, Record<string, (p: string, stats: Stats) => unknown>>;
-export let persistent = false;
+export const persistent = false;
 
 // A save we made ourselves still fires change events; ignore them for a moment after the write
 // so the editor does not report its own save as an external change.

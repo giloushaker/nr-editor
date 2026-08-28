@@ -37,7 +37,7 @@ export default {
                         // remove all whitespace and newlines to avoid differences due to spacing
                         .replace(/\s+/g, " ")
                         // replace numbers with a # to avoid differences due to values (if matchNumbers is true)
-                        .replace(/\d+/g, matchNumbers ? (match) => match : "#")
+                        .replace(/\d+/g, (match) => (matchNumbers ? match : "#"))
                         // remove punctuation and special characters
                         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
                         .trim()

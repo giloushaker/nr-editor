@@ -43,14 +43,14 @@ export async function getFolderMtime(folderPath: string): Promise<number | undef
   return max || undefined;
 }
 
-var AdmZip = require("adm-zip");
+const AdmZip = require("adm-zip");
 export async function readAndUnzipFile(path: string) {
   try {
     if (!(await isFile(path))) return undefined;
     const isZip = isZipExtension(path);
     if (isZip) {
-      var zip = new AdmZip(path);
-      var zipEntries = zip.getEntries();
+      const zip = new AdmZip(path);
+      const zipEntries = zip.getEntries();
       const entry = zipEntries[0];
       return entry.getData().toString("utf-8");
     } else {

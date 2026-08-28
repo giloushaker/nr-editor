@@ -16,7 +16,7 @@ export default {
   emits: ["update:modelValue", "paste"],
   props: {
     modelValue: {
-      type: [String, Number, Array],
+      type: [String, Number, Boolean, Array],
     },
     placeholder: {
       type: String,
@@ -46,13 +46,13 @@ export default {
       return s.replace(/\n/g, "<br />");
     },
     decodeHtml(html: string) {
-      var txt = document.createElement("textarea");
+      const txt = document.createElement("textarea");
       txt.innerHTML = html;
       return txt.value;
     },
     onpaste(e: ClipboardEvent) {
       e.preventDefault();
-      var text = this.decodeHtml(e.clipboardData?.getData("text/plain") ?? "");
+      let text = this.decodeHtml(e.clipboardData?.getData("text/plain") ?? "");
       if (this.beforePaste) {
         text = this.beforePaste(text);
       }

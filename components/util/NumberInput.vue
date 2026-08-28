@@ -40,7 +40,7 @@ export default {
 
   methods: {
     refresh() {
-      this.intValue = this.modelValue || 0;
+      this.intValue = Number(this.modelValue) || 0;
       this.stringValue = "" + this.modelValue;
     },
 

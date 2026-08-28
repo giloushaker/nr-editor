@@ -1,13 +1,13 @@
 import { BSICost } from "~/assets/shared/battlescribe/bs_types";
 import { ArmyBookOption } from "./army_book_interfaces";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
-import { cost, specialCost } from "../t9a/costs";
+import { specialCost } from "../t9a/costs";
 
 export function addDictionnaryEntries(groups: Group[], opt: ArmyBookOption, res: Record<string, any>) {
   if (!opt.optionsDict) return;
 
-  for (let dictRef of opt.optionsDict) {
-    for (let sharedGroup of groups || []) {
+  for (const dictRef of opt.optionsDict) {
+    for (const sharedGroup of groups || []) {
       const split = sharedGroup.comment?.split(":");
       if (split && split.length >= 2 && split[0] == "dict") {
         const refsList = split[1];
@@ -15,7 +15,7 @@ export function addDictionnaryEntries(groups: Group[], opt: ArmyBookOption, res:
           const refs = refsList.split("-");
           if (refs.includes(dictRef)) {
             if (!res.entryLinks) res.entryLinks = [];
-            for (let item of sharedGroup.selectionEntries || []) {
+            for (const item of sharedGroup.selectionEntries || []) {
               if (item.comment !== "shared item") {
                 res.entryLinks.push({
                   name: item.name,
@@ -27,7 +27,7 @@ export function addDictionnaryEntries(groups: Group[], opt: ArmyBookOption, res:
               }
             }
 
-            for (let item of sharedGroup.entryLinks || []) {
+            for (const item of sharedGroup.entryLinks || []) {
               const link = {
                 name: item.name,
                 import: true,
