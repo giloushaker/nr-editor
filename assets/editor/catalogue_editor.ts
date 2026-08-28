@@ -165,25 +165,92 @@ export function getAllPossibleParents(node: EditorBase) {
  * grouping and per-group reverse are what put the scope dropdown in a sensible order, and
  * membership does not care about order at all.
  */
-export function findPossibleParent(node: EditorBase, id: string): EditorBase | undefined {
+/**
+ * Ids of everything `node` could sit under, for the memo below.
+ *
+ * Excludes catalogueLinks by parentKey rather than editorTypeName. They agree -- a node under
+ * `catalogueLinks` is exactly what getTypeName names "catalogueLink" -- but editorTypeName is a
+ * getter that recurses into the link's target and builds a string, and here it would run on
+ * every visited node instead of on the single node a query matches.
+ */
+function collectPossibleParentIds(node: EditorBase): Set<string> {
+  const ids = new Set<string>();
   const refsStack = startOfWalk(node);
-  if (!refsStack) return undefined;
+  if (!refsStack) return ids;
   const stack = [] as EditorBase[];
-  const set = new Set();
+  const seen = new Set();
   while (refsStack.length) {
     stack.push(refsStack.shift()!);
     while (stack.length) {
       const cur = stack.pop()!;
-      if (set.has(cur.id)) continue;
-      set.add(cur.id);
-      // Only the one candidate that matches is worth asking for editorTypeName.
-      if (cur.id === id && cur.editorTypeName !== "catalogueLink") return cur;
+      if (seen.has(cur.id)) continue;
+      seen.add(cur.id);
+      if (cur.id && cur.parentKey !== "catalogueLinks") ids.add(cur.id);
       if (cur.parent && !cur.parent.isCatalogue()) stack.push(cur.parent);
       const refs = cur.refs;
       if (refs?.length) refsStack.push(...refs);
     }
   }
-  return undefined;
+  return ids;
+}
+
+/**
+ * Live only inside withAncestorCache, i.e. during one catalogue's validation pass.
+ *
+ * A link's possible parents are its parent's, so every link in an entry shares one answer --
+ * on Warhammer: The Old World that is ~20k links over ~6k distinct parents. Outside a pass
+ * there is no cache: a single revalidation walks once, which is cheap, and nothing has to
+ * decide when to invalidate.
+ *
+ * Within a pass the tree does not move. updateLink re-resolves links that init() already
+ * resolved, to the same targets, so the refs the walk follows do not change under it.
+ */
+let ancestorIds: Map<EditorBase, Set<string>> | undefined;
+
+function withAncestorCache<T>(fn: () => T): T {
+  const outer = ancestorIds;
+  ancestorIds ??= new Map();
+  try {
+    return fn();
+  } finally {
+    ancestorIds = outer;
+  }
+}
+
+/**
+ * Whether `id` names a node this one could sit under -- the cycle half of the
+ * bad-link-target diagnostic, and the single most expensive rule in a load.
+ */
+export function hasPossibleParentId(node: EditorBase, id: string): boolean {
+  const parent = node.parent;
+  // Only cacheable when the answer really is the parent's: a node with referrers of its own
+  // starts the walk from a wider set.
+  if (ancestorIds && parent && !node.refs?.length) {
+    let ids = ancestorIds.get(parent);
+    if (!ids) {
+      ids = collectPossibleParentIds(node);
+      ancestorIds.set(parent, ids);
+    }
+    return ids.has(id);
+  }
+  const refsStack = startOfWalk(node);
+  if (!refsStack) return false;
+  const stack = [] as EditorBase[];
+  const seen = new Set();
+  while (refsStack.length) {
+    stack.push(refsStack.shift()!);
+    while (stack.length) {
+      const cur = stack.pop()!;
+      if (seen.has(cur.id)) continue;
+      seen.add(cur.id);
+      // Only the one candidate that matches is worth asking for editorTypeName.
+      if (cur.id === id && cur.editorTypeName !== "catalogueLink") return true;
+      if (cur.parent && !cur.parent.isCatalogue()) stack.push(cur.parent);
+      const refs = cur.refs;
+      if (refs?.length) refsStack.push(...refs);
+    }
+  }
+  return false;
 }
 
 /**
@@ -332,39 +399,37 @@ class CatalogueEditor extends Catalogue {
     // so all of that work was being thrown away.
     this.withoutRevalidation(() => this.init(false));
 
-    // Indexing is cheap and resolves nothing, but a rule firing per reference during a
-    // full load is not; the validation pass below covers this catalogue once instead.
-    const touched = new Set<string>();
+    // Records `parent` and the outgoing edges of nodes init() could not reach: addToIndex
+    // returns early on a node with no id, so conditions and modifiers -- which carry childId,
+    // scope and value edges -- are indexed here, and nothing sets `parent` at all.
     this.withoutRevalidation(() => {
       forEachObjectWhitelist2<EditorBase>(
         this,
         (cur, parent) => {
-          cur.parent = parent;
-          cur.catalogue = this;
-          const edges = outgoingReferences(cur);
-          this.references.set(cur, edges);
-          // Collected unconditionally, not from set()'s change report: init() -> resolveAllLinks
-          // -> addToIndex already recorded these edges, so set() sees no change here. What
-          // matters is which targets this catalogue points at, not which ones moved just now.
-          for (const edge of edges) touched.add(edge.id);
+          // Guarded because these are writes through a Vue proxy, on every node of every
+          // catalogue: a reload re-walks a tree whose parents have not moved, and a read that
+          // finds the value already correct is far cheaper than a set that re-triggers.
+          if (cur.parent !== parent) cur.parent = parent;
+          if (cur.catalogue !== this) cur.catalogue = this;
+          this.references.set(cur, outgoingReferences(cur));
         },
         arrayKeys,
       );
     });
-    forEachObjectWhitelist2<EditorBase>(this, (cur) => (cur.isLink() ? this.updateLink(cur) : this.refreshErrors(cur)), arrayKeys);
+    withAncestorCache(() =>
+      forEachObjectWhitelist2<EditorBase>(this, (cur) => (cur.isLink() ? this.updateLink(cur) : this.refreshErrors(cur)), arrayKeys),
+    );
 
-    // Nodes in other catalogues just gained referrers from this one. They were validated when
-    // their own catalogue loaded -- before this one existed -- and the edges above were
-    // recorded directly, so nothing has told them their answer changed. A rule reading refs
-    // (like "unused") is stale on them until it does.
-    for (const id of touched) this.revalidateId(id, this);
-
-    // And the other direction: this catalogue now *provides* every id in its index, so anything
-    // elsewhere that was waiting on one has a different answer too. onIndexed normally tells
-    // them one node at a time, but it was suspended for the load above, and their own catalogue
-    // has already had its pass -- without this, a condition pointing into a catalogue that
-    // loads later keeps a "child id does not exist" it no longer deserves. Referrers inside
-    // this catalogue are already covered by the pass above.
+    // This catalogue now *provides* every id in its index, so anything elsewhere that was
+    // waiting on one has a different answer too. onIndexed normally tells them one node at a
+    // time, but it was suspended for the load above, and their own catalogue has already had
+    // its pass -- without this, a condition pointing into a catalogue that loads later keeps a
+    // "child id does not exist" it no longer deserves. Referrers inside this catalogue are
+    // already covered by the pass above.
+    //
+    // The mirror of this -- revalidating every id this catalogue *points at*, because those
+    // targets just gained a referrer -- is gone with the unused rule, which was the only one
+    // whose verdict a new referrer could change.
     for (const id in this.index) {
       for (const referrer of this.references.referrers(id, "link")) {
         if (referrer.catalogue !== this) referrer.catalogue?.revalidate(referrer);
@@ -428,7 +493,7 @@ class CatalogueEditor extends Catalogue {
       catalogue: this,
       findById: (id) => resolveId(id, this.getIndexes()),
       findByIdGlobal: (id) => this.findOptionByIdGlobal(id) as Base | undefined,
-      hasPossibleParent: (node, id) => findPossibleParent(node as EditorBase, id) !== undefined,
+      hasPossibleParent: (node, id) => hasPossibleParentId(node as EditorBase, id),
       idCollisions: (node) => this.idCollisions(node as EditorBase),
     }));
   }

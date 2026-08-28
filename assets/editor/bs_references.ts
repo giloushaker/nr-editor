@@ -16,6 +16,9 @@ import type { ReferenceEdge } from "./bs_reference_index";
 /** Fields whose value is a node id, keyed so set_field knows when to reindex. */
 export const REFERENCE_FIELDS = new Set(["targetId", "typeId", "childId", "scope", "value"]);
 
+/** Shared, for the many nodes that point at nothing. Never stored and never mutated. */
+const NONE = Object.freeze([]) as unknown as ReferenceEdge[];
+
 /**
  * Everything `node` points at.
  *
@@ -25,6 +28,11 @@ export const REFERENCE_FIELDS = new Set(["targetId", "typeId", "childId", "scope
  * not the index.
  */
 export function outgoingReferences(node: any): ReferenceEdge[] {
+  // Runs on every node of every catalogue, and most nodes carry no reference at all.
+  // Cheaper to rule those out than to allocate an array that stays empty.
+  if (!node.targetId && !(node instanceof Condition) && !(node instanceof Modifier) && !(node instanceof Profile)) {
+    return NONE;
+  }
   const edges: ReferenceEdge[] = [];
 
   // Links, including catalogueLinks: reload() finds the catalogues pointing at it this way.

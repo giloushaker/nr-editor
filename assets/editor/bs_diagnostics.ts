@@ -103,8 +103,11 @@ export const DIAGNOSTICS: Diagnostic[] = [
     id: "id-not-exist",
     severity: "warning",
     // Constraints reuse the Condition shape but have no childId to resolve.
+    // instanceof first: editorTypeName is a getter that resolves through link targets, and
+    // putting it in front ran it on every node of every catalogue for a rule that only ever
+    // applies to conditions.
     applies: (node) =>
-      node.editorTypeName !== "localConditionGroup" && node instanceof Condition && !(node instanceof Constraint),
+      node instanceof Condition && !(node instanceof Constraint) && node.editorTypeName !== "localConditionGroup",
     check(node, ctx) {
       const condition = node as EditorBase & Condition;
       const childId = condition.childId;
@@ -155,30 +158,29 @@ export const DIAGNOSTICS: Diagnostic[] = [
     },
     related: (node, ctx) => ctx.idCollisions(node),
   },
-
-  {
-    /**
-     * Shared entries exist to be linked to, so one nobody links to is dead data -- usually a
-     * leftover from a rename or a half-finished edit.
-     *
-     * This is the first rule whose answer depends on a *different* node changing: adding or
-     * retargeting a link elsewhere flips it. That works because addRef/removeRef revalidate
-     * the node whose refs changed. related() could not have covered it -- by the time a
-     * retargeted link is revalidated, its previous target is already unreachable, so only
-     * the mutation site knows both ends.
-     *
-     * Info rather than warning: an unused shared entry is suspicious, not broken, and a
-     * catalogue mid-edit legitimately has them.
-     */
-    id: "unused",
-    severity: "info",
-    applies: (node) => SHARED_KEYS.has(node.parentKey),
-    check(node) {
-      if (node.refs?.length) return;
-      return `${node.getName()} is not linked to by anything`;
-    },
-  },
 ];
+
+/**
+ * Shared entries exist to be linked to, so one nobody links to is usually a leftover from a
+ * rename or a half-finished edit.
+ *
+ * Not registered by default. It accounted for 1000 of the 1023 diagnostics on Warhammer: The
+ * Old World -- enough noise to bury the 23 that matter -- and it is the only rule whose answer
+ * depends on a *different* node gaining a referrer, which is what forced processForEditor to
+ * revalidate every id this catalogue points at after every load.
+ *
+ * `registerDiagnostic(UNUSED_DIAGNOSTIC)` turns it back on; note that doing so reintroduces the
+ * staleness this rule needs that extra pass to avoid.
+ */
+export const UNUSED_DIAGNOSTIC: Diagnostic = {
+  id: "unused",
+  severity: "info",
+  applies: (node) => SHARED_KEYS.has(node.parentKey),
+  check(node) {
+    if (node.refs?.length) return;
+    return `${node.getName()} is not linked to by anything`;
+  },
+};
 
 /** Scopes that aren't node ids don't need resolving; exported so callers can share the set. */
 export { validScopes };
