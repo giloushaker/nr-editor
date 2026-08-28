@@ -45,6 +45,28 @@
 import { get_ctx, get_base_from_vue_el, useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 
+// ponytail: module-scoped, so every tree node shares one pair of listeners.
+// Each instance used to register its own on window, so a single keystroke fired
+// one handler per rendered node and holding Alt wrote reactive state on all of them.
+const altHeld = ref(false);
+let altListening = false;
+function listenForAlt() {
+  if (altListening) return;
+  altListening = true;
+  addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.key === "Alt") {
+      altHeld.value = true;
+      e.preventDefault();
+    }
+  });
+  addEventListener("keyup", (e: KeyboardEvent) => {
+    if (e.key === "Alt") {
+      altHeld.value = false;
+      e.preventDefault();
+    }
+  });
+}
+
 export default {
   name: "EditorCollapsibleBox",
   props: {
@@ -100,7 +122,6 @@ export default {
       collapsed: true,
       initiated: this.vshow,
       selected: false,
-      alt: false,
       sticky: false,
     };
   },
@@ -111,22 +132,16 @@ export default {
     }
   },
   setup() {
-    return { store: useEditorStore(), settings: useSettingsStore() };
+    return { store: useEditorStore(), settings: useSettingsStore(), alt: altHeld };
   },
   mounted() {
-    addEventListener("keydown", this.handleKeyDown);
-    addEventListener("keyup", this.handleKeyUp);
+    listenForAlt();
     this.$el.vnode = this;
     this.init(this.payload);
   },
 
   updated() {
     this.$el.vnode = this;
-  },
-  unmounted() {
-    // console.log("unmounted", this.depth);
-    removeEventListener("keydown", this.handleKeyDown);
-    removeEventListener("keyup", this.handleKeyUp);
   },
   watch: {
     payload(data) {
@@ -245,18 +260,6 @@ export default {
         deep ? await this.open_recursive() : this.open();
       } else {
         deep ? await this.close_recursive() : this.close();
-      }
-    },
-    handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        this.alt = true;
-        event.preventDefault();
-      }
-    },
-    handleKeyUp(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        this.alt = false;
-        event.preventDefault();
       }
     },
   },
