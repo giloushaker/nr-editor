@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { setAppearanceFont } from "~/assets/ts/appearance";
-import { AppearanceTheme } from "~/assets/ts/appearance_types";
+import type { AppearanceTheme } from "~/assets/ts/appearance_types";
 export interface RGB {
   r: number;
   g: number;

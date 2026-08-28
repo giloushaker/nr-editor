@@ -125,22 +125,18 @@
 </template>
 <script lang="ts">
 import PopupDialog from "~/shared_components/PopupDialog.vue";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICostType, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICostType, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 import {
-  EditorSearchItem,
   getParentUnitHierarchy,
   getSearchCategories,
   getSearchElements,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import {
-  AffectsQuery,
-  construct_affects_query,
-  deconstruct_affects_query,
-  Modifier,
-} from "~/assets/shared/battlescribe/bs_main";
+import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
+import type { AffectsQuery } from "~/assets/shared/battlescribe/bs_main";
 import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
 const scopes = {
   self: { id: undefined, name: "Self" },

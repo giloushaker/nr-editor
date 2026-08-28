@@ -47,7 +47,7 @@ import { PropType } from "vue";
 import { findParentWhere, sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { getEntryPathInfo, getName } from "~/assets/shared/battlescribe/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import NodePath from "~/components/util/NodePath.vue";
 

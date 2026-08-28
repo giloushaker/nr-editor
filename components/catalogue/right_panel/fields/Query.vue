@@ -81,16 +81,17 @@
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
-import { Catalogue, EditorBase, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
-  EditorSearchItem,
   getSearchCategories,
   getSearchElements,
   getParentUnitHierarchy,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 interface ScopeChoice {
   id: string;
   name: string;

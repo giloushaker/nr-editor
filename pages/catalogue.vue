@@ -59,7 +59,7 @@ import LeftPanel from "~/components/catalogue/left_panel/LeftPanel.vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
-import { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import type { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";

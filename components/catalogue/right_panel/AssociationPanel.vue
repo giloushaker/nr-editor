@@ -19,9 +19,10 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
-import { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
+import type { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

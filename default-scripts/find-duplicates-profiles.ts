@@ -1,6 +1,6 @@
 import type { Profile, Rule } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIProfile, BSIRule } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIProfile, BSIRule } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
     name: "Find Duplicate Profiles",

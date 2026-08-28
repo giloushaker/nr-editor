@@ -22,7 +22,7 @@
   </div>
 </template>
 <script lang="ts">
-import { EntryPathEntryExtended } from "~/assets/shared/battlescribe/bs_editor";
+import type { EntryPathEntryExtended } from "~/assets/shared/battlescribe/bs_editor";
 
 export default defineComponent({
   props: {

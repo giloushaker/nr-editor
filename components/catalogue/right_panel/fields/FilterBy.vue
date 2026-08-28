@@ -52,11 +52,10 @@
 
 <script lang="ts">
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICondition } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 import {
-  EditorSearchItem,
   getSearchElements,
   getSearchCategories,
   getFilterSelections,
@@ -64,6 +63,7 @@ import {
   getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "@/assets/ts/catalogue/catalogue_helpers";
 import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
 import { fieldToText } from "~/assets/shared/battlescribe/bs_modifiers";

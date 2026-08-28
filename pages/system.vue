@@ -103,7 +103,7 @@
 
 <script lang="ts">
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { createFolder, getFolderFolders, getFolderMtime, getPath, isDirectory, showOpenDialog } from "~/electron/node_helpers";
 import { hasRoot, permissionState, pickFolder, requestPermission, restoreHandles, supported } from "~/electron/web_fs";

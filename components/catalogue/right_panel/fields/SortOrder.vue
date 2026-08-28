@@ -79,7 +79,7 @@
 import type { PropType } from "vue";
 import { sortByAscending, sortByAscendingInplace } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { AutoSortConfig } from "~/assets/shared/battlescribe/sortorder";
 import { useSettingsStore } from "~/stores/settingsState";
