@@ -94,7 +94,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .script-group {
   font-size: 1.05em;

@@ -57,8 +57,8 @@ one per line">
 
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIOption, BSINamed, BSIAliasable, BSIForce } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSIOption, BSINamed, BSIAliasable, BSIForce } from "~/assets/shared/battlescribe/bs_types";
 import InputStringArray from "./InputStringArray.vue";
 import { Force } from "~/assets/shared/battlescribe/bs_main";
 

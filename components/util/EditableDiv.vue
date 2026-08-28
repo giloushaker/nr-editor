@@ -80,7 +80,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .editableDiv {
   border: 1px $box_border solid;

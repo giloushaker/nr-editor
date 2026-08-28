@@ -48,7 +48,7 @@
 <script lang="ts">
 import { getEntryPathInfo, getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import NodePath from "~/components/util/NodePath.vue";
 import { useEditorStore } from "~/stores/editorStore";
 

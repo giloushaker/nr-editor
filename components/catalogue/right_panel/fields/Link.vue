@@ -75,11 +75,13 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import type { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
@@ -225,7 +227,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .linkIcon {
   vertical-align: middle;

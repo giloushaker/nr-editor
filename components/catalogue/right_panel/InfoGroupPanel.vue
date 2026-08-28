@@ -12,7 +12,7 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIInfoGroup } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIInfoGroup } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

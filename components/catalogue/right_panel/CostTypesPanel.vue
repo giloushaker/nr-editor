@@ -23,7 +23,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { BSICostType } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

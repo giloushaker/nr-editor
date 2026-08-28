@@ -1,7 +1,7 @@
-import { ArmyListEntry, Loc } from "./types";
+import type { ArmyListEntry, Loc } from "./types";
 import categories from "./categories";
 import { cost } from "./costs";
-import { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
 /*
   - name: string;
 

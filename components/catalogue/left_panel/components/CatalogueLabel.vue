@@ -47,8 +47,8 @@ import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
-import { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   name: "CatalogueEntry",
@@ -137,7 +137,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .imported {
   color: rgb(128, 145, 183);

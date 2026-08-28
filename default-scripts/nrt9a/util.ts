@@ -1,5 +1,6 @@
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICharacteristic, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICharacteristic, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 
 export function toTitleCaseWords(str: string): string {
   if (str.includes("-")) {

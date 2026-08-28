@@ -1,4 +1,4 @@
-import { ArmyBookArmy, ArmyBookBook } from "./army_book_interfaces";
+import type { ArmyBookArmy, ArmyBookBook } from "./army_book_interfaces";
 import { convertArmyBookUnit } from "./army_book_unit";
 
 export function getArmyUnits(opt: ArmyBookBook): Record<string, any>[] {

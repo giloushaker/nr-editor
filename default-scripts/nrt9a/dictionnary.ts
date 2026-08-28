@@ -1,5 +1,5 @@
-import { BSICost } from "~/assets/shared/battlescribe/bs_types";
-import { ArmyBookOption } from "./army_book_interfaces";
+import type { BSICost } from "~/assets/shared/battlescribe/bs_types";
+import type { ArmyBookOption } from "./army_book_interfaces";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { cost, specialCost } from "../t9a/costs";
 

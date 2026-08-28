@@ -1,6 +1,7 @@
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICharacteristic, BSIInfoLink, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICharacteristic, BSIInfoLink, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { findRule } from "./rule_importer";
 import { charac } from "./util";
 

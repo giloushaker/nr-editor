@@ -32,7 +32,7 @@
 </template>
 <script lang="ts">
 import { Category, Link } from "~/assets/shared/battlescribe/bs_main";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ContextMenu from "~/components/dialog/ContextMenu.vue";
 import { useEditorStore } from "~/stores/editorStore";
 

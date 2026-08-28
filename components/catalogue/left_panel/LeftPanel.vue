@@ -87,7 +87,8 @@
 </template>
 
 <script lang="ts">
-import { EntryPathEntry, getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
+import { getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
+import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import { useEditorUIState } from "~/stores/editorUIState";
@@ -326,7 +327,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .leftPanel {
   height: 100%;

@@ -1,6 +1,7 @@
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { bookNames } from "./profile_import";
-import {
+import type {
   BSIEntryLink,
   BSIInfoLink,
   BSIRule,

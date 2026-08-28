@@ -7,9 +7,10 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

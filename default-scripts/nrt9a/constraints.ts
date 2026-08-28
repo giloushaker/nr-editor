@@ -1,11 +1,11 @@
-import { BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
-import { ArmyBookCondition, ArmyBookOption } from "./army_book_interfaces";
+import type { BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import type { ArmyBookCondition, ArmyBookOption } from "./army_book_interfaces";
 import T9AImporter from "./t9a_importer";
 import { toTitleCaseWords } from "./util";
 import { convertRef } from "./refs";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { specialCost, specialCostType } from "../t9a/costs";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getConditionFromHasOption, insertIdConditions } from "./conditions";
 
 export function addConstraint(node: any, constraint: any) {

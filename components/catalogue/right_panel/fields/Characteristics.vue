@@ -33,7 +33,8 @@
 import { PropType } from "vue";
 import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
 import { Link, Profile, ProfileType } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import { useSettingsStore } from "~/stores/settingsState";
 

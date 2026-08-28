@@ -59,11 +59,11 @@
   </CollapsibleBox>
 </template>
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import type { PropType } from "vue";
 import ScriptArgument from "./ScriptArgument.vue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getEntryPathInfo } from "~/assets/shared/battlescribe/bs_editor";
 import { useEditorStore } from "~/stores/editorStore";
 import NodePath from "../util/NodePath.vue";
@@ -161,7 +161,7 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .script {
   margin-top: 2px;

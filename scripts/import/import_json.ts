@@ -4,7 +4,8 @@ import type { EntyTemplate, Equipment, NoId, Page, ParsedUnitText, Profile, Spec
 import { id, isSameCharacteristics, removeTextInParentheses, splitAnd, splitByCenterDot, removeSuffix, replaceNewlineWithSpace, getOnlyTextInParentheses, extractTextAndDetails, replaceSuffix, parseSpecialRule, toTitleCase } from "./import_helpers"
 import { getGroup, getPerModelCostModifier, parseDetails, toCategoryLink, toCost, toEntry, toEntryLink, toEquipment, toGroup, toGroupLink, toInfoLink, toMaxConstraint, toMinConstraint, toModelProfile, toProfileLink, toSpecialRule, toSpecialRuleLink, toUnitProfile, toWeaponProfile } from "./import_create_entries";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { OptionsEntry, optionsToGroups } from "./import_options";
+import { optionsToGroups } from "./import_options";
+import type { OptionsEntry } from "./import_options";
 import { Base, Entry, InfoGroup } from "~/assets/shared/battlescribe/bs_main";
 import { parseUnitText } from "./import_raw";
 

@@ -34,8 +34,8 @@
 </template>
 
 <script lang="ts">
-import { BSICharacteristicType } from "~/assets/shared/battlescribe/bs_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICharacteristicType } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import UtilEditableDiv from "~/components/util/EditableDiv.vue";
 import { useEditorStore } from "~/stores/editorStore";
 

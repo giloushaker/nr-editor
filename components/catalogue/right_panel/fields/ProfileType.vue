@@ -33,9 +33,9 @@
 </template>
 
 <script lang="ts">
-import { BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { PropType } from "vue";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import SortOrder from "./SortOrder.vue";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";

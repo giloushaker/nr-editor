@@ -1,4 +1,4 @@
-import { AppearanceTheme } from "./appearance_types";
+import type { AppearanceTheme } from "./appearance_types";
 
 export interface RGB {
   r: number;
