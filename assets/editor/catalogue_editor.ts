@@ -812,6 +812,12 @@ declare module "~/assets/shared/battlescribe/bs_main_catalogue" {
      */
     readonly refs: EditorBase[];
     readonly other_refs: EditorBase[];
+    /**
+     * Restated so a Catalogue still satisfies EditorBase. Base declares `parent` as the weaker
+     * `Base`, because that is all bs_condition's walk needs; narrowing it here rather than there
+     * keeps shared from naming the editor's node type.
+     */
+    readonly parent?: EditorBase;
     errorCount(severity?: IErrorMessage["severity"]): number;
     reindexReferences(node: EditorBase): void;
     unindexReferences(node: EditorBase): void;
