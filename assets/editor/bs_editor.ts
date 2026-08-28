@@ -1,4 +1,4 @@
-import { Base, Condition, Link, Modifier, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
+import { Base, Condition, ConditionGroup, Constraint, Link, LocalConditionGroup, Modifier,  Repeat,  goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { conditionToString, fieldToText, getModifierOrConditionParent, modifierToString } from "~/assets/shared/battlescribe/bs_modifiers";
 import { BSICondition, BSIConditionGroup, BSIConstraint, BSILocalConditionGroup, BSIModifier, BSIModifierGroup, BSIProfile, BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
@@ -256,7 +256,7 @@ export function getTypeLabel(key: string & keyof typeof types): string {
 }
 export function getTypeName(key: string & keyof typeof entries, obj?: Base): keyof typeof types {
   if (obj?.target) {
-    const targetType = getTypeName((obj.target as EditorBase).parentKey as string & keyof typeof entries, obj.target);
+    const targetType = getTypeName((obj.target ).parentKey as string & keyof typeof entries, obj.target);
     return (targetType + "Link") as keyof typeof types;
   }
   const type = (entries[key] as { type?: keyof typeof types })?.type;
@@ -268,11 +268,14 @@ export function getNameExtra(obj: EditorBase, _refs = true, _type = true): strin
   const type = obj.parentKey;
   const pieces = [];
   switch (type) {
-    case "infoLinks":
-      if (["profiles", "sharedProfiles"].includes((obj.target as EditorBase)?.parentKey) && _type) {
+    case "infoLinks":{
+
+      const targetKey = (obj.target)?.parentKey;
+      if (targetKey && ["profiles", "sharedProfiles"].includes(targetKey) && _type) {
         pieces.push((obj.target as unknown as BSIProfile).typeName);
       }
       break;
+    }
     case "sharedProfiles":
     case "profiles":
       if (_type) {
@@ -319,7 +322,7 @@ export function getNameExtra(obj: EditorBase, _refs = true, _type = true): strin
   return pieces.join(" ");
 }
 
-export function getName(obj: Base & { parentKey: string }): string {
+export function getName(obj: Base): string {
   const type = obj.parentKey;
   switch (type) {
     case "sharedSelectionEntries":
@@ -367,10 +370,13 @@ export function getName(obj: Base & { parentKey: string }): string {
     case "associationLinks":
       return obj.getName();
     case "modifiers":
-      return modifierToString(getModifierOrConditionParent(obj as EditorBase), obj as EditorBase & BSIModifier);
+      return modifierToString(getModifierOrConditionParent(obj), obj as Modifier);
     case "repeats": {
-      const repeat = obj as EditorBase & BSIRepeat;
-      const parent = getModifierOrConditionParent(obj as EditorBase);
+      // Double cast: Repeat redeclares `repeats` as the count, while Condition.repeats is the
+      // array of them, so the two do not structurally overlap. Same clash the class suppresses
+      // on that member.
+      const repeat = obj as unknown as Repeat;
+      const parent = getModifierOrConditionParent(obj);
       if (!parent) {
         console.warn("no parent for repeat", obj);
       }
@@ -382,18 +388,18 @@ export function getName(obj: Base & { parentKey: string }): string {
       );
     }
     case "constraints": {
-      const constraint = obj as EditorBase & BSIConstraint;
-      return conditionToString(getModifierOrConditionParent(obj as EditorBase), constraint);
+      const constraint = obj as Base & BSIConstraint;
+      return conditionToString(getModifierOrConditionParent(obj), constraint);
     }
     case "conditions":
-      return conditionToString(getModifierOrConditionParent(obj as EditorBase), obj as EditorBase & BSICondition);
+      return conditionToString(getModifierOrConditionParent(obj), obj as Base & BSICondition);
     case "localConditionGroups":
-      return conditionToString(getModifierOrConditionParent(obj as EditorBase), obj as EditorBase & BSILocalConditionGroup) + " where:";
+      return conditionToString(getModifierOrConditionParent(obj), obj as Base & BSILocalConditionGroup) + " where:";
 
     case "modifierGroups":
       return `Modify...`;
     case "conditionGroups":
-      return `${(obj as EditorBase & BSIConditionGroup).type!.toUpperCase()}`;
+      return `${(obj as Base & BSIConditionGroup).type!.toUpperCase()}`;
     default:
       console.log(type, obj);
       return type;
@@ -411,6 +417,15 @@ export function siblingArray(parent: Base, key: string): EditorBase[] | undefine
   return (parent as unknown as Record<string, EditorBase[] | undefined>)[key];
 }
 
+/**
+ * Like siblingArray, but for a caller that is about to put something in: creates the array when
+ * the parent does not have one yet.
+ */
+export function ensureSiblingArray(parent: Base, key: string): EditorBase[] {
+  const arrays = parent as unknown as Record<string, EditorBase[] | undefined>;
+  return (arrays[key] ??= []);
+}
+
 export function forEachEntryRecursive(entry: EditorBase, callback: (entry: EditorBase, key?: string, parent?: EditorBase) => unknown) {
   callback(entry);
   const stack = [entry];
@@ -418,7 +433,7 @@ export function forEachEntryRecursive(entry: EditorBase, callback: (entry: Edito
     const cur = stack.pop()!;
     for (const key of Object.keys(cur)) {
       if (!goodJsonKeys.has(key) || textNodeTags.has(key)) continue;
-      const val = cur[key as string & keyof EditorBase] as EditorBase[] | undefined;
+      const val = siblingArray(cur, key);
       if (val && Array.isArray(val)) {
         for (const e of val) {
           stack.push(e);
@@ -462,7 +477,7 @@ export function onAddEntry(entries: EditorBase[] | EditorBase, catalogue: Catalo
   for (const entry of Array.isArray(entries) ? entries : [entries]) {
     forEachEntryRecursive(entry, (entry, key, _parent) => {
       if (isObject(entry)) {
-        entry.parent = _parent || (parent as EditorBase);
+        entry.parent = _parent || (parent );
 
         entry.catalogue = catalogue;
         catalogue.addToIndex(entry);
@@ -483,7 +498,7 @@ export function onAddEntry(entries: EditorBase[] | EditorBase, catalogue: Catalo
   }
 }
 export interface EntryPathEntry {
-  key: string;
+  key: string & keyof typeof entries;
   index: number;
   id?: string;
 }
@@ -500,7 +515,7 @@ export function getEntryPath(entry: EditorBase): EntryPathEntry[] {
   }
   const result = [] as EntryPathEntry[];
   while (entry.parent) {
-    const parent = (entry.parent || entry.catalogue) as EditorBase;
+    const parent = (entry.parent || entry.catalogue) ;
     result.push({
       key: entry.parentKey,
       index: siblingArray(parent, entry.parentKey)!.indexOf(entry),
@@ -517,7 +532,7 @@ export function getEntryPathInfo(entry: EditorBase): EntryPathEntry[] {
   }
   const result = [] as EntryPathEntryExtended[];
   do {
-    const parent = (entry.parent || entry.catalogue) as EditorBase;
+    const parent = (entry.parent || entry.catalogue) ;
     if (parent) {
       result.push({
         name: entry.getName(),
@@ -548,54 +563,46 @@ export function getEntryPathInfo(entry: EditorBase): EntryPathEntry[] {
  *  returns the parent
  */
 export function addAtEntryPath(catalogue: Catalogue, path: EntryPathEntry[], entry: EditorBase) {
-  let current: unknown = catalogue;
+  let current: Base = catalogue;
   // resolve path up until the last node
   for (let i = 0; i < path.length - 1; i++) {
     const node = path[i];
-    current = ((current as EditorBase)[node.key as string & keyof EditorBase] as EditorBase[])[node.index];
+    current = siblingArray(current, node.key)![node.index];
   }
   const lastNode = path[path.length - 1];
-  if (!(current as EditorBase)[lastNode.key as string & keyof EditorBase]) {
-    (current as Record<string, EditorBase[]>)[lastNode.key] = [];
-  }
-  const arr = (current as EditorBase)[lastNode.key as string & keyof EditorBase] as EditorBase[];
-  arr.splice(lastNode.index, 0, entry);
-  return current as EditorBase;
+  ensureSiblingArray(current, lastNode.key).splice(lastNode.index, 0, entry);
+  return current;
 }
 export function getAtEntryPath(catalogue: Catalogue, path: EntryPathEntry[]): EditorBase | undefined {
-  let current: unknown = catalogue;
-  // resolve path up until the last node
+  let current: Base = catalogue;
   for (const node of path) {
-    current = (current as EditorBase)[node.key as string & keyof EditorBase];
-    if (!current) return undefined;
-    current = (current as EditorBase[])[node.index];
+    const found = siblingArray(current, node.key)?.[node.index];
+    if (!found) return undefined;
+    current = found;
   }
-  return current as EditorBase | undefined;
+  return current;
 }
 export function popAtEntryPath(catalogue: Catalogue, path: EntryPathEntry[]): EditorBase {
-  let current: unknown = catalogue;
+  let current: Base = catalogue;
   // resolve path up until the last node
   const lastNode = path[path.length - 1];
   for (const node of path) {
     if (node === lastNode) continue;
-    current = ((current as EditorBase)[node.key as string & keyof EditorBase] as EditorBase[])[node.index];
+    current = siblingArray(current, node.key)![node.index];
   }
-  const arr = (current as EditorBase)[lastNode.key as string & keyof EditorBase] as EditorBase[];
-  const result = arr.splice(lastNode.index, 1)[0];
+  const result = siblingArray(current, lastNode.key)?.splice(lastNode.index, 1)[0];
   if (!result) throw new Error("popAtEntryPath failed");
-
   return result;
 }
 export function replaceAtEntryPath(catalogue: Catalogue, path: EntryPathEntry[], value: EditorBase): EditorBase {
-  let current: unknown = catalogue;
+  let current: Base = catalogue;
   // resolve path up until the last node
   const lastNode = path[path.length - 1];
   for (const node of path) {
     if (node === lastNode) continue;
-    current = ((current as EditorBase)[node.key as string & keyof EditorBase] as EditorBase[])[node.index];
+    current = siblingArray(current, node.key)![node.index];
   }
-  const arr = (current as EditorBase)[lastNode.key as string & keyof EditorBase] as EditorBase[];
-  const result = arr.splice(lastNode.index, 1, value)[0];
+  const result = siblingArray(current, lastNode.key)?.splice(lastNode.index, 1, value)[0];
   if (!result) throw new Error("replaceAtEntryPath failed");
   return result;
 }
@@ -631,7 +638,18 @@ export function scrambleIds(catalogue: Catalogue, entry_or_entries: MaybeArray<E
   }
 }
 
-export function fixKey(parent: EditorBase | Catalogue, key: keyof typeof entries, catalogueKey?: keyof typeof entries): string {
+/**
+ * Which array a child of `key` actually belongs in under `parent`.
+ *
+ * Returns "" when it does not belong anywhere -- a shared entry has no home outside a
+ * catalogue, for instance. Both callers already test `if (!key)`; the return type just did not
+ * admit it, and claimed six unreachable branches were returning a real key.
+ */
+export function fixKey(
+  parent: EditorBase | Catalogue,
+  key: keyof typeof entries,
+  catalogueKey?: keyof typeof entries,
+): (string & keyof typeof entries) | "" {
   if (!parent.isCatalogue()) {
     switch (key) {
       case "sharedRules":
