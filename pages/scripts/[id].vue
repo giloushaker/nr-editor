@@ -1,7 +1,17 @@
 <template>
   <div class="h-full overflow-y-auto">
     <template v-if="system">
-      <div v-for="script in scripts"> <RunScript :script="script" :system="system" /> </div>
+      <template v-if="specific.length">
+        <h2 class="script-group">{{ systemName }}</h2>
+        <div v-for="script in specific" :key="script.name">
+          <RunScript :script="script" :system="system" />
+        </div>
+      </template>
+
+      <h2 class="script-group">Any game system</h2>
+      <div v-for="script in generic" :key="script.name">
+        <RunScript :script="script" :system="system" />
+      </div>
     </template>
     <CollapsibleBox>
       <template #title>Info</template>
@@ -62,21 +72,35 @@ export default defineComponent({
   data() {
     return {
       system: null as GameSystemFiles | null,
-      scripts: [] as Record<string, any>[],
+      generic: [] as Record<string, any>[],
+      specific: [] as Record<string, any>[],
     };
   },
   async mounted() {
     this.system = null;
     this.system = await this.store.get_or_load_system((this.$route.params as { id: string }).id);
-    // On construit la liste une fois le système connu, pour que le filtrage par système
-    // (ex: scripts TOW) fonctionne, puis on trie par ordre alphabétique.
-    const scripts = [
-      ...this.store.scripts.get_default_scripts(this.system),
-      ...(await this.store.scripts.get_scripts(this.system)),
-    ];
-    scripts.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    this.scripts = scripts;
+    // Built once the system is known, so the per-system filtering has something to match on.
+    const { generic, specific } = await this.store.scripts.get_scripts_grouped(this.system);
+    this.generic = generic;
+    this.specific = specific;
+  },
+  computed: {
+    systemName(): string {
+      return this.system?.gameSystem?.name || "This game system";
+    },
   },
   methods: {},
 });
 </script>
+
+<style lang="scss" scoped>
+@import "@/shared_components/css/vars.scss";
+
+.script-group {
+  font-size: 1.05em;
+  font-weight: bold;
+  margin: 14px 4px 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid $box_border;
+}
+</style>

@@ -4,7 +4,7 @@ import { BSIProfile, BSIRule } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
     name: "Find Duplicate Profiles",
-    description: "Returns profiles with mrore than one occurrence",
+    description: "Lists profiles defined more than once, so the copies can be replaced by links to a single shared profile. Matching is tunable with the options below.",
     arguments: [
         {
             name: "catalogues",

@@ -63,12 +63,13 @@ export const useScriptsStore = defineStore("scripts", {
         return [];
       }
     },
-    get_default_scripts(system?: GameSystemFiles) {
+    /** Built-in scripts that work on any game system. */
+    get_generic_scripts() {
       // const testScripts = [] as Record<string, any>[];
       // testScripts.push(pasteSpecialRule);
       // testScripts.push(pasteWeapons);
       // testScripts.push(pasteEquipment);
-      const scripts = [
+      return [
         fixLinkNames,
         fixProfiles,
         listRefs,
@@ -78,15 +79,35 @@ export const useScriptsStore = defineStore("scripts", {
         listAutomaticRefs,
         //  ...(electron ? [] : testScripts),
       ] as Record<string, any>[];
+    },
 
-      // Scripts spécifiques à Warhammer: The Old World (filtré par nom de système,
-      // comme les scripts T9A l'étaient dans get_scripts). Nécessaire ici car ce script
-      // est en .ts : get_scripts ne charge que les .js du dossier de données, donc il le skip.
+    /**
+     * Built-in scripts written for a single game system, filtered by system name.
+     * They live here rather than in the system's own data folder because they are .ts,
+     * and get_scripts only loads .js files from there.
+     */
+    get_system_specific_scripts(system?: GameSystemFiles) {
+      const scripts = [] as Record<string, any>[];
       if ((system?.gameSystem?.name ?? "").includes("Old World")) {
         scripts.push(towMatchedPlay);
       }
-
       return scripts;
+    },
+
+    get_default_scripts(system?: GameSystemFiles) {
+      return [...this.get_generic_scripts(), ...this.get_system_specific_scripts(system)];
+    },
+
+    /**
+     * Every script available for a system, split by whether it is tied to that system.
+     * Scripts loaded from the system's own data folder are system-specific by definition.
+     */
+    async get_scripts_grouped(system?: GameSystemFiles) {
+      const byName = (a: Record<string, any>, b: Record<string, any>) => (a.name || "").localeCompare(b.name || "");
+      return {
+        generic: this.get_generic_scripts().sort(byName),
+        specific: [...this.get_system_specific_scripts(system), ...(await this.get_scripts(system))].sort(byName),
+      };
     },
     async emit(key: string, ...args: any[]) {
       for (const cb of Object.values(this.hooks[key] || {})) {

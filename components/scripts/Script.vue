@@ -9,13 +9,13 @@
         <ScriptArgument :arg="arg" :args="args" :system="system" :index="i" ref="args" />
       </div>
       <div>
-        <button class="bouton my-10px" @click="run" :disabled="running">
+        <button class="bouton run-script my-10px" @click="run" :disabled="running">
           <template v-if="running">
-            <span class="gray">...</span>
+            <span class="gray">Running...</span>
           </template>
           <template v-else>
-            <img class="icon" src="/assets/icons/right2.png" />
-            Run Script
+            <img class="icon run-script-icon" src="/assets/icons/right2.png" alt="" />
+            <span>Run Script</span>
           </template>
         </button>
       </div>
@@ -160,14 +160,33 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/shared_components/css/vars.scss";
 
 .script {
   margin-top: 2px;
   border: 1px solid $box_border;
 }
-:deep(.title) {
-  background-color: blue;
+
+/**
+ * The icon is a 20x20 png and `.icon` carries no sizing globally, so as a plain inline
+ * image it sat on the text baseline and overflowed the button's default padding. Lay the
+ * button out as a flex row and bound the icon to the line height instead.
+ */
+.run-script {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 12px;
+  line-height: 1.2;
+  min-height: 30px;
+}
+
+.run-script-icon {
+  display: block;
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
 }
 </style>
