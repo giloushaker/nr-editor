@@ -76,7 +76,7 @@
   </div>
 </template>
 <script lang="ts">
-import { PropType } from "nuxt/dist/app/compat/capi";
+import type { PropType } from "vue";
 import { sortByAscending, sortByAscendingInplace } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
