@@ -14,7 +14,8 @@ import {
   removeEntry,
   getName,
   getNameExtra,
-} from "~/assets/shared/battlescribe/bs_editor";
+  siblingArray,
+} from "~/assets/editor/bs_editor";
 import {
   enumerate_zip,
   generateBattlescribeId,
@@ -34,7 +35,6 @@ import {
   Link,
   entriesToJson,
   entryToJson,
-  goodJsonKeys,
   rootToJson,
   Characteristic,
   Rule,
@@ -44,6 +44,11 @@ import {
   ProfileType,
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
+// Side-effect import: grafts the editor half onto Catalogue.prototype and registers the
+// per-parentKey prototype hook. Must be in place before any catalogue is loaded, and this
+// store is where they all come from.
+import "~/assets/editor/catalogue_editor";
+import { REFERENCE_FIELDS } from "~/assets/editor/bs_references";
 import { useCataloguesStore } from "./cataloguesState";
 import type {
   BSICatalogue,
@@ -79,7 +84,8 @@ import { EditorUIState, useEditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { toRaw } from "vue";
+import { nextTick, toRaw } from "vue";
+import { continuesFieldEdit, fieldEditType, type FieldEditMark } from "./field_edit_stack";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
@@ -90,7 +96,7 @@ type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>;
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
-  selectionsParent?: Object | null;
+  selectionsParent?: object | null;
   selections: Array<{ obj: any; onunselected: () => unknown; payload?: any }>;
   selectedEntries: Array<{ obj: EditorBase; onunselected: () => unknown; payload?: any }>;
   selectedElementGroup: VueComponent[] | null;
@@ -157,9 +163,17 @@ export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorB
 }
 
 type VueComponent = any;
+/**
+ * Consecutive edits to the same field collapse into one undo entry while the user is still
+ * typing, so ctrl+Z steps back a word at a time rather than a character at a time.
+ */
+const FIELD_COALESCE_MS = 700;
+let lastFieldEdit: FieldEditMark | null = null;
 // ponytail: data folders keep catalogues at the root or one folder down; deeper is where
 // backups, exports and vendor copies live. Raise if someone nests legitimately.
 const LOAD_FOLDER_DEPTH = 1;
+const FIX_PROFILES_DEBOUNCE_MS = 800;
+const fixProfilesTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorStore => ({
@@ -361,16 +375,16 @@ export const useEditorStore = defineStore("editor", {
           }
           if (systemId) {
             const systemFiles = this.get_system(systemId);
-            systemFiles.setSystem(shallowReactive(json));
+            systemFiles.setSystem(shallowReactive(json) as BSIDataSystem);
             systems.push(systemFiles);
             result_system_ids.push(systemId);
           }
           if (catalogueId) {
-            const systemFiles = this.get_system(json.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
+            const systemFiles = this.get_system(json.catalogue!.gameSystemId);
+            systemFiles.catalogueFiles[catalogueId] = shallowReactive(json) as BSIDataCatalogue;
             if (!globalThis.electron) {
               // cache in the browser db so refreshing the index restores the full system
-              db.catalogues.put({ content: json, path: obj.fullFilePath, id: getDataDbId(json) });
+              db.catalogues.put({ content: json as BSIDataCatalogue, path: obj.fullFilePath, id: getDataDbId(json) });
             }
           }
           result_files.push(json);
@@ -400,8 +414,8 @@ export const useEditorStore = defineStore("editor", {
     async load_systems_from_db(force = false) {
       if (!this.gameSystemsLoaded && !force) {
         this.gameSystemsLoaded = true;
-        let systems = (await db.systems.offset(0).keys()) as string[];
-        for (let system of systems) {
+        const systems = (await db.systems.offset(0).keys()) as string[];
+        for (const system of systems) {
           if (system in this.gameSystems) continue;
           this.load_system_from_db(system);
         }
@@ -420,7 +434,7 @@ export const useEditorStore = defineStore("editor", {
       const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
       const systemFiles = this.get_system(system.gameSystem.id);
       systemFiles.setSystem(system);
-      for (let { content, path } of await dbcatalogues.toArray()) {
+      for (const { content, path } of await dbcatalogues.toArray()) {
         const catalogueId = content.catalogue.id;
         if (!content.catalogue.fullFilePath) {
           content.catalogue.fullFilePath = path;
@@ -525,6 +539,25 @@ export const useEditorStore = defineStore("editor", {
         state.unsaved = changedState;
       }
     },
+    /**
+     * Coalesces "Fix profiles" runs per game system. Editing a profile type touches every
+     * profile in every catalogue, so a burst of edits should produce one pass, not one each.
+     */
+    queue_fix_profiles(systemId: string) {
+      if (fixProfilesTimers[systemId]) clearTimeout(fixProfilesTimers[systemId]);
+      fixProfilesTimers[systemId] = setTimeout(async () => {
+        delete fixProfilesTimers[systemId];
+        try {
+          const system = this.get_system(systemId);
+          await system.loadAll();
+          const catalogues = system.getAllLoadedCatalogues();
+          catalogues.map((o) => o.processForEditor());
+          console.log(await this.scripts.run_script("Fix profiles", catalogues));
+        } catch (e) {
+          console.error("Fix profiles failed", e);
+        }
+      }, FIX_PROFILES_DEBOUNCE_MS);
+    },
     async changed(node: EditorBase | Catalogue) {
       function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
         const result = [] as NonNullable<T>[];
@@ -540,11 +573,10 @@ export const useEditorStore = defineStore("editor", {
         (node as EditorBase).editorTypeName === "profileType" ||
         getParents(node as EditorBase).find((o) => o.editorTypeName === "profileType")
       ) {
-        const system = this.get_system(node.getCatalogue().getSystemId());
-        await system.loadAll();
-        const catalogues = system.getAllLoadedCatalogues();
-        catalogues.map((o) => o.processForEditor());
-        console.log(await this.scripts.run_script("Fix profiles", catalogues));
+        // "Fix profiles" loads every catalogue in the system and walks every object in each.
+        // This fires on any `change` event under a profile type (the right panel catches them
+        // by bubbling), so coalesce instead of running it once per blur.
+        this.queue_fix_profiles(node.getCatalogue().getSystemId());
       }
 
       const catalogue = node.getCatalogue();
@@ -895,15 +927,15 @@ export const useEditorStore = defineStore("editor", {
         this.undoStackPos++;
       }
     },
-    async cut(event: ClipboardEvent) {
+    async cut(event?: ClipboardEvent) {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
+    async copy(event?: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
       const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections();
       await this.set_clipboard(toCopy, event);
     },
-    async paste(event: ClipboardEvent) {
+    async paste(event?: ClipboardEvent) {
       const clip = await this.get_clipboard(event);
       const script_result = await this.scripts.run_hooks("paste", event, clip);
       if (script_result) {
@@ -989,7 +1021,7 @@ export const useEditorStore = defineStore("editor", {
      * Remove the current selections.
      */
     async remove(entry_or_entries?: MaybeArray<Base>) {
-      let foundEntries = [] as EditorBase[];
+      const foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
           foundEntries.push(entry as EditorBase);
@@ -1062,7 +1094,7 @@ export const useEditorStore = defineStore("editor", {
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const fixedEntries = foundEntries.map((o) =>
-        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined),
+        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parentsWithPayload[0].obj : undefined),
       );
       const sysId = catalogue.getSystemId();
 
@@ -1327,11 +1359,12 @@ export const useEditorStore = defineStore("editor", {
           }
         }
       }
-      const missing = profileType.characteristicTypes?.filter(
+      const characteristicTypes = profileType.characteristicTypes;
+      const missing = characteristicTypes?.filter(
         (ct) => !profile.characteristics.find((c) => c.typeId === ct.id),
       );
       const badIndex = profile.characteristics.find(
-        (c, i) => i !== profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId),
+        (c, i) => i !== characteristicTypes.findIndex((ct) => ct.id === c.typeId),
       );
       if (missing?.length || badIndex) {
         const out_characteristics = [];
@@ -1427,7 +1460,18 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & keyof typeof entries, parent: EditorBase, data?: Record<string, any>) {
+    /**
+     * Creates a node under `parent` and returns it.
+     *
+     * Returns undefined when the key is not an allowed child or the target is not an array,
+     * which callers have to handle -- the return type used to be inferred as a bare object,
+     * so neither the node-ness nor the bail-out was visible to anyone calling it.
+     */
+    add_node(
+      _key: string & keyof typeof entries,
+      parent: EditorBase,
+      data?: Record<string, any>,
+    ): EditorBase | undefined {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1461,7 +1505,7 @@ export const useEditorStore = defineStore("editor", {
       arr.push(obj as EditorBase);
       onAddEntry(obj as EditorBase, catalogue, parent, this.get_system(sysId));
       this.changed(obj as EditorBase);
-      return obj;
+      return obj as EditorBase;
     },
     del_node(entry: Base) {
       try {
@@ -1479,6 +1523,77 @@ export const useEditorStore = defineStore("editor", {
       if (obj.isLink()) return false;
       return true;
     },
+    /**
+     * The single path a field edit takes.
+     *
+     * Right-panel inputs used to write straight to the object with v-model, so nothing
+     * downstream could tell what changed: no undo entry, no revalidation, and `changed()`
+     * had to walk ancestors guessing whether a profile type was involved. Everything that
+     * needs to react to a field write hangs off here.
+     *
+     * Passing `default` deletes the key when the value matches it, which keeps the key out
+     * of the saved file rather than writing a redundant value.
+     */
+    set_field(node: EditorBase, key: string, value: unknown, options?: { default?: unknown }) {
+      // Identity for coalescing must be the raw object (the proxy is a fresh wrapper each
+      // time), but the write itself has to go through the reactive one -- writing to the raw
+      // target skips Vue entirely, so undo would change the model without redrawing the input.
+      const raw = $toRaw(node) as Record<string, any>;
+      const target = node as unknown as Record<string, any>;
+      const previous = target[key];
+      const next = options && "default" in options && value === options.default ? undefined : value;
+      if (previous === next) return false;
+
+      const apply = (v: unknown) => {
+        if (v === undefined) delete target[key];
+        else target[key] = v;
+        const catalogue = node.getCatalogue();
+        // Writing targetId/childId/scope/typeId/value moves an edge: reindexing revalidates
+        // the target it left as well as the one it arrived at.
+        if (catalogue && REFERENCE_FIELDS.has(key)) catalogue.reindexReferences(node);
+        catalogue?.revalidate(node);
+        this.changed(node);
+      };
+
+      // Still typing in the same box: rewrite the entry on top of the stack instead of
+      // stacking a new one, but keep the value from before the burst started.
+      const now = performance.now();
+      const top = this.undoStack[this.undoStackPos];
+      const continues = continuesFieldEdit(lastFieldEdit, {
+        node: raw,
+        key,
+        now,
+        stackPos: this.undoStackPos,
+        topType: top?.type,
+        coalesceMs: FIELD_COALESCE_MS,
+      });
+
+      if (continues && top) {
+        const from = lastFieldEdit!.from;
+        apply(next);
+        top.undo = () => apply(from);
+        top.redo = () => apply(next);
+        lastFieldEdit!.at = now;
+        return true;
+      }
+
+      apply(next);
+      const entry = { type: fieldEditType(key), undo: () => apply(previous), redo: () => apply(next) };
+      if (this.undoStackPos < this.undoStack.length - 1) {
+        this.undoStack.splice(this.undoStackPos + 1, this.undoStack.length - this.undoStackPos - 1, entry);
+      } else {
+        this.undoStack.push(entry);
+      }
+      this.undoStackPos += 1;
+      lastFieldEdit = { node: raw, key, at: now, from: previous, stackPos: this.undoStackPos };
+      return true;
+    },
+
+    /** Ends the current coalescing window, so the next edit starts a fresh undo entry. */
+    end_field_edit() {
+      lastFieldEdit = null;
+    },
+
     edit_node(entry: EditorBase, data?: Record<string, any>) {
       let changed = false;
       for (const key in data) {
@@ -1639,16 +1754,19 @@ export const useEditorStore = defineStore("editor", {
         return head.length ? head[0].children[0] : undefined;
       }
 
+      // These wait on the global nextTick, not the box's: all they need is for the level
+      // they just opened to be in the DOM before the next one is looked up, and depending on
+      // the box exposing $nextTick tied navigation to that component's API surface.
       async function open_el(el: any) {
         const context = get_ctx(el);
         get_base_from_vue_el(context).showInEditor = true;
         context.open();
-        await context.$nextTick();
+        await nextTick();
       }
       async function close_el(el: any) {
         const context = get_ctx(el);
         context.close();
-        await context.$nextTick();
+        await nextTick();
       }
 
       const path = getEntryPath(obj);
@@ -1769,7 +1887,7 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {
-      el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" });
+      el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" as ScrollBehavior });
     },
     async scrollto(obj: EditorBase) {
       const el = await this.open(obj as EditorBase);
@@ -1802,7 +1920,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async move_up(obj: EditorBase) {
       if (obj.parent) {
-        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const arr = siblingArray(obj.parent, obj.parentKey)!;
         const index = arr.indexOf(obj);
         if (index > 0) {
           const temp = arr.splice(index, 1)[0];
@@ -1813,7 +1931,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async move_down(obj: EditorBase) {
       if (obj.parent) {
-        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const arr = siblingArray(obj.parent, obj.parentKey)!;
         const index = arr.indexOf(obj);
         if (index >= 0 && index < arr.length - 1) {
           const temp = arr.splice(index, 1)[0];
@@ -1828,41 +1946,11 @@ export const useEditorStore = defineStore("editor", {
       return entry?.editorTypeName !== "forceEntry";
     },
     get_leftpanel_open_collapsible_boxes() {
-      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
-        const cls = `depth-${depth} collapsible-box opened`;
-        const results = elt.getElementsByClassName(cls);
-        if (!results?.length) return;
-        for (var i = 0; i < results.length; i++) {
-          const cur = results[i];
-          const item = get_base_from_vue_el(get_ctx(cur));
-          const key = item.parentKey;
-          const parent = item.parent;
-
-          if (parent) {
-            const val = parent[key];
-            if (!val || !Array.isArray(val)) continue;
-            const index = val.indexOf(item as any);
-            if (!(key in obj)) obj[key] = {};
-            if (!(index in obj[key])) obj[key][index] = {};
-            find_open_recursive(cur, obj[key][index], depth + 1);
-          } else {
-            const arr = [];
-            for (var i = 0; i < cur.classList.length; i++) {
-              const cur_class = cur.classList[i];
-              arr.push(cur_class);
-            }
-            const keys = arr.filter((o) => arrayKeys.has(o) || o.startsWith("label-"));
-            for (const key of keys) {
-              obj[key] = {};
-              obj[key][0] = {};
-            }
-            find_open_recursive(cur, obj[keys[0]][0], depth + 1);
-          }
-        }
-      }
-      const result = {};
-      find_open_recursive(document.documentElement, result);
-      return result;
+      const id = this.catalogueComponent?.cat?.id;
+      if (!id) return {};
+      // Copied, not aliased: this goes into the history stack, and the live tree keeps
+      // changing as the user expands things. Values are plain {}, so JSON round-trips.
+      return JSON.parse(JSON.stringify(useEditorUIState().get_data(id).open ?? {}));
     },
     get_leftpanel_state() {
       if (!this.catalogueComponent) return {};
@@ -2033,17 +2121,36 @@ export const useEditorStore = defineStore("editor", {
       }
       return { grouped, all: result, more };
     },
-    async open_catalogue(systemId: string, catalogueId?: string) {
+    /**
+     * `progress_cb` is awaited, so a caller that yields in it lets the loading screen paint:
+     * processForEditor is synchronous and blocks for as long as it runs, and there is one call
+     * per import, so without a yield in between the whole open is a single frozen frame.
+     */
+    async open_catalogue(
+      systemId: string,
+      catalogueId?: string,
+      progress_cb?: (current: number, max: number, msg?: string) => void | Promise<void>
+    ) {
       const system = await this.get_or_load_system(systemId);
       let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
       if (!loaded) {
+        await progress_cb?.(0, 0, "Reading files");
         loaded = await system.loadCatalogue({
           targetId: catalogueId || systemId,
         });
       }
       globalThis.$catalogue = loaded as any;
+      // Order matters: processForEditor is what populates `imports` (init -> generateImports),
+      // so the root has to be processed before its imports can be listed at all.
+      //
+      // Messages only, no counter: loadAll runs straight after this over the whole system, and
+      // two counters on different scales drive the one progress bar backwards when the second
+      // starts. This phase is a prelude to that count, not a count of its own.
+      await progress_cb?.(0, 0, `Processing ${loaded.name ?? ""}`);
       loaded.processForEditor();
-      for (const imported of loaded.imports) {
+      const imports = loaded.imports ?? [];
+      for (const imported of imports) {
+        await progress_cb?.(0, 0, `Processing ${imported.name ?? ""}`);
         imported.processForEditor();
       }
 
