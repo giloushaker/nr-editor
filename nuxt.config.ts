@@ -76,6 +76,13 @@ export default defineNuxtConfig({
       hashMode: electron,
     },
   },
+  vue: {
+    compilerOptions: {
+      // <nr-icon> is the icon wrapper element (shared_components/svg/NrIcon.vue): a custom tag
+      // so generic CSS selectors like "a > span" or ".x img" never catch icons
+      isCustomElement: (tag) => tag === "nr-icon",
+    },
+  },
   typescript: {
     strict: true,
   },
@@ -139,6 +146,12 @@ export default defineNuxtConfig({
       }
     },
   },
-  components: [{ path: "~/shared_components/" }, { path: "~/components/" }],
+  components: [
+    // Same naming as nuxt-nr (svg/ + prefix "Icons"), so icon components stay copy-pasteable
+    // between the two projects without renaming their <IconsNrIcon> references.
+    { path: "~/shared_components/svg", prefix: "Icons", pathPrefix: false },
+    { path: "~/shared_components/", ignore: ["**/svg/**"] },
+    { path: "~/components/" },
+  ],
 
 });

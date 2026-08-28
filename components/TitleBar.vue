@@ -3,7 +3,7 @@
     <div class="titlebar-content titlebar-left" id="titlebar-content">
       <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
         <h1 class="flex titletext">
-          <img class="w-30px h-30px" src="/assets/icons/icon.png" />
+          <img class="logo" src="/assets/icons/logo-menu.svg" />
           <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
@@ -13,11 +13,11 @@
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
       <div class="iconbox no-underline unselectable" @click="settingsOpen = true">
-        <img class="icon" src="/assets/icons/filtre.png" />
+        <IconsGear class="icon-svg" :size="21" />
         <span class="icontext">Settings</span>
       </div>
       <NuxtLink class="iconbox no-underline unselectable" to="/system">
-        <img class="icon" src="/assets/icons/system2.png" />
+        <IconsGames class="icon-svg" :size="22" />
         <span class="icontext">Systems</span>
       </NuxtLink>
       <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
@@ -103,6 +103,12 @@ export default {
   padding: 4px;
   max-height: 20px;
 }
+/* Inline svg icons inherit the titlebar's white font color (currentColor) instead of being
+   flat black PNGs on the pastel-blue bar. Not named ".icon": that class carries the global
+   --image-filter, which would re-invert artwork that already follows the theme. */
+.icon-svg {
+  margin: 2px auto;
+}
 .static-icon {
   margin: auto;
   padding: 4px;
@@ -117,6 +123,9 @@ export default {
 .iconbox {
   display: flex;
   flex-direction: column;
+  /* The Systems box is a NuxtLink, and the global "a { color: $blue }" would otherwise
+     beat the titlebar's white and tint its currentColor icon blue */
+  color: #fff;
 }
 .iconbox:hover {
   cursor: pointer;
@@ -134,5 +143,10 @@ export default {
 
 h1 img {
   margin-right: 10px;
+}
+
+/* Width only: the logo's viewBox is wider than tall, height follows to keep it undistorted */
+.logo {
+  width: 38px;
 }
 </style>
