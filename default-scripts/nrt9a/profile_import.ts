@@ -77,7 +77,7 @@ export default class ProfileImporter {
     unit.forEach((child) => {
       // `type` is declared on the node subclasses, not Base; children here are Base | Link.
       if ((child as { type?: string }).type === "model") {
-        target = child as EditorBase;
+        target = child;
       }
     });
 
@@ -193,7 +193,7 @@ export default class ProfileImporter {
             if (unit) {
               // Root entries are all links
               const target = unit.target;
-              this.importProfile(target as EditorBase, t9aProfile, armyName);
+              this.importProfile(target, t9aProfile, armyName);
             }
           }
         }

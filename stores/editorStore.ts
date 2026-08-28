@@ -164,7 +164,7 @@ export function get_ctx(el: any): any {
  */
 export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorBase {
   if (vue_el instanceof Base) {
-    return vue_el as EditorBase;
+    return vue_el;
   }
   const p1 = vue_el.$parent;
   if (p1.item) return p1.item;
@@ -582,8 +582,8 @@ export const useEditorStore = defineStore("editor", {
       }
 
       if (
-        (node as EditorBase).editorTypeName === "profileType" ||
-        getParents(node as EditorBase).find((o) => o.editorTypeName === "profileType")
+        node.editorTypeName === "profileType" ||
+        getParents(node).find((o) => o.editorTypeName === "profileType")
       ) {
         // "Fix profiles" loads every catalogue in the system and walks every object in each.
         // This fires on any `change` event under a profile type (the right panel catches them
@@ -768,7 +768,7 @@ export const useEditorStore = defineStore("editor", {
     select(obj: VueComponent | EditorBase, onunselected: () => unknown, payload?: any) {
       if (!this.is_selected(obj)) {
         if (obj instanceof Base) {
-          this.selectedEntries.push({ obj: obj as EditorBase, onunselected, payload });
+          this.selectedEntries.push({ obj, onunselected, payload });
         } else {
           this.selections.push({ obj, onunselected, payload });
         }
@@ -1036,7 +1036,7 @@ export const useEditorStore = defineStore("editor", {
       const foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
-          foundEntries.push(entry as EditorBase);
+          foundEntries.push(entry);
         }
       } else {
         const selections = this.get_selections();
@@ -1522,7 +1522,7 @@ export const useEditorStore = defineStore("editor", {
       try {
         const catalogue = entry.catalogue;
         const manager = catalogue.manager;
-        const path = getEntryPath(entry as EditorBase);
+        const path = getEntryPath(entry);
         const removed = popAtEntryPath(catalogue, path);
         this.removed(removed);
         onRemoveEntry(removed, manager);
@@ -1882,7 +1882,7 @@ export const useEditorStore = defineStore("editor", {
       if (highlight) {
         obj.highlightInEditor = true;
       }
-      forEachParent(obj as EditorBase, (parent) => {
+      forEachParent(obj, (parent) => {
         parent.showInEditor = true;
       });
     },
@@ -1901,14 +1901,14 @@ export const useEditorStore = defineStore("editor", {
       el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" as ScrollBehavior });
     },
     async scrollto(obj: EditorBase) {
-      const el = await this.open(obj as EditorBase);
+      const el = await this.open(obj);
       if (el) {
         const context = get_ctx(el);
         this.do_select(null, context);
         this.scroll_to_el(el);
       } else {
         setTimeout(async () => {
-          const el = await this.open(obj as EditorBase);
+          const el = await this.open(obj);
           if (el) {
             const context = get_ctx(el);
             this.do_select(null, context);
@@ -1926,7 +1926,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
-        await this.goto(obj.target as EditorBase);
+        await this.goto(obj.target);
       }
     },
     async move_up(obj: EditorBase) {
@@ -2048,7 +2048,7 @@ export const useEditorStore = defineStore("editor", {
         delete p.showInEditor;
         delete p.showChildsInEditor;
         delete p.highlightInEditor;
-        forEachParent(p as EditorBase, (parent) => {
+        forEachParent(p, (parent) => {
           delete parent.showInEditor;
           delete p.showChildsInEditor;
         });

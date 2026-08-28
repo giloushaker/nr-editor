@@ -96,7 +96,7 @@ export function findRule(catalogues: Catalogue[], bookName: string, rulename: st
   for (const cat of cats) {
     for (const rule of cat?.sharedSelectionEntries || []) {
       if (rule.name === rulename) {
-        return rule as EditorBase;
+        return rule;
       }
     }
   }

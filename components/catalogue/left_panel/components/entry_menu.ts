@@ -49,7 +49,7 @@ function hasRootLink(catalogue: Catalogue, item: Base) {
  */
 export function buildEntryMenu(ctx: EntryMenuContext, payload?: ItemKeys): MenuItem[][] {
   const store = ctx.store;
-  const item = ctx.item as EditorBase;
+  const item = ctx.item;
   const bs = (icon: string) => `assets/bsicons/${icon}.png`;
   const groups: Record<string, MenuItem[]> = {};
   const order: string[] = [];

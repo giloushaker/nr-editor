@@ -63,7 +63,7 @@ export default {
               if (m.match?.length && m.match[0].getName() !== obj.getName()) {
                 results[m.match[0].getName()] = (results[m.match[0].getName()] || 0) + 1
                 map[m.match[0].getName()] = m.match
-                if (filter && !added) references.push(obj as EditorBase)
+                if (filter && !added) references.push(obj)
               }
             })
           }

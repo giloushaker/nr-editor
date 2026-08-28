@@ -12,7 +12,7 @@ const ONE_PER_THOUSAND_ID = "27c9-52f0-c942-681e";
 
 function removeConstraintsWithComment(catalogues: Catalogue[], comment: string) {
   forEachEntry(catalogues, (catalogue, rootEntry) => {
-    $store.edit_node(rootEntry as EditorBase, {
+    $store.edit_node(rootEntry, {
       constraints: rootEntry.constraints?.filter((elt) => elt.comment != comment),
       modifiers: rootEntry.modifiers?.filter((elt) => elt.comment != comment),
       modifierGroups: rootEntry.modifierGroups?.filter((elt) => elt.comment != comment),
@@ -262,7 +262,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
           field: newConstraint.id,
         },
       ];
-      $store.edit_node(rootEntry as EditorBase, {
+      $store.edit_node(rootEntry, {
         constraints: [...(rootEntry.constraints || []), newConstraint],
         modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
       });
@@ -670,7 +670,7 @@ function addBattleMarchFloor(catalogues: Catalogue[]) {
                 },
               ],
             };
-            $store.edit_node(rootEntry as EditorBase, {
+            $store.edit_node(rootEntry, {
               modifiers: [...(rootEntry.modifiers || []), newModifie],
             });
             console.log("Modifier detected on entry: [" + catalogue.name + "] " + rootEntry.name, rootEntry.modifiers);
@@ -709,7 +709,7 @@ function addPerThousandCategory(catalogues: Catalogue[]) {
 
       if (found) {
         console.log(rootEntry);
-        $store.edit_node(rootEntry as EditorBase, {
+        $store.edit_node(rootEntry, {
           categoryLinks: (rootEntry.categoryLinks || []).concat([
             {
               comment: "Battle March Category",
@@ -957,7 +957,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
           field: newConstraint.id,
         },
       ];
-      $store.edit_node(rootEntry as EditorBase, {
+      $store.edit_node(rootEntry, {
         constraints: [...(rootEntry.constraints || []), newConstraint],
         modifiers: [...(rootEntry.modifiers || []), ...newModifiers],
       });

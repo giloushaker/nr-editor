@@ -46,8 +46,8 @@ export async function insertUnitRarity(catalogue: Catalogue) {
         };
 
         if (!child.modifiers) child.modifiers = [];
-        $store.add(constraint, "constraints", child as EditorBase);
-        $store.add(modifier, "modifiers", child as EditorBase);
+        $store.add(constraint, "constraints", child);
+        $store.add(modifier, "modifiers", child);
       }
     });
   }

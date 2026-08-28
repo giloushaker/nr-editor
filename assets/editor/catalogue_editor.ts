@@ -392,7 +392,7 @@ class CatalogueEditor extends Catalogue {
     delete this.initialized;
     delete this.loaded;
     delete this.loaded_editor;
-    const refs = (this as Base as EditorBase).refs;
+    const refs = (this as Base).refs;
     delete (this as Partial<Catalogue>).index;
     const key = this.isGameSystem() ? "gameSystem" : "catalogue";
     const loaded = await manager.loadData({ [key]: this } as any);
@@ -524,7 +524,7 @@ class CatalogueEditor extends Catalogue {
     link.target = target;
     if (link.target) {
       link.name = target.name;
-      const targetType = (link.target as EditorBase).editorTypeName;
+      const targetType = link.target.editorTypeName;
       if (targetType == "categoryEntry") {
         delete link.type;
       } else {

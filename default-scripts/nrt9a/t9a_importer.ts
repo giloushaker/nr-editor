@@ -383,7 +383,7 @@ export default class T9AImporter {
             };
 
             elt.forEach(async (elt) => {
-              await setSpecialEquipment(elt as EditorBase);
+              await setSpecialEquipment(elt);
             });
 
             // Add Primary Category

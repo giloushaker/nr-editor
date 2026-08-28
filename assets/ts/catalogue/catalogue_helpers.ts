@@ -262,7 +262,7 @@ export function getFilterSelections(item: EditorBase & Partial<BSIQuery>, catalo
     return getSearchSelectionsWithCategory(getFirstAncestor(item), catalogue);
   }
 
-  const parent = item.scope ? (catalogue.findOptionById(item.scope) as EditorBase) : undefined;
+  const parent = item.scope ? catalogue.findOptionById(item.scope) : undefined;
   if (parent) {
     return res.concat(getParentSelections(parent));
   }
