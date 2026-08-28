@@ -38,6 +38,7 @@ import { markRaw, shallowRef } from "vue";
 import { DIAGNOSTICS } from "./bs_diagnostics";
 import { DiagnosticStore, runDiagnostics, type DiagnosticContext } from "./bs_diagnostics_engine";
 import { ReferenceIndex } from "./bs_reference_index";
+import { CycleIndex } from "./bs_link_cycles";
 import { outgoingReferences } from "./bs_references";
 import { getName, getTypeName } from "./bs_editor";
 
@@ -126,6 +127,15 @@ function startOfWalk(node: EditorBase): EditorBase[] | undefined {
   return [node.parent, ...(refs ?? [])].filter(Boolean) as EditorBase[];
 }
 
+/**
+ * Every node `node` could sit under, innermost first -- the scope dropdown's list.
+ *
+ * Walks upward through parents and through whatever links to each node on the way. The
+ * bad-link-target diagnostic used to ask this same question per link and search the result for
+ * one id; that is bs_link_cycles.ts now, which answers it for the whole system at once. This is
+ * the remaining caller, and it runs for a single node when the query editor opens, so the walk
+ * is fine as it stands.
+ */
 export function getAllPossibleParents(node: EditorBase) {
   const result = [] as EditorBase[];
   const refsStack = startOfWalk(node);
@@ -151,106 +161,39 @@ export function getAllPossibleParents(node: EditorBase) {
 }
 
 /**
- * Whether `id` names a node this one could sit under -- the cycle half of the bad-link-target
- * diagnostic.
+ * The system's link cycles, rebuilt when the links move.
  *
- * Same walk as above, but it answers the question instead of building the answer. That rule
- * runs on every link on every revalidation, and it only ever did
- * `getAllPossibleParents(node).find(o => o.id === targetId)`: an ordered array, reversed and
- * concatenated per group, then filtered on `editorTypeName` -- a getter that resolves through
- * link targets. On one system load that filter alone was a million getter calls, and the whole
- * thing came to about a second, to look up one id and throw the array away.
- *
- * The two are kept apart rather than shared behind a callback because getAllPossibleParents'
- * grouping and per-group reverse are what put the scope dropdown in a sensible order, and
- * membership does not care about order at all.
+ * Held on the manager, like the reference index, because a cycle can run through catalogues:
+ * a shared entry in one, linked from another that it links back into. Built lazily and only
+ * when something has actually changed, so an edit that touches no link costs nothing.
  */
-/**
- * Ids of everything `node` could sit under, for the memo below.
- *
- * Excludes catalogueLinks by parentKey rather than editorTypeName. They agree -- a node under
- * `catalogueLinks` is exactly what getTypeName names "catalogueLink" -- but editorTypeName is a
- * getter that recurses into the link's target and builds a string, and here it would run on
- * every visited node instead of on the single node a query matches.
- */
-function collectPossibleParentIds(node: EditorBase): Set<string> {
-  const ids = new Set<string>();
-  const refsStack = startOfWalk(node);
-  if (!refsStack) return ids;
-  const stack = [] as EditorBase[];
-  const seen = new Set();
-  while (refsStack.length) {
-    stack.push(refsStack.shift()!);
-    while (stack.length) {
-      const cur = stack.pop()!;
-      if (seen.has(cur.id)) continue;
-      seen.add(cur.id);
-      if (cur.id && cur.parentKey !== "catalogueLinks") ids.add(cur.id);
-      if (cur.parent && !cur.parent.isCatalogue()) stack.push(cur.parent);
-      const refs = cur.refs;
-      if (refs?.length) refsStack.push(...refs);
-    }
-  }
-  return ids;
+function cycleIndexFor(catalogue: Catalogue): CycleIndex<EditorBase> {
+  const owner = (catalogue.manager ?? catalogue) as {
+    cycles?: CycleIndex<EditorBase>;
+    cyclesDirty?: boolean;
+  };
+  if (owner.cycles && !owner.cyclesDirty) return owner.cycles;
+  const references = catalogue.references;
+  owner.cycles = CycleIndex.build<EditorBase>({
+    // Everything that points at anything, narrowed to links: a condition's childId cannot
+    // expand into a tree, so it cannot be part of a loop.
+    links: (function* () {
+      for (const node of references.sources()) if (node.isLink()) yield node;
+    })(),
+    parentOf: (node) => {
+      const parent = node.parent;
+      return parent && !parent.isCatalogue() ? parent : undefined;
+    },
+    referrersOf: (node) => references.referrers(node.id, "link"),
+  });
+  owner.cyclesDirty = false;
+  return owner.cycles;
 }
 
-/**
- * Live only inside withAncestorCache, i.e. during one catalogue's validation pass.
- *
- * A link's possible parents are its parent's, so every link in an entry shares one answer --
- * on Warhammer: The Old World that is ~20k links over ~6k distinct parents. Outside a pass
- * there is no cache: a single revalidation walks once, which is cheap, and nothing has to
- * decide when to invalidate.
- *
- * Within a pass the tree does not move. updateLink re-resolves links that init() already
- * resolved, to the same targets, so the refs the walk follows do not change under it.
- */
-let ancestorIds: Map<EditorBase, Set<string>> | undefined;
-
-function withAncestorCache<T>(fn: () => T): T {
-  const outer = ancestorIds;
-  ancestorIds ??= new Map();
-  try {
-    return fn();
-  } finally {
-    ancestorIds = outer;
-  }
-}
-
-/**
- * Whether `id` names a node this one could sit under -- the cycle half of the
- * bad-link-target diagnostic, and the single most expensive rule in a load.
- */
-export function hasPossibleParentId(node: EditorBase, id: string): boolean {
-  const parent = node.parent;
-  // Only cacheable when the answer really is the parent's: a node with referrers of its own
-  // starts the walk from a wider set.
-  if (ancestorIds && parent && !node.refs?.length) {
-    let ids = ancestorIds.get(parent);
-    if (!ids) {
-      ids = collectPossibleParentIds(node);
-      ancestorIds.set(parent, ids);
-    }
-    return ids.has(id);
-  }
-  const refsStack = startOfWalk(node);
-  if (!refsStack) return false;
-  const stack = [] as EditorBase[];
-  const seen = new Set();
-  while (refsStack.length) {
-    stack.push(refsStack.shift()!);
-    while (stack.length) {
-      const cur = stack.pop()!;
-      if (seen.has(cur.id)) continue;
-      seen.add(cur.id);
-      // Only the one candidate that matches is worth asking for editorTypeName.
-      if (cur.id === id && cur.editorTypeName !== "catalogueLink") return true;
-      if (cur.parent && !cur.parent.isCatalogue()) stack.push(cur.parent);
-      const refs = cur.refs;
-      if (refs?.length) refsStack.push(...refs);
-    }
-  }
-  return false;
+/** Called when a link moves; the next question rebuilds. */
+function invalidateCycles(catalogue: Catalogue): void {
+  const owner = (catalogue.manager ?? catalogue) as { cyclesDirty?: boolean };
+  owner.cyclesDirty = true;
 }
 
 /**
@@ -362,7 +305,12 @@ class CatalogueEditor extends Catalogue {
    * reference to a catalogue that hasn't loaded is kept and starts counting when it arrives.
    */
   reindexReferences(node: EditorBase) {
-    for (const id of this.references.set(node, outgoingReferences(node))) this.revalidateId(id);
+    const affected = this.references.set(node, outgoingReferences(node));
+    // Only a link that actually moved reshapes the cycle graph. Guarding on the change report
+    // matters more than it looks: the validation pass re-resolves every link to the target it
+    // already had, and invalidating there would rebuild the index once per link.
+    if (affected.length && node.isLink()) invalidateCycles(this);
+    for (const id of affected) this.revalidateId(id);
   }
 
   unindexReferences(node: EditorBase) {
@@ -370,6 +318,7 @@ class CatalogueEditor extends Catalogue {
   }
 
   removeFromIndex(cur: EditorBase) {
+    invalidateCycles(this);
     if (cur.id && $toRaw(this.index[cur.id]) === $toRaw(cur)) {
       delete this.index[cur.id];
     }
@@ -416,9 +365,7 @@ class CatalogueEditor extends Catalogue {
         arrayKeys,
       );
     });
-    withAncestorCache(() =>
-      forEachObjectWhitelist2<EditorBase>(this, (cur) => (cur.isLink() ? this.updateLink(cur) : this.refreshErrors(cur)), arrayKeys),
-    );
+    forEachObjectWhitelist2<EditorBase>(this, (cur) => (cur.isLink() ? this.updateLink(cur) : this.refreshErrors(cur)), arrayKeys);
 
     // This catalogue now *provides* every id in its index, so anything elsewhere that was
     // waiting on one has a different answer too. onIndexed normally tells them one node at a
@@ -493,7 +440,7 @@ class CatalogueEditor extends Catalogue {
       catalogue: this,
       findById: (id) => resolveId(id, this.getIndexes()),
       findByIdGlobal: (id) => this.findOptionByIdGlobal(id) as Base | undefined,
-      hasPossibleParent: (node, id) => hasPossibleParentId(node as EditorBase, id),
+      isCyclicLink: (node) => cycleIndexFor(this).sameComponent(node as EditorBase, (node as Partial<Link>).target as EditorBase),
       idCollisions: (node) => this.idCollisions(node as EditorBase),
     }));
   }
@@ -620,6 +567,7 @@ class CatalogueEditor extends Catalogue {
 
   unlinkLink(link: Link & EditorBase) {
     this.references.remove(link);
+    invalidateCycles(this);
   }
 
   /**
@@ -866,6 +814,9 @@ declare module "~/assets/shared/battlescribe/local_game_system" {
     loadAll(progress_cb?: (current: number, max: number, msg?: string) => void | Promise<void>): Promise<void>;
     /** The system-wide reverse reference index; see Catalogue.references. */
     references?: ReferenceIndex<EditorBase>;
+    /** The system-wide link cycle index; see cycleIndexFor. */
+    cycles?: CycleIndex<EditorBase>;
+    cyclesDirty?: boolean;
     /**
      * Depth counter for withoutRevalidation. Held here rather than per catalogue because
      * indexing a node notifies referrers in other catalogues.

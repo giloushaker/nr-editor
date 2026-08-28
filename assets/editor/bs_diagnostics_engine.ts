@@ -42,8 +42,8 @@ export interface DiagnosticContext {
   findById(id: string): any | undefined;
   /** Resolve an id anywhere in the system (used by instanceOf conditions). */
   findByIdGlobal(id: string): any | undefined;
-  /** Whether `id` names a node this one could sit under, following links. */
-  hasPossibleParent(node: DiagnosticNode, id: string): boolean;
+  /** Whether expanding this link would come back round to itself. */
+  isCyclicLink(node: DiagnosticNode): boolean;
   /** Other nodes holding the same id, in whichever scope the settings say counts. */
   idCollisions(node: DiagnosticNode): DiagnosticNode[];
 }

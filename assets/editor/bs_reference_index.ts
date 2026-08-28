@@ -163,6 +163,14 @@ export class ReferenceIndex<TNode = any> {
     return [...affected];
   }
 
+  /**
+   * Every node recorded as pointing at something. The cycle index seeds from these rather than
+   * from a catalogue's id index, which would miss a link that has no id of its own.
+   */
+  sources(): Iterable<TNode> {
+    return this.edges.keys();
+  }
+
   /** Drops a node's outgoing edges; returns the ids that lost a referrer. */
   remove(node: TNode): string[] {
     return this.set(node, []);

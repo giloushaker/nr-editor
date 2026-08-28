@@ -69,7 +69,9 @@ export const DIAGNOSTICS: Diagnostic[] = [
     check(node, ctx) {
       const link = node as EditorBase & Link;
       if (!link.targetId) return;
-      if (ctx.hasPossibleParent(node, link.targetId)) {
+      // Answered from the system-wide cycle index rather than by walking up from this link;
+      // see bs_link_cycles.ts for why. The message is unchanged: this is the same question.
+      if (ctx.isCyclicLink(node)) {
         return "Link target cannot be itself or include itself as a child";
       }
       const target = ctx.findById(link.targetId) as EditorBase | undefined;

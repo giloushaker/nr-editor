@@ -39,7 +39,7 @@ const ctx: any = {
   catalogue,
   findById: () => undefined,
   findByIdGlobal: () => undefined,
-  hasPossibleParent: () => false,
+  isCyclicLink: () => false,
   idCollisions: () => [],
 };
 
