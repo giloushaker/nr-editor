@@ -1,0 +1,58 @@
+/**
+ * Which fields on a node point at another node.
+ *
+ * This is the whole definition of a reference in the editor. It replaces the hand-written
+ * addRef/removeRef pairs that used to be scattered across processForEditor, updateLink,
+ * updateCondition, onAddEntry, onRemoveEntry and three Vue components: instead of every
+ * mutation site remembering to keep the target's array in step, each node reports what it
+ * points at and bs_reference_index inverts it.
+ *
+ * Adding a new kind of reference is one entry here.
+ */
+import { Condition, Constraint, Link, Modifier, Profile, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
+import { validScopes } from "~/assets/shared/battlescribe/bs_condition";
+import type { ReferenceEdge } from "./bs_reference_index";
+
+/** Fields whose value is a node id, keyed so set_field knows when to reindex. */
+export const REFERENCE_FIELDS = new Set(["targetId", "typeId", "childId", "scope", "value"]);
+
+/**
+ * Everything `node` points at.
+ *
+ * Ids are not resolved: an edge to a catalogue that isn't loaded yet is recorded like any
+ * other, and starts reporting the moment that catalogue arrives. That is also why a stale
+ * id still produces an edge -- the "child id does not exist" diagnostic is what reports it,
+ * not the index.
+ */
+export function outgoingReferences(node: any): ReferenceEdge[] {
+  const edges: ReferenceEdge[] = [];
+
+  // Links, including catalogueLinks: reload() finds the catalogues pointing at it this way.
+  if (typeof node.targetId === "string" && node.targetId) {
+    edges.push({ id: node.targetId, kind: "link" });
+  }
+
+  // A profile points at its profile type. Characteristics and costs also carry a typeId, but
+  // those were never tracked and counting them would change what the references panel shows.
+  if (node instanceof Profile && !(node instanceof Link) && typeof node.typeId === "string" && node.typeId) {
+    edges.push({ id: node.typeId, kind: "link" });
+  }
+
+  if (node instanceof Condition) {
+    // Builtin scopes ("parent", "force", "roster", ...) and query fields are keywords, not ids.
+    if (typeof node.scope === "string" && node.scope && !validScopes.has(node.scope)) {
+      edges.push({ id: node.scope, kind: "other" });
+    }
+    if (!(node instanceof Constraint) && typeof node.childId === "string" && node.childId && !basicQueryFields.has(node.childId)) {
+      edges.push({ id: node.childId, kind: "other" });
+    }
+  }
+
+  // A modifier's value is an id when it sets something that names another node. Non-id values
+  // simply key nothing, so there is no need to resolve first.
+  if (node instanceof Modifier && typeof node.value === "string" && node.value) {
+    edges.push({ id: node.value, kind: "other" });
+  }
+
+  return edges;
+}

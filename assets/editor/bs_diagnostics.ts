@@ -1,0 +1,191 @@
+/**
+ * The default catalogue diagnostics.
+ *
+ * Adding a check used to mean finding the right spot in refreshErrors/addToIndex/
+ * updateCondition/updateConstraint, then hand-pairing an addError with a matching
+ * removeError on every path that could clear it. Miss one and the error sticks; call
+ * removeErrors and you wipe checks that a different function owns.
+ *
+ * Here a rule answers one question about one node and returns a message or nothing.
+ * bs_diagnostics_engine diffs that against what the node already carries, so nothing has
+ * to remove anything, and a rule can only ever touch errors under its own id.
+ *
+ * To add a diagnostic: append one entry to DIAGNOSTICS, or call registerDiagnostic() from
+ * outside. That is the whole procedure -- no piping, no cleanup.
+ */
+import { Condition, Constraint, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
+import type { Link } from "~/assets/shared/battlescribe/bs_main";
+import { isScopeValid, validScopes } from "~/assets/shared/battlescribe/bs_condition";
+import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
+import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { Diagnostic } from "./bs_diagnostics_engine";
+
+export type { Diagnostic, DiagnosticContext, DiagnosticFinding, DiagnosticResult } from "./bs_diagnostics_engine";
+
+const COMMENT_SEVERITY: Array<[string, IErrorMessage["severity"]]> = [
+  ["todo:", "info"],
+  ["warning:", "warning"],
+  ["error:", "error"],
+];
+
+/** Entry kinds that only make sense when something links to them. */
+const SHARED_KEYS = new Set([
+  "sharedSelectionEntries",
+  "sharedSelectionEntryGroups",
+  "sharedProfiles",
+  "sharedRules",
+  "sharedInfoGroups",
+  "sharedForceEntries",
+  "sharedAssociations",
+]);
+
+export const DIAGNOSTICS: Diagnostic[] = [
+  {
+    id: "comment",
+    applies: () => true,
+    check(node) {
+      const comment = node.comment === undefined ? "" : String(node.comment);
+      for (const [prefix, severity] of COMMENT_SEVERITY) {
+        if (comment.startsWith(prefix)) {
+          return { msg: `${node.getName()}: ${comment}`, severity };
+        }
+      }
+    },
+  },
+
+  {
+    id: "no-target",
+    severity: "error",
+    applies: (node) => node.isLink(),
+    check(node) {
+      if (!node.target) return `(${node.editorTypeName}) ${node.name} has no target`;
+    },
+  },
+
+  {
+    id: "bad-link-target",
+    severity: "error",
+    applies: (node) => node.isLink(),
+    check(node, ctx) {
+      const link = node as EditorBase & Link;
+      if (!link.targetId) return;
+      if (ctx.hasPossibleParent(node, link.targetId)) {
+        return "Link target cannot be itself or include itself as a child";
+      }
+      const target = ctx.findById(link.targetId) as EditorBase | undefined;
+      if (target?.isLink()) return "Link target Cannot be a Link";
+    },
+  },
+
+  {
+    id: "no-profile-type",
+    severity: "error",
+    applies: (node) => node.isProfile() && !node.isLink(),
+    check(node) {
+      if (!(node as EditorBase & { typeId?: string }).typeId) return "Profile has no type";
+    },
+  },
+
+  {
+    id: "invalid-scope",
+    severity: "error",
+    applies: (node) => node instanceof Condition && Boolean(node.scope),
+    check(node) {
+      const condition = node as EditorBase & Condition;
+      const parent = getModifierOrConditionParent(condition);
+      if (parent && !isScopeValid(parent, condition.scope)) {
+        return `Invalid scope ${condition.scope}`;
+      }
+    },
+  },
+
+  {
+    id: "id-not-exist",
+    severity: "warning",
+    // Constraints reuse the Condition shape but have no childId to resolve.
+    applies: (node) =>
+      node.editorTypeName !== "localConditionGroup" && node instanceof Condition && !(node instanceof Constraint),
+    check(node, ctx) {
+      const condition = node as EditorBase & Condition;
+      const childId = condition.childId;
+      if (!childId || basicQueryFields.has(childId)) return;
+      const isInstanceOf = ["instanceOf", "notInstanceOf"].includes(condition.type);
+      const target = isInstanceOf ? ctx.findByIdGlobal(childId) : ctx.findById(childId);
+      if (!target) return "child id does not exist";
+    },
+  },
+
+  {
+    id: "duplicate-constraint-id",
+    severity: "error",
+    applies: (node) => node instanceof Constraint,
+    check(node) {
+      const siblings = node.parent?.constraintsIterator?.();
+      if (!siblings) return;
+      for (const found of siblings as Iterable<EditorBase & Constraint>) {
+        if (found !== node && found.id === node.id) return "Duplicate constraints id";
+      }
+    },
+    *related(node) {
+      const siblings = node.parent?.constraintsIterator?.();
+      if (siblings) yield* siblings as unknown as Iterable<EditorBase>;
+    },
+  },
+
+  {
+    /**
+     * Replaces the old duplicate-id-1 / duplicate-id-2 pair. Those were asymmetric --
+     * which node got which id depended on index insertion order -- and refreshErrors
+     * cleared them wholesale, so they vanished until a reload. Asking "does anything
+     * else hold my id" is answerable for one node at any time, so both sides report it
+     * and both sides clear it on their own.
+     */
+    id: "duplicate-id",
+    severity: "error",
+    applies: (node) => Boolean(node.id),
+    check(node, ctx) {
+      const [other] = ctx.idCollisions(node);
+      if (!other) return;
+      const where = other.getCatalogue?.();
+      return {
+        msg: `Duplicate id ${node.id} ${other.getName()}`,
+        other,
+        extra: where && where !== ctx.catalogue ? where.name : undefined,
+      };
+    },
+    related: (node, ctx) => ctx.idCollisions(node),
+  },
+
+  {
+    /**
+     * Shared entries exist to be linked to, so one nobody links to is dead data -- usually a
+     * leftover from a rename or a half-finished edit.
+     *
+     * This is the first rule whose answer depends on a *different* node changing: adding or
+     * retargeting a link elsewhere flips it. That works because addRef/removeRef revalidate
+     * the node whose refs changed. related() could not have covered it -- by the time a
+     * retargeted link is revalidated, its previous target is already unreachable, so only
+     * the mutation site knows both ends.
+     *
+     * Info rather than warning: an unused shared entry is suspicious, not broken, and a
+     * catalogue mid-edit legitimately has them.
+     */
+    id: "unused",
+    severity: "info",
+    applies: (node) => SHARED_KEYS.has(node.parentKey),
+    check(node) {
+      if (node.refs?.length) return;
+      return `${node.getName()} is not linked to by anything`;
+    },
+  },
+];
+
+/** Scopes that aren't node ids don't need resolving; exported so callers can share the set. */
+export { validScopes };
+
+/** Adds a rule at runtime. Rules are plain objects, so a plugin needs nothing else. */
+export function registerDiagnostic(rule: Diagnostic): void {
+  const at = DIAGNOSTICS.findIndex((o) => o.id === rule.id);
+  if (at >= 0) DIAGNOSTICS[at] = rule;
+  else DIAGNOSTICS.push(rule);
+}

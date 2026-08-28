@@ -30,6 +30,11 @@ declare global {
         on: (channel: string, ...args: any) => unknown;
       };
   var cataloguesdexie: CatDexie;
+  /**
+   * Provided by nuxt-nr, which shares assets/shared with this repo. Neither is reachable
+   * from nr-editor at runtime ($t only from util.ts's time formatters, showMessage only
+   * from GithubGameSystemFiles), so these are declarations, not shims.
+   */
+  var $t: (key: string, ...args: any[]) => string;
+  var showMessage: (text: string) => unknown;
 }
-
-console.log($store);

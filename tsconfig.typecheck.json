@@ -1,0 +1,24 @@
+{
+  // Baseline type check over the .ts sources. Excludes .vue: `nuxt typecheck` needs vue-tsc,
+  // which wants TypeScript 5 while this project is on 4.9. The EditorBase cast debt lives
+  // in these files anyway, so this is the number to drive down.
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": [
+    ".nuxt/nuxt.d.ts",
+    "types/**/*.ts",
+    "assets/shared/**/*.ts",
+    "assets/editor/**/*.ts",
+    "assets/ts/**/*.ts",
+    "stores/**/*.ts",
+    "scripts/**/*.ts",
+    "default-scripts/**/*.ts",
+    "electron/**/*.ts",
+    "plugins/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "dist-electron", ".output"]
+}
