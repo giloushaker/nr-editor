@@ -21,7 +21,7 @@ jobs:
           git config --global user.name "GitHub Actions"
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: giloushaker/nr-editor
           submodules: true
@@ -29,13 +29,13 @@ jobs:
           fetch-depth: 1
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: 20.11.0
+          node-version: 24.17.0
 
       - name: Run version increment script and capture output
         id: version_script
-        run: echo "::set-output name=version::$(node ./increment-version.js --${{ github.event.inputs.version }})"
+        run: echo "version=$(node ./increment-version.js --${{ github.event.inputs.version }})" >> "$GITHUB_OUTPUT"
 
       - name: Commit and push if version updated
         run: |
@@ -67,7 +67,7 @@ jobs:
           git config --global user.name "GitHub Actions"
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: giloushaker/nr-editor
           submodules: true
@@ -75,9 +75,9 @@ jobs:
           fetch-depth: 1
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.16.0
+          node-version: 24.17.0
 
       - name: Run version increment script
         id: version_script
@@ -104,7 +104,7 @@ jobs:
           git config --global user.name "GitHub Actions"
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: giloushaker/nr-editor
           submodules: true
@@ -112,9 +112,9 @@ jobs:
           fetch-depth: 1
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.16.0
+          node-version: 24.17.0
 
       - name: Run version increment script
         id: version_script
