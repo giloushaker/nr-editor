@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIConstraint } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

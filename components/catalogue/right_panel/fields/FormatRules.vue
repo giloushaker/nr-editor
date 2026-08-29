@@ -87,9 +87,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import { BSICharacteristicType, IFormatRule } from "~/assets/shared/battlescribe/bs_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { PropType } from "vue";
+import type { BSICharacteristicType, IFormatRule } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import EditableDiv from "~/components/util/EditableDiv.vue";
 import InfoButton from "~/components/InfoButton.vue";
 import { Base } from "~/assets/shared/battlescribe/bs_main";

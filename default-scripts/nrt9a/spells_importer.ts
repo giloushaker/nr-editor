@@ -1,6 +1,6 @@
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ArmyBookOption, ArmyBookPath, ArmyBookUnit } from "./army_book_interfaces";
-import {
+import type { ArmyBookOption, ArmyBookPath, ArmyBookUnit } from "./army_book_interfaces";
+import type {
   BSIInfoGroup,
   BSIProfile,
   BSISelectionEntry,

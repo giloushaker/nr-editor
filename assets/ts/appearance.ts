@@ -1,4 +1,4 @@
-import { AppearanceTheme } from "./appearance_types";
+import type { AppearanceTheme } from "./appearance_types";
 
 /**
  * Applies one font role (body, Header, Button) to the CSS variables.

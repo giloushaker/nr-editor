@@ -62,10 +62,11 @@
 <script lang="ts">
 import { link } from "fs";
 import { catalogueProp } from "./fields/props";
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Link, Profile, Rule } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useSettingsStore } from "~/stores/settingsState";
 
 export default {

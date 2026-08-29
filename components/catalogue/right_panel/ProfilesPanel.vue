@@ -29,7 +29,7 @@
 
 <script lang="ts">
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { Profile } from "~/assets/shared/battlescribe/bs_main";

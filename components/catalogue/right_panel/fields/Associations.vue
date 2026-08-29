@@ -89,9 +89,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
+import type { PropType } from "vue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
 import InfoButton from "~/components/InfoButton.vue";
 import { useEditorStore } from "~/stores/editorStore";
 

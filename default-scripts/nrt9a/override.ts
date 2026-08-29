@@ -1,5 +1,5 @@
-import { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
-import { ArmyBookOption, ArmyBookOverride } from "./army_book_interfaces";
+import type { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import type { ArmyBookOption, ArmyBookOverride } from "./army_book_interfaces";
 import T9AImporter from "./t9a_importer";
 import { getConditionFromHasOption } from "./conditions";
 

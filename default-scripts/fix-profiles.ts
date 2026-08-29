@@ -10,6 +10,7 @@ export function findParentWhere<T extends { parent?: T }>(self: T, fn: (node: T)
 }
 export default {
     name: "Fix profiles",
+    description: "Repairs profiles against their profile type: wrong typeName, wrong characteristic and attribute typeIds or names, missing characteristics, wrong order, and extra characteristics that the type does not define. Writes to the data, and reports the text of anything it drops.",
     arguments: [{
         name: "catalogues",
         type: "catalogue[]"

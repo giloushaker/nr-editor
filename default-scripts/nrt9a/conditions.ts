@@ -1,5 +1,5 @@
-import { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
-import { ArmyBookCondition } from "./army_book_interfaces";
+import type { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
+import type { ArmyBookCondition } from "./army_book_interfaces";
 import T9AImporter from "./t9a_importer";
 
 export function insertIdConditions(id: string, scope: string, amt: number): BSIConditionGroup {

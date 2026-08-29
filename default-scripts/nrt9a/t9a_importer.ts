@@ -1,6 +1,8 @@
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ArmyBookArmy, ArmyBookBook, ArmyBookOption, ArmyBookUnit } from "./army_book_interfaces";
-import { catalogueAllRefs, convertRef, T9ARef } from "./refs";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { ArmyBookArmy, ArmyBookBook, ArmyBookOption, ArmyBookUnit } from "./army_book_interfaces";
+import { catalogueAllRefs, convertRef } from "./refs";
+import type { T9ARef } from "./refs";
 import { cost } from "../t9a/costs";
 import {
   addConstraint,
@@ -11,7 +13,7 @@ import {
   leafMaxCost,
   setSpecialEquipment,
 } from "./constraints";
-import { BSICategoryLink, BSIInfoLink } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICategoryLink, BSIInfoLink } from "~/assets/shared/battlescribe/bs_types";
 import { cleanup, toTitleCaseWords } from "./util";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 import { addDictionnaryEntries } from "./dictionnary";

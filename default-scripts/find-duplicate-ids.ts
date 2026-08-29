@@ -2,7 +2,7 @@ import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue"
 
 export default {
     name: "Find Duplicates Ids",
-    description: "Returns ids with mrore than one occurrence",
+    description: "Lists every id that appears more than once across the selected catalogues. Duplicate ids break link resolution, so this should always come back empty.",
     arguments: [
         {
             name: "catalogues",

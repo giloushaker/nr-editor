@@ -11,7 +11,8 @@
 </template>
 
 <script lang="ts">
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import Tag from "../../edit_v2/Tag.vue";
 
 /**

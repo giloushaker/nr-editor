@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, session, shell, protocol, dialog, net } = require("electron");
 const path = require("path");
+const { pathToFileURL } = require("url");
 
 // On Linux the chrome-sandbox helper must be root-owned with mode 4755, which
 // isn't the case for a plain `npm install` (especially on external drives).
@@ -16,9 +17,10 @@ import * as bs_helpers from "../assets/shared/battlescribe/bs_helpers";
 import { add_watcher, mark_self_write, remove_watcher, remove_watchers } from "./filewatch";
 import { getFile, getFolderFiles, getFolderFolders, getFolderMtime, listFolder } from "./files";
 import { entry, options } from "./entry";
-import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
+import type { IpcMainInvokeEvent } from "electron";
 import { stripHtml } from "./electron_helpers";
-import { existsSync, readFileSync, WriteFileOptions, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import type { WriteFileOptions } from "fs";
 
 
 export function init_globals() {
@@ -253,25 +255,26 @@ function setupSession() {
   // src="/assets/x.png" resolves to the root of the drive. A relative src="assets/x.png"
   // already lands next to index.html and must be left alone -- rewriting it was what broke
   // the icons, because `file://${winPath}` yields file://C:/... , where C: parses as the host
-  // rather than the drive. So rewrite only what is genuinely not on disk, and hand back a
-  // path rather than a hand-built URL.
+  // rather than the drive. So rewrite only what is genuinely not on disk.
+  //
+  // This was protocol.interceptFileProtocol until Electron 44, where it stopped passing
+  // requests through: it swallowed index.html itself and the window came up blank (39
+  // characters of document). protocol.handle is the supported replacement; net.fetch needs
+  // bypassCustomProtocolHandlers so it does not re-enter this handler.
   const cleanDirName = __dirname.replaceAll("\\", "/");
   const toDiskPath = (url: string) => decodeURIComponent(url.replace(/^file:\/+/, "").split(/[?#]/)[0]);
-  protocol.interceptFileProtocol(
-    "file",
-    (request: ProtocolRequest & { path?: string }, callback: (arg0: any) => void) => {
-      if (!request.url.includes("/assets/")) {
-        callback(request);
-        return;
+  protocol.handle("file", (request: { url: string }) => {
+    let url = request.url;
+    if (url.includes("/assets/")) {
+      const onDisk = toDiskPath(url);
+      // inside app.asar the file lives in the archive, where existsSync cannot see it
+      if (url.includes("app.asar") || !existsSync(onDisk)) {
+        const relative = onDisk.replace(/^.*?[/]+assets[/]+/, "");
+        url = pathToFileURL(`${cleanDirName}/assets/${relative}`).toString();
       }
-      if (!request.url.includes("app.asar") && existsSync(toDiskPath(request.url))) {
-        callback(request);
-        return;
-      }
-      const relative = toDiskPath(request.url).replace(/^.*?[/]+assets[/]+/, "");
-      callback({ path: `${cleanDirName}/assets/${relative}` });
     }
-  );
+    return net.fetch(url, { bypassCustomProtocolHandlers: true });
+  });
 
   // Bypass cors
   const filter = { urls: ["https://*/*"] };

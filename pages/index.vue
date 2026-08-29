@@ -104,7 +104,7 @@
 </template>
 
 <script lang="ts">
-import { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import CataloguesDetail from "~/components/my_catalogues/CataloguesDetail.vue";
 
@@ -120,7 +120,7 @@ import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { GithubIntegration } from "~/assets/shared/battlescribe/github";
+import type { GithubIntegration } from "~/assets/shared/battlescribe/github";
 function sanitizeFileName(fileName: string) {
   // Remove invalid characters completely
   let clean = fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, "");

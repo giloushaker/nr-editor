@@ -30,8 +30,8 @@ import type { MenuItem } from "~/components/dialog/menu";
 import EditorCollapsibleBox from "~/components/catalogue/left_panel/components/EditorCollapsibleBox.vue";
 import { useEditorUIState } from "~/stores/editorUIState";
 import { useSettingsStore } from "~/stores/settingsState";
-import { EntryPathEntry } from "~/assets/editor/bs_editor";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EntryPathEntry } from "~/assets/editor/bs_editor";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   // Was "CatalogueEntry", which is the name of a different component in this same folder:
@@ -144,7 +144,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .imported {
   color: rgb(128, 145, 183);

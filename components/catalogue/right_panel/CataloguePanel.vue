@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 

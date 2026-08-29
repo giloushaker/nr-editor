@@ -53,11 +53,10 @@
 <script lang="ts">
 import type { QueryNode } from "./props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICondition } from "~/assets/shared/battlescribe/bs_types";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSICondition } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 import {
-  EditorSearchItem,
   getSearchElements,
   getSearchCategories,
   getFilterSelections,
@@ -279,7 +278,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .catalogueName {
   color: rgb(144, 152, 197);

@@ -101,11 +101,11 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { convertToXml, removeExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { addOne, generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
-import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { deleteFile, filename } from "~/electron/node_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";

@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 
 export default {
   emits: ["update:modelValue"],
@@ -253,7 +253,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .suggestions {
   position: absolute;
