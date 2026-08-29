@@ -1,0 +1,2 @@
+import{H as e,Wt as t,h as n,t as r}from"./CmOgBh9-.js";import{n as i}from"./CY6UfpYz.js";var a={};function o(r,a){return e(),n(`pre`,null,t(r._.provides[i]||r.$route),1)}var s=r(a,[[`render`,o]]);export{s as default};
+//# sourceMappingURL=D3BMa38y.js.map

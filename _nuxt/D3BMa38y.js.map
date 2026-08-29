@@ -1,0 +1,1 @@
+{"version":3,"file":"D3BMa38y.js","names":[],"sources":["../../../pages/[...slugs].vue"],"sourcesContent":["<template>\n  <pre>{{ $route }}</pre>\n</template>\n"],"mappings":"mHACE,OAAA,EAAA,EAAA,EAAuB,MAAA,KAAA,EAAf,EAAA,EAAA,SAAA,IAAA,EAAA,MAAM,EAAA,CAAA"}
