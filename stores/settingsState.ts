@@ -243,11 +243,13 @@ const defaultState = {
   activeSystems: [] as string[],
   systemsSort: "edited" as "edited" | "opened" | "name",
   catalogueLayout: "list" as "grid" | "list",
-  showOnlyEnabledCategories: false,
   globalDuplicateIdError: false,
-  useNewCategoriesUI: false,
   sort: "asc" as string,
-  theme: "" as "" | "dark" | "light",
+  // Persisted settings from before this had a real default still carry "", which every reader
+  // treats as light; new installs get the value the title bar's two-state toggle can act on.
+  theme: "light" as "" | "dark" | "light",
+  /** MCP is opt-in: the editor registers no tools and loads no relay until this is switched on. */
+  mcpEnabled: false,
   githubToken: "",
   githubAutoIncrement: true,
   autosort: {
@@ -309,6 +311,10 @@ export const useSettingsStore = defineStore("settings", {
     setTheme(theme: "" | "dark" | "light") {
       this.theme = theme;
       this.refreshAppearance();
+    },
+    /** The title bar's theme button. "" counts as light, so anything but dark flips to dark. */
+    toggleTheme() {
+      this.setTheme(this.theme === "dark" ? "light" : "dark");
     },
     refreshAppearance() {
       updateCssVars(this.getDefaultAppareance(), {});
