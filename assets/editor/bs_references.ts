@@ -16,6 +16,22 @@ import type { ReferenceEdge } from "./bs_reference_index";
 /** Fields whose value is a node id, keyed so set_field knows when to reindex. */
 export const REFERENCE_FIELDS = new Set(["targetId", "typeId", "childId", "scope", "value"]);
 
+/**
+ * `field` is deliberately NOT here, and a modifier's field is deliberately not an edge below.
+ *
+ * A modifier names its constraint by id, so indexing it looks like the obvious missing
+ * reference -- 10k of the 14k modifiers on Warhammer: The Old World point at one. But a
+ * constraint id is only unique within the entry that owns it, and duplicating an entry
+ * duplicates its constraint ids, so one id keyed globally collects every modifier in the
+ * system that names it -- nearly all of them acting on somebody else's constraint.
+ *
+ * That would not be a slightly noisy index, it would be a wrong one: `mentions:0` is how
+ * "nothing uses this" is asked, and the references panel would show modifiers that cannot
+ * reach the constraint they are listed under. A modifier only ever affects constraints on
+ * its own node or on a node linking to it, which is a local question -- see modifiersFor()
+ * in plugins/webmcp.client.ts, which answers it by walking those two places instead.
+ */
+
 /** Shared, for the many nodes that point at nothing. Never stored and never mutated. */
 const NONE = Object.freeze([]) as unknown as ReferenceEdge[];
 

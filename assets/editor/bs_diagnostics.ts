@@ -13,11 +13,12 @@
  * To add a diagnostic: append one entry to DIAGNOSTICS, or call registerDiagnostic() from
  * outside. That is the whole procedure -- no piping, no cleanup.
  */
-import { Condition, Constraint, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
-import type { Link } from "~/assets/shared/battlescribe/bs_main";
+import { Association, AssociationLink, Condition, Constraint, Modifier, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
+import type { Link, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_main";
 import { splitScopeSelf, validScopes } from "~/assets/shared/battlescribe/bs_condition";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { pointlessAffects, pointlessAssociation, pointlessLocalGroup } from "./bs_recursion";
 import type { Diagnostic } from "./bs_diagnostics_engine";
 
 export type { Diagnostic, DiagnosticContext, DiagnosticFinding, DiagnosticResult } from "./bs_diagnostics_engine";
@@ -80,11 +81,28 @@ export const DIAGNOSTICS: Diagnostic[] = [
   },
 
   {
+    /**
+     * A dead link, and where its id actually went.
+     *
+     * The id nearly always still exists -- in a catalogue this one does not import, because the
+     * entry was copy-pasted from another faction's file and kept the source's targetId. Naming
+     * that file turns "has no target" from a mystery into a one-line fix: either import it, or
+     * repoint the link at the copy that is already reachable.
+     */
     id: "no-target",
     severity: "error",
     applies: (node) => node.isLink(),
-    check(node) {
-      if (!node.target) return `(${node.editorTypeName}) ${node.name} has no target`;
+    check(node, ctx) {
+      if (node.target) return;
+      const base = `(${node.editorTypeName}) ${node.name} has no target`;
+      const targetId = (node as EditorBase & Link).targetId;
+      if (!targetId) return base;
+      // Only runs for links that are already broken, so the global lookup costs nothing on the
+      // catalogues where every link resolves.
+      const elsewhere = ctx.findByIdGlobal(targetId) as EditorBase | undefined;
+      const where = elsewhere?.getCatalogue?.();
+      if (!where || where === ctx.catalogue) return base;
+      return `${base}: id ${targetId} is in "${where.name}", which this catalogue does not import`;
     },
   },
 
@@ -186,6 +204,35 @@ export const DIAGNOSTICS: Diagnostic[] = [
     },
     related: (node, ctx) => ctx.idCollisions(node),
   },
+
+  {
+    /**
+     * A recursive query that never had anything to recurse into.
+     *
+     * Recursion is not free -- a recursive query listens on every scope it reaches -- and a
+     * recursive flag that changes nothing is nearly always a copy-paste from a query where it
+     * did. bs_recursion.ts holds the reasoning, including what it declines to judge.
+     */
+    id: "pointless-recursion",
+    severity: "warning",
+    // Cheapest gate first: `affects` is absent on the overwhelming majority of modifiers, and
+    // the rest are rare enough that the checks past it only run once. Local condition groups
+    // are matched on parentKey rather than instanceof -- they are not in protoMap, so they
+    // carry Base.prototype and there is no class to test against.
+    applies: (node) =>
+      node instanceof Modifier
+        ? Boolean(node.affects)
+        : node instanceof Association ||
+          node instanceof AssociationLink ||
+          node.parentKey === "localConditionGroups",
+    check(node) {
+      if (node instanceof Modifier) return pointlessAffects(node as EditorBase & Modifier);
+      if (node.parentKey === "localConditionGroups") {
+        return pointlessLocalGroup(node as EditorBase & LocalConditionGroup);
+      }
+      return pointlessAssociation(node as EditorBase & (Association | AssociationLink));
+    },
+  },
 ];
 
 /**
@@ -209,6 +256,19 @@ export const UNUSED_DIAGNOSTIC: Diagnostic = {
     return `${node.getName()} is not linked to by anything`;
   },
 };
+
+/**
+ * Rules that exist, are correct, and are off because being correct is not the same as being
+ * worth reporting. Kept reachable by name so a caller that genuinely wants one can ask for it
+ * -- nr_diagnosis runs these on request without registering them, so nothing is written to the
+ * node and the editor's own error list is untouched.
+ */
+export const OPTIONAL_DIAGNOSTICS: Diagnostic[] = [UNUSED_DIAGNOSTIC];
+
+/** Every rule addressable by id, registered or not. */
+export function diagnosticById(id: string): Diagnostic | undefined {
+  return [...DIAGNOSTICS, ...OPTIONAL_DIAGNOSTICS].find((rule) => rule.id === id);
+}
 
 /** Scopes that aren't node ids don't need resolving; exported so callers can share the set. */
 export { validScopes };

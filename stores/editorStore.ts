@@ -46,6 +46,7 @@ import {
 } from "~/assets/shared/battlescribe/bs_main";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { initializeSubtree } from "~/assets/editor/bs_initialize";
+import { search, type SearchOptions } from "~/assets/editor/bs_search";
 
 /**
  * Initializes a subtree the editor is inserting. The shared setPrototypeRecursive stops at the
@@ -98,6 +99,7 @@ import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/gi
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { nextTick, toRaw } from "vue";
 import { continuesFieldEdit, fieldEditType, type FieldEditMark } from "./field_edit_stack";
+import { planMerge } from "./merge_children";
 import { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
@@ -593,6 +595,12 @@ export const useEditorStore = defineStore("editor", {
 
       const catalogue = node.getCatalogue();
       if (catalogue) {
+        // Re-check the node here, not only in set_field. Several right-panel fields bind
+        // v-model straight to the node -- Query's includeChild* checkboxes, ComplexQuery's
+        // whole affects builder -- so they never pass through set_field, and this bubbled
+        // `change` is the only notice a rule reading those fields ever gets. Skipped for the
+        // catalogue itself, which processForEditor's pass does not validate either.
+        if (node !== catalogue) catalogue.revalidate(node as EditorBase);
         this.set_catalogue_changed(catalogue);
       }
     },
@@ -1589,15 +1597,49 @@ export const useEditorStore = defineStore("editor", {
       }
 
       apply(next);
-      const entry = { type: fieldEditType(key), undo: () => apply(previous), redo: () => apply(next) };
+      this.push_undo(fieldEditType(key), () => apply(previous), () => apply(next));
+      lastFieldEdit = { node: raw, key, at: now, from: previous, stackPos: this.undoStackPos };
+      return true;
+    },
+
+    /**
+     * Records an action that has already been applied, dropping any redo branch.
+     *
+     * The synchronous counterpart to do_action, which runs the action itself and so has to be
+     * awaited. Anything that mutates the tree must go through one of the two, or the edit is
+     * invisible to undo -- see edit_node, which for a long time did not.
+     */
+    push_undo(type: string, undo: () => unknown, redo: () => unknown) {
+      const entry = { type, undo, redo };
       if (this.undoStackPos < this.undoStack.length - 1) {
         this.undoStack.splice(this.undoStackPos + 1, this.undoStack.length - this.undoStackPos - 1, entry);
       } else {
         this.undoStack.push(entry);
       }
       this.undoStackPos += 1;
-      lastFieldEdit = { node: raw, key, at: now, from: previous, stackPos: this.undoStackPos };
-      return true;
+    },
+
+    /**
+     * Replaces every entry pushed since `from` with one entry that undoes/redoes all of them.
+     *
+     * One user gesture is one Ctrl+Z, however many nodes it touched -- which is what makes a
+     * bulk action safe to offer at all. Left alone if the position moved backwards instead
+     * (something called undo() in between), since then there is no run of new entries to fold.
+     */
+    collapse_undo(from: number, type = "batch") {
+      const added = this.undoStackPos - from;
+      if (added < 2) return;
+      const entries = this.undoStack.slice(from + 1, this.undoStackPos + 1);
+      this.undoStack.splice(from + 1, added, {
+        type,
+        undo: async () => {
+          for (const entry of [...entries].reverse()) await entry.undo();
+        },
+        redo: async () => {
+          for (const entry of entries) await entry.redo();
+        },
+      });
+      this.undoStackPos = from + 1;
     },
 
     /** Ends the current coalescing window, so the next edit starts a fresh undo entry. */
@@ -1605,35 +1647,193 @@ export const useEditorStore = defineStore("editor", {
       lastFieldEdit = null;
     },
 
+    /**
+     * Sets several fields at once, as one undo entry.
+     *
+     * Was a bare `entry[key] = val` loop: the write landed but nothing recorded it, so an
+     * edit_node change could not be undone and left the reference index stale when it wrote
+     * one of REFERENCE_FIELDS. It now does what set_field does, once for the whole batch,
+     * which is what makes it safe to hand to a script or an agent.
+     */
     edit_node(entry: EditorBase, data?: Record<string, any>) {
-      let changed = false;
+      const target = entry as unknown as Record<string, any>;
+      const catalogue = entry.getCatalogue();
+      const changes = [] as Array<{ key: string; from: unknown; to: unknown; inserted?: EditorBase }>;
       for (const key in data) {
         const val = data[key];
-        // @ts-ignore
-        if (entry[key] !== val) {
-          if (isObject(val)) {
-            const catalogue = entry.getCatalogue();
-            const sysId = catalogue.getSystemId();
-
-            // @ts-ignore
-            const fixed_obj = this.fix_object(key, val, catalogue);
-            initializeInserted({ [key]: fixed_obj });
-
-            // @ts-ignore
-            entry[key] = fixed_obj;
-            onAddEntry(fixed_obj, catalogue, entry, this.get_system(sysId));
-          } else {
-            // @ts-ignore
-            entry[key] = val;
-          }
-          changed = true;
+        if (target[key] === val) continue;
+        if (isObject(val)) {
+          // @ts-ignore
+          const fixed_obj = this.fix_object(key, val, catalogue);
+          initializeInserted({ [key]: fixed_obj });
+          changes.push({ key, from: target[key], to: fixed_obj, inserted: fixed_obj });
+        } else {
+          changes.push({ key, from: target[key], to: val });
         }
       }
-      if (changed) {
+      if (!changes.length) return false;
+
+      const sysId = catalogue.getSystemId();
+      const apply = (dir: "to" | "from") => {
+        for (const change of changes) {
+          const value = change[dir];
+          if (value === undefined) delete target[change.key];
+          else target[change.key] = value;
+          // An inserted object has to be registered/unregistered as well as assigned, or undo
+          // leaves it in the indexes with nothing pointing at it.
+          if (change.inserted) {
+            if (dir === "to") onAddEntry(change.inserted, catalogue, entry, this.get_system(sysId));
+            else onRemoveEntry(change.inserted);
+          }
+          if (REFERENCE_FIELDS.has(change.key)) catalogue.reindexReferences(entry);
+        }
+        catalogue.revalidate(entry);
         this.changed(entry);
+      };
+
+      apply("to");
+      this.push_undo("edit", () => apply("from"), () => apply("to"));
+      return true;
+    },
+    /**
+     * Sets the same fields on several nodes, as one undo entry.
+     *
+     * Data first and target last-and-optional, like add(): omit `nodes` and it edits the
+     * current selection. edit_node is the single-node form this is built from.
+     */
+    edit(data: Record<string, any>, nodes?: MaybeArray<EditorBase>) {
+      const targets = nodes ? (Array.isArray(nodes) ? nodes : [nodes]) : this.get_selections();
+      if (!targets.length) {
+        console.error("Couldn't edit: no selection or node(s) provided");
+        return false;
       }
+      const from = this.undoStackPos;
+      let changed = false;
+      for (const node of targets) {
+        if (this.edit_node(node, data)) changed = true;
+      }
+      this.collapse_undo(from, "edit");
       return changed;
     },
+
+    /**
+     * Applies generated data onto an existing node, in place.
+     *
+     * For the regenerate loop: a script builds a whole unit, you change the script and run it
+     * again. Deleting the old entry and adding the new one gives every node a fresh id, so
+     * every link pointing into the unit dangles. Merging keeps the id of anything that still
+     * exists, so references survive. It works because generator scripts give their nodes
+     * deterministic ids -- scripts/import's id() hashes a semantic path -- so the same logical
+     * child comes back with the same id, and add() keeps a preferred id when it is free.
+     *
+     * Never deletes: anything in the catalogue that the data no longer mentions is returned in
+     * `extra` for the caller to remove(), so a hand-made addition survives a regeneration.
+     * Only arrays that `data` actually mentions are looked at, and only those that are real
+     * child arrays for that node -- characteristics, costs and the like are set wholesale, the
+     * way the right panel sets them.
+     *
+     * Matching is by id when every incoming child has one and by typeName/name otherwise; pass
+     * `key` to decide it yourself. `id` itself is never written: it is what identifies a node,
+     * and overwriting it is how references break.
+     */
+    async merge(target: EditorBase, data: Record<string, any>, options?: { key?: (node: any) => string }) {
+      const from = this.undoStackPos;
+      const stats = { updated: 0, added: 0, extra: [] as EditorBase[] };
+
+      const merge_into = async (node: EditorBase, incoming: Record<string, any>) => {
+        const allowed = allowed_children(node, node.parentKey);
+        const fields = {} as Record<string, any>;
+        const childArrays = [] as Array<[string, any[]]>;
+        for (const [key, value] of Object.entries(incoming)) {
+          if (key === "id") continue;
+          if (Array.isArray(value) && allowed?.has(key)) childArrays.push([key, value]);
+          else fields[key] = value;
+        }
+        if (this.edit_node(node, fields)) stats.updated += 1;
+
+        for (const [key, children] of childArrays) {
+          const existing = ((node as any)[key] ?? []) as EditorBase[];
+          const plan = planMerge(existing.slice(), children, options?.key);
+          for (const { existing: match, incoming: child } of plan.pairs) {
+            await merge_into(match, child as Record<string, any>);
+          }
+          for (const child of plan.added) {
+            await this.add(child, key as string & keyof typeof entries, node);
+            stats.added += 1;
+          }
+          stats.extra.push(...plan.extra);
+        }
+      };
+
+      await merge_into(target, data);
+      this.collapse_undo(from, "merge");
+      return stats;
+    },
+
+    /**
+     * Repoints everything referring to `duplicates` at `keep`, then deletes them.
+     *
+     * Deliberately mechanical: deciding *which* entries are duplicates and which copy to keep
+     * is a judgement about the game data (see the find-duplicate-* scripts), and belongs in
+     * the caller. What the caller cannot be expected to get right is the repointing -- the id
+     * lives in a different field per node type (targetId on a link, typeId on a profile,
+     * childId/scope on a condition, value on a modifier), so the field is found from
+     * REFERENCE_FIELDS rather than assumed to be targetId. Miss one and the reference dangles,
+     * showing up as a validation error somewhere else entirely.
+     *
+     * Repointing goes through set_field and deletion through remove, so the whole merge is
+     * one undo entry.
+     *
+     * Called with no arguments it merges the current selection into its first node, ordered by
+     * position in the tree rather than by click order so the survivor does not depend on how
+     * the selection was made.
+     *
+     * Not to be confused with merge(), which applies generated data onto one node.
+     */
+    async merge_duplicates(keep?: EditorBase, duplicates?: MaybeArray<EditorBase>) {
+      if (!keep) {
+        const selections = this.get_sorted_selections();
+        if (selections.length < 2) {
+          console.error("Couldn't merge: select at least two entries, or pass them in");
+          return { merged: 0, repointed: 0 };
+        }
+        keep = selections[0];
+        duplicates = selections.slice(1);
+      }
+      const survivor = keep;
+      const dupes = (Array.isArray(duplicates) ? duplicates : duplicates ? [duplicates] : []).filter(
+        (dupe) => $toRaw(dupe) !== $toRaw(survivor)
+      );
+      if (!dupes.length) return { merged: 0, repointed: 0 };
+
+      // Merging across types would repoint references at something that cannot answer for
+      // them; from a selection it is an easy misclick, so it is refused rather than attempted.
+      const mismatch = dupes.find((dupe) => dupe.editorTypeName !== survivor.editorTypeName);
+      if (mismatch) {
+        throw new Error(
+          `Cannot merge a ${mismatch.editorTypeName} into a ${survivor.editorTypeName} (${getName(mismatch)})`
+        );
+      }
+
+      const from = this.undoStackPos;
+      let repointed = 0;
+      for (const dupe of dupes) {
+        // Snapshot: refs/other_refs are accessors over the reference index, which set_field
+        // rewrites as we go.
+        for (const ref of [...dupe.refs, ...dupe.other_refs]) {
+          for (const key of REFERENCE_FIELDS) {
+            if ((ref as unknown as Record<string, unknown>)[key] !== dupe.id) continue;
+            if (this.set_field(ref, key, survivor.id)) repointed += 1;
+            // Each write starts its own undo entry rather than extending the previous one.
+            this.end_field_edit();
+          }
+        }
+      }
+      await this.remove(dupes);
+      this.collapse_undo(from, "merge_duplicates");
+      return { merged: dupes.length, repointed };
+    },
+
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
       if (!catalogue) return;
@@ -2040,6 +2240,18 @@ export const useEditorStore = defineStore("editor", {
         this.historyStackPos += 1;
         this.load_state(this.historyStack[this.historyStackPos]!);
       }
+    },
+    /**
+     * The query language, over whatever is loaded. Defaults to every catalogue of every open
+     * system, so a query can follow a link out of one file and into another; pass `where` to
+     * pin it to one.
+     *
+     * Separate from update_catalogue_search below, which is the tree's plain-substring filter
+     * and owns the showInEditor flags. This one just answers.
+     */
+    query(query: string, where?: Catalogue | Catalogue[], options?: SearchOptions): EditorBase[] {
+      const scope = where ?? Object.values(this.gameSystems).flatMap((s) => [...s.getAllLoadedCatalogues()]);
+      return search(scope, query, options);
     },
     async update_catalogue_search(catalogue: Catalogue, data: { filter: string; ignoreProfilesRules: boolean }) {
       const { filter, ignoreProfilesRules } = data;

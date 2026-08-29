@@ -264,6 +264,31 @@ export function getTypeName(key: string & keyof typeof entries, obj?: Base): key
   return key as keyof typeof types;
 }
 
+/**
+ * Short forms for the few type names that are a mouthful. Only `is` reads these --
+ * `editorTypeName` keeps the long names, which are saved in filters and compared by name.
+ */
+const shortNames = {
+  selectionEntry: "entry",
+  selectionEntryGroup: "group",
+  selectionEntryLink: "entryLink",
+  selectionEntryGroupLink: "groupLink",
+} as const;
+
+/** What `is` can hold: every type name, with the four above swapped for their short form. */
+export type NodeIs = Exclude<keyof typeof types, keyof typeof shortNames> | (typeof shortNames)[keyof typeof shortNames];
+
+/**
+ * What a node *is*, in the short form the editor talks in. Same answer as `getTypeName` --
+ * shared and non-shared arrays already collapse to one type there -- only shorter, so
+ * `selectionEntryGroup` reads as `group`. Links keep their suffix, so a switch can still
+ * tell an `entry` from an `entryLink`.
+ */
+export function getIs(key: string & keyof typeof entries, obj?: Base): NodeIs {
+  const type = getTypeName(key, obj);
+  return (shortNames[type as keyof typeof shortNames] ?? type) as NodeIs;
+}
+
 export function getNameExtra(obj: EditorBase, _refs = true, _type = true): string {
   const type = obj.parentKey;
   const pieces = [];

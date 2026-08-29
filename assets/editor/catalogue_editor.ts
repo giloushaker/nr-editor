@@ -41,7 +41,7 @@ import { ReferenceIndex } from "./bs_reference_index";
 import { CycleIndex } from "./bs_link_cycles";
 import type { entries, types } from "~/assets/shared/battlescribe/entries";
 import { outgoingReferences } from "./bs_references";
-import { getName, getTypeName } from "./bs_editor";
+import { getName, getIs, getTypeName, type NodeIs } from "./bs_editor";
 
 /**
  * The reverse index and the diagnostic store are kept out of Vue's reactive graph.
@@ -107,6 +107,20 @@ Object.defineProperty(Base.prototype, "editorTypeName", {
     if (this.parentKey === undefined) return undefined;
     // getTypeName hands back the key unchanged when it does not know it, so any string is safe.
     return getTypeName(this.parentKey as Parameters<typeof getTypeName>[0], this);
+  },
+  configurable: true,
+});
+
+/**
+ * The same question as `editorTypeName`, in the short form worth switching on: an entry is an
+ * `entry` whether it sits in `selectionEntries` or `sharedSelectionEntries`, and a group is a
+ * `group`. Kept as a second getter rather than shortening `editorTypeName`, because those long
+ * names are stored in saved filters and compared by name across the app.
+ */
+Object.defineProperty(Base.prototype, "is", {
+  get(this: Base) {
+    if (this.parentKey === undefined) return undefined;
+    return getIs(this.parentKey as Parameters<typeof getIs>[0], this);
   },
   configurable: true,
 });
@@ -791,6 +805,8 @@ declare module "~/assets/shared/battlescribe/bs_main" {
     /** Which array this node was found in -- always one of the keys entries.ts defines. */
     parentKey: string & keyof typeof entries;
     readonly editorTypeName: string & keyof typeof types;
+    /** editorTypeName's short form -- `entry`, `group`, `entryLink` -- for switching on. */
+    readonly is: NodeIs;
     /**
      * Declared here, and required, which is the point: shared leaves these off entirely, so
      * there is no optional declaration to merge against. Every node in the editor really does
