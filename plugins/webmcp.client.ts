@@ -4,7 +4,7 @@ import { initializeWebMCPPolyfill } from "@mcp-b/webmcp-polyfill";
 import { effectiveFlags, idFields, search, type SearchOptions } from "~/assets/editor/bs_search";
 import { DIAGNOSTICS, OPTIONAL_DIAGNOSTICS, diagnosticById } from "~/assets/editor/bs_diagnostics";
 import { getName } from "~/assets/editor/bs_editor";
-import { validChildIds, validScopes, selfableScopes } from "~/assets/shared/battlescribe/bs_condition";
+import { validChildIds, validScopes, selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { getFolderFolders, readFile } from "~/electron/node_helpers";
@@ -1242,6 +1242,7 @@ function tree(root: NodeLike | Catalogue, options: TreeOptions = {}): string {
       )
       .filter((c) => c.field === "selections" && c.scope === "parent")
       .map((c) => `${c.type === "min" ? "min" : "max"} ${c.value}`)
+      .filter((text, index, all) => all.indexOf(text) === index)
       .join(", ");
     const cats = ((node as { categoryLinks?: Array<{ name?: string; primary?: boolean }> }).categoryLinks ?? [])
       .filter((c) => c.name && !skipCategory.test(c.name))
@@ -1513,6 +1514,225 @@ function conventionsReport(targets: Catalogue[]) {
   return report;
 }
 
+const CONDITION_TYPES = new Set([
+  "atLeast",
+  "atMost",
+  "lessThan",
+  "greaterThan",
+  "equalTo",
+  "notEqualTo",
+  "instanceOf",
+  "notInstanceOf",
+  "before",
+  "always",
+  "never",
+]);
+const MODIFIER_TYPES = new Set([
+  "set",
+  "increment",
+  "decrement",
+  "append",
+  "prepend",
+  "replace",
+  "add",
+  "remove",
+  "multiply",
+  "divide",
+  "modulo",
+  "power",
+  "exponent",
+  "floor",
+  "ceil",
+  "triangular",
+  "set-primary",
+  "unset-primary",
+  "cumulative-add",
+  "cumulative-multiply",
+  "cumulative-power",
+]);
+const MODIFIER_FIELDS = new Set([
+  "hidden",
+  "name",
+  "annotation",
+  "description",
+  "page",
+  "category",
+  "defaultAmount",
+  "defaultSelectionEntryId",
+  "error",
+  "warning",
+  "info",
+  "readme",
+]);
+
+/**
+ * What a write would get wrong, before it is written.
+ *
+ * A bad scope, a field that is not a cost or a constraint id, a childId nothing has, a link to
+ * nothing: each of these lands silently and shows up later as a diagnostic, or not at all -- a
+ * condition on an unknown scope simply never fires, and the option it was meant to cap is
+ * uncapped. The tables here are the same ones nr_fields reports, so anything refused was going
+ * to be wrong. Ids declared inside the payload count as known: a modifier may name a constraint
+ * that arrives in the same add().
+ */
+function validateForWrite(data: unknown, catalogue: Catalogue): string[] {
+  const problems: string[] = [];
+  const costIds = new Set<string>();
+  for (const cost of catalogue.iterateCostTypes()) if (cost.id) costIds.add(cost.id);
+  const profileTypes = new Map<string, string>();
+  for (const type of catalogue.iterateProfileTypes()) if (type.id) profileTypes.set(type.id, type.name ?? "");
+  const local = new Set<string>();
+  const collect = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) return node.forEach(collect);
+    const record = node as Record<string, unknown>;
+    if (typeof record.id === "string") local.add(record.id);
+    for (const value of Object.values(record)) if (value && typeof value === "object") collect(value);
+  };
+  collect(data);
+  const known = (id: unknown) => typeof id === "string" && (local.has(id) || Boolean(catalogue.findOptionById?.(id)));
+  const fieldOk = (field: unknown) =>
+    typeof field === "string" &&
+    (["selections", "forces", "associations"].includes(field) ||
+      costIds.has(field) ||
+      (field.startsWith("limit::") && costIds.has(field.slice("limit::".length))));
+  const scopeOk = (scope: unknown) =>
+    typeof scope === "string" && (validScopes.has(splitScopeSelf(scope).base) || known(scope));
+  const childOk = (childId: unknown) => typeof childId === "string" && (validChildIds.has(childId) || known(childId));
+  const fieldMsg = "is not selections/forces/associations, a cost type id, or limit::<cost id>";
+
+  const walk = (node: unknown, key: string, path: string) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) return node.forEach((child, index) => walk(child, key, `${path}[${index}]`));
+    const record = node as Record<string, unknown>;
+    const at = `${path} (${(record.name as string) ?? key})`;
+    if (key === "conditions" || key === "repeats") {
+      if (key === "conditions" && !CONDITION_TYPES.has(String(record.type))) {
+        problems.push(`${at}: condition type "${record.type}" is not one of ${[...CONDITION_TYPES].join("|")}`);
+      }
+      if (!scopeOk(record.scope))
+        problems.push(`${at}: scope "${record.scope}" is neither a scope keyword nor a known id`);
+      if (!childOk(record.childId)) {
+        problems.push(`${at}: childId "${record.childId}" is neither ${[...validChildIds].join("|")} nor a known id`);
+      }
+      if (!fieldOk(record.field)) problems.push(`${at}: field "${record.field}" ${fieldMsg}`);
+    } else if (key === "constraints") {
+      if (record.type !== "min" && record.type !== "max") problems.push(`${at}: constraint type must be min or max`);
+      if (!scopeOk(record.scope))
+        problems.push(`${at}: scope "${record.scope}" is neither a scope keyword nor a known id`);
+      if (!fieldOk(record.field)) problems.push(`${at}: field "${record.field}" ${fieldMsg}`);
+    } else if (key === "modifiers") {
+      if (!MODIFIER_TYPES.has(String(record.type))) {
+        problems.push(`${at}: modifier type "${record.type}" is not one of ${[...MODIFIER_TYPES].join("|")}`);
+      }
+      const field = record.field;
+      if (!(typeof field === "string" && (MODIFIER_FIELDS.has(field) || costIds.has(field) || known(field)))) {
+        problems.push(
+          `${at}: field "${field}" is not a modifiable field, a cost type id, a characteristic type id or a constraint id`,
+        );
+      }
+    } else if (key === "profiles") {
+      const typeId = record.typeId;
+      const typeName = record.typeName;
+      const byName = typeName && [...profileTypes.values()].includes(String(typeName));
+      if (!(typeId && profileTypes.has(String(typeId))) && !byName) {
+        problems.push(`${at}: profile type "${typeName ?? typeId}" is not defined (nr_fields lists them)`);
+      }
+    } else if (key === "categoryLinks" || key === "entryLinks" || key === "infoLinks" || key === "catalogueLinks") {
+      if (!known(record.targetId)) problems.push(`${at}: targetId "${record.targetId}" resolves to nothing`);
+    }
+    for (const [childKey, value] of Object.entries(record)) {
+      if (Array.isArray(value) && arrayKeys.has(childKey)) walk(value, childKey, `${path}.${childKey}`);
+    }
+  };
+  walk(data, "", "data");
+  return problems;
+}
+
+/** Root entries keyed by the id of what they point at, so a fork keeping its base's ids lines up. */
+function unitSummaries(catalogue: Catalogue, shared = false): Map<string, { name: string; lines: Set<string> }> {
+  const out = new Map<string, { name: string; lines: Set<string> }>();
+  const sharedGroups = (catalogue.sharedSelectionEntryGroups ?? []) as unknown as NodeLike[];
+  const roots = shared
+    ? sharedGroups
+    : [
+        ...((catalogue.entryLinks ?? []) as unknown as NodeLike[]),
+        ...((catalogue.selectionEntries ?? []) as unknown as NodeLike[]),
+      ];
+  // A shared group (Mount, Big Name) linked from every character would repeat its changes under
+  // each of them; it is diffed once, under its own name, and left out of the units.
+  const exclude = ["Magic Items", "Magic Standards", ...(shared ? [] : sharedGroups.map((g) => g.name ?? ""))];
+  for (const root of roots) {
+    const target = ((root as { target?: NodeLike }).target ?? root) as NodeLike;
+    const key = target.id ?? root.name ?? labelOf(root);
+    const lines = tree(root, { depth: 6, exclude })
+      .split("\n")
+      .map((line) => line.trim());
+    out.set(key, { name: root.name ?? labelOf(root), lines: new Set(lines) });
+  }
+  return out;
+}
+
+/**
+ * Two catalogues side by side, the way a reviewer reads a fork against its base or a release
+ * against the last: which units exist only on one side, and for the rest, which tree lines
+ * (points, options, limits, rules) changed. Shared profile text is compared by name.
+ */
+function diffCatalogues(base: Catalogue, other: Catalogue) {
+  const a = unitSummaries(base);
+  const b = unitSummaries(other);
+  const onlyBase = [...a].filter(([key]) => !b.has(key)).map(([, unit]) => unit.name);
+  const onlyOther = [...b].filter(([key]) => !a.has(key)).map(([, unit]) => unit.name);
+  const changesBetween = (
+    from: Map<string, { name: string; lines: Set<string> }>,
+    to: Map<string, { name: string; lines: Set<string> }>,
+  ) => {
+    const out: Array<{ unit: string; removed: string[]; added: string[] }> = [];
+    for (const [key, unit] of from) {
+      const counterpart = to.get(key);
+      if (!counterpart) continue;
+      const removed = [...unit.lines].filter((line) => !counterpart.lines.has(line));
+      const added = [...counterpart.lines].filter((line) => !unit.lines.has(line));
+      if (removed.length || added.length) out.push({ unit: unit.name, removed, added });
+    }
+    return out;
+  };
+  const changed = changesBetween(a, b);
+  const sharedGroupsChanged = changesBetween(unitSummaries(base, true), unitSummaries(other, true));
+  const textOf = (catalogue: Catalogue) => {
+    const out = new Map<string, string>();
+    for (const profile of (catalogue.sharedProfiles ?? []) as unknown as NodeLike[]) {
+      const chars = ((profile as { characteristics?: Array<{ name?: string; $text?: string }> }).characteristics ?? [])
+        .map((c) => `${c.name}=${c.$text ?? ""}`)
+        .join(" | ");
+      out.set(profile.name ?? "?", chars);
+    }
+    return out;
+  };
+  const textA = textOf(base);
+  const textB = textOf(other);
+  const profilesChanged = [...textA]
+    .filter(([name, text]) => textB.has(name) && textB.get(name) !== text)
+    .map(([name]) => name);
+  const profilesOnlyOther = [...textB.keys()].filter((name) => !textA.has(name));
+  const categoriesOf = (catalogue: Catalogue) =>
+    ((catalogue.categoryEntries ?? []) as unknown as NodeLike[]).map((c) => c.name ?? "?");
+  const catsA = categoriesOf(base);
+  const catsB = categoriesOf(other);
+  return {
+    base: base.name,
+    other: other.name,
+    unitsOnlyInBase: onlyBase,
+    unitsOnlyInOther: onlyOther,
+    changedUnits: changed,
+    sharedGroupsChanged,
+    sharedProfilesChanged: profilesChanged,
+    sharedProfilesOnlyInOther: profilesOnlyOther,
+    categoriesOnlyInBase: catsA.filter((name) => !catsB.includes(name)),
+    categoriesOnlyInOther: catsB.filter((name) => !catsA.includes(name)),
+  };
+}
+
 // #endregion
 
 const TOOLS: WebMcpTool[] = [
@@ -1587,26 +1807,33 @@ docs whether or not you have web access of your own.`,
   {
     name: "nr_systems",
     description: `Every game system you could open -- one per game, from the working folder and the
-browser store -- whether or not it is loaded.
+browser store. Open ones come back in full; the rest as names under "available".
 
-loaded is no/partial/full. Only "full" is safe to search or edit across: a partial system answers
+loaded is partial/full. Only "full" is safe to search or edit across: a partial system answers
 queries from the files that happen to be open, so a cross-catalogue question gets a confident
 answer drawn from half the data. nr_load_system fixes that.`,
     inputSchema: { type: "object", properties: {} },
     execute: async () => {
-      const systems = (await systemRows()).map((row) => {
+      const loaded: Array<Record<string, unknown>> = [];
+      const available: string[] = [];
+      for (const row of await systemRows()) {
         const live = loadedSystemFor(row);
-        return {
+        if (!live?.gameSystem) {
+          available.push(row.name);
+          continue;
+        }
+        loaded.push({
           name: row.name,
-          id: live?.getId() ?? row.id,
+          id: live.getId() ?? row.id,
           source: row.source,
           path: row.path,
-          loaded: !live?.gameSystem ? "no" : live.allLoaded ? "full" : "partial",
-          catalogues: live?.getAllLoadedCatalogues().length ?? 0,
-        };
-      });
+          loaded: live.allLoaded ? "full" : "partial",
+          catalogues: live.getAllLoadedCatalogues().length,
+        });
+      }
       const note = await folderProblem();
-      return note ? { systems, note } : systems;
+      // One line per system that is not open; the full row only for those that are.
+      return { loaded, available, ...(note ? { note } : {}) };
     },
   },
   {
@@ -2234,7 +2461,30 @@ The result reports the diagnostics delta (new and fixed findings) and which file
         if (typeof value === "function") scope[key] = value;
       }
       const shadowed = Object.keys(helpers).filter((key) => typeof scope[key] === "function" && key in $store);
+      // The two writes that take a payload check it first: a bad scope or field lands silently
+      // and surfaces as a rule that never fires. A refused write names every problem at once.
+      const catalogueOf = (node: unknown): Catalogue | undefined => {
+        const n = node as { getCatalogue?: () => Catalogue; isCatalogue?: () => boolean } | undefined;
+        if (n?.isCatalogue?.()) return n as unknown as Catalogue;
+        return n?.getCatalogue?.();
+      };
+      const checked = (what: string, data: unknown, target: unknown) => {
+        const catalogue = catalogueOf(Array.isArray(target) ? target[0] : target);
+        if (!catalogue) return;
+        const problems = validateForWrite(data, catalogue);
+        if (problems.length) throw new Error(`${what} refused, ${problems.length} problem(s):\n${problems.join("\n")}`);
+      };
+      const storeAdd = scope.add as (...args: unknown[]) => unknown;
+      const storeMerge = scope.merge as (...args: unknown[]) => unknown;
       Object.assign(scope, {
+        add: (data: unknown, childKey?: string, parent?: unknown) => {
+          checked("add()", data, parent);
+          return storeAdd(data, childKey, parent);
+        },
+        merge: (node: unknown, data: unknown, options?: unknown) => {
+          checked("merge()", data, node);
+          return storeMerge(node, data, options);
+        },
         $store,
         $catalogue: globalThis.$catalogue,
         $catalogues: catalogues(),
@@ -2307,6 +2557,27 @@ model raw. Read it before the first write into a system you have not edited befo
       properties: { catalogue: { type: "string", description: "Name or id; omit for all loaded catalogues" } },
     },
     execute: (args) => conventionsReport(pick(asString(args.catalogue))),
+  },
+  {
+    name: "nr_diff",
+    description: `Two catalogues side by side: units only on one side, and for the rest which lines of
+their tree (points, options, limits, rules) were removed or added; shared profiles whose text
+differs; categories only on one side. Units pair by the id of the entry they point at, so a
+fork that kept its base's ids lines up unit for unit. Review a variant against its base, or a
+release against the last, without reading either.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        catalogue: { type: "string", description: "The base, by name or id" },
+        against: { type: "string", description: "The other one" },
+      },
+      required: ["catalogue", "against"],
+    },
+    execute: (args) =>
+      diffCatalogues(
+        pickOne(requireString(args.catalogue, "catalogue")),
+        pickOne(requireString(args.against, "against")),
+      ),
   },
   {
     name: "nr_scripts",
@@ -2527,7 +2798,18 @@ function start() {
           mcpStatus.connected = true;
           if (!mcpStatus.address) mcpStatus.address = "this browser";
         }
-        const content = [{ type: "text", text: JSON.stringify(await tool.execute(args), null, 1) }];
+        const text = JSON.stringify(await tool.execute(args), null, 1);
+        // A result the client cannot hold gets spilled to a file and read back in slices, which
+        // costs more than narrowing the question. Cut here, and say how to narrow it.
+        const content = [
+          {
+            type: "text",
+            text:
+              text.length <= MAX_RESULT_CHARS
+                ? text
+                : `${text.slice(0, MAX_RESULT_CHARS)}\n… [truncated: the result was ${text.length} chars. Narrow it: depth/exclude in json() and tree(), limit in nr_find, fewer fields in the return value.]`,
+          },
+        ];
         const note = nudge(tool.name);
         if (note) content.push({ type: "text", text: note });
         return { content };
@@ -2567,6 +2849,9 @@ function start() {
   document.head.appendChild(embed);
   listenForRelay(port ?? RELAY_DEFAULT_PORT);
 }
+
+/** About 20k tokens: enough for a survey, short of what makes a client spill the reply to disk. */
+const MAX_RESULT_CHARS = 80_000;
 
 /** The relay's own default, which the embed applies when no data-relay-port is set. */
 const RELAY_DEFAULT_PORT = "9333";

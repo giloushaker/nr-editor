@@ -18,8 +18,13 @@ Dropped: B10 nr_fork -- copying files is not how data should be made; forks are 
 Also done: A3 (store clears the unsaved flag when undo returns to the saved position), A6 (doc: the type is
 categoryEntryLink and targetId: does find it; quoting rule for ':' added to nr_find).
 
-Still open: B11 nr_diff, B12 per-catalogue force reload, B14 schema-aware add(), D29
-nr_systems compactness, E31 nr_apply(spec), and the nr_eval result size cap (spill to file) -- paginate.
+Second pass: B11 nr_diff, B14 validateForWrite() on add()/merge() from eval (scope, field, childId, type,
+profile type, targetId checked against the same tables nr_fields reports), D29 nr_systems {loaded, available},
+result cap at 80k chars with a narrowing hint instead of a spill to disk, tree() dedupes constraints.
+
+Still open: B12 per-catalogue force reload, B14 schema-aware add(), D29
+E31 nr_apply(spec), a behaviour test (nr_test: build a roster through the real builder and report costs +
+validation -- the one thing no read can replace), and the questions below.
 
 ## A. Bugs (fix first)
 
@@ -73,3 +78,21 @@ Facts I had to reverse-engineer that are pure convention. Some are TOW-specific 
 ## Worked well (keep)
 
 - `nr_docs` briefing's "read before you write" rules; `nr_read` `modifiedBy`; `owner()`/`row()`/`label()` in eval; one call = one undo entry; result footer showing `unsaved` catalogues; `nr_find` bracket queries (`is:condition childId:…`) once the syntax was known; scripts runnable via `nr_script_run` (Unit Strength re-run after edits).
+
+## Questions only the nuxt-nr evaluator can answer (docs would go from convention to fact)
+
+1. Scope resolution table: from each node kind (entry, link, profile, infoLink inside a linked infoGroup,
+   categoryLink, cost, characteristic), what does each scope (self, parent, ancestor, root-entry, force,
+   roster, primary-catalogue, primary-category, unit/model/upgrade, group, link, the `-self` variants)
+   resolve to, and which are silently ignored?
+2. `ancestor is <category>` from a profile or spell inside an infoGroup linked from a unit -- does it see
+   the unit's categories? (I cloned the spells into the fork instead of relying on it.)
+3. `shared:true` on conditions/constraints/repeats -- what changes when it is false?
+4. `limit::<cost>` vs `<cost>`: game size vs spent; is `limit::` ever meaningful outside roster scope?
+5. `includeChildSelections` / `includeChildForces` defaults per query kind; `automatic` on constraints.
+6. Modifier application order in practice (set before increment before floor/ceil?) and whether a
+   modifier on an infoLink inside an infoGroup applies where the group is linked.
+7. How the builder renders: a hidden infoLink (gone or greyed?), `append` on a link's name, an
+   `annotation`, a profile with a hidden modifier, two profiles with the same name on one entry.
+8. Allied contingents: primary-catalogue vs Faction categories -- which do shared item files rely on?
+9. What `type: crew | mount | upgrade | model | unit` change in evaluation (counts, unit strength, exports).
