@@ -18,7 +18,7 @@ import { getFile, getFolderFiles, getFolderFolders, getFolderMtime, listFolder }
 import { entry, options } from "./entry";
 import { IpcMainInvokeEvent, ProtocolRequest } from "electron";
 import { stripHtml } from "./electron_helpers";
-import { readFileSync, WriteFileOptions, writeFileSync } from "fs";
+import { existsSync, readFileSync, WriteFileOptions, writeFileSync } from "fs";
 
 
 export function init_globals() {
@@ -249,29 +249,27 @@ function setupUpdater() {
 
 // One-time session setup; running it per window would fail the protocol intercept and stack the header hooks.
 function setupSession() {
-  // Intercept file protocol to fix loading images
-  const imageRegex = /(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i;
+  // Only /assets/ ever needs help here, and only in its leading-slash form: under file://,
+  // src="/assets/x.png" resolves to the root of the drive. A relative src="assets/x.png"
+  // already lands next to index.html and must be left alone -- rewriting it was what broke
+  // the icons, because `file://${winPath}` yields file://C:/... , where C: parses as the host
+  // rather than the drive. So rewrite only what is genuinely not on disk, and hand back a
+  // path rather than a hand-built URL.
   const cleanDirName = __dirname.replaceAll("\\", "/");
+  const toDiskPath = (url: string) => decodeURIComponent(url.replace(/^file:\/+/, "").split(/[?#]/)[0]);
   protocol.interceptFileProtocol(
     "file",
     (request: ProtocolRequest & { path?: string }, callback: (arg0: any) => void) => {
-      if (!request.url.match(imageRegex)) {
+      if (!request.url.includes("/assets/")) {
         callback(request);
         return;
       }
-
-      if (request.url.includes("app.asar")) {
-        request.url = request.url.replace(/^[a-zA-Zf:/\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
+      if (!request.url.includes("app.asar") && existsSync(toDiskPath(request.url))) {
         callback(request);
         return;
       }
-      //  move what comes after /assets to correct path
-      if (request.url.includes("/assets/")) {
-        const ressource = request.url.replace(/^[a-zA-Zf:/\].*?[\/]+assets[\/]+(.*)$/, `${cleanDirName}/assets/$1`);
-        request.url = ressource.includes("file://") ? ressource : `file://${ressource}`;
-        request.path = ressource;
-      }
-      callback(request);
+      const relative = toDiskPath(request.url).replace(/^.*?[/]+assets[/]+/, "");
+      callback({ path: `${cleanDirName}/assets/${relative}` });
     }
   );
 

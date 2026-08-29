@@ -13,10 +13,10 @@
     "dev": "nuxi dev --port 3005",
     "start": "nuxi start",
     "generate": "nuxi generate",
-    "preview": "electron dist",
+    "preview": "electron .output/public",
     "postinstall": "nuxt prepare",
     "electron": "npx nuxi generate --electron && npx electron .output/public",
-    "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
+    "deploy": "nuxi generate --ghpages && gh-pages -d .output/public -t true",
     "increment-version": "npm version patch --force",
     "lint": "eslint . --quiet",
     "lint:all": "eslint .",
@@ -33,20 +33,20 @@
       "output": ".release"
     },
     "win": {
-      "icon": "dist/favicon.ico"
+      "icon": "public/favicon.ico"
     },
     "mac": {
-      "icon": "dist/favicon.icns",
+      "icon": "public/favicon.icns",
       "category": "public.app-category.utilities"
     },
     "linux": {
       "category": "Utility",
-      "icon": "dist/favicon.png",
+      "icon": "public/favicon.png",
       "target": "AppImage"
     },
     "files": [
       {
-        "from": "dist",
+        "from": ".output/public",
         "to": ""
       },
       {
