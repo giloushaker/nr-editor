@@ -98,6 +98,8 @@ The catalogue editor uses a three-panel layout:
 
 ## Important Notes
 - The `assets/shared/` directory is a git submodule - changes here affect newrecruit.eu
-- BattleScribe compatibility is crucial - don't break the data format
+- Keep reading existing BattleScribe files - a .gst/.cat that loaded before must still load
+- Do NOT constrain new features to what BattleScribe the program supports. It is dead. NR-only
+  fields and behaviour are fine and expected; "BattleScribe would ignore this" is not an argument
 - Performance matters - the editor handles catalogues with thousands of entries
 - Both web and Electron modes must work - test platform-specific code
