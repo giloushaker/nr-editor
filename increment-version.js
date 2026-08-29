@@ -27,6 +27,9 @@ function incrementJsonFileVersion(path) {
 function setJsonFileVersion(path, version) {
     const json = JSON.parse(fs.readFileSync(path));
     json.version = version
+    // a lockfile also carries the root package's version under packages[""]; leaving it
+    // behind makes the lock disagree with package.json about what version this is
+    if (json.packages && json.packages[""]) json.packages[""].version = version
     fs.writeFileSync(path, JSON.stringify(json, null, 2));
 }
 const newVersion = incrementJsonFileVersion("./package.json");

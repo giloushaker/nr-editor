@@ -99,7 +99,9 @@ export default defineNuxtConfig({
               "~~": dirname(__filename),
               "@@": dirname(__filename),
               "assets": `${dirname(__filename)}/assets`,
-              "public": `${dirname(__filename)}/public`
+              "public": `${dirname(__filename)}/public`,
+              // see electron/fsevents-stub.cjs
+              "fsevents": `${dirname(__filename)}/electron/fsevents-stub.cjs`
 
             }
           },
