@@ -102,7 +102,12 @@ export default defineNuxtConfig({
                 // Setting format to 'iife' for a self-executing function, or 'umd' for universal module definition
                 format: 'umd', // or 'umd'
                 // Optionally, you can name your module, useful especially for 'umd' format
-                name: 'main.js'
+                name: 'main.js',
+                // Only main.js and preload.js are copied to .output/public, so main.js has to be
+                // self-contained. Rollup enforced that on its own -- it refuses to code-split a
+                // UMD build -- but rolldown splits one happily, and main.js came out requiring
+                // sibling chunks that were never copied next to it.
+                inlineDynamicImports: true
               }
             }
           }
