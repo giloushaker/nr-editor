@@ -10,18 +10,63 @@ const GRAND_MELEE_ID = "cdbe-ecb9-27cb-fd2b";
 const COMBINED_AND_GRAND_ID = "0750-5d17-d708-f990";
 const ONE_PER_THOUSAND_ID = "27c9-52f0-c942-681e";
 
+// Every element this script writes is tagged with one of these, and removal matches on the tag.
+// Anything written by hand is therefore never touched.
+const GRAND_MELEE_COMMENT = "Grand melee";
+const COMBINED_ARMS_COMMENT = "Combined arms";
+const BATTLE_MARCH_POINTS_COMMENT = "Battle March points";
+const BATTLE_MARCH_FLOOR_COMMENT = "Battle march";
+const PER_THOUSAND_COMMENT = "Battle March Category";
+
 function removeConstraintsWithComment(catalogues: Catalogue[], comment: string) {
   forEachEntry(catalogues, (catalogue, rootEntry) => {
-    $store.edit_node(rootEntry as EditorBase, {
-      constraints: rootEntry.constraints?.filter((elt) => elt.comment != comment),
-      modifiers: rootEntry.modifiers?.filter((elt) => elt.comment != comment),
-      modifierGroups: rootEntry.modifierGroups?.filter((elt) => elt.comment != comment),
-    });
+    const constraints = rootEntry.constraints?.filter((elt) => elt.comment != comment);
+    const modifiers = rootEntry.modifiers?.filter((elt) => elt.comment != comment);
+    const modifierGroups = rootEntry.modifierGroups?.filter((elt) => elt.comment != comment);
+
+    // Only write when something actually goes away. This visits every entry of every catalogue,
+    // so an unconditional edit_node marked the whole file dirty on every run.
+    const changed =
+      constraints?.length !== rootEntry.constraints?.length ||
+      modifiers?.length !== rootEntry.modifiers?.length ||
+      modifierGroups?.length !== rootEntry.modifierGroups?.length;
+    if (!changed) return;
+
+    $store.edit_node(rootEntry as EditorBase, { constraints, modifiers, modifierGroups });
+  });
+}
+
+/**
+ * Id of the constraint this element already wrote on that entry, or a fresh one.
+ *
+ * Modifiers point at their constraint by id, so minting a new id on every run would rewrite
+ * ~1800 constraint ids across the repository for no behavioural gain -- and would silently
+ * orphan any hand-written modifier that targets one of them. Reusing the id keeps re-runs to
+ * an actual content diff.
+ */
+function keepConstraintId(rootEntry: Entry, comment: string): string {
+  const existing = (rootEntry.constraints || []).find((elt) => elt.comment === comment);
+  return existing?.id || generateBattlescribeId();
+}
+
+/**
+ * Swap this element's tagged constraints and modifiers for freshly built ones, in a single write.
+ * Anything carrying another tag, or no tag at all, is left untouched.
+ */
+function replaceTagged(
+  rootEntry: Entry,
+  comment: string,
+  newConstraints: BSIConstraint[],
+  newModifiers: BSIModifier[],
+) {
+  $store.edit_node(rootEntry as EditorBase, {
+    constraints: (rootEntry.constraints || []).filter((elt) => elt.comment !== comment).concat(newConstraints),
+    modifiers: (rootEntry.modifiers || []).filter((elt) => elt.comment !== comment).concat(newModifiers),
   });
 }
 
 function removeGrandMeleeConstraints(catalogues: Catalogue[]) {
-  removeConstraintsWithComment(catalogues, "Grand melee");
+  removeConstraintsWithComment(catalogues, GRAND_MELEE_COMMENT);
 }
 
 function addGrandMeleeConstraints(catalogues: Catalogue[]) {
@@ -29,13 +74,13 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
     catalogues,
     (catalogue, rootEntry) => {
       let newConstraint: BSIConstraint = {
-        comment: "Grand melee",
+        comment: GRAND_MELEE_COMMENT,
         type: "max",
         value: -1,
         field: "points",
         scope: "self",
         shared: true,
-        id: generateBattlescribeId(),
+        id: keepConstraintId(rootEntry, GRAND_MELEE_COMMENT),
         includeChildSelections: true,
         includeChildForces: true,
         percentValue: false,
@@ -43,7 +88,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
 
       let newModifiers: BSIModifier[] = [
         {
-          comment: "Grand melee",
+          comment: GRAND_MELEE_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -77,7 +122,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
         },
         {
           // Modifier for Normal forces
-          comment: "Grand melee",
+          comment: GRAND_MELEE_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -170,7 +215,7 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
         },
         {
           // Modifier for Allies
-          comment: "Grand melee",
+          comment: GRAND_MELEE_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -262,17 +307,14 @@ function addGrandMeleeConstraints(catalogues: Catalogue[]) {
           field: newConstraint.id,
         },
       ];
-      $store.edit_node(rootEntry as EditorBase, {
-        constraints: (rootEntry.constraints || []).concat([newConstraint]),
-        modifiers: (rootEntry.modifiers || []).concat(newModifiers),
-      });
+      replaceTagged(rootEntry, GRAND_MELEE_COMMENT, [newConstraint], newModifiers);
     },
     { nested: false, categories: false },
   );
 }
 
 function removeCombinedArmsConstraints(catalogues: Catalogue[]) {
-  removeConstraintsWithComment(catalogues, "Combined arms");
+  removeConstraintsWithComment(catalogues, COMBINED_ARMS_COMMENT);
 }
 
 function alreadyHasLimitation(rootEntry: Entry) {
@@ -280,7 +322,7 @@ function alreadyHasLimitation(rootEntry: Entry) {
   for (let link of rootEntry.categoryLinks || []) {
     for (let constraint of link.target.constraints || []) {
       if (constraint.scope == "roster" || constraint.scope == "force") {
-        if (constraint.type === "max" && constraint.comment != "Combined arms") {
+        if (constraint.type === "max" && constraint.comment != COMBINED_ARMS_COMMENT) {
           console.log(
             `Entry: ${rootEntry.name}: Skipped Combined arms constraints because ${link.target.name} already has constraints`,
           );
@@ -292,7 +334,7 @@ function alreadyHasLimitation(rootEntry: Entry) {
 
   for (let constraint of rootEntry.constraints || []) {
     if (constraint.scope == "roster" || constraint.scope == "force") {
-      if (constraint.comment != "Combined arms" && constraint.type === "max") {
+      if (constraint.comment != COMBINED_ARMS_COMMENT && constraint.type === "max") {
         console.log(
           `Entry: ${rootEntry.name}: Skipped Combined arms constraints because it already has constraints`,
           constraint,
@@ -301,6 +343,7 @@ function alreadyHasLimitation(rootEntry: Entry) {
       }
     }
   }
+  return false;
 }
 
 function addCombinedArmsConstraints(catalogues: Catalogue[]) {
@@ -332,20 +375,20 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
 
       if (val != -1) {
         const newConstraint: BSIConstraint = {
-          comment: "Combined arms",
+          comment: COMBINED_ARMS_COMMENT,
           type: "max",
           value: -1,
           field: "selections",
           scope: "roster",
           shared: true,
-          id: generateBattlescribeId(),
+          id: keepConstraintId(rootEntry, COMBINED_ARMS_COMMENT),
           includeChildSelections: true,
           includeChildForces: true,
         };
 
         const newModifiers: BSIModifier[] = [
           {
-            comment: "Combined arms",
+            comment: COMBINED_ARMS_COMMENT,
             type: "set",
             value: val - 2,
             field: newConstraint.id,
@@ -389,7 +432,7 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
             type: "increment",
             value: 1,
             field: newConstraint.id,
-            comment: "Combined arms",
+            comment: COMBINED_ARMS_COMMENT,
             conditions: [
               {
                 type: "atLeast",
@@ -440,7 +483,7 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
             ],
           },
           {
-            comment: "Combined arms",
+            comment: COMBINED_ARMS_COMMENT,
             conditionGroups: [
               {
                 conditions: [
@@ -482,10 +525,7 @@ function addCombinedArmsConstraints(catalogues: Catalogue[]) {
           },
         ];
 
-        $store.edit_node(rootEntry as EditorBase, {
-          constraints: (rootEntry.constraints || []).concat([newConstraint]),
-          modifiers: (rootEntry.modifiers || []).concat(newModifiers),
-        });
+        replaceTagged(rootEntry, COMBINED_ARMS_COMMENT, [newConstraint], newModifiers);
       }
     },
     { nested: false, categories: false },
@@ -496,7 +536,6 @@ function editModifierConditions(catalogues: Catalogue[]) {
   forEachEntry(
     catalogues,
     (catalogue, rootEntry) => {
-      console.log(rootEntry);
       for (let modifier of rootEntry.modifiers || []) {
         if (modifier.conditions) {
           let foundCondition: BSICondition | null = null;
@@ -519,7 +558,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
                   value: 1,
                   field: "selections",
                   scope: "force",
-                  childId: "8214-cf48-b1cd-5f5e",
+                  childId: OPEN_WAR_ID,
                   shared: true,
                   includeChildSelections: true,
                 },
@@ -528,7 +567,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
                   value: 1,
                   field: "selections",
                   scope: "force",
-                  childId: "1ae6-ed95-069e-a390",
+                  childId: COMBINED_ARMS_ID,
                   shared: true,
                   includeChildSelections: true,
                 },
@@ -537,7 +576,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
                   value: 1,
                   field: "selections",
                   scope: "force",
-                  childId: "cdbe-ecb9-27cb-fd2b",
+                  childId: GRAND_MELEE_ID,
                   shared: true,
                   includeChildSelections: true,
                 },
@@ -546,7 +585,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
                   value: 1,
                   field: "selections",
                   scope: "force",
-                  childId: "0750-5d17-d708-f990",
+                  childId: COMBINED_AND_GRAND_ID,
                   shared: true,
                   includeChildSelections: true,
                 },
@@ -555,7 +594,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
                   value: 1,
                   field: "selections",
                   scope: "force",
-                  childId: "e40a-36c4-0c66-472a",
+                  childId: BATTLE_MARCH_ID,
                   shared: true,
                   includeChildSelections: true,
                 },
@@ -607,19 +646,25 @@ interface ForEachEntryOptions {
 function forEachEntry(
   catalogues: Catalogue[],
   callback: (catalogue: Catalogue, entry: Entry) => void,
-  options: ForEachEntryOptions = { nested: true, categories: true, root: true },
+  options: ForEachEntryOptions = {},
 ) {
+  // A default parameter replaces the WHOLE object, so passing { nested: false } used to silently
+  // drop root: true and iterate nothing at all. Merge per key, and treat the three flags alike.
+  const root = options.root !== false;
+  const nested = options.nested !== false;
+  const categories = options.categories !== false;
+
   const processed = new Set<Entry>();
   for (const catalogue of catalogues) {
     const allEntries: Entry[] = (catalogue.selectionEntries || []).concat(catalogue.entryLinks || []);
 
     const entries: Entry[] = [];
-    if (options.root) entries.push(...allEntries);
+    if (root) entries.push(...allEntries);
 
-    if (options.nested !== false) {
+    if (nested) {
       entries.push(...getNestedEntries(allEntries));
     }
-    if (options.categories !== false) {
+    if (categories) {
       entries.push(...(catalogue.categoryEntries || []));
     }
     for (const entry of entries) {
@@ -636,7 +681,7 @@ function removeBattleMarchFloorNoCondition(catalogues: Catalogue[]) {
     catalogues,
     (catalogue, rootEntry) => {
       for (let modifier of rootEntry.modifiers || []) {
-        if (modifier.comment === "Battle march" && (modifier.conditions || []).length == 0) {
+        if (modifier.comment === BATTLE_MARCH_FLOOR_COMMENT && (modifier.conditions || []).length == 0) {
           $store.del_node(modifier as any);
         }
       }
@@ -647,43 +692,55 @@ function removeBattleMarchFloorNoCondition(catalogues: Catalogue[]) {
 
 function addBattleMarchFloor(catalogues: Catalogue[]) {
   forEachEntry(catalogues, (catalogue, rootEntry) => {
-    for (let modifier of rootEntry.modifiers || []) {
-      if (modifier.type === "increment" && modifier.comment != "Combined arms") {
-        const repeats = modifier.repeats || [];
-        if (repeats.length) {
-          if (repeats[0].value === 1000 && repeats[0].field === "limit::points") {
-            const newModifie: BSIModifier = {
-              repeats: [],
-              conditionGroups: [],
-              type: "floor",
-              value: 1,
-              field: modifier.field,
-              comment: "Battle march",
-              conditions: [
-                {
-                  type: "instanceOf",
-                  value: 1,
-                  field: "selections",
-                  scope: "ancestor",
-                  childId: "e40a-36c4-0c66-472a",
-                  shared: true,
-                },
-              ],
-            };
-            $store.edit_node(rootEntry as EditorBase, {
-              modifiers: rootEntry.modifiers?.concat([newModifie]),
-            });
-            console.log("Modifier detected on entry: [" + catalogue.name + "] " + rootEntry.name, rootEntry.modifiers);
-          }
-        }
+    const modifiers = rootEntry.modifiers || [];
+
+    // One floor per constraint, not one per matching increment: two "0-X per 1000 points"
+    // increments on the same constraint used to yield two identical floors.
+    const needFloor = new Set<string>();
+    for (const modifier of modifiers) {
+      if (modifier.comment === BATTLE_MARCH_FLOOR_COMMENT) continue;
+      if (modifier.type !== "increment" || modifier.comment === COMBINED_ARMS_COMMENT) continue;
+      const repeats = modifier.repeats || [];
+      if (!repeats.length) continue;
+      if (repeats[0].value === 1000 && repeats[0].field === "limit::points") {
+        needFloor.add(modifier.field as string);
       }
+    }
+
+    // Rebuild rather than top up, so a floor written in an older shape is replaced instead of kept.
+    const kept = modifiers.filter((elt) => elt.comment !== BATTLE_MARCH_FLOOR_COMMENT);
+    const toAdd: BSIModifier[] = [];
+    for (const field of needFloor) {
+      toAdd.push({
+        repeats: [],
+        conditionGroups: [],
+        type: "floor",
+        value: 1,
+        field,
+        comment: BATTLE_MARCH_FLOOR_COMMENT,
+        conditions: [
+          {
+            type: "instanceOf",
+            value: 1,
+            field: "selections",
+            scope: "ancestor",
+            childId: BATTLE_MARCH_ID,
+            shared: true,
+          },
+        ],
+      });
+    }
+
+    // Single write at the end: the previous version edited rootEntry.modifiers while iterating it.
+    if (toAdd.length || kept.length !== modifiers.length) {
+      $store.edit_node(rootEntry as EditorBase, { modifiers: kept.concat(toAdd) });
     }
   });
 }
 
 function hasPerThousandModifier(rootEntry: EditorBase) {
   for (let modifier of rootEntry.modifiers || []) {
-    if (modifier.type === "increment" && modifier.comment != "Combined arms") {
+    if (modifier.type === "increment" && modifier.comment != COMBINED_ARMS_COMMENT) {
       const repeats = modifier.repeats || [];
       if (repeats.length) {
         if (repeats[0].value === 1000 && repeats[0].field === "limit::points") {
@@ -707,19 +764,46 @@ function addPerThousandCategory(catalogues: Catalogue[]) {
         }
       }
 
-      if (found) {
-        console.log(rootEntry);
-        $store.edit_node(rootEntry as EditorBase, {
-          categoryLinks: (rootEntry.categoryLinks || []).concat([
+      // Rebuild our own link rather than topping up, and never touch a link added by hand:
+      // matching is on our tag, not on the target id.
+      const links = rootEntry.categoryLinks || [];
+      const kept = links.filter((link) => (link as any).comment !== PER_THOUSAND_COMMENT);
+      const byHand = kept.some((link) => (link as any).targetId === ONE_PER_THOUSAND_ID);
+
+      const next = found && !byHand
+        ? kept.concat([
             {
-              comment: "Battle March Category",
+              comment: PER_THOUSAND_COMMENT,
               name: "OnePerThousandConstraint",
               hidden: true,
               targetId: ONE_PER_THOUSAND_ID,
               primary: false,
             } as any,
-          ]),
-        });
+          ])
+        : kept;
+
+      if (next.length !== links.length) {
+        $store.edit_node(rootEntry as EditorBase, { categoryLinks: next });
+      }
+    },
+    {
+      categories: false,
+      root: true,
+      nested: true,
+    },
+  );
+}
+
+function removePerThousandCategory(catalogues: Catalogue[]) {
+  forEachEntry(
+    catalogues,
+    (catalogue, rootEntry) => {
+      const links = rootEntry.categoryLinks || [];
+      // Only the links this script wrote: matched on our comment, never on the target id alone,
+      // so a link added by hand to the same category is left alone.
+      const kept = links.filter((link) => (link as any).comment !== PER_THOUSAND_COMMENT);
+      if (kept.length !== links.length) {
+        $store.edit_node(rootEntry as EditorBase, { categoryLinks: kept });
       }
     },
     {
@@ -731,7 +815,7 @@ function addPerThousandCategory(catalogues: Catalogue[]) {
 }
 
 function removeBattleMarchPoints(catalogues: Catalogue[]) {
-  removeConstraintsWithComment(catalogues, "Battle March points");
+  removeConstraintsWithComment(catalogues, BATTLE_MARCH_POINTS_COMMENT);
 }
 
 function addBattleMarchPoints(catalogues: Catalogue[]) {
@@ -739,13 +823,13 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
     catalogues,
     (catalogue, rootEntry) => {
       let newConstraint: BSIConstraint = {
-        comment: "Battle March points",
+        comment: BATTLE_MARCH_POINTS_COMMENT,
         type: "max",
         value: -1,
         field: "points",
         scope: "self",
         shared: true,
-        id: generateBattlescribeId(),
+        id: keepConstraintId(rootEntry, BATTLE_MARCH_POINTS_COMMENT),
         includeChildSelections: true,
         includeChildForces: true,
         percentValue: false,
@@ -774,7 +858,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
 
       let newModifiers: BSIModifier[] = [
         {
-          comment: "Battle March points",
+          comment: BATTLE_MARCH_POINTS_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -796,7 +880,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
         },
         {
           // Modifier for Normal forces
-          comment: "Battle March points",
+          comment: BATTLE_MARCH_POINTS_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -877,7 +961,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
         },
         {
           // Modifier for Allies
-          comment: "Battle March points",
+          comment: BATTLE_MARCH_POINTS_COMMENT,
           conditionGroups: [
             {
               conditions: [
@@ -957,43 +1041,119 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
           field: newConstraint.id,
         },
       ];
-      $store.edit_node(rootEntry as EditorBase, {
-        constraints: (rootEntry.constraints || []).concat([newConstraint]),
-        modifiers: (rootEntry.modifiers || []).concat(newModifiers),
-      });
+      replaceTagged(rootEntry, BATTLE_MARCH_POINTS_COMMENT, [newConstraint], newModifiers);
     },
     { nested: false, categories: false, root: true },
   );
 }
 
+/**
+ * One switchable element of the matched play ruleset.
+ *
+ * `clear` must undo exactly what `write` produces, so that running the same element twice
+ * leaves the data identical to running it once. Every element is therefore rewritten from
+ * scratch rather than patched: clear, then write.
+ */
+interface Element {
+  key: string;
+  label: string;
+  clear: (catalogues: Catalogue[]) => void;
+  write?: (catalogues: Catalogue[]) => void;
+}
+
+const ELEMENTS: Element[] = [
+  {
+    key: "grandMelee",
+    label: "Grand Melee point caps",
+    clear: removeGrandMeleeConstraints,
+    write: addGrandMeleeConstraints,
+  },
+  {
+    key: "combinedArms",
+    label: "Combined Arms duplicate caps",
+    clear: removeCombinedArmsConstraints,
+    write: addCombinedArmsConstraints,
+  },
+  {
+    key: "battleMarchPoints",
+    label: "Battle March point caps",
+    clear: removeBattleMarchPoints,
+    write: addBattleMarchPoints,
+  },
+  {
+    key: "battleMarchFloor",
+    label: "Battle March floor on 0-X per 1000 points limits",
+    clear: (catalogues) => removeConstraintsWithComment(catalogues, BATTLE_MARCH_FLOOR_COMMENT),
+    write: addBattleMarchFloor,
+  },
+  {
+    key: "perThousandCategory",
+    label: "Single 0-X per 1000 points slot category",
+    clear: removePerThousandCategory,
+    write: addPerThousandCategory,
+  },
+  {
+    // One-shot migration, not a generated element: it rewrites hand-written Open War conditions
+    // into a condition group covering all five game modes. Nothing to clear -- the old shape is
+    // gone once rewritten, so this one is deliberately not reversible.
+    key: "migrateGameModeConditions",
+    label: "Migrate lone Open War conditions into a five-mode group (one-way)",
+    clear: () => {},
+    write: editModifierConditions,
+  },
+  {
+    // Legacy cleanup: floors written before the condition was added, which fire in every mode.
+    key: "dropUnconditionalFloors",
+    label: "Drop Battle March floors that have no condition (legacy cleanup)",
+    clear: removeBattleMarchFloorNoCondition,
+  },
+];
+
 export default {
   name: "[TOW 4] Matched Play Constraints",
-  description: "Warhammer: The Old World only. Writes the matched play composition limits onto every root entry: Battle March points and category caps, Grand Melee, Combined Arms, and the one-per-thousand-points marker. Each element is tagged with a comment and removed before being rewritten, so the script is safe to re-run.",
+  description:
+    "Warhammer: The Old World only. Writes the matched play composition limits onto every root entry. " +
+    "Tick only the elements you want -- nothing runs unless it is ticked. Each element is tagged with its own " +
+    "comment and is cleared before being rewritten, so re-running is idempotent. Tick 'Remove only' to strip an " +
+    "element instead of writing it.",
   arguments: [
+    { name: "catalogues", type: "catalogue[]" },
+    ...ELEMENTS.map((element) => ({
+      name: element.label,
+      type: "boolean",
+      optional: true,
+      default: false,
+    })),
     {
-      name: "catalogues",
-      type: "catalogue[]",
+      name: "Remove only (undo: clear the ticked elements without rewriting them)",
+      type: "boolean",
+      optional: true,
+      default: false,
     },
   ],
-  run(catalogues: Catalogue[]) {
-    // removeCombinedArmsConstraints(catalogues);
-    //addCombinedArmsConstraints(catalogues);
+  run(catalogues: Catalogue[], ...rest: boolean[]) {
+    const removeOnly = rest[ELEMENTS.length] === true;
+    const picked = ELEMENTS.filter((_, i) => rest[i] === true);
 
-    // addGrandMeleeConstraints(catalogues);
-    //editModifierConditions(catalogues);
-    //addBattleMarchFloor(catalogues);
-    // removeBattleMarchPoints(catalogues);
-    //addBattleMarchPoints(catalogues);
-    //editModifierConditions(catalogues);
-    //removeConstraintsWithComment(catalogues, "Battle march");
-    //addBattleMarchFloor(catalogues);
-    //removeBattleMarchFloorNoCondition(catalogues);
-    //  removeConstraintsWithComment(catalogues, "Battle march");
-    //  addBattleMarchFloor(catalogues);
-    //editModifierConditions(catalogues);
-    removeConstraintsWithComment(catalogues, "Battle march");
-    //addPerThousandCategory(catalogues);
-    addBattleMarchFloor(catalogues);
-    return [];
+    if (!catalogues?.length) return ["No catalogue selected."];
+    if (!picked.length) {
+      return ["Nothing ticked. Tick at least one element above, otherwise this script does nothing."];
+    }
+
+    const log: string[] = [];
+    for (const element of picked) {
+      // Deliberately NOT clear-then-write: every writer replaces its own tagged elements in place
+      // and reuses the existing constraint id. Clearing first would delete the id it needs to reuse
+      // and mint a new one for every entry, which is exactly what we are avoiding.
+      if (removeOnly || !element.write) {
+        element.clear(catalogues);
+        log.push(`${element.label}: removed`);
+        continue;
+      }
+      element.write(catalogues);
+      log.push(`${element.label}: rewritten (constraint ids preserved)`);
+    }
+    log.push(`Done on ${catalogues.length} catalogue(s). Remember to bump each catalogue's revision.`);
+    return log;
   },
 };
