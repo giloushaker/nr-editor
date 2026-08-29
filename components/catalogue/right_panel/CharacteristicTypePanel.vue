@@ -7,9 +7,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIAttributeType, BSICharacteristicType } from "~/assets/shared/battlescribe/bs_types";
+import type { PropType } from "vue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSIAttributeType, BSICharacteristicType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

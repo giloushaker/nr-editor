@@ -62,9 +62,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
-import { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   emits: ["create"],

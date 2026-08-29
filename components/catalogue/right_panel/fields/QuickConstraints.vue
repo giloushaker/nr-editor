@@ -49,8 +49,8 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "~/assets/editor/bs_editor";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { ItemTypes } from "~/assets/editor/bs_editor";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {

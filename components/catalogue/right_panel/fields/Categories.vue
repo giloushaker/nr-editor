@@ -41,7 +41,8 @@
 
 <script lang="ts">
 import { Base, Category, CategoryLink, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
 import { useSettingsStore } from "~/stores/settingsState";
 import { useEditorStore } from "~/stores/editorStore";

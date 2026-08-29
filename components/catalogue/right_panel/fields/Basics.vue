@@ -58,7 +58,7 @@
 
 <script lang="ts">
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import InputStringArray from "./InputStringArray.vue";
 import EditorField from "./EditorField.vue";
 import EditorFieldControl from "./EditorFieldControl.vue";

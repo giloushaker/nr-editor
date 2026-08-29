@@ -1,7 +1,7 @@
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { Entry } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSICondition, BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICondition, BSIConditionGroup, BSIConstraint, BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 const BATTLE_MARCH_ID = "e40a-36c4-0c66-472a";
 const OPEN_WAR_ID = "8214-cf48-b1cd-5f5e";
@@ -968,7 +968,7 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
 
 export default {
   name: "[TOW 4] Matched Play Constraints",
-  description: "Adds Matched Play Constraints",
+  description: "Warhammer: The Old World only. Writes the matched play composition limits onto every root entry: Battle March points and category caps, Grand Melee, Combined Arms, and the one-per-thousand-points marker. Each element is tagged with a comment and removed before being rewritten, so the script is safe to re-run.",
   arguments: [
     {
       name: "catalogues",

@@ -13,9 +13,10 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import FilterBy from "./fields/FilterBy.vue";
 import { AssociationLink } from "~/assets/shared/battlescribe/bs_main";
 

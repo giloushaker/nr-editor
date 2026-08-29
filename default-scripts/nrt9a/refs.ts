@@ -1,5 +1,5 @@
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { ArmyBookBook, ArmyBookOption, ArmyRef } from "./army_book_interfaces";
+import type { ArmyBookBook, ArmyBookOption, ArmyRef } from "./army_book_interfaces";
 import { deepTrasverse } from "./option_tree";
 import T9AImporter from "./t9a_importer";
 

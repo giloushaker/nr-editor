@@ -1,6 +1,7 @@
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIConstraint, BSIModifier, BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { BSIConstraint, BSIModifier, BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
 
 export async function insertUnitRarity(catalogue: Catalogue) {
   const entries = (catalogue.sharedSelectionEntries || []).concat(catalogue.sharedSelectionEntryGroups || []);

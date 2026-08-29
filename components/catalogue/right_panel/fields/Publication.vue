@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { BSIPublication } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIPublication } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

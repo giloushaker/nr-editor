@@ -22,7 +22,7 @@
   </div>
 </template>
 <script lang="ts">
-import { EntryPathEntryExtended, EntryPathEntry } from "~/assets/editor/bs_editor";
+import type { EntryPathEntryExtended, EntryPathEntry } from "~/assets/editor/bs_editor";
 
 export default defineComponent({
   props: {

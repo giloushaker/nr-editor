@@ -55,8 +55,8 @@
 </template>
 
 <script lang="ts">
-import { ItemTypes } from "~/assets/editor/bs_editor";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { ItemTypes } from "~/assets/editor/bs_editor";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { scopeIsId } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";

@@ -1,7 +1,5 @@
 import { defineStore } from "pinia";
 import {
-  ItemTypes,
-  EntryPathEntry,
   getEntryPath,
   onAddEntry,
   onRemoveEntry,
@@ -30,7 +28,8 @@ import {
   sortByDescendingInplace,
   sortByAscendingInplace,
 } from "~/assets/shared/battlescribe/bs_helpers";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import {
   Base,
   Link,
@@ -92,15 +91,15 @@ import {
 } from "~/assets/shared/battlescribe/bs_convert";
 import CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
-import { EditorUIState, useEditorUIState } from "./editorUIState";
+import { useEditorUIState } from "./editorUIState";
+import type { EditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { nextTick, toRaw } from "vue";
 import { continuesFieldEdit, fieldEditType, type FieldEditMark } from "./field_edit_stack";
-import { Router } from "vue-router";
+import type { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
-import { RouteLocationNormalizedLoaded } from "~/.nuxt/vue-router";
 import { useScriptsStore } from "./scriptsStore";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { entries } from "~/assets/shared/battlescribe/entries";

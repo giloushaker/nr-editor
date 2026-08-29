@@ -11,10 +11,10 @@
 
 <script lang="ts">
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { BSIInfoGroup } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIInfoGroup } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

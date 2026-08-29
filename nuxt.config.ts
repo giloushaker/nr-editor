@@ -2,6 +2,8 @@
 import { defineNuxtConfig } from "nuxt/config";
 import pkg from "./package.json";
 import { dirname } from "path";
+import { copyFileSync, writeFileSync } from "fs";
+import commonjs from "vite-plugin-commonjs";
 const electron = process.argv.includes("--electron");
 const ghpages = process.argv.includes("--ghpages");
 
@@ -29,7 +31,7 @@ export default defineNuxtConfig({
   modules: [
     "nuxt-windicss",
     "@pinia/nuxt",
-    "@pinia-plugin-persistedstate/nuxt",
+    "pinia-plugin-persistedstate/nuxt",
     ...(electron ? ["nuxt-electron"] : []),
   ],
   app: ghpages
@@ -64,6 +66,15 @@ export default defineNuxtConfig({
       ]
       : []),
   ],
+  // nuxt-electron sets router.options.hashMode with `??=`, but Nuxt >= 3.15 ships an
+  // explicit `hashMode: false` default, so its assignment never fires. Electron loads
+  // index.html over file://, where path routing resolves to the filesystem path and
+  // every route falls through to the [...slugs] catch-all.
+  router: {
+    options: {
+      hashMode: electron,
+    },
+  },
   typescript: {
     strict: true,
   },
@@ -102,10 +113,12 @@ export default defineNuxtConfig({
   },
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
-    plugins: [require("vite-plugin-commonjs")()],
+    plugins: [commonjs()],
     build: {
-      // electron 24 ships chromium ~112: transpile syntax so web-dev code can't silently break the desktop build
-      target: "chrome112",
+      // electron 44 ships chromium 152: transpile syntax so web-dev code can't silently break the desktop build.
+      // The web build keeps the older floor on purpose, so raising Electron does not drop
+      // browsers that were supported before.
+      target: electron ? "chrome152" : "chrome112",
     },
   },
   ignore: [".release/**"],
@@ -113,7 +126,6 @@ export default defineNuxtConfig({
     "nitro:build:public-assets"(nitro) {
       if (electron) {
         const outputDir = nitro.options.output.publicDir;
-        const { copyFileSync } = require("fs");
         // copyFileSync("electron/main.js", `${outputDir}/main.js`);
         // copyFileSync("electron/preload.js", `${outputDir}/preload.js`);
         copyFileSync("dist-electron/main.js", `${outputDir}/main.js`);
@@ -121,7 +133,6 @@ export default defineNuxtConfig({
         copyFileSync("package.json", `${outputDir}/package.json`);
       }
       if (ghpages) {
-        const { writeFileSync, readdirSync } = require("fs");
         const outputDir = nitro.options.output.publicDir;
         writeFileSync(`${outputDir}/.nojekyll`, "");
       }

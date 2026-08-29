@@ -9,9 +9,10 @@
 <script lang="ts">
 import { Base, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_main";
 import { catalogueProp } from "./fields/props";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { BSILocalConditionGroup } from "~/assets/shared/battlescribe/bs_types";
+import type { BSILocalConditionGroup } from "~/assets/shared/battlescribe/bs_types";
 import NumberInput from "~/components/util/NumberInput.vue";
 
 export default {

@@ -1,7 +1,17 @@
 import { Base, Condition, ConditionGroup, Constraint, Link, LocalConditionGroup, Modifier,  Repeat,  goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, CatalogueLink, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, CatalogueLink } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { conditionToString, fieldToText, getModifierOrConditionParent, modifierToString } from "~/assets/shared/battlescribe/bs_modifiers";
-import { BSICondition, BSIConditionGroup, BSIConstraint, BSILocalConditionGroup, BSIModifier, BSIModifierGroup, BSIProfile, BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
+import type {
+  BSICondition,
+  BSIConditionGroup,
+  BSIConstraint,
+  BSILocalConditionGroup,
+  BSIModifier,
+  BSIModifierGroup,
+  BSIProfile,
+  BSIRepeat,
+} from "~/assets/shared/battlescribe/bs_types";
 import { BSCatalogueManager } from "~/assets/shared/battlescribe/bs_system";
 import { isObject, type MaybeArray } from "~/assets/shared/battlescribe/bs_helpers";
 import { textNodeTags } from "~/assets/shared/battlescribe/bs_convert";

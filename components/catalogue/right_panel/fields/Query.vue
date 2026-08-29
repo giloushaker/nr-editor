@@ -82,17 +82,18 @@ import type { QueryNode } from "./props";
 import { getNameExtra } from "~/assets/editor/bs_editor";
 import { Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getAllPossibleParents } from "~/assets/editor/catalogue_editor";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICondition, BSIConstraint, BSICostType } from "~/assets/shared/battlescribe/bs_types";
 import {
-  EditorSearchItem,
   getSearchCategories,
   getSearchElements,
   getParentUnitHierarchy,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 interface ScopeChoice {
   id: string;
   name: string;
@@ -446,6 +447,7 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
 </script>
 
 <style scoped lang="scss">
+@use "@/shared_components/css/vars.scss" as *;
 .constraint {
   display: grid;
   grid-template-columns: 1fr 50px max-content;
@@ -464,8 +466,6 @@ note: shared=false on BS will limit the constraint to it's parent rootSelectionE
   align-items: center;
   gap: 8px;
 }
-
-@import "@/shared_components/css/vars.scss";
 
 .catalogueName {
   color: rgb(144, 152, 197);

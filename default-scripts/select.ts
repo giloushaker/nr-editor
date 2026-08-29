@@ -320,6 +320,7 @@ class SelectParser {
 }
 export default {
   name: "Select nodes",
+  description: "Runs a query over every node of the selected catalogues and selects what matches, for inspection or for another script to pick up from $store.get_selections(). The query is JS evaluated against a node view: self, child, descendant, parent, ancestor and their has_/hasnot_ variants.",
   arguments: [
     {
       name: "catalogues",

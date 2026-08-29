@@ -1,9 +1,7 @@
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { bookNames } from "./profile_import";
-import {
-  BSIRule,
-  BSISelectionEntry,
-} from "~/assets/shared/battlescribe/bs_types";
+import type { BSIRule, BSISelectionEntry } from "~/assets/shared/battlescribe/bs_types";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 
 interface T9ARule {

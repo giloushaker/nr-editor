@@ -1,5 +1,5 @@
 import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { T9aJson } from "./types";
+import type { T9aJson } from "./types";
 import { toEntry } from "./entry";
 
 export default {

@@ -14,9 +14,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { Base } from "~/assets/shared/battlescribe/bs_main";
-import { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 // NR-only hint telling the builder to always display this category's count/limits
 export default {

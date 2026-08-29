@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-import { BSIHidden } from "~/assets/shared/battlescribe/bs_types";
+import type { BSIHidden } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {

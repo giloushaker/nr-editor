@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
 import { Rule } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";

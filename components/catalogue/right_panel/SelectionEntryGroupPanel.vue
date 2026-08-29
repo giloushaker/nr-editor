@@ -24,12 +24,13 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { catalogueProp } from "./fields/props";
-import { ItemTypes } from "~/assets/editor/bs_editor";
+import type { ItemTypes } from "~/assets/editor/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Group, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, EditorBase, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   props: {
