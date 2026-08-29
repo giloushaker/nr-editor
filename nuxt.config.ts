@@ -78,6 +78,23 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
+  vue: {
+    compilerOptions: {
+      /**
+       * Every right-panel field is a bare <table><tr> -- 25 of them across 23 files. The parser
+       * inserts the <tbody> itself, and nothing here renders on a server (ssr is false), so there
+       * is no hydration to mismatch. Vue 3.5 started warning about the nesting anyway, which the
+       * Nuxt 4 upgrade turned into a screenful on every build.
+       *
+       * Only that one warning is dropped; anything else the template compiler says still prints.
+       */
+      onWarn: (warning: { message: string }) => {
+        if (!warning.message.includes("cannot be child of")) {
+          console.warn(`[vue/compiler] ${warning.message}`);
+        }
+      },
+    },
+  },
   electron: {
     build: [
       {
