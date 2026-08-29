@@ -441,7 +441,8 @@ HOW TO WORK
                       tree() in nr_eval surveys forty units on one screen.
   4. nr_eval          make the change; one call is one undo entry. The reply lists the
                       diagnostics it created or fixed -- a new finding means undo() and rethink.
-                      nr_docs "editor/eval" and "editor/writing" are the API and the shapes.
+                      nr_docs "editor/eval" and "editor/writing" are the API and the shapes;
+                      "editor/evaluation" is what the builder does with them (scopes, quirks).
   5. nr_save          only when asked -- they may want to review in their own window first.
 A check or a fix the user will want again is a script (nr_script_write), not an nr_eval.
 Names of catalogues and systems are matched exactly (id, name, or a substring that fits one);
@@ -588,6 +589,135 @@ iterate catalogue.index (ids only, no conditions); count off anything but find()
 RESULT: return plain data; nodes anywhere in it become rows. The reply carries
 errors:{new, fixed} when the diagnostics changed, and the list of unsaved catalogues.`,
   },
+  "editor/evaluation": {
+    about:
+      "how the builder evaluates the data: roster tree, instanceOf, every scope, queries, repeats, modifier order, visibility",
+    text: `HOW THE BUILDER EVALUATES THE DATA. Read off the NewRecruit engine source
+(assets/ts/battlescribe/bs_condition.ts, reactive/reactive_state.ts, reactive_scope.ts,
+reactive_modifiers.ts, reactive_info.ts, reactive_constraints.ts), not off the wiki. Where the
+engine reproduces a BattleScribe bug on purpose it says so; write data that does not depend on it.
+
+THE ROSTER TREE
+  roster > force > category (the entry's PRIMARY category) > root entry > model / group / upgrade ...
+  A root entry sits under its primary category node inside the force. That is why "primary-category"
+  is an ancestor and why "root-entry" means "the nearest ancestor-or-self whose parent is a category".
+  A force node "is" its catalogue; a root entry "is" also its force.
+
+WHAT A NODE IS (instanceOf / notInstanceOf, and the "is::" index)
+  instanceOf <id> on a scope node is true when that node's own index holds the id. The index holds:
+    - the entry's own id; for a link, the link id AND the target id
+    - the ids of the groups above it (group id and, for a group link, its target id)
+    - the ids of the forces above it; a root entry also holds its force id
+    - every category the entry links, its primary category, and categories of the groups above it
+    - on a force node: the catalogue id
+  It does NOT hold the categories of a parent ENTRY: a model inside a unit does not "is" the unit's
+  categories; test the unit through ancestor or root-entry instead.
+  Categories are also inherited DOWN through groups for counting: an option in a group that carries
+  a category counts toward that category. Rules and profiles attached to a categoryEntry are shown
+  on every entry carrying that category (extra info).
+
+SCOPES -- what each resolves to, from the node the condition/constraint sits on ("here")
+  self          here
+  parent        nearest ancestor that is an entry or the roster, groups skipped
+  ancestor      the whole chain INCLUDING here, up to the roster (instanceOf is true if any holds the id)
+  root-entry    nearest ancestor-or-self whose parent is a category node (the unit as added to the army)
+  primary-category  nearest ancestor-or-self that is a category node
+  force         nearest ancestor-or-self that is a force
+  primary-catalogue SAME node as force -- the force "is" its catalogue, so instanceOf <catalogue id> works
+  roster        the root
+  group         nearest ancestor group        unit / model / upgrade   nearest ancestor with that type
+  model-or-unit nearest ancestor typed model or unit    non-upgrade-entry   nearest ancestor entry not typed upgrade
+  link          nearest ancestor that is a link
+  <scope>-self  the same, but here itself is a candidate (group-self, model-self, unit-self, upgrade-self,
+                model-or-unit-self, non-upgrade-entry-self); the count then includes here's own amount
+  <any id>      here if here's id / link id / target id equals it; else the nearest ancestor that does;
+                else a CHILD OF THE FORCE with that id -- which is how "scope: <category id>" reaches a
+                category slot from anywhere in the army
+  A scope that resolves to nothing disables the condition (it is neither true nor false: the query is
+  simply off). primary-category from a node with no category above it is such a case.
+
+WHERE A CONDITION IS EVALUATED FROM
+  A condition on an entry or link: from that entry's instance.
+  A condition on a profile, rule, infoLink or infoGroup, or on a modifier inside them: from the ENTRY
+  THAT HOLDS THE INFO (the unit for an infoGroup on the unit, the model for a profile on the model),
+  through however many infoGroups and links it is nested. A shared profile's own modifiers and the
+  infoLink's modifiers both apply to the link.
+  A condition on a constraint's modifier: from the entry owning the constraint.
+
+QUERIES (field / childId / includeChildSelections / includeChildForces / shared / percentValue)
+  field        "selections" counts selections; "forces" counts forces; a cost type id sums that cost;
+               "limit::<cost id>" is the roster's cost limit -- it exists ONLY on the roster node, so
+               use it with scope roster. When the roster has no limit for that cost it reads -1: a
+               "repeat per 1000 limit::points" then repeats -1 times, and "increment 1" yields max -1
+               (unlimited) -- that is why per-N caps fall away in an unlimited game.
+  childId      "any" counts everything; an entry/link/target/category/force id counts what "is" it;
+               "unit"/"model"/"upgrade"/"mount"/"crew" count entries of that type.
+  includeChildSelections  count nested selections, not only the scope's direct children. The engine
+               sets it whenever field is a cost, and treats it as ALSO implying includeChildForces
+               unless the scope is a force (BattleScribe bug, kept).
+  shared       ignored on conditions and repeats (always treated as true). On CONSTRAINTS shared:false
+               remaps the scope: parent/force/primary-catalogue/primary-category become "here" (a
+               group) or "here's parent" (an entry), and roster from a force means the force.
+  percentValue on a constraint: value is a percentage (25 = 25%) of the same query with childId any.
+               On a condition the engine divides the query by the "any" count and compares the RAW
+               ratio to value -- write 0.25, not 25, or avoid percent conditions.
+  Conditions read the current amounts, so a modifier can depend on another modifier's result.
+
+CONDITION TYPES
+  atLeast, atMost, lessThan, greaterThan, equalTo, notEqualTo compare the count to value.
+  atLeast with scope self and a count of 0 is FALSE even for value 0 (BattleScribe bug, kept):
+    never write "atLeast 0 in self"; use notInstanceOf or equalTo.
+  instanceOf / notInstanceOf test the index described above; with scope ancestor, any node in the
+    chain counts. always is true, never is false. before is true when the counted node precedes here
+    in the tree (order-dependent, rarely wanted).
+  A modifier applies when EVERY conditionGroup and EVERY direct condition passes (AND). Inside a
+  conditionGroup, type "or" needs one, "and" needs all; groups nest.
+
+REPEATS
+  A repeat counts its query like a condition, then floor(count / value) * repeats (ceil with roundUp).
+  A modifier with repeats applies "that many times": increment/decrement/multiply/... use value *
+  times; set/append/hidden apply once when times > 0. Several repeats on one modifier ADD their
+  counts. A repeat counting 0 disables the modifier entirely.
+
+MODIFIERS
+  Applied to a field in this order, whatever the array order: set/add/remove/set-primary/unset-primary,
+  then append/prepend, then increment/decrement/multiply/divide/modulo/power/exponent/triangular,
+  then floor/ceil (floor X: values below X become X; ceil X: values above X become X), then the
+  cumulative-* forms and replace.
+  On a string value (a characteristic like "D6+1"), the arithmetic edits the number at "position"
+  (0 = first number). append/prepend use "join" (default a space) and skip when skipIfPresent text
+  is already in the value. replace with an empty arg sets the value only if it is empty.
+  Fields: hidden, name, annotation (rendered as "Name (annotation)"), page, description (rules),
+  category (add/remove, set-primary/unset-primary), a cost type id, a characteristic type id (the
+  result is re-formatted by the characteristic's rules), a constraint id (changes that constraint's
+  value), defaultAmount, defaultSelectionEntryId, error/warning/info (messages on the roster).
+  Relative modifiers ("affects") run on the targets they name rather than on their holder.
+
+VISIBILITY OF INFO
+  A rule / profile / infoLink is shown when enabled and not hidden; hidden ones are not rendered
+  at all (not greyed). An infoLink is hidden if the link OR its target is hidden; a hidden modifier
+  on either hides it. An infoGroup hidden hides everything inside. The link's name modifiers rename
+  what is shown ("Impact Hits" + append "(2)"); the target keeps its own name elsewhere.
+
+CONSTRAINTS
+  min/max/exactly compare the query to value; value -1 means no limit (unless negative:true, when
+  -1 is a real number). A MIN constraint on a hidden entry (or one hidden by a modifier) does not
+  fire, so a mandatory child of a hidden option cannot error. automatic:true asks the builder to
+  satisfy the constraint itself (auto-select up to min / down to max) instead of only flagging it.
+  A constraint's own modifiers (field = its id) change its value; they are evaluated from the
+  owning entry.
+
+ENTRY TYPES IN THE ENGINE
+  unit / model / upgrade are what the unit/model/upgrade scopes and the childId keywords match;
+  getAllUnits() collects type unit. mount: type mount, or a category named "(Mount)" / "MOUNT",
+  never an entry carrying "CHARIOT CREW". crew: matched by the childId keyword only; the tabletop
+  export treats crew as models that are not counted. Nothing else in evaluation depends on type.
+
+AMOUNTS AND COSTS
+  A selection's amount multiplies through its parent entries (3 models x 2 units = 6), stopping at
+  a node that does not propagate. Costs propagate the same way and are summed per category on the
+  entry and on every entry above it, which is what "max 25% points in <category>" reads.`,
+  },
   "editor/writing": {
     about: "the shapes data takes when written: where things live, gates, caps, patterns",
     text: `SHAPES DATA TAKES. Generic to the format; nr_conventions says which of them the loaded system
@@ -623,7 +753,9 @@ GATES
               childId:'<entry, group or category id>'|'any'|'model'|'mount', shared:true,
               includeChildSelections:true}
              'is mounted': scope self, atLeast 1, childId 'mount' (or the mount category).
-             'belongs to faction X': scope ancestor, instanceOf, childId = X's category id.
+             'belongs to faction X': scope ancestor, instanceOf, childId = X's category id
+             (ancestor includes the node itself). Never 'atLeast 0 in self': the engine reads it
+             as false. "editor/evaluation" says what every scope resolves to.
              'the army's General is a Y': scope force, atLeast 1, childId = Y's entry id, with
              the General upgrade counted through includeChildSelections.
   constraint {id, type:'min'|'max', value, field:'selections'|'points'|'limit::points',
@@ -1749,7 +1881,7 @@ docs whether or not you have web access of your own.`,
         page: {
           type: "string",
           description:
-            'A path from the index: "editor/eval", "editor/writing", "editor/conventions", "guide/concepts/modifiers", ... or "all"',
+            'A path from the index: "editor/eval", "editor/writing", "editor/evaluation", "editor/conventions", "guide/concepts/modifiers", ... or "all"',
         },
         catalogue: {
           type: "string",
@@ -1793,6 +1925,7 @@ docs whether or not you have web access of your own.`,
         readFirst: [
           "editor/conventions",
           "editor/writing",
+          "editor/evaluation",
           "editor/eval",
           "guide/concepts/modifiers",
           "guide/recipes/army-limits",

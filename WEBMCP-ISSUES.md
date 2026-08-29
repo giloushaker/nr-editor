@@ -79,7 +79,7 @@ Facts I had to reverse-engineer that are pure convention. Some are TOW-specific 
 
 - `nr_docs` briefing's "read before you write" rules; `nr_read` `modifiedBy`; `owner()`/`row()`/`label()` in eval; one call = one undo entry; result footer showing `unsaved` catalogues; `nr_find` bracket queries (`is:condition childId:…`) once the syntax was known; scripts runnable via `nr_script_run` (Unit Strength re-run after edits).
 
-## Questions only the nuxt-nr evaluator can answer (docs would go from convention to fact)
+## Questions the nuxt-nr evaluator answers -- now written up as nr_docs "editor/evaluation" (third pass)
 
 1. Scope resolution table: from each node kind (entry, link, profile, infoLink inside a linked infoGroup,
    categoryLink, cost, characteristic), what does each scope (self, parent, ancestor, root-entry, force,
@@ -96,3 +96,13 @@ Facts I had to reverse-engineer that are pure convention. Some are TOW-specific 
    `annotation`, a profile with a hidden modifier, two profiles with the same name on one entry.
 8. Allied contingents: primary-catalogue vs Faction categories -- which do shared item files rely on?
 9. What `type: crew | mount | upgrade | model | unit` change in evaluation (counts, unit strength, exports).
+
+Answers (from assets/ts/battlescribe/bs_condition.ts, reactive/*.ts): 1 scope table written; 2 yes -- info
+conditions evaluate from the holding entry and ancestor includes self; 3 shared is ignored on conditions,
+remaps scopes on constraints; 4 limit:: lives only on the roster node, -1 when unlimited (which is what
+makes per-N caps vanish in unlimited games); 5 includeChildSelections implies includeChildForces (BS bug
+kept), cost fields force it; automatic = builder auto-satisfies; 6 order set > append > arithmetic >
+floor/ceil > cumulative/replace, info modifiers apply to the link from the holding entry; 7 hidden info is
+not rendered at all, name + annotation render "Name (annotation)"; 8 primary-catalogue resolves to the
+force node which "is" its catalogue, faction categories are ordinary categories on root entries; 9 only
+unit/model/upgrade scopes+keywords, mount detection, crew keyword; nothing else in evaluation.
