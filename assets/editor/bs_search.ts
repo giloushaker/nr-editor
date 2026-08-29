@@ -29,7 +29,8 @@
  */
 import { Base, walkChildren } from "~/assets/shared/battlescribe/bs_main";
 import { entries } from "~/assets/shared/battlescribe/entries";
-import { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { forEachParent, type MaybeArray } from "~/assets/shared/battlescribe/bs_helpers";
 import { getName, siblingArray } from "./bs_editor";
 
