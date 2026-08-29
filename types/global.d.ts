@@ -13,6 +13,8 @@ declare global {
   var $delete: (o: any, k: any) => unknown;
   var $catalogue: Catalogue & { manager: GameSystemFiles; fullFilePath: string };
   var $store: ReturnType<typeof useEditorStore>;
+  /** Console handle for the WebMCP tools; see plugins/webmcp.client.ts. */
+  var $mcp: (name: string, args?: Record<string, unknown>) => Promise<unknown>;
   var $node: typeof nodeHelpers;
   var $helpers: typeof bsHelpers;
   function $toRaw<T extends Object>(o: T): T;
