@@ -15,8 +15,10 @@ nr_read self/target/modifiedBy and json(); expand:true).
 
 Dropped: B10 nr_fork -- copying files is not how data should be made; forks are the homebrew exception.
 
-Still open: A3 (undo leaves unsaved flag), A6 (nr_find quoting of ':' in bare words; targetId: on
-categoryLinks -- verify), B11 nr_diff, B12 per-catalogue force reload, B14 schema-aware add(), D29
+Also done: A3 (store clears the unsaved flag when undo returns to the saved position), A6 (doc: the type is
+categoryEntryLink and targetId: does find it; quoting rule for ':' added to nr_find).
+
+Still open: B11 nr_diff, B12 per-catalogue force reload, B14 schema-aware add(), D29
 nr_systems compactness, E31 nr_apply(spec), and the nr_eval result size cap (spill to file) -- paginate.
 
 ## A. Bugs (fix first)

@@ -1838,11 +1838,15 @@ link or group it hangs on, with that one's id. That is the id to nr_read -- and 
 by when a query over conditions is really a question about the entries holding them.
 Bare words match name/comment/description text -- all of them, any order. Beyond that:
   is:*                              EVERY node. This is how you walk the tree; see below.
-  is:entry|group|constraint|condition|modifier|profile|rule|entryLink   node kind
+  is:entry|group|constraint|condition|modifier|profile|rule|entryLink   node kind; also
+  is:categoryEntryLink|profileLink|infoGroup|categoryEntry|characteristic|cost|catalogue
+  (a category link is categoryEntryLink, not categoryLink; targetId:<id> finds links of any kind)
   -is:entryLink                     negate any term
   scope:force childId:any           any field by its real name; "any" means present
   id:none                           ...and "none" means absent
   name=Scouts                       exact, not substring (":" is substring). Same as name:=Scouts
+  name="Faction: Skaven"            quote a value holding ":" or "=" -- a bare Faction: Skaven is
+                                    parsed as a field named Faction
   value:>0   refs:0                 numeric compare; on an array, its length
   has:constraint[scope:force]       a descendant matches the bracketed query
   in:entry["bolt rifle"]            an ancestor matches
