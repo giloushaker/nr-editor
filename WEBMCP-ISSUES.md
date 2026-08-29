@@ -3,6 +3,22 @@
 Everything hit while implementing one TOW fork via the MCP, however minor. Grouped by what to do about it.
 Code refs are `plugins/webmcp.client.ts` unless stated.
 
+## Status (2026-08-29, after the first fix pass in plugins/webmcp.client.ts)
+
+Done: A1 (exact/unique matching, ambiguity throws -- pick/pickOne/findSystem/load only), A2 (nr_save on the gst),
+A4 (scriptResult walks any object, rows anything with a parent), A5/C25 (nr_eval description short; API in
+nr_docs "editor/eval"), A7/D30 (results carry errors:{new,fixed} only when something changed), B8 (json(),
+nr_read raw:true/depth), B9 partly (tree(), json depth/exclude/collapse, catalogue read = table of contents),
+B13 (docs), C15-C24 (nr_conventions / nr_docs "editor/conventions" + "editor/writing"), C23 (nr_fields lists
+profile types by name), C26 (briefing shortened, readFirst list), D22/D27/D28 (comment-tagged runs collapse in
+nr_read self/target/modifiedBy and json(); expand:true).
+
+Dropped: B10 nr_fork -- copying files is not how data should be made; forks are the homebrew exception.
+
+Still open: A3 (undo leaves unsaved flag), A6 (nr_find quoting of ':' in bare words; targetId: on
+categoryLinks -- verify), B11 nr_diff, B12 per-catalogue force reload, B14 schema-aware add(), D29
+nr_systems compactness, E31 nr_apply(spec), and the nr_eval result size cap (spill to file) -- paginate.
+
 ## A. Bugs (fix first)
 
 1. **Catalogue matching is substring** — `pick()` :111 and `findSystem()` :332. `"Renegades v2.0"` matched both the Skaven and Ogre forks; three edits went into Skaven before `undo()`. Wants: exact id → exact name → unique substring, and **throw on ambiguity** listing the hits. Same in `find(query, catalogue)` inside eval and the `catalogue` arg of every tool.

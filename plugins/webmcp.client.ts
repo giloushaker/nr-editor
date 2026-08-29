@@ -7,11 +7,12 @@ import { getName } from "~/assets/editor/bs_editor";
 import { validChildIds, validScopes, selfableScopes } from "~/assets/shared/battlescribe/bs_condition";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { getFolderFolders } from "~/electron/node_helpers";
+import { getFolderFolders, readFile } from "~/electron/node_helpers";
 import { permissionState } from "~/electron/web_fs";
 import { useSettingsStore } from "~/stores/settingsState";
+import type { ScriptDef } from "~/stores/scriptsStore";
 import * as helpers from "~/assets/shared/battlescribe/bs_helpers";
-import { arrayKeys, getDataObject, goodJsonKeys, type Base } from "~/assets/shared/battlescribe/bs_main";
+import { arrayKeys, Base, getDataObject, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 /**
@@ -103,15 +104,48 @@ function catalogues(): Catalogue[] {
   return systems.flatMap((system) => [...system.getAllLoadedCatalogues()]);
 }
 
+/**
+ * Exact id, then exact name, then a UNIQUE substring. Anything looser throws and lists the hits.
+ *
+ * This used to be a plain substring filter, and "Renegades v2.0" matched two forked factions at
+ * once: three edits landed in the wrong file before anything noticed. A name that could mean two
+ * files is a question to bounce back, not a set to write into.
+ */
+function resolveOne<T>(
+  items: T[],
+  wanted: string,
+  idOf: (item: T) => string | undefined,
+  nameOf: (item: T) => string,
+  what: string,
+): T {
+  const byId = items.find((item) => idOf(item) === wanted);
+  if (byId) return byId;
+  const lower = wanted.toLowerCase();
+  const exact = items.filter((item) => nameOf(item).toLowerCase() === lower);
+  if (exact.length === 1) return exact[0] as T;
+  const hits = exact.length ? exact : items.filter((item) => nameOf(item).toLowerCase().includes(lower));
+  if (hits.length === 1) return hits[0] as T;
+  if (!hits.length) throw new Error(`No ${what} matching "${wanted}". Have: ${items.map(nameOf).join(", ")}`);
+  throw new Error(
+    `"${wanted}" is ambiguous, it matches ${hits.length} ${what}s: ${hits
+      .map((item) => `${nameOf(item)} [${idOf(item) ?? "?"}]`)
+      .join(", ")}. Pass the id, or the exact name.`,
+  );
+}
+
+function pickOne(name: string): Catalogue {
+  return resolveOne(
+    catalogues(),
+    name,
+    (c) => c.id,
+    (c) => c.name ?? "",
+    "loaded catalogue",
+  );
+}
+
+/** Every loaded catalogue when no name is given; exactly one when it is. Never a fuzzy several. */
 function pick(name?: string): Catalogue[] {
-  const all = catalogues();
-  if (!name) return all;
-  const wanted = name.toLowerCase();
-  const hit = all.filter((c) => c.id === name || (c.name ?? "").toLowerCase().includes(wanted));
-  if (!hit.length) {
-    throw new Error(`No loaded catalogue matching "${name}". Loaded: ${all.map((c) => c.name).join(", ")}`);
-  }
-  return hit;
+  return name ? [pickOne(name)] : catalogues();
 }
 
 /**
@@ -326,11 +360,13 @@ function loadedSystemFor(row: SystemRow): GameSystemFiles | undefined {
 }
 
 async function findSystem(nameOrId: string): Promise<SystemRow> {
-  const rows = await systemRows();
-  const wanted = nameOrId.toLowerCase();
-  const hit = rows.find((row) => row.id === nameOrId) ?? rows.find((row) => row.name.toLowerCase().includes(wanted));
-  if (!hit) throw new Error(`No system matching "${nameOrId}". Available: ${rows.map((r) => r.name).join(", ")}`);
-  return hit;
+  return resolveOne(
+    await systemRows(),
+    nameOrId,
+    (r) => r.id,
+    (r) => r.name,
+    "system",
+  );
 }
 
 /** Names of catalogues with edits not yet on disk. Re-reading or unloading would lose them. */
@@ -392,42 +428,33 @@ That is what each piece is for:
   entryLink / infoLink  a reference to a shared definition, so one edit reaches every user of it
 
 HOW TO WORK
-  1. nr_systems       what exists on disk, and whether it is loaded
-  2. nr_load_system   nothing else sees a system until this has run. Refuses if already loaded,
-                      so call it when unsure; force:true re-reads from disk.
-  3. nr_diagnosis     write down the finding count BEFORE you change anything.
-  4. nr_find          locate candidates. Guessed ids do not exist.
-  5. nr_read          OPEN every node you will change, or draw any conclusion about. A search row
-                      says a node exists; it does not say what it does. A constraint reading
-                      "max 0" is routinely raised by a modifier, a link is mostly its target, and
-                      a boolean the editor deleted looks identical to one that is off. nr_read
-                      resolves all three. Skipping it is how a confident wrong answer gets made.
-  6. nr_eval          make the change. One call is one undo entry, so keep it whole.
-  7. nr_diagnosis     the count must not have gone up. If it did, undo() and rethink.
-  8. nr_save          only when asked -- they may want to review in their own window first.
+  1. nr_systems / nr_load_system   nothing else sees a system until it is loaded. force:true
+                      re-reads from disk.
+  2. nr_conventions   HOW THIS SYSTEM WRITES ITS DATA: where rules attach, how "(X)" rules and
+                      per-N caps are built, entry types, faction gating, profile types -- read
+                      off the loaded files, with live examples. Read it before your first write;
+                      it replaces an hour of reverse-engineering.
+  3. nr_find + nr_read  locate, then OPEN every node you will change or judge. A search row says
+                      a node exists, not what it does: "max 0" is routinely raised by a modifier,
+                      a link is mostly its target, a deleted boolean looks like an off one.
+                      nr_read raw:true gives the file shape to copy when writing one like it;
+                      tree() in nr_eval surveys forty units on one screen.
+  4. nr_eval          make the change; one call is one undo entry. The reply lists the
+                      diagnostics it created or fixed -- a new finding means undo() and rethink.
+                      nr_docs "editor/eval" and "editor/writing" are the API and the shapes.
+  5. nr_save          only when asked -- they may want to review in their own window first.
+A check or a fix the user will want again is a script (nr_script_write), not an nr_eval.
+Names of catalogues and systems are matched exactly (id, name, or a substring that fits one);
+an ambiguous name is refused rather than guessed.
 
 WHAT COUNTS AS A PROBLEM
-Two findings are cheap to compute and almost never the answer. Reporting them reads as diligence
-and is usually the streetlight rather than the keys:
-  - "nothing links to this shared entry". Usually a library item, a work in progress, or
-    something linked from a catalogue that is not loaded. There is a rule for it, it is switched
-    OFF, and the reason is measured: on The Old World it fires 1000 times against the 23 findings
-    that matter. Ask for it by name when tidiness is the question. Do not volunteer it.
-  - "these ids are duplicated". Ids repeat legitimately. A constraint id is only unique inside
-    the entry that owns it, and forked faction files keep shared ids on purpose so old rosters
-    survive. The registered diagnostics already flag the collisions that actually break; the
-    rest is not a defect.
-Both are habits carried in from reviewing code, where dead code and clashing identifiers really
-are bugs. This is not code. It is a rulebook, and the only defects that count are the ones a
-player meets:
-  - a choice the book allows that cannot be selected, or one it forbids that can
-  - a points cost, statline or rules text that does not match the book
-  - a constraint or modifier scoped wider or narrower than the rule it encodes -- one unit's
-    option applying to the whole army is the classic
-  - a link that resolves to the wrong thing, or to nothing
-  - a unit that is already illegal the moment it is added
-If you cannot say which of those a finding is, it is probably not worth reporting. Say what a
-player would notice, and say how you verified it.
+Only what a player meets: an allowed choice that cannot be selected, a forbidden one that can,
+a cost/statline/text that differs from the book, a rule scoped wider or narrower than written
+(one unit's option applying army-wide is the classic), a link to the wrong thing or to nothing,
+a unit illegal the moment it is added. Two cheap findings are almost never it: "nothing links to
+this shared entry" (library items, work in progress, other files -- the rule is off on purpose)
+and "duplicate ids" (constraint ids are per-entry; forked files keep ids so rosters survive).
+The diagnostics already flag the collisions that break. Say what a player would notice.
 
 STAY ON THE QUESTION
 This tree is large and every corner of it is interesting. Almost none of it is what you were
@@ -464,11 +491,8 @@ WHAT YOU ARE LOOKING AT (the way to survey the data wrongly, and the way to do i
     readable slug ids are both normal; a check that assumes otherwise reports nonsense.
 
 TELL US WHAT IS MISSING
-These tools are new and deliberately incomplete. When you finish, say plainly in your reply which
-ones were missing or awkward: something you had to hand-roll in nr_eval that deserved its own
-tool, a query nr_find could not express, a check that does not exist, a result shape that made you
-call twice. That report is the point of the exercise -- a session that ends without one has thrown
-away half of what it was worth.`;
+When you finish, say which tools were missing or awkward -- what you hand-rolled, what a query
+could not express, what made you call twice. These tools are built from that list.`;
 
 /**
  * What `page:"all"` leaves out: installing the app, publishing to GitHub, the changelog, and the
@@ -487,6 +511,156 @@ const NOT_ABOUT_DATA: ReadonlySet<string> = new Set([
   "guide/reference/supported-systems",
   "guide/advanced/export-templates",
 ]);
+
+/**
+ * Pages that live here rather than on the wiki: the nr_eval scope and the shapes data takes when
+ * written. They describe this file's own API, so they stay beside it; the wiki cannot know what
+ * json() returns. "editor/conventions" is the third and is generated from the loaded data.
+ */
+const EDITOR_PAGES: Record<string, { about: string; text: string }> = {
+  "editor/eval": {
+    about: "everything in scope inside nr_eval: read helpers, write actions, returns, quirks",
+    text: `nr_eval SCOPE -- what the code body can call. await the writes.
+
+READ
+find(query, catalogue?, {path, includeImports, followLinks}) -> live nodes
+  The nr_find language. catalogue: an id, an exact name, or a substring that fits ONE loaded
+  file; ambiguous throws, omitted means every loaded catalogue. Imports are searched unless
+  includeImports:false. One node by id: find('id=<id>', cat)[0]. One whole file:
+  find('is:*', cat, {includeImports:false}). One array: find('', cat, {path:'sharedProfiles'}).
+json(node, {depth, exclude, collapse}) -> plain object
+  The node as the file stores it -- the keys add()/merge() accept: scalars, child arrays under
+  their real names, no parent/target/refs. Logic arrays (modifiers, conditions, conditionGroups,
+  repeats) always come out whole; entry arrays stop at depth (default unlimited). exclude: child
+  names to drop ('Magic Items'). collapse (default true): 2+ siblings sharing a comment become
+  one string '(6 modifiers tagged "Battle March", collapsed)'. The result is a copy: edit it and
+  hand it to add() or merge().
+tree(node | catalogue, {depth=8, exclude, rules=true, shared=false}) -> string
+  One line per entry: 'Name <type> {31pts} [min 3] <Core*; 0-1 per 1,000>' (* = primary
+  category, '→' = a link, HIDDEN when hidden), then 'rules: Fear, Impact Hits(2), Scouts(H)(?)'
+  ((H) the link is hidden, (?) a modifier can hide it). Follows links into their targets.
+  shared:true lists the shared arrays too. The survey tool: forty units on one screen.
+rules(entry) -> [{name, label, targetId, hidden, conditional, group}]
+  The special rules an entry carries, wherever this system keeps them: an infoGroup, bare
+  infoLinks to rules or rule-like profiles, rules[]. label includes the '(X)' a name modifier
+  appends.
+row(node) -> {id, name, type, catalogue, path, in}   the search row. Return this, never a node.
+owner(node) -> node   nearest ancestor that is a tree row (skips modifiers, conditionGroups, repeats)
+label(node) -> string   what the tree prints, conditions and modifiers included
+query(query, catalogues[], opts)   search taking Catalogue objects rather than a name
+$catalogues   every loaded Catalogue      $catalogue   the one open in the user's window
+$store   editor state: unsavedCount, gameSystems, undoStack, undoStackPos, get_catalogue_state(c)
+$h   bs_helpers (groupBy, sortBy, countKeys, clone, generateBattlescribeId, ...), also spread
+     into scope unqualified -- except add/remove/copy, which are the store actions
+help()   the live list of names in scope
+
+WRITE -- all undoable, all taking their target explicitly. Omit it and they act on whatever the
+user has selected, which is never what you meant.
+set_field(node, key, value)
+  One field. Costs and characteristics are child objects, so set_field(cost, 'value', 30) and
+  set_field(characteristic, '$text', '5'). A boolean set to its default is deleted (normal).
+edit({key: value, ...}, node | nodes) -> boolean changed
+add(data | data[], childKey, parent | parents) -> the FIRST node added, live
+  childKey is the array name ('sharedProfiles', 'infoLinks', 'modifiers', 'conditions',
+  'categoryLinks', 'costs', 'characteristics', 'selectionEntries', ...) and must be a legal
+  child of the parent, otherwise it notifies and adds nothing. data is file shape, nested
+  arrays included -- a whole unit in one call is fine.
+  Ids: give your own (a prefix per job, 'okr2-...', keeps them greppable) or leave them out.
+  An id already present in the catalogue is silently replaced by a fresh one, and scope/childId
+  references inside the added subtree are remapped along with it -- read .id off the return
+  value rather than assuming yours survived.
+  Profiles: typeName plus the characteristic names are enough; the Fix-profiles hook fills in
+  every typeId as the node lands (nr_fields lists the types).
+remove(node | nodes)   links into a removed node dangle; nr_diagnosis shows them as no-target
+move(node, fromCatalogue, toCatalogue, 'root' | 'shared')
+merge(node, data, {key}?) -> {updated, added, extra}
+  Applies generated data onto an existing node: updates what matches (by id, else by
+  typeName/name, or by your key), adds what is new, NEVER deletes -- extra lists the children
+  the data did not mention, for you to remove() if wanted. Use it instead of remove()+add() so
+  ids, and every link into them, survive.
+merge_duplicates(keep, dupes)   repoints every reference at keep and deletes the dupes
+undo() / redo()   a previous nr_eval call is ONE entry however many nodes it touched
+
+DO NOT: node.x = y (skips change tracking: never marked unsaved, gone on reload);
+add_node/del_node/*_child (not undoable); create()/duplicate() (act on the selection);
+iterate catalogue.index (ids only, no conditions); count off anything but find().
+
+RESULT: return plain data; nodes anywhere in it become rows. The reply carries
+errors:{new, fixed} when the diagnostics changed, and the list of unsaved catalogues.`,
+  },
+  "editor/writing": {
+    about: "the shapes data takes when written: where things live, gates, caps, patterns",
+    text: `SHAPES DATA TAKES. Generic to the format; nr_conventions says which of them the loaded system
+uses and shows live examples. nr_read raw:true / json() on a neighbour is always the safest
+template. Vocabulary (fields, scopes, childIds, cost and profile types): nr_fields.
+
+WHERE THINGS LIVE
+  units      shared entries of type 'unit', reached from the root through entryLinks. Inside:
+             models (type 'model'), upgrades ('upgrade'), mounts ('mount'), chariot crew
+             ('crew' -- not 'model'; scripts that count models skip crew).
+  rules      infoLinks of type 'profile' to a shared rule-like profile (e.g. 'Special Rule'),
+             usually grouped in an infoGroup on the UNIT entry rather than the model. A
+             parameterised rule is the generic rule plus a name modifier:
+               {name:'Impact Hits', type:'profile', targetId:'<rule id>',
+                modifiers:[{type:'append', value:'(2)', field:'name'}]}
+  statlines  a profile on the model (infoLink to a shared profile, or inline); weapon profiles
+             on the weapon entry. Exports read the hierarchy, so a profile parked on the wrong
+             node renders under the wrong heading.
+  points     costs:[{name:'pts', typeId:'points', value:31}]
+  slots      catalogue.categoryEntries, and on each entry categoryLinks:
+               [{name:'Core', targetId:'<category id>', primary:true}]
+  text       profile characteristics: {name:'Description', typeId:'<char type>', $text:'...'};
+             a comment starting todo:/warning:/error: is a diagnostic the user sees.
+
+GATES
+  modifier   {type:'set'|'increment'|'decrement'|'append'|'add'|'remove', value, field,
+              conditions:[...], conditionGroups:[{type:'or'|'and', conditions:[...]}],
+              repeats:[...]}
+             field: 'hidden' | 'name' | a cost type id ('points') | a characteristic typeId |
+             a constraint id (changes that constraint's value) | 'category' (value = category id)
+  condition  {type:'atLeast'|'atMost'|'equalTo'|'instanceOf'|'notInstanceOf'|..., value:1,
+              field:'selections', scope:'self'|'parent'|'force'|'roster'|'ancestor'|'root-entry',
+              childId:'<entry, group or category id>'|'any'|'model'|'mount', shared:true,
+              includeChildSelections:true}
+             'is mounted': scope self, atLeast 1, childId 'mount' (or the mount category).
+             'belongs to faction X': scope ancestor, instanceOf, childId = X's category id.
+             'the army's General is a Y': scope force, atLeast 1, childId = Y's entry id, with
+             the General upgrade counted through includeChildSelections.
+  constraint {id, type:'min'|'max', value, field:'selections'|'points'|'limit::points',
+              scope:'parent'|'force'|'roster', shared:true, includeChildSelections:true}
+             -1 = no limit. Ids repeat across entries; a modifier names its constraint by id.
+
+CAPS
+  '0-1 X per 1,000 points'   a hidden categoryEntry, max 0 in the force, raised per 1,000:
+     constraints:[{id:'c1', type:'max', value:0, field:'selections', scope:'force', shared:true,
+                   includeChildSelections:true}]
+     modifiers:[{type:'increment', value:1, field:'c1',
+                 repeats:[{value:1000, repeats:1, field:'limit::points', scope:'roster',
+                           childId:'any', shared:true, roundUp:false}]}]
+     ...then a categoryLink to it on every entry it caps. 'limit::points' is the game size the
+     player set; plain 'points' would be the points spent so far.
+  '0-1 X per Y taken'        the same, the repeat over field 'selections', childId = Y's id.
+  '0-3 of X and Y combined'  one category on both, max 3 in force.
+  'at least 25% on Core'     min, field 'limit::points', percentValue:true, on the category.
+  cost by context            {type:'set', value:75, field:'points', conditions:[<ancestor is
+                             category>]} on the item, in the shared file that holds it.
+  text by context            give the entry its own profile, hidden, unhidden by the condition,
+                             and hide the shared infoLink under the same condition. Never show two.
+  hide or forbid             a max 0 constraint keeps the option visible with a reason; hidden:true
+                             makes it vanish. Prefer the constraint unless it truly does not belong.
+
+HOUSEKEEPING
+  ids        never regenerate a published id (rosters hold them). A fork keeps the base's ids on
+             purpose. New nodes: your own prefix, or none and read them back from add().
+  shared     define once under shared*, link everywhere. Moving an inline entry to shared leaves
+             a link in its place.
+  comments   tag every node a job writes ('Unit strength script', 'Renegades') so a re-run can
+             find and replace its own output and readers can collapse it.
+  toggles    an optional rule set gated behind one 'toggle' entry (max 0, raised by a modifier)
+             is how base files carry a variant; forking that variant into its own file means
+             baking those conditions in -- find('is:condition childId:<toggle id>').`,
+  },
+};
 
 /**
  * Page paths, from the site's own sitemap so a new page shows up here without anyone editing this
@@ -668,16 +842,29 @@ function conciseRow(child: NodeLike, catalogue: Catalogue, key: string): ChildRo
  * apply" on a profile, and only the table in bs_search knows which. Everything else absent means
  * unset. See FLAGS.
  */
-function projectSelf(node: NodeLike, catalogue: Catalogue): Record<string, unknown> {
+function projectSelf(node: NodeLike, catalogue: Catalogue, expand = false): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
     if (Array.isArray(value) && arrayKeys.has(key)) {
       if (!value.length) continue;
-      out[key] = (value as NodeLike[]).map((child, index) =>
-        child && typeof child === "object"
-          ? conciseRow(child, catalogue, key)
-          : { name: `(not a node at ${key}[${index}])` },
-      );
+      const rows: unknown[] = [];
+      const children = value as NodeLike[];
+      // Runs of script-written siblings collapse to one line each; the index in the array is
+      // still what "at" addresses, so the line says where the run starts.
+      for (const [child, run] of expand ? children.map((c) => [c, undefined] as const) : runsByComment(children)) {
+        if (run) {
+          rows.push({
+            collapsed: `${run.count} ${key} tagged "${run.comment}" (from ${key}[${children.indexOf(child)}]; expand:true shows them)`,
+          });
+          continue;
+        }
+        rows.push(
+          child && typeof child === "object"
+            ? conciseRow(child, catalogue, key)
+            : { name: `(not a node at ${key}[${children.indexOf(child)}])` },
+        );
+      }
+      out[key] = rows;
       continue;
     }
     if (!goodJsonKeys.has(key) || Array.isArray(value)) continue;
@@ -748,7 +935,7 @@ interface NodeRead extends ReturnType<typeof row> {
   self: Record<string, unknown>;
   /** The same projection of what a link points at, so the two can be compared side by side. */
   target?: NodeRead | ReturnType<typeof row> | { unresolved: string };
-  modifiedBy: ReturnType<typeof modifierRow>[];
+  modifiedBy: Array<ReturnType<typeof modifierRow> | { collapsed: string }>;
   errors: ReturnType<typeof errorRow>[];
 }
 
@@ -765,12 +952,26 @@ interface NodeRead extends ReturnType<typeof row> {
  * question about two nodes, and the answer is to show both and let them be compared, rather than
  * to merge them into one number or to bolt on a second key per thing that can differ.
  */
-function readNode(node: Base & WithErrors, catalogue: Catalogue, throughLink?: NodeLike): NodeRead {
+function readNode(node: Base & WithErrors, catalogue: Catalogue, throughLink?: NodeLike, expand = false): NodeRead {
   // A constraint owns no modifiers; the ones acting on it live on the node holding it.
   const owner = (node.parentKey === "constraints" ? node.parent : node) as unknown as WithModifiers;
-  const modifiedBy = [...modifiersFor(owner, throughLink)]
-    .filter(({ modifier }) => node.parentKey !== "constraints" || modifier.field === node.id)
-    .map(({ modifier, viaLink }) => modifierRow(modifier, viaLink));
+  const reaching = [...modifiersFor(owner, throughLink)].filter(
+    ({ modifier }) => node.parentKey !== "constraints" || modifier.field === node.id,
+  );
+  // Same collapse as the arrays: six matched-play modifiers riding in on the link are one line.
+  const byModifier = new Map(reaching.map((entry) => [entry.modifier as NodeLike, entry]));
+  const modifiedBy: Array<ReturnType<typeof modifierRow> | { collapsed: string }> = [];
+  for (const [modifier, run] of expand
+    ? reaching.map(({ modifier }) => [modifier as NodeLike, undefined] as const)
+    : runsByComment(reaching.map(({ modifier }) => modifier as NodeLike))) {
+    const entry = byModifier.get(modifier)!;
+    if (run) {
+      const via = entry.viaLink ? ` on link "${labelOf(entry.viaLink)}"` : "";
+      modifiedBy.push({ collapsed: `${run.count} modifiers tagged "${run.comment}"${via} (expand:true shows them)` });
+      continue;
+    }
+    modifiedBy.push(modifierRow(entry.modifier, entry.viaLink));
+  }
   const editor = node as Base & { refs?: unknown[]; other_refs?: unknown[] };
   const link = node as Base & { targetId?: string; target?: NodeLike };
   const target = !link.targetId
@@ -783,6 +984,7 @@ function readNode(node: Base & WithErrors, catalogue: Catalogue, throughLink?: N
             link.target as Base & WithErrors,
             (link.target.catalogue as Catalogue) ?? catalogue,
             node as NodeLike,
+            expand,
           );
   const parents = parentsOf(node as NodeLike);
   return {
@@ -790,30 +992,556 @@ function readNode(node: Base & WithErrors, catalogue: Catalogue, throughLink?: N
     refs: editor.refs?.length ?? 0,
     mentions: editor.other_refs?.length ?? 0,
     parents: parents.length ? parents : undefined,
-    self: projectSelf(node as NodeLike, catalogue),
+    self: projectSelf(node as NodeLike, catalogue, expand),
     target,
     modifiedBy,
     errors: (node.errors ?? []).map((error) => errorRow(error, catalogue)),
   };
 }
 
+/**
+ * The loaded system a script tool acts on. Scripts belong to a system -- they live in its folder
+ * and their catalogue arguments load out of it -- but naming it every call is noise when only one
+ * is open, which is the normal case.
+ */
+async function scriptSystem(name?: string): Promise<GameSystemFiles> {
+  if (name) {
+    const found = loadedSystemFor(await findSystem(name));
+    if (!found) throw new Error(`System "${name}" is not loaded. Call nr_load_system first.`);
+    return found;
+  }
+  const open = Object.values(store().gameSystems ?? {}).filter(Boolean) as GameSystemFiles[];
+  if (!open.length) throw new Error("No system is loaded. Call nr_load_system first.");
+  if (open.length === 1) return open[0];
+  const names = open.map((o) => o.gameSystem?.gameSystem.name).join(", ");
+  throw new Error(`Several systems are open, so "system" is required. Open: ${names}`);
+}
+
+/** What a script offers, without its source: enough to decide whether to run it. */
+function scriptRow(script: ScriptDef) {
+  const hooks = Object.keys(script.hooks ?? {});
+  return {
+    name: script.name,
+    path: script.path ?? "built in",
+    description: script.description,
+    runnable: Boolean(script.run),
+    arguments: (script.arguments ?? []).map((arg) => ({
+      name: arg.name,
+      type: Array.isArray(arg.type) ? arg.type[0] : arg.type,
+      optional: arg.optional,
+      description: arg.description,
+      default: arg.default,
+    })),
+    ...(hooks.length ? { hooks } : {}),
+    ...(script.diagnostics?.length ? { diagnostics: script.diagnostics.map((rule) => rule.id) } : {}),
+    ...(script.error ? { error: String(script.error) } : {}),
+  };
+}
+
+/**
+ * Anything a script or an eval body returns, made safe to serialise.
+ *
+ * A Base node becomes its row. So does anything else carrying a `parent` -- a characteristic, a
+ * cost, an entry of `refs` -- which the old instanceof check let through to JSON.stringify,
+ * where it died on the cycle with no hint of which key. Other objects are walked with their
+ * back-references dropped and a cycle set, so a half-projected node still comes out as data.
+ */
+function scriptResult(value: unknown, depth = 0, seen = new WeakSet<object>()): unknown {
+  if (value instanceof Base) return row(value as NodeLike);
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+  if (!value || typeof value !== "object") return value;
+  if (depth > 8) return "...";
+  if (seen.has(value)) return "(cycle)";
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((one) => scriptResult(one, depth + 1, seen));
+  const record = value as Record<string, unknown>;
+  if ("parent" in record && (record.id !== undefined || record.name !== undefined || record.$text !== undefined)) {
+    return row(value as NodeLike);
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, one] of Object.entries(record)) {
+    if (BACK_REFERENCES.has(key)) continue;
+    out[key] = scriptResult(one, depth + 1, seen);
+  }
+  return out;
+}
+
+// #region json / tree / conventions
+
+interface JsonOptions {
+  /** How deep entry arrays recurse; logic arrays always come out whole. Default unlimited. */
+  depth?: number;
+  /** Children to leave out, by name -- "Magic Items" is the usual one. */
+  exclude?: string[];
+  /** Fold runs of siblings sharing a comment (script-written boilerplate) into one line. Default on. */
+  collapse?: boolean;
+}
+
+type Commented = { comment?: string };
+
+/**
+ * Siblings that share a non-empty comment, two or more of them, are one thing repeated: the
+ * matched-play caps a script stamps onto every root entry, the unit-strength modifiers, the
+ * "Renegades" toggles. Yielded once with a count so the reader sees "6 modifiers tagged
+ * 'Battle March'" instead of six blocks of the same shape; the rest are skipped.
+ */
+function* runsByComment(
+  nodes: NodeLike[],
+): Iterable<readonly [NodeLike, { comment: string; count: number } | undefined]> {
+  const counts = new Map<string, number>();
+  for (const node of nodes) {
+    const comment = (node as Commented).comment;
+    if (comment) counts.set(comment, (counts.get(comment) ?? 0) + 1);
+  }
+  const emitted = new Set<string>();
+  for (const node of nodes) {
+    const comment = (node as Commented).comment;
+    if (comment && (counts.get(comment) ?? 0) >= 2) {
+      if (emitted.has(comment)) continue;
+      emitted.add(comment);
+      yield [node, { comment, count: counts.get(comment)! }] as const;
+      continue;
+    }
+    yield [node, undefined] as const;
+  }
+}
+
+/**
+ * A node the way the file stores it: goodJsonKeys scalars and arrayKeys arrays, nothing the
+ * editor bolted on. This is the shape add() and merge() take, so what comes out can be edited
+ * and fed straight back. Logic arrays (modifiers, conditions, repeats...) are always whole: a
+ * modifier without its conditions is not a summary of anything.
+ */
+function toJson(node: NodeLike, options: JsonOptions = {}, depth = 0): Record<string, unknown> {
+  const { exclude = [], collapse = true } = options;
+  const max = options.depth ?? Infinity;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
+    if (BACK_REFERENCES.has(key)) continue;
+    if (Array.isArray(value)) {
+      if (!arrayKeys.has(key) || !value.length) continue;
+      const logic = LOGIC.has(key);
+      if (!logic && depth >= max) {
+        out[key] = `(${value.length} ${key}, beyond depth ${max})`;
+        continue;
+      }
+      const kept = (value as NodeLike[]).filter((child) => !exclude.includes(child?.name ?? ""));
+      const rows: unknown[] = [];
+      for (const [child, run] of collapse ? runsByComment(kept) : kept.map((child) => [child, undefined] as const)) {
+        if (run) {
+          rows.push(`(${run.count} ${key} tagged "${run.comment}", collapsed; {collapse:false} shows them)`);
+          continue;
+        }
+        rows.push(child && typeof child === "object" ? toJson(child, options, logic ? depth : depth + 1) : child);
+      }
+      out[key] = rows;
+      continue;
+    }
+    if (!goodJsonKeys.has(key) || value === undefined) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/** Rule-ish profile types: what a "Special Rules" list is made of, whatever the system calls it. */
+function isRuleLike(node: NodeLike | undefined): boolean {
+  if (!node) return false;
+  const typeName = (node as { typeName?: string }).typeName ?? "";
+  return node.editorTypeName === "rule" || /rule|abilit|trait|special/i.test(typeName);
+}
+
+interface RuleRow {
+  name: string;
+  /** The name as the tree renders it, "(2)" suffix and all. */
+  label: string;
+  targetId?: string;
+  hidden?: true;
+  conditional?: true;
+  /** The infoGroup it sits in, when it sits in one. */
+  group?: string;
+}
+
+/**
+ * The special rules an entry carries, found where systems actually put them: in infoGroups
+ * (TOW's "Special Rules"), as bare infoLinks to rules or rule-like profiles, or in `rules`.
+ * A link with a name modifier reports the rendered label, which is how "Impact Hits (2)" is
+ * written -- a link to Impact Hits plus append "(2)" on the name.
+ */
+function rulesOf(entry: NodeLike): RuleRow[] {
+  const target = ((entry as { target?: NodeLike }).target ?? entry) as NodeLike & {
+    infoGroups?: Array<NodeLike & { infoLinks?: NodeLike[] }>;
+    infoLinks?: NodeLike[];
+    rules?: NodeLike[];
+  };
+  const out: RuleRow[] = [];
+  const push = (link: NodeLike, group?: string) => {
+    const mods = (link as { modifiers?: ModifierNode[] }).modifiers ?? [];
+    const suffix = mods
+      .filter((m) => m.field === "name" && m.type === "append")
+      .map((m) => String(m.value))
+      .join("");
+    out.push({
+      name: link.name ?? labelOf(link),
+      label: `${link.name ?? labelOf(link)}${suffix}`,
+      targetId: (link as { targetId?: string }).targetId,
+      hidden: (link as { hidden?: boolean }).hidden ? true : undefined,
+      conditional: mods.some((m) => m.field === "hidden") ? true : undefined,
+      group,
+    });
+  };
+  for (const group of target.infoGroups ?? []) for (const link of group.infoLinks ?? []) push(link, group.name);
+  for (const link of target.infoLinks ?? []) {
+    const linkTarget = (link as { target?: NodeLike }).target;
+    if (link.editorTypeName === "ruleLink" || isRuleLike(linkTarget)) push(link);
+  }
+  for (const rule of target.rules ?? []) push(rule);
+  return out;
+}
+
+interface TreeOptions {
+  depth?: number;
+  exclude?: string[];
+  /** List each entry's special rules on a line of their own. Default on. */
+  rules?: boolean;
+  /** Include the catalogue's shared arrays too, not only its root entries. */
+  shared?: boolean;
+}
+
+/**
+ * One line per entry, indented, the way a person skims a unit: name, points, its own min/max,
+ * its categories, then its rules -- following links into their targets the way the tree does.
+ * Nothing about modifiers or conditions; those are nr_read's job. The point is to see forty
+ * units in one screen instead of four.
+ */
+function tree(root: NodeLike | Catalogue, options: TreeOptions = {}): string {
+  const { exclude = [], rules = true, shared = false } = options;
+  const max = options.depth ?? 8;
+  const lines: string[] = [];
+  const skipCategory = /^(Faction:|Units \(|.*'per \d+ points' selection)/;
+  const costOf = (node: NodeLike): string => {
+    const costs = (node as { costs?: Array<{ name?: string; value?: number }> }).costs ?? [];
+    return costs
+      .filter((c) => Number(c.value))
+      .map((c) => `${c.value}${c.name === "pts" ? "pts" : ` ${c.name ?? ""}`}`)
+      .join(",");
+  };
+  const walk = (node: NodeLike, depth: number, viaLink: boolean) => {
+    if (exclude.includes(node.name ?? "")) return;
+    const target = ((node as { target?: NodeLike }).target ?? node) as NodeLike;
+    const ind = "  ".repeat(depth);
+    const cost = costOf(node) || costOf(target);
+    const own = (
+      (node as { constraints?: Array<{ type?: string; value?: number; scope?: string; field?: string }> })
+        .constraints ?? []
+    )
+      .concat(
+        node !== target
+          ? ((target as { constraints?: Array<{ type?: string; value?: number; scope?: string; field?: string }> })
+              .constraints ?? [])
+          : [],
+      )
+      .filter((c) => c.field === "selections" && c.scope === "parent")
+      .map((c) => `${c.type === "min" ? "min" : "max"} ${c.value}`)
+      .join(", ");
+    const cats = ((node as { categoryLinks?: Array<{ name?: string; primary?: boolean }> }).categoryLinks ?? [])
+      .filter((c) => c.name && !skipCategory.test(c.name))
+      .map((c) => (c.primary ? `${c.name}*` : c.name))
+      .join("; ");
+    const type = (target as { type?: string }).type;
+    const isGroup = node.editorTypeName?.includes("Group") || target.editorTypeName?.includes("Group");
+    lines.push(
+      `${ind}${viaLink ? "→ " : ""}${node.name ?? labelOf(node)}${type && !isGroup ? ` <${type}>` : ""}${cost ? ` {${cost}}` : ""}${own ? ` [${own}]` : ""}${(node as { hidden?: boolean }).hidden ? " HIDDEN" : ""}${cats ? ` <${cats}>` : ""}`,
+    );
+    if (rules) {
+      const found = rulesOf(node);
+      if (found.length) {
+        lines.push(
+          `${ind}  rules: ${found.map((r) => `${r.label}${r.hidden ? "(H)" : ""}${r.conditional ? "(?)" : ""}`).join(", ")}`,
+        );
+      }
+    }
+    if (depth >= max) return;
+    const record = target as unknown as Record<string, NodeLike[] | undefined>;
+    for (const key of ["selectionEntryGroups", "selectionEntries", "entryLinks"]) {
+      for (const child of record[key] ?? []) walk(child, depth + 1, key === "entryLinks");
+    }
+  };
+  const record = root as unknown as Record<string, NodeLike[] | undefined>;
+  // A node (entry, link, group) is its own first line; only a catalogue is a list of roots.
+  if (!(root as Catalogue).isCatalogue?.()) {
+    walk(root as NodeLike, 0, Boolean((root as { targetId?: string }).targetId));
+    return lines.join("\n");
+  }
+  const rootKeys = shared
+    ? ["entryLinks", "selectionEntries", "selectionEntryGroups", "sharedSelectionEntries", "sharedSelectionEntryGroups"]
+    : ["entryLinks", "selectionEntries", "selectionEntryGroups"];
+  for (const key of rootKeys) {
+    const children = record[key];
+    if (!children?.length) continue;
+    if (shared) lines.push(`== ${key}`);
+    for (const child of children) walk(child, 0, key === "entryLinks");
+  }
+  return lines.join("\n") || "(no entries)";
+}
+
+/**
+ * The catalogue as a table of contents rather than as three hundred rows: what each array
+ * holds, by count and by name. Names are capped, because a file with 200 shared profiles is
+ * asking to be searched, not listed.
+ */
+function catalogueSummary(catalogue: Catalogue): Record<string, unknown> {
+  const CAP = 60;
+  const out: Record<string, unknown> = {};
+  const record = catalogue as unknown as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    if (Array.isArray(value)) {
+      if (!arrayKeys.has(key) || !value.length) continue;
+      const names = (value as NodeLike[]).map((n) => n.name ?? labelOf(n));
+      out[key] = {
+        count: names.length,
+        names:
+          names.length > CAP ? [...names.slice(0, CAP), `… ${names.length - CAP} more (nr_find path:"${key}")`] : names,
+      };
+      continue;
+    }
+    if (!goodJsonKeys.has(key) || value === undefined) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+type ErrorSnapshot = Map<string, ReturnType<typeof errorRow>>;
+
+function errorSnapshot(): ErrorSnapshot {
+  const out: ErrorSnapshot = new Map();
+  for (const catalogue of catalogues()) {
+    for (const error of errorsOf(catalogue)) {
+      const projected = errorRow(error, catalogue);
+      out.set(`${projected.catalogue}|${projected.msg}|${projected.at?.path ?? ""}`, projected);
+    }
+  }
+  return out;
+}
+
+/**
+ * What an edit did to the diagnostics, as the findings themselves rather than a count. A bare
+ * "18 -> 19" made every result end with the same question -- which one, and is it mine? -- and a
+ * separate nr_diagnosis call to answer it. Absent when nothing changed.
+ */
+function errorDelta(before: ErrorSnapshot): { errors?: unknown } {
+  const after = errorSnapshot();
+  const added = [...after].filter(([key]) => !before.has(key)).map(([, error]) => error);
+  const fixed = [...before].filter(([key]) => !after.has(key)).map(([, error]) => error);
+  if (!added.length && !fixed.length) return {};
+  return {
+    errors: {
+      before: before.size,
+      after: after.size,
+      new: added.slice(0, 8),
+      ...(added.length > 8 ? { newNotShown: added.length - 8 } : {}),
+      fixed: fixed.slice(0, 8).map((error) => error.msg),
+    },
+  };
+}
+
+type Counter = Map<string, number>;
+const bump = (counter: Counter, key: string, by = 1) => counter.set(key, (counter.get(key) ?? 0) + by);
+const top = (counter: Counter, n = 10) =>
+  [...counter]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([key, count]) => `${key} ×${count}`);
+
+/**
+ * How this system writes its data, read off the loaded files rather than written down.
+ *
+ * Every convention here is one an agent had to reverse-engineer on The Old World before it could
+ * write a single node: where the special rules hang, how a parameterised rule is spelled, that
+ * chariot crew are typed 'crew', which category gates the magic items, what the per-thousand
+ * cap looks like in full. None of it is in the format docs because none of it is the format --
+ * it is how one repository chose to use it. Counting it is cheap; guessing it is not.
+ */
+function conventionsReport(targets: Catalogue[]) {
+  const files = targets.filter((c) => !c.isGameSystem());
+  const scope = files.length ? files : targets;
+  const report: Record<string, unknown> = { catalogues: scope.map((c) => c.name) };
+
+  const rulesWhere: Counter = new Map();
+  const groupNames: Counter = new Map();
+  const typesByDepth: Counter = new Map();
+  const paramExamples: Array<Record<string, unknown>> = [];
+  const commentTags: Counter = new Map();
+  const categoryNames: Counter = new Map();
+  let units = 0;
+  let firstUnit: NodeLike | undefined;
+  const ids: string[] = [];
+
+  const typeOf = (n: NodeLike) => ((n as { target?: NodeLike }).target ?? n) as NodeLike & { type?: string };
+  for (const catalogue of scope) {
+    const roots = [
+      ...((catalogue.entryLinks ?? []) as unknown as NodeLike[]),
+      ...((catalogue.selectionEntries ?? []) as unknown as NodeLike[]),
+    ];
+    for (const category of (catalogue.categoryEntries ?? []) as unknown as NodeLike[])
+      bump(categoryNames, category.name ?? "?");
+    for (const root of roots) {
+      const target = typeOf(root);
+      if (target.type !== "unit") continue;
+      units += 1;
+      firstUnit ??= root;
+      if (ids.length < 3 && target.id) ids.push(target.id);
+      const census = (node: NodeLike, prefix: string, depth: number) => {
+        const record = node as NodeLike & {
+          infoGroups?: Array<NodeLike & { infoLinks?: NodeLike[] }>;
+          infoLinks?: NodeLike[];
+          rules?: NodeLike[];
+          selectionEntries?: NodeLike[];
+          type?: string;
+        };
+        for (const group of record.infoGroups ?? []) {
+          bump(rulesWhere, `${prefix}.infoGroups[].infoLinks`, group.infoLinks?.length ?? 0);
+          bump(groupNames, group.name ?? "?");
+          for (const link of group.infoLinks ?? []) {
+            const mods = (link as { modifiers?: ModifierNode[] }).modifiers ?? [];
+            const pure = mods.length > 0 && mods.every((m) => m.field === "name");
+            // The cleanest example wins: a link whose only modifier is the "(X)" suffix.
+            if (pure && !paramExamples.some((e) => e.pure)) {
+              paramExamples.unshift({ pure, on: `${prefix}: ${labelOf(node)}`, link: toJson(link) });
+            } else if (!pure && mods.some((m) => m.field === "name") && !paramExamples.length) {
+              paramExamples.push({ pure, on: `${prefix}: ${labelOf(node)}`, link: toJson(link) });
+            }
+          }
+        }
+        const ruleLinks = (record.infoLinks ?? []).filter(
+          (l) => l.editorTypeName === "ruleLink" || isRuleLike((l as { target?: NodeLike }).target),
+        );
+        if (ruleLinks.length) bump(rulesWhere, `${prefix}.infoLinks(rule-like)`, ruleLinks.length);
+        if (record.rules?.length) bump(rulesWhere, `${prefix}.rules`, record.rules.length);
+        if (depth < 3) {
+          for (const child of record.selectionEntries ?? []) {
+            const type = (child as { type?: string }).type ?? "(no type)";
+            bump(typesByDepth, `depth ${depth + 1}: ${type}`);
+            census(child, type === "model" ? "model" : type, depth + 1);
+          }
+        }
+      };
+      census(target, "unit", 0);
+    }
+    // Comment tags: what scripts stamp on what they write. Counted over logic and link arrays
+    // only; a comment on an entry is a note to a person, not a tag.
+    for (const node of search(catalogue, "is:*", { includeImports: false })) {
+      const key = (node as NodeLike).parentKey ?? "";
+      if (!LOGIC.has(key) && key !== "constraints" && key !== "categoryLinks" && key !== "costs") continue;
+      const comment = (node as Commented).comment;
+      if (comment) bump(commentTags, `${key}: "${comment}"`);
+    }
+  }
+
+  report.units = units;
+  report.rulesAttachedAt = top(rulesWhere, 6);
+  report.infoGroupNames = top(groupNames, 5);
+  report.entryTypesByDepth = top(typesByDepth, 12);
+  report.parameterisedRuleExample = paramExamples[0]
+    ? { on: paramExamples[0].on, link: paramExamples[0].link }
+    : "none found: rules are linked without name modifiers";
+  report.idStyle = ids;
+  report.scriptTaggedNodes = top(commentTags, 8);
+  report.scriptTaggedNote = commentTags.size
+    ? "nr_read and json() collapse runs of these; expand:true / {collapse:false} shows them. Re-running the script that wrote them replaces its own output."
+    : undefined;
+
+  // Categories: what caps exist, and one per-N cap in full -- the shape people get wrong most.
+  const perN: Array<Record<string, unknown>> = [];
+  for (const catalogue of scope) {
+    for (const category of (catalogue.categoryEntries ?? []) as unknown as NodeLike[]) {
+      const withRepeat = [...ownModifiers(category as unknown as WithModifiers)].some((m) => m.repeats?.length);
+      if (withRepeat && perN.length < 1) perN.push({ catalogue: catalogue.name, category: toJson(category) });
+    }
+  }
+  report.categories = { count: categoryNames.size, names: [...categoryNames.keys()].slice(0, 30) };
+  report.perNCapExample = perN[0] ?? "none in these catalogues";
+
+  // Faction gating: categories in the game system named for factions, and whether this file
+  // links one -- the mechanism shared item files use to show per-faction options.
+  const gst = catalogues().find((c) => c.isGameSystem());
+  const factionCategories = ((gst?.categoryEntries ?? []) as unknown as NodeLike[])
+    .map((c) => c.name ?? "")
+    .filter((name) => /^faction\b/i.test(name));
+  if (factionCategories.length) {
+    const linked = new Set<string>();
+    for (const catalogue of scope) {
+      for (const root of (catalogue.entryLinks ?? []) as unknown as Array<NodeLike & { categoryLinks?: NodeLike[] }>) {
+        // The link may sit on the root link or on the shared unit it points at.
+        const target = (root as { target?: NodeLike & { categoryLinks?: NodeLike[] } }).target;
+        for (const holder of [root, target]) {
+          for (const link of holder?.categoryLinks ?? [])
+            if (/^faction\b/i.test(link.name ?? "")) linked.add(link.name!);
+        }
+      }
+    }
+    report.factionGating = {
+      gameSystemCategories: factionCategories.length,
+      thisFileLinks: [...linked],
+      how: "shared files test 'ancestor is <Faction: X>' to show a faction's items; a new faction file needs its own category and links on its root entries",
+    };
+  }
+
+  // Profile types, by name: names are enough to add a profile.
+  const profileTypes = new Map<string, string[]>();
+  for (const catalogue of scope) {
+    for (const type of catalogue.iterateProfileTypes()) {
+      if (type.name && !profileTypes.has(type.name)) {
+        profileTypes.set(
+          type.name,
+          (type.characteristicTypes ?? []).map((c) => c.name ?? "?"),
+        );
+      }
+    }
+  }
+  report.profileTypes = Object.fromEntries(profileTypes);
+
+  if (firstUnit) {
+    report.exampleUnit = {
+      tree: tree(firstUnit, { depth: 3, exclude: ["Magic Items", "Magic Standards"] }),
+      firstModelRaw: (() => {
+        const target = typeOf(firstUnit!) as NodeLike & { selectionEntries?: NodeLike[] };
+        const model = (target.selectionEntries ?? []).find((c) => (c as { type?: string }).type === "model");
+        return model ? toJson(model, { depth: 1, exclude: ["Magic Items"] }) : undefined;
+      })(),
+    };
+  }
+  return report;
+}
+
+// #endregion
+
 const TOOLS: WebMcpTool[] = [
   {
     name: "nr_docs",
     description: `READ THIS FIRST, before any other nr_ tool. With no argument: how to drive the
-editor safely, plus the index of the official documentation. With page: that page's text, fetched
-live from the wiki -- so you can read the docs whether or not you have web access of your own.`,
+editor safely, plus the index of the documentation. With page: that page's text. Pages under
+"editor/" describe these tools' own API (eval scope, data shapes, the loaded system's
+conventions) and live here; the rest is the official wiki, fetched live -- so you can read the
+docs whether or not you have web access of your own.`,
     inputSchema: {
       type: "object",
       properties: {
         page: {
           type: "string",
-          description: 'A path from the index, e.g. "guide/concepts/modifiers", or "all"',
+          description:
+            'A path from the index: "editor/eval", "editor/writing", "editor/conventions", "guide/concepts/modifiers", ... or "all"',
+        },
+        catalogue: {
+          type: "string",
+          description: 'For "editor/conventions": which catalogue to read (default: all loaded)',
         },
       },
     },
     execute: async (args) => {
       const page = asString(args.page);
+      const local = page ? EDITOR_PAGES[page] : undefined;
+      if (local) return { page, text: local.text };
+      if (page === "editor/conventions") return conventionsReport(pick(asString(args.catalogue)));
       if (page && page !== "all") return { page, text: await docPage(page) };
 
       let pages: string[] = [];
@@ -823,17 +1551,37 @@ live from the wiki -- so you can read the docs whether or not you have web acces
       } catch (error) {
         note = `Could not reach ${DOCS_SITE} (${error}). The briefing below still applies, but read the docs before editing data.`;
       }
+      const editor = {
+        ...Object.fromEntries(Object.entries(EDITOR_PAGES).map(([path, { about }]) => [path, about])),
+        "editor/conventions": "how the LOADED system writes its data, with live examples (also nr_conventions)",
+      };
       if (page === "all") {
         if (!pages.length) throw new Error(note);
         const wanted = pages.filter((path) => !NOT_ABOUT_DATA.has(path));
         const texts = await Promise.all(wanted.map(async (path) => `\n\n===== ${path} =====\n${await docPage(path)}`));
         return {
           briefing: BRIEFING,
-          docs: texts.join(""),
+          docs:
+            Object.entries(EDITOR_PAGES)
+              .map(([path, { text }]) => `\n\n===== ${path} =====\n${text}`)
+              .join("") + texts.join(""),
           skipped: pages.filter((path) => NOT_ABOUT_DATA.has(path)),
         };
       }
-      return { briefing: BRIEFING, site: DOCS_SITE, pages, note };
+      return {
+        briefing: BRIEFING,
+        readFirst: [
+          "editor/conventions",
+          "editor/writing",
+          "editor/eval",
+          "guide/concepts/modifiers",
+          "guide/recipes/army-limits",
+        ],
+        editor,
+        site: DOCS_SITE,
+        pages,
+        note,
+      };
     },
   },
   {
@@ -904,14 +1652,13 @@ when a big system takes too long.`,
 
       if (only) {
         const files = system.getAllCatalogueFiles().map(getDataObject);
-        const wanted = only.toLowerCase();
-        const file =
-          files.find((f) => f.id === only) ?? files.find((f) => (f.name ?? "").toLowerCase().includes(wanted));
-        if (!file) {
-          throw new Error(
-            `No catalogue matching "${only}" in ${row.name}. Files: ${files.map((f) => f.name).join(", ")}`,
-          );
-        }
+        const file = resolveOne(
+          files,
+          only,
+          (f) => f.id,
+          (f) => f.name ?? "",
+          `catalogue in ${row.name}`,
+        );
         const loaded = await system.loadCatalogue({ targetId: file.id });
         // Same order open_catalogue uses: the root has to be processed before its imports exist.
         loaded.processForEditor();
@@ -1166,10 +1913,22 @@ reports confident nonsense.`,
     },
     execute: (args) => {
       const costs = new Map<string, string>();
+      const profileTypes = new Map<string, { id: string; name: string; characteristics: string[] }>();
       for (const catalogue of pick(asString(args.catalogue))) {
         for (const cost of catalogue.iterateCostTypes()) if (cost.id) costs.set(cost.id, cost.name ?? cost.id);
+        for (const type of catalogue.iterateProfileTypes()) {
+          if (!type.id || profileTypes.has(type.id)) continue;
+          profileTypes.set(type.id, {
+            id: type.id,
+            name: type.name ?? type.id,
+            characteristics: (type.characteristicTypes ?? []).map((c) => c.name ?? c.id ?? "?"),
+          });
+        }
       }
       return {
+        // Names are enough when adding a profile: give typeName and the characteristic names
+        // and the Fix-profiles hook fills every typeId in as the node lands.
+        profileTypes: [...profileTypes.values()],
         field: {
           fixed: ["selections", "forces", "associations"],
           costs: [...costs].map(([id, name]) => ({ id, name })),
@@ -1284,7 +2043,15 @@ refs counts links pointing here; mentions counts conditions naming it by id (sco
 modifiers whose value is it. Both zero on a shared entry means nothing uses it. To see who they
 are: nr_find "refs:*[...]" or "mentions:*[...]".
 
-Fields holding an id answer as {id, name}, so a scope or childId reads as the thing it names.`,
+Fields holding an id answer as {id, name}, so a scope or childId reads as the thing it names.
+
+Runs of siblings that share a comment -- the caps and modifiers a script stamps onto every root
+entry -- come back as one {collapsed} line each; expand:true lists them. A catalogue id answers
+with a table of contents (counts and names per array) rather than every row.
+
+raw:true answers with the node AS THE FILE STORES IT instead of the projection above: the exact
+keys add() and merge() take, logic arrays whole, entry arrays down to "depth" (default 1). Read a
+node raw when you are about to write one like it.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -1297,12 +2064,18 @@ Fields holding an id answer as {id, name}, so a scope or childId reads as the th
             '"selectionEntries[0].constraints[1]" to go further. This is how nodes with no id ' +
             "-- conditions, modifiers, constraints -- are read.",
         },
+        raw: { type: "boolean", description: "The file shape, ready to feed back to add()/merge()" },
+        depth: { type: "number", description: "With raw: how deep entry arrays go (default 1)" },
+        expand: { type: "boolean", description: "Do not collapse comment-tagged runs of siblings" },
       },
       required: ["id"],
     },
     execute: (args) => {
       const id = requireString(args.id, "id");
       const at = asString(args.at);
+      const raw = args.raw === true;
+      const expand = args.expand === true;
+      const depth = asNumber(args.depth, 1);
       // index is per-catalogue and holds only that file's own nodes, so more than one hit really
       // is the same id in two files rather than a node seen through an import. A catalogue is
       // not in its own index -- nothing indexes the root -- so it needs asking about separately,
@@ -1316,7 +2089,9 @@ Fields holding an id answer as {id, name}, so a scope or childId reads as the th
       const read = (catalogue: Catalogue) => {
         const found = (catalogue.id === id ? catalogue : catalogue.index![id]) as unknown as NodeLike;
         const node = at ? resolveAt(found, at) : found;
-        return readNode(node as Base & WithErrors, catalogue);
+        if (raw) return toJson(node, { depth, collapse: !expand });
+        if (node === (catalogue as unknown as NodeLike)) return catalogueSummary(catalogue);
+        return readNode(node as Base & WithErrors, catalogue, undefined, expand);
       };
       if (holders.length === 1) return read(holders[0]); // Same id, different files, and often different rules under it -- which is worth seeing
       // rather than choosing between blind, so both come back.
@@ -1340,15 +2115,21 @@ git commit, not a save, so leave revision alone unless they ask.`,
       required: ["catalogue"],
     },
     execute: async (args) => {
-      const target = pick(requireString(args.catalogue, "catalogue"))[0];
+      const target = pickOne(requireString(args.catalogue, "catalogue"));
       const mode = asString(args.incrementRevision) ?? "no";
       if (!REVISION_MODES.includes(mode as RevisionMode)) {
         throw new Error(`"incrementRevision" must be one of ${REVISION_MODES.join(", ")}`);
       }
-      const system = target.gameSystemId ? store().gameSystems[target.gameSystemId] : undefined;
+      // A game system file has no gameSystemId: it IS the system, keyed by its own id.
+      const system = store().gameSystems[target.gameSystemId ?? target.id];
       if (!system) throw new Error(`No open system for catalogue "${target.name}"`);
       const bumped = await store().save_catalogue(system, target, mode as RevisionMode);
-      return { saved: target.name, revision: target.revision, revisionIncremented: bumped };
+      return {
+        saved: target.name,
+        path: getDataObject(target).fullFilePath ?? "(browser storage)",
+        revision: target.revision,
+        revisionIncremented: bumped,
+      };
     },
   },
   {
@@ -1408,74 +2189,20 @@ git commit, not a save, so leave revision alone unless they ask.`,
   {
     name: "nr_eval",
     description: `Run JavaScript in the editor page: the write tool, and the way to ask the data a
-question no other tool answers. The whole edit goes in one call, and the whole call is one undo
-entry. Body of an async function -- use return, not an expression.
+question no other tool answers. Body of an async function -- use return, not an expression. One
+call is one undo entry, so keep a whole edit in one call.
 
-READING
-  find(query, catalogue?, options?)  the nr_find language, returning LIVE nodes.
-                                     catalogue is a name/id substring, omitted means all loaded.
-                                     options is {path, includeImports, followLinks}.
-  query(query, where?, options?)     the same search as a store action; where takes Catalogue
-                                     objects rather than a name.
-  row(node)                          -> {id, name, type, catalogue, path}, plus in:{id,name,type}
-                                     on a node with no id of its own. Nodes are cyclic, so
-                                     return row(n), never n.
-  owner(node)                        the LIVE node a row's "in" names: nearest ancestor that is a
-                                     tree row, walking past modifiers, conditionGroups and
-                                     repeats. owner(condition) is the entry it gates, not the
-                                     modifier holding it. Compose it: row(owner(n)). Use this
-                                     instead of hand-rolling a while(p.parent) walk -- surveys
-                                     that group findings by entry all need it, and the hand-
-                                     rolled version picks a different ancestor set every time.
-  label(node, extra?)                the text the tree shows, incl. for conditions/modifiers.
-  $catalogues                        every loaded Catalogue, as an array.
-  $catalogue                         the one open in front of the user.
-  $store                             for state: unsavedCount, gameSystems, undoStack, selections.
-  $h                                 bs_helpers, also spread into scope unqualified (groupBy,
-                                     sortBy, countKeys, clone, forEachParent...). Reach through
-                                     $h for the three a store action shadows: add, remove, copy.
-  help()                             every name actually in scope right now, grouped. The scope
-                                     is built from the live store, so this is the real list.
-
-TO WALK THE DATA use find("is:*"), or find("", undefined, {path: "sharedProfiles"}) for one array.
-Do NOT iterate catalogue.index: it is keyed by id, so it holds only nodes that have one -- on a
-real system that is a few percent of the tree and NONE of the conditions. Counting off .index
-gives a confident wrong answer rather than an error.
-
-WRITING -- every write goes through one of these, all undoable, all taking their target
-explicitly. Omit the target and they fall back to the editor's current selection, which is
-rarely what you meant:
-  set_field(node, key, value)                 one field on one node
-  edit({name, hidden, ...}, node | nodes)     several fields, on one node or many
-  add(data, childKey, parent | parents)       childKey is an array name ("sharedProfiles");
-                                              data may be one object or an array
-  remove(node | nodes)
-  move(node, fromCatalogue, toCatalogue, "root" | "shared")
-  merge(node, data, {key}?)                   below
-  merge_duplicates(keep, dupes)               below
-  undo() / redo()
-Each is ONE undo entry however many nodes it touched.
-
-Do NOT use add_node / del_node / the *_child aliases: that older script-facing pair writes
-without recording anything, so the change cannot be undone. Same for assigning a property
-directly (node.name = "x") -- it skips the changed() bookkeeping, so the catalogue never reads
-as unsaved, "Save All" skips the file, and the edit is gone on reload.
-duplicate() takes no arguments and create(key, data?) ignores its parent: both act on the
-editor's selection. Prefer add().
-
-merge(node, data, {key}) applies generated data onto an existing node instead of deleting and
-re-adding it, so ids -- and every link pointing at them -- survive a regeneration. It updates
-what matches, adds what is new, and NEVER deletes: what the data no longer mentions comes back
-as .extra for you to remove() if you want it gone. Only arrays the data mentions are touched.
-Returns {updated, added, extra}. Children match on id when the data has ids, otherwise on
-typeName/name; pass key to decide yourself.
-
-merge_duplicates(keep, dupes) is the unrelated one: points everything referring to the dupes at
-keep and deletes them. Which entries are duplicates is yours to decide -- find() and groupBy()
-are what that is for.
-
-Return a JSON-serialisable value. The result carries the validation delta, so a write that
-breaks something shows up in the same call.`,
+The full API -- signatures, return values, quirks -- is nr_docs page "editor/eval"; the shapes
+data takes when written are "editor/writing". Read both before the first write. In scope:
+  read   find(query, catalogue?, opts?)   json(node, {depth, exclude, collapse})
+         tree(node | catalogue, {depth, exclude, rules, shared})   rules(entry)
+         row(node)  owner(node)  label(node)  $catalogues  $catalogue  $store  $h  help()
+  write  set_field(node, key, value)   edit({...}, node | nodes)   add(data, childKey, parent)
+         remove(node | nodes)   move(node, from, to, "root" | "shared")   merge(node, data)
+         merge_duplicates(keep, dupes)   undo()   redo()
+Catalogue names are matched exactly (id, name, or a substring that fits ONE file); an ambiguous
+name throws rather than picking. Return plain data -- live nodes are turned into rows for you.
+The result reports the diagnostics delta (new and fixed findings) and which files are unsaved.`,
     inputSchema: {
       type: "object",
       properties: { code: { type: "string", description: "Async function body" } },
@@ -1484,7 +2211,7 @@ breaks something shows up in the same call.`,
     execute: async (args) => {
       const code = requireString(args.code, "code");
       const $store = store();
-      const before = countErrors();
+      const before = errorSnapshot();
 
       // Actions are plain functions on the store instance, already bound; taking them at call
       // time means a new action is in scope the moment it is added, which is the point of
@@ -1511,12 +2238,30 @@ breaks something shows up in the same call.`,
           search(pick(catalogue), query, options ?? {}),
         row,
         owner: ownerOf,
+        label: labelOf,
+        json: (node: NodeLike, options?: JsonOptions) => toJson(node, options ?? {}),
+        tree: (node: NodeLike | Catalogue, options?: TreeOptions) => tree(node, options ?? {}),
+        rules: rulesOf,
         $h: helpers,
         // The scope is assembled from the live store, so a written-down list would drift the
         // first time an action is added. This one cannot.
         help: () => ({
           writes: ["set_field", "edit", "add", "remove", "merge", "merge_duplicates", "move", "undo", "redo"],
-          reads: ["find", "query", "row", "owner", "label", "$catalogue", "$catalogues", "$store", "$h"],
+          reads: [
+            "find",
+            "query",
+            "json",
+            "tree",
+            "rules",
+            "row",
+            "owner",
+            "label",
+            "$catalogue",
+            "$catalogues",
+            "$store",
+            "$h",
+          ],
+          docs: 'nr_docs page "editor/eval" and "editor/writing"',
           storeActions: Object.keys(scope)
             .filter((key) => key in $store)
             .sort(),
@@ -1536,12 +2281,150 @@ breaks something shows up in the same call.`,
       const result = await fn(...names.map((name) => scope[name]));
       $store.collapse_undo(stackStart, "script");
 
-      const after = countErrors();
       return {
-        result,
-        errors: before === after ? after : `${before} -> ${after}`,
+        result: scriptResult(result),
+        ...errorDelta(before),
         unsaved: catalogues()
           .filter((c) => $store.get_catalogue_state(c)?.unsaved)
+          .map((c) => c.name),
+      };
+    },
+  },
+  {
+    name: "nr_conventions",
+    description: `How the LOADED system writes its data, read off the files: where special rules
+attach and what the infoGroup is called, how a parameterised rule ("Impact Hits (2)") is
+spelled, which entry types appear at which depth (crew, mount...), what a per-N cap looks like
+in full, which category gates the shared item files per faction, the profile types by name,
+and what scripts have stamped onto every entry. Ends with one real unit as a tree and one
+model raw. Read it before the first write into a system you have not edited before.`,
+    inputSchema: {
+      type: "object",
+      properties: { catalogue: { type: "string", description: "Name or id; omit for all loaded catalogues" } },
+    },
+    execute: (args) => conventionsReport(pick(asString(args.catalogue))),
+  },
+  {
+    name: "nr_scripts",
+    description: `List the scripts loaded for a system, or read one's source.
+
+A script is the persistent form of nr_eval: a .js file in the system's own \`scripts\` folder that
+the editor loads every time that system is opened. Use one when the answer is a check or a fix the
+user will want again -- a rule the built-in diagnostics do not cover, a bulk edit they repeat every
+release. Use nr_eval for a one-off; a file the user has to maintain is not free.
+
+Scripts contribute more than a Run button: \`hooks\` add right-click, toolbar and panel entries,
+and \`diagnostics\` add checks that show in the tree and the error list like the built-in ones.
+Those are live from the moment the system loads, whether or not anyone ran the script.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        system: { type: "string", description: "Name or id; omit when only one is open" },
+        script: { type: "string", description: "Name or file path: returns its source too" },
+      },
+    },
+    execute: async (args) => {
+      const system = await scriptSystem(asString(args.system));
+      const scripts = await store().scripts.load(system);
+      const wanted = asString(args.script);
+      if (wanted) {
+        const found = store().scripts.find_script(wanted);
+        if (!found) throw new Error(`No script named "${wanted}". Loaded: ${scripts.map((o) => o.name).join(", ")}`);
+        return {
+          ...scriptRow(found),
+          // Built-ins are bundled .ts and have no file to read; nr_docs points at them on GitHub.
+          source: found.path ? (await readFile(found.path)).data : "built in, not readable from here",
+        };
+      }
+      return {
+        folder: store().scripts.script_folder(system) ?? "this system has no folder on disk",
+        scripts: scripts.map(scriptRow),
+      };
+    },
+  },
+  {
+    name: "nr_script_write",
+    description: `Create or replace a script file in the system's \`scripts\` folder, and load it.
+
+This writes a file into the user's data folder and it stays there, so do it when they asked for a
+script -- not as a way to run something once. Overwrites the file of the same name outright.
+
+The file is a standalone ES module, default-exporting {name, description, arguments, run, hooks,
+diagnostics}. It is loaded on its own, so imports must already be bundled into it; talk to the
+editor through the global \`$store\` (the same actions nr_eval lists) and to disk through \`$node\`.
+
+  export default {
+    name: "Name shown on the Scripts page",
+    description: "One line",
+    arguments: [{ name: "catalogues", type: "catalogue[]" }],
+    run(catalogues) { return ["<b>Found:</b>", catalogues.flatMap(c => ...)] },
+  }
+
+Argument types: catalogue, catalogue[], string, text, number, boolean, select (with \`options\`),
+file, selection, selection[]. run() may return a number, a string (rendered as html), a node, an
+array of nodes, [node, label] pairs, or an array of any of those.
+
+Errors are reported back rather than thrown, so a syntax error comes back as \`loaded: false\` with
+the message. Fix it and write again.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: 'File name, e.g. "check-points.js". No path.' },
+        code: { type: "string", description: "The whole module" },
+        system: { type: "string", description: "Name or id; omit when only one is open" },
+      },
+      required: ["file", "code"],
+    },
+    execute: async (args) => {
+      const system = await scriptSystem(asString(args.system));
+      const entry = await store().scripts.write_script(
+        system,
+        requireString(args.file, "file"),
+        requireString(args.code, "code"),
+      );
+      return { loaded: !entry.error, ...scriptRow(entry) };
+    },
+  },
+  {
+    name: "nr_script_run",
+    description: `Run one script's run() and return what it produced. One call is one undo entry.
+
+Arguments are given by name (or positionally) and resolved by their declared type the way the Run
+panel resolves them: a "catalogue" is a name or id and is loaded and processed first, "catalogue[]"
+defaults to every catalogue in the system, and "selection" is whatever the user has selected in
+their tree right now. Anything not given falls back to the argument's default. Call nr_scripts
+first to see what a script takes -- a script may edit hundreds of nodes, and the arguments are
+usually what decides how many.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        script: { type: "string", description: "Name or file path, from nr_scripts" },
+        args: { type: "object", description: "By argument name; an array is taken positionally" },
+        system: { type: "string", description: "Name or id; omit when only one is open" },
+      },
+      required: ["script"],
+    },
+    execute: async (args) => {
+      const system = await scriptSystem(asString(args.system));
+      const before = errorSnapshot();
+      // A "catalogue[]" argument loads the whole system, so findings appear that were always
+      // there. The delta is keyed per finding, so those show as "new" only if genuinely new.
+      const loadedBefore = catalogues().length;
+      const result = await store().scripts.run_script_with_args(
+        system,
+        requireString(args.script, "script"),
+        args.args as any[] | Record<string, unknown> | undefined,
+      );
+      // invoke() reports and returns what the script threw rather than rethrowing, so that the
+      // Run panel can render it. Here it is a failed call.
+      if (result instanceof Error) throw result;
+      const opened = catalogues().length - loadedBefore;
+      return {
+        result: scriptResult(result),
+        ...errorDelta(before),
+        ...(opened ? { note: `${opened} more catalogues were loaded by the script's arguments` } : {}),
+        unsaved: catalogues()
+          .filter((c) => store().get_catalogue_state(c)?.unsaved)
           .map((c) => c.name),
       };
     },
@@ -1588,10 +2471,6 @@ function nudge(name: string): string | undefined {
     return "Before you finish: tell the user which tools were missing or awkward.";
   }
   return undefined;
-}
-
-function countErrors(): number {
-  return catalogues().reduce((total, catalogue) => total + errorsOf(catalogue).length, 0);
 }
 
 export default defineNuxtPlugin(() => {
@@ -1665,7 +2544,9 @@ function start() {
   // from the relay package). It must be a real <script src> — the embed resolves widget.html
   // relative to its own src — and it is injected after registration so the tools are there already.
   const embed = document.createElement("script");
-  embed.src = "/webmcp/embed.js";
+  // Resolved against <base>, not the origin: a leading-slash "/webmcp/..." lands on the drive root
+  // under Electron's file:// and outside the baseURL on GitHub Pages, and the embed never loads.
+  embed.src = new URL("webmcp/embed.js", document.baseURI).href;
   embed.async = true;
   // The relay's own --port is configurable, so allow ?webmcpPort= rather than pinning its default.
   const params = new URLSearchParams(location.search);

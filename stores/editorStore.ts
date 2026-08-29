@@ -150,6 +150,8 @@ export interface CatalogueState {
   changed: boolean;
   unsaved: boolean;
   incremented?: boolean;
+  /** Where the undo stack stood when this catalogue was last saved; undoing back to it means clean. */
+  savedUndoPos?: number;
   savingPromise?: Promise<any>;
   isChangedOnDisk?: boolean;
 }
@@ -640,6 +642,7 @@ export const useEditorStore = defineStore("editor", {
         this.unsavedCount--;
         state.unsaved = false;
       }
+      if (state) state.savedUndoPos = this.undoStackPos;
       return catalogue.revision !== revision;
     },
     async prompt_revision(catalogue: Catalogue | GameSystemFiles) {
@@ -933,6 +936,21 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.undo();
         this.undoStackPos--;
+        this.sync_unsaved_with_undo();
+      }
+    },
+    /**
+     * A catalogue whose save position the undo stack has come back to is byte-for-byte what is
+     * on disk, so it stops reading as unsaved. Only that direction: moving away from the saved
+     * position cannot tell whether the entries crossed touched this file or another one, and
+     * those entries already flagged it through changed() when they were made.
+     */
+    sync_unsaved_with_undo() {
+      for (const state of Object.values(this.unsavedChanges)) {
+        if (state.unsaved && state.savedUndoPos === this.undoStackPos) {
+          state.unsaved = false;
+          this.unsavedCount--;
+        }
       }
     },
     can_redo() {
@@ -944,6 +962,7 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.redo();
         this.undoStackPos++;
+        this.sync_unsaved_with_undo();
       }
     },
     async cut(event?: ClipboardEvent) {
