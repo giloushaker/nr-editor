@@ -8,7 +8,7 @@
  * What is worth checking here is the text a rule produces: a diagnostic that says the wrong
  * thing is worse than one that says nothing, and nothing else in the repo reads these strings.
  */
-import { DIAGNOSTICS } from "./bs_diagnostics";
+import { DIAGNOSTICS, registerDiagnostic, unregisterDiagnostic } from "./bs_diagnostics";
 
 let failures = 0;
 function assert(condition: boolean, msg: string) {
@@ -73,6 +73,37 @@ console.log("no-target");
   assert(
     check(link({ targetId: "595-bbd0" }), () => ({})) === "(infoLink) Mark of Chaos Undivided has no target",
     "a lookup result that is not a node is ignored rather than throwing"
+  );
+}
+
+/**
+ * A script's diagnostics go into this same array, so what matters is that adding one lands it
+ * where the engine will actually run it, that re-adding the same id replaces rather than
+ * duplicates (a watched script file reloads on every save), and that removing it puts the list
+ * back exactly as it was.
+ */
+console.log("\nregister / unregister");
+{
+  const before = DIAGNOSTICS.length;
+  const rule = { id: "check-only", applies: () => true, check: () => "nope" };
+
+  registerDiagnostic(rule);
+  assert(DIAGNOSTICS.length === before + 1, "registering adds one rule");
+  assert(DIAGNOSTICS[DIAGNOSTICS.length - 1] === rule, "the rule is in the list the engine runs");
+
+  const replacement = { ...rule, check: () => "different" };
+  registerDiagnostic(replacement);
+  assert(DIAGNOSTICS.length === before + 1, "re-registering the same id replaces rather than appends");
+  assert(DIAGNOSTICS.filter((o) => o.id === "check-only")[0] === replacement, "the replacement is what stays");
+
+  assert(unregisterDiagnostic("check-only") === replacement, "unregistering hands back the rule it removed");
+  assert(DIAGNOSTICS.length === before, "unregistering leaves the list as it was");
+  assert(unregisterDiagnostic("check-only") === undefined, "unregistering an unknown id is a no-op");
+
+  // A script's rule must not be able to displace a built-in by claiming its id and leaving.
+  assert(
+    DIAGNOSTICS.some((o) => o.id === "no-target"),
+    "the built-in rules are still registered afterwards"
   );
 }
 

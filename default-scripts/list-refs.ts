@@ -3,7 +3,9 @@ import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main
 
 export default {
     name: "List used imports",
-    description: "Lists what a catalogue uses from an imported catalogue, can used to find out if an import is not necesarry",
+    description:
+        "Lists what a catalogue uses from an imported catalogue.\n" +
+        "Use it to find out whether an import is still necessary.",
     arguments: [
         {
             name: "catalogue",

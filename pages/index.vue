@@ -89,7 +89,7 @@
         </div>
       </template>
     </SplitView>
-    <Teleport to="#titlebar-content" v-if="has_unsaved_changes && $route.name == 'index'">
+    <Teleport to="#titlebar-content" v-if="has_unsaved_changes && route_is_index">
       <template v-if="has_unsaved_changes">
         <button class="bouton save ml-10px !w-100px" @click="saveAll">Save All</button>
       </template>
@@ -112,29 +112,13 @@ import CataloguesCreate from "~/components/my_catalogues/CataloguesCreate.vue";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
-import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
-import { hasRoot } from "~/electron/web_fs";
+import { closeWindow, showMessageBox } from "~/electron/node_helpers";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
-import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import type { GithubIntegration } from "~/assets/shared/battlescribe/github";
-function sanitizeFileName(fileName: string) {
-  // Remove invalid characters completely
-  let clean = fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, "");
-
-  // Trim leading/trailing spaces and dots (not allowed in Windows)
-  clean = clean.trim().replace(/^[. ]+|[. ]+$/g, "");
-
-  // If the filename becomes empty, fallback
-  if (clean.length === 0) {
-    return null;
-  }
-
-  return clean;
-}
 export default defineComponent({
   components: {
     CataloguesDetail,
@@ -194,6 +178,10 @@ export default defineComponent({
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   computed: {
+    /** See catalogue.vue's route_is_catalogue: `$route` is frozen per page, `$router` is not. */
+    route_is_index() {
+      return this.$router.currentRoute.value.name === "index";
+    },
     has_unsaved_changes() {
       const changes = this.store.unsavedChanges;
       for (const key in changes) {
@@ -317,48 +305,9 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
         },
       } as any;
     },
-    getCatExtension(gstPath: string): string {
-      switch (getExtension(gstPath)) {
-        case "json":
-          return "json";
-        case "gstz":
-          return "catz";
-        default:
-        case "gst":
-          return "cat";
-      }
-    },
     async createCatalogue(data: BSIDataCatalogue) {
       const system = this.store.get_system(data.catalogue.gameSystemId);
-      const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
-      copy.catalogue.battleScribeVersion = "2.03";
-
-      const fileName = sanitizeFileName(copy.catalogue.name);
-      if (!fileName) {
-        throw new Error("Cannot create catalogue: couldn't create filename using provided name (only invalid chars)");
-      }
-      if (electron && !system.gameSystem) {
-        throw new Error("Cannot create catalogue: no game system");
-      }
-      const systemPath = system.gameSystem ? getDataObject(system.gameSystem).fullFilePath : undefined;
-      if (electron && !systemPath) {
-        throw new Error("Cannot create catalogue: game system has no path set");
-      }
-      if (systemPath && (electron || (await hasRoot(systemPath)))) {
-        const folder = dirname(systemPath);
-        getDataObject(copy).fullFilePath = `${folder}/${fileName}.${this.getCatExtension(systemPath)}`;
-      }
-      system.setCatalogue(copy);
-      this.cataloguesStore.setEdited(getDataDbId(copy), true);
-      this.store.set_catalogue_changed(copy, true);
-      this.store.get_catalogue_state(copy).incremented = true;
-      this.selectedItem = copy;
-      if (!electron) {
-        db.catalogues.put({
-          content: copy,
-          id: getDataDbId(data),
-        });
-      }
+      this.selectedItem = await this.store.create_catalogue(system, data);
       this.mode = "edit";
     },
     deleteCatalogue(data: BSIDataCatalogue | BSIDataSystem) {

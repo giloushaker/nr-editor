@@ -133,6 +133,10 @@ export default defineNuxtConfig({
       { entry: "electron/preload.js" }
     ],
   },
+  // windi re-parses every <style> block through its own CSS parser, which flattens scss nesting and
+  // reorders rules -- that pushed rules above `@use`, which sass rejects. Nothing here uses @apply /
+  // @screen / theme(), so the transform only ever had a downside. Class scanning is unaffected.
+  windicss: { transformCSS: false },
   css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
   vite: {
     plugins: [commonjs()],
@@ -145,6 +149,22 @@ export default defineNuxtConfig({
   },
   ignore: [".release/**"],
   hooks: {
+    // @pinia/nuxt appends `import.meta.hot.accept(acceptHMRUpdate(useXStore, import.meta.hot))` to
+    // every file that calls defineStore. Pinia's hot patch keeps only the state keys the *fresh*
+    // state object already has (patchObject: `if (!(key in newState)) continue`), and every store
+    // here is a dynamically-keyed record -- scripts/hooks/loaded, catalogues, dict, systemInfo.
+    // So a hot update emptied them, the persist plugin wrote the empty version back to
+    // localStorage, and registered scripts stopped firing with nothing saying why. Dropping the
+    // injection leaves the live store alone: a store edit no longer applies until a reload, which
+    // is what every other .ts in this app already does.
+    //
+    // Not import.meta.hot.invalidate() in its place: these stores import each other, every path
+    // out of them ends at a self-accepting .vue, and the invalidation ping-ponged between
+    // editorStore and editorUIState until the dev server drowned in it.
+    "vite:extendConfig"(config) {
+      const at = config.plugins?.findIndex((p: any) => p && p.name === "pinia:auto-hmr-registration") ?? -1;
+      if (at >= 0) config.plugins!.splice(at, 1);
+    },
     "nitro:build:public-assets"(nitro) {
       if (electron) {
         const outputDir = nitro.options.output.publicDir;

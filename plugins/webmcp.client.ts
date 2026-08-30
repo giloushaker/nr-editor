@@ -11,8 +11,11 @@ import { getFolderFolders, readFile } from "~/electron/node_helpers";
 import { permissionState } from "~/electron/web_fs";
 import { useSettingsStore } from "~/stores/settingsState";
 import type { ScriptDef } from "~/stores/scriptsStore";
-import * as helpers from "~/assets/shared/battlescribe/bs_helpers";
 import { arrayKeys, Base, getDataObject, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
+import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
+import type { BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
+import type { Router } from "vue-router";
+import { compactStringify } from "~/assets/shared/battlescribe/compact_json";
 import type { Catalogue, EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 /**
@@ -125,6 +128,9 @@ function resolveOne<T>(
   if (exact.length === 1) return exact[0] as T;
   const hits = exact.length ? exact : items.filter((item) => nameOf(item).toLowerCase().includes(lower));
   if (hits.length === 1) return hits[0] as T;
+  if (!items.length) {
+    throw new Error(`No ${what} matching "${wanted}": nothing is loaded. nr_systems lists what exists; nr_load_system opens it.`);
+  }
   if (!hits.length) throw new Error(`No ${what} matching "${wanted}". Have: ${items.map(nameOf).join(", ")}`);
   throw new Error(
     `"${wanted}" is ambiguous, it matches ${hits.length} ${what}s: ${hits
@@ -199,7 +205,25 @@ function row(node: NodeLike) {
     catalogue: node.catalogue?.name,
     path: pathOf(node),
     in: owner && { id: owner.id, name: labelOf(owner), type: owner.editorTypeName },
+    // The "at" nr_read takes, relative to "in": a row for a condition used to name the entry
+    // holding it and leave the index to be guessed.
+    at: owner && addressOf(node, owner),
   };
+}
+
+/** "modifiers[1].conditions[0]": the steps from `from` down to `node`, in nr_read's `at` syntax. */
+function addressOf(node: NodeLike, from: NodeLike): string | undefined {
+  const steps: string[] = [];
+  for (let cur = node; cur && cur !== from; cur = cur.parent as NodeLike) {
+    const parent = cur.parent as unknown as Record<string, unknown> | undefined;
+    const key = cur.parentKey;
+    if (!parent || !key) return undefined;
+    const siblings = parent[key];
+    const index = Array.isArray(siblings) ? siblings.indexOf(cur) : -1;
+    if (index < 0) return undefined;
+    steps.unshift(`${key}[${index}]`);
+  }
+  return steps.join(".") || undefined;
 }
 
 /** Only the parts these helpers touch: the engine types do not describe modifier internals. */
@@ -518,6 +542,20 @@ const NOT_ABOUT_DATA: ReadonlySet<string> = new Set([
  * written. They describe this file's own API, so they stay beside it; the wiki cannot know what
  * json() returns. "editor/conventions" is the third and is generated from the loaded data.
  */
+/** The store actions nr_eval puts in scope: exactly the ones "editor/eval" documents. */
+const STORE_ACTIONS_IN_SCOPE = [
+  "set_field",
+  "edit",
+  "add",
+  "remove",
+  "move",
+  "merge",
+  "merge_duplicates",
+  "undo",
+  "redo",
+  "query",
+] as const;
+
 const EDITOR_PAGES: Record<string, { about: string; text: string }> = {
   "editor/eval": {
     about: "everything in scope inside nr_eval: read helpers, write actions, returns, quirks",
@@ -551,9 +589,7 @@ label(node) -> string   what the tree prints, conditions and modifiers included
 query(query, catalogues[], opts)   search taking Catalogue objects rather than a name
 $catalogues   every loaded Catalogue      $catalogue   the one open in the user's window
 $store   editor state: unsavedCount, gameSystems, undoStack, undoStackPos, get_catalogue_state(c)
-$h   bs_helpers (groupBy, sortBy, countKeys, clone, generateBattlescribeId, ...), also spread
-     into scope unqualified -- except add/remove/copy, which are the store actions
-help()   the live list of names in scope
+help()   the list of names in scope
 
 WRITE -- all undoable, all taking their target explicitly. Omit it and they act on whatever the
 user has selected, which is never what you meant.
@@ -583,8 +619,8 @@ merge_duplicates(keep, dupes)   repoints every reference at keep and deletes the
 undo() / redo()   a previous nr_eval call is ONE entry however many nodes it touched
 
 DO NOT: node.x = y (skips change tracking: never marked unsaved, gone on reload);
-add_node/del_node/*_child (not undoable); create()/duplicate() (act on the selection);
-iterate catalogue.index (ids only, no conditions); count off anything but find().
+$store.add_node/del_node/*_child (not undoable); $store.create()/duplicate() (act on the
+selection); iterate catalogue.index (ids only, no conditions); count off anything but find().
 
 RESULT: return plain data; nodes anywhere in it become rows. The reply carries
 errors:{new, fixed} when the diagnostics changed, and the list of unsaved catalogues.`,
@@ -877,6 +913,14 @@ const LOGIC = new Set([
 ]);
 
 /**
+ * What a row opens in full: the logic, plus a unit's rules. An infoGroup row saying only
+ * "Special Rules, hasChildren" made every unit a two-read affair, and the second read still hid
+ * the "(2)" suffix and the hide-when-mounted gate that live in the link's modifiers. Rules are
+ * small and are what a person opens a unit to see, so they come out inline like the logic does.
+ */
+const INLINE = new Set([...LOGIC, "infoGroups", "infoLinks"]);
+
+/**
  * The nearest ancestor a person would name when asked where this node lives.
  *
  * Logic nodes have no id, so a row for one used to be a dead end: it said what the node was, and
@@ -945,7 +989,13 @@ function conciseRow(child: NodeLike, catalogue: Catalogue, key: string): ChildRo
   };
   const link = child as { targetId?: string; target?: NodeLike };
   if (link.targetId && !link.target) out.unresolved = true;
-  if (LOGIC.has(key)) {
+  // A profile row IS its statline; "Tyrant, hasChildren" said nothing a third read did not have to.
+  const characteristics = (child as { characteristics?: Array<{ name?: string; $text?: unknown }> }).characteristics;
+  if (characteristics?.length) {
+    const line = characteristics.map((c) => `${c.name ?? "?"}=${c.$text ?? ""}`).join(" ");
+    out.characteristics = line.length > 200 ? `${line.slice(0, 200)}…` : line;
+  }
+  if (INLINE.has(key)) {
     // Opened in full: its own arrays sit on the row, the same way they sit on `self`.
     for (const { key: sub, nodes } of childArrays(child)) {
       out[sub] = nodes.map((n, i) =>
@@ -1440,6 +1490,8 @@ function catalogueSummary(catalogue: Catalogue): Record<string, unknown> {
     if (!goodJsonKeys.has(key) || value === undefined) continue;
     out[key] = value;
   }
+  out.errors = errorsOf(catalogue).length;
+  out.unsaved = Boolean(store().get_catalogue_state(catalogue)?.unsaved);
   return out;
 }
 
@@ -2009,7 +2061,8 @@ when a big system takes too long.`,
       }
       if (!id) throw new Error(`Read no system out of ${row.path ?? row.name}`);
       const system = store().gameSystems[id];
-
+      keepInUrl(id);
+      if (!system) throw new Error(`"${row.name}" is not loaded. nr_load_system it first.`);
       if (only) {
         const files = system.getAllCatalogueFiles().map(getDataObject);
         const file = resolveOne(
@@ -2083,6 +2136,54 @@ when a big system takes too long.`,
         created: name,
         id: files.getId(),
         path: files.gameSystem?.gameSystem.fullFilePath ?? "(browser storage only)",
+      };
+    },
+  },
+  {
+    name: "nr_create_catalogue",
+    description: `Create an empty catalogue in a loaded system and load it. It is marked edited but NOT written
+to disk: fill it, then nr_save it. The file name is the name with invalid characters stripped; the
+extension follows the game system file (.cat, .catz or .json). Build its content with the store actions
+in nr_eval -- define shared profiles/entries once and link to them, do not paste copies from another
+catalogue.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        system: { type: "string", description: "Loaded system, by name or id" },
+        name: { type: "string" },
+        library: {
+          type: "boolean",
+          description: "true for a shared library (imported by other catalogues, not pickable as an army)",
+        },
+      },
+      required: ["system", "name"],
+    },
+    execute: async (args) => {
+      const row = await findSystem(requireString(args.system, "system"));
+      const system = loadedSystemFor(row);
+      if (!system?.gameSystem) throw new Error(`"${row.name}" is not loaded. nr_load_system it first.`);
+      const name = requireString(args.name, "name").trim();
+      if (!name) throw new Error('"name" is empty');
+      const taken = system.getAllCatalogueFiles().map(getDataObject).find((c) => c.name === name);
+      if (taken) throw new Error(`"${row.name}" already has a catalogue named "${name}" (${taken.id})`);
+      const gameSystem = system.gameSystem.gameSystem;
+      const data = await store().create_catalogue(system, {
+        catalogue: {
+          library: args.library === true,
+          id: generateBattlescribeId(),
+          name,
+          gameSystemId: gameSystem.id,
+          gameSystemRevision: gameSystem.revision,
+          revision: 1,
+        },
+      } as BSIDataCatalogue);
+      const loaded = await system.loadData(data);
+      return {
+        created: loaded.name,
+        id: loaded.id,
+        library: Boolean(loaded.library),
+        path: data.catalogue.fullFilePath ?? "(browser storage only)",
+        unsaved: true,
       };
     },
   },
@@ -2396,7 +2497,9 @@ what the link brings in, the way opening one in the tree does.
 
 Rows are one level deep. The exception is modifiers, modifierGroups, conditions, conditionGroups,
 localConditionGroups and repeats: those carry their own arrays inline, however deep, because a
-modifier shown without its conditions reads as unconditional when it is not.
+modifier shown without its conditions reads as unconditional when it is not. infoGroups and
+infoLinks open the same way, so a unit's rules -- with the "(2)" name modifier and the
+hide-when-mounted gate on each -- are on the unit's own read rather than one level down.
 
 parents is where this node hangs, nearest ancestor first, up to the catalogue. path says that in
 names; parents says it with the id of each step, so an ancestor is something to nr_read rather
@@ -2429,7 +2532,13 @@ node raw when you are about to write one like it.`,
             "-- conditions, modifiers, constraints -- are read.",
         },
         raw: { type: "boolean", description: "The file shape, ready to feed back to add()/merge()" },
-        depth: { type: "number", description: "With raw: how deep entry arrays go (default 1)" },
+        tree: {
+          type: "boolean",
+          description:
+            "One indented line per entry -- name, points, own min/max, categories, rules -- following " +
+            "links into their targets, the way a person skims a unit. For a catalogue id: every root entry.",
+        },
+        depth: { type: "number", description: "With raw: how deep entry arrays go (default 1). With tree: default 8" },
         expand: { type: "boolean", description: "Do not collapse comment-tagged runs of siblings" },
       },
       required: ["id"],
@@ -2438,6 +2547,7 @@ node raw when you are about to write one like it.`,
       const id = requireString(args.id, "id");
       const at = asString(args.at);
       const raw = args.raw === true;
+      const asTree = args.tree === true;
       const expand = args.expand === true;
       const depth = asNumber(args.depth, 1);
       // index is per-catalogue and holds only that file's own nodes, so more than one hit really
@@ -2453,6 +2563,10 @@ node raw when you are about to write one like it.`,
       const read = (catalogue: Catalogue) => {
         const found = (catalogue.id === id ? catalogue : catalogue.index![id]) as unknown as NodeLike;
         const node = at ? resolveAt(found, at) : found;
+        if (asTree) {
+          const options = { depth: args.depth === undefined ? undefined : depth };
+          return { ...row(node), tree: tree(node as NodeLike | Catalogue, options) };
+        }
         if (raw) return toJson(node, { depth, collapse: !expand });
         if (node === (catalogue as unknown as NodeLike)) return catalogueSummary(catalogue);
         return readNode(node as Base & WithErrors, catalogue, undefined, expand);
@@ -2560,7 +2674,7 @@ The full API -- signatures, return values, quirks -- is nr_docs page "editor/eva
 data takes when written are "editor/writing". Read both before the first write. In scope:
   read   find(query, catalogue?, opts?)   json(node, {depth, exclude, collapse})
          tree(node | catalogue, {depth, exclude, rules, shared})   rules(entry)
-         row(node)  owner(node)  label(node)  $catalogues  $catalogue  $store  $h  help()
+         row(node)  owner(node)  label(node)  $catalogues  $catalogue  $store  help()
   write  set_field(node, key, value)   edit({...}, node | nodes)   add(data, childKey, parent)
          remove(node | nodes)   move(node, from, to, "root" | "shared")   merge(node, data)
          merge_duplicates(keep, dupes)   undo()   redo()
@@ -2577,23 +2691,13 @@ The result reports the diagnostics delta (new and fixed findings) and which file
       const $store = store();
       const before = errorSnapshot();
 
-      // Actions are plain functions on the store instance, already bound; taking them at call
-      // time means a new action is in scope the moment it is added, which is the point of
-      // exposing them at all. Skipped: Pinia's own $patch/$reset/$subscribe and _hotUpdate.
+      // Only the store actions the "editor/eval" page documents: the undoable writes that take
+      // their target explicitly. The rest of the store (selection, navigation, add_node and the
+      // other non-undoable primitives) stays behind $store, where reaching it is deliberate.
       const scope: Record<string, unknown> = {};
-      // Helpers first, store actions second, so the three names they share -- add, remove, copy --
-      // resolve to the undoable store action. Reaching a shadowed helper is what $h stays for.
-      for (const [key, value] of Object.entries(helpers)) {
-        if (typeof value === "function") scope[key] = value;
+      for (const key of STORE_ACTIONS_IN_SCOPE) {
+        scope[key] = ($store as unknown as Record<string, unknown>)[key];
       }
-      for (const key in $store) {
-        // A key that is not a bare identifier would make `new Function` throw and take every
-        // nr_eval call down with it, so it is skipped rather than trusted.
-        if (key.startsWith("$") || key.startsWith("_") || !/^[A-Za-z][A-Za-z0-9_]*$/.test(key)) continue;
-        const value = ($store as unknown as Record<string, unknown>)[key];
-        if (typeof value === "function") scope[key] = value;
-      }
-      const shadowed = Object.keys(helpers).filter((key) => typeof scope[key] === "function" && key in $store);
       // The two writes that take a payload check it first: a bad scope or field lands silently
       // and surfaces as a rule that never fires. A refused write names every problem at once.
       const catalogueOf = (node: unknown): Catalogue | undefined => {
@@ -2629,32 +2733,12 @@ The result reports the diagnostics delta (new and fixed findings) and which file
         json: (node: NodeLike, options?: JsonOptions) => toJson(node, options ?? {}),
         tree: (node: NodeLike | Catalogue, options?: TreeOptions) => tree(node, options ?? {}),
         rules: rulesOf,
-        $h: helpers,
-        // The scope is assembled from the live store, so a written-down list would drift the
-        // first time an action is added. This one cannot.
-        help: () => ({
-          writes: ["set_field", "edit", "add", "remove", "merge", "merge_duplicates", "move", "undo", "redo"],
-          reads: [
-            "find",
-            "query",
-            "json",
-            "tree",
-            "rules",
-            "row",
-            "owner",
-            "label",
-            "$catalogue",
-            "$catalogues",
-            "$store",
-            "$h",
-          ],
-          docs: 'nr_docs page "editor/eval" and "editor/writing"',
-          storeActions: Object.keys(scope)
-            .filter((key) => key in $store)
-            .sort(),
-          helpers: Object.keys(helpers).sort(),
-          shadowedByStoreAction: shadowed,
-        }),
+      });
+      const writes: string[] = STORE_ACTIONS_IN_SCOPE.filter((key) => key !== "query");
+      scope.help = () => ({
+        writes,
+        reads: Object.keys(scope).filter((key) => !writes.includes(key) && key !== "help"),
+        docs: 'nr_docs page "editor/eval" and "editor/writing"',
       });
 
       // One call is one undo entry: the store actions each push their own, so collapse whatever
@@ -2881,7 +2965,37 @@ function nudge(name: string): string | undefined {
   return undefined;
 }
 
-export default defineNuxtPlugin(() => {
+/**
+ * Waits out the loads the page itself starts. A dev-server reload (HMR) restarts the page, which
+ * re-opens its systems asynchronously; a tool answering during that window saw an empty store
+ * and reported "nothing is loaded" for a system that was half a second from being back.
+ */
+async function untilLoaded(): Promise<void> {
+  const deadline = Date.now() + 15_000;
+  while ((store().loading ?? 0) > 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+let router: Router | undefined;
+
+/**
+ * Keeps the system in the index page's URL, which is what the page re-opens after a reload
+ * (`filter` in pages/index.vue). A system opened through nr_load_system alone was not there, so
+ * the next HMR reload came back without it.
+ */
+function keepInUrl(systemId: string) {
+  const route = router?.currentRoute.value;
+  if (!route || route.name !== "index") return;
+  const ids = String(route.query.id ?? "")
+    .split(",")
+    .filter(Boolean);
+  if (ids.includes(systemId)) return;
+  router!.replace({ query: { ...route.query, id: [...ids, systemId].join(",") } }).catch(() => undefined);
+}
+
+export default defineNuxtPlugin((nuxtApp) => {
+  router = nuxtApp.$router as Router;
   const settings = useSettingsStore();
   // Opt-in, and off by default: an editor that quietly answers to anything on localhost is not a
   // default anyone chose. Registration happens once, the first time it is switched on -- neither
@@ -2927,11 +3041,15 @@ function start() {
       execute: async (args: ToolArgs) => {
         // The only enforcement point that works after registration, so it is the one that counts.
         if (!settings.mcpEnabled) throw new Error("MCP is switched off in the editor's options.");
+        await untilLoaded();
         if (!mcpStatus.connected) {
           mcpStatus.connected = true;
           if (!mcpStatus.address) mcpStatus.address = "this browser";
         }
-        const text = JSON.stringify(await tool.execute(args), null, 1);
+        // The same layout the files are saved in: name/id first, small objects on one line. A
+        // result is read by something that pays per token, and JSON.stringify(x, null, 1) spent
+        // a third of them on newlines.
+        const text = compactStringify(await tool.execute(args), 1);
         // A result the client cannot hold gets spilled to a file and read back in slices, which
         // costs more than narrowing the question. Cut here, and say how to narrow it.
         const content = [

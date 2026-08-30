@@ -3,6 +3,17 @@
     <NodePath :path="path(item)" class="inline p-1px pl-2px" @nodeclick="clicked" />
     <template v-if="store.mode === 'edit'">
       <component v-if="panel" :is="panel" v-bind="panelProps" />
+      <!--
+        Boxes contributed by scripts. Below the real panel, collapsed, so a plugin can show what
+        it computed about the selected node without competing with the fields being edited.
+      -->
+      <details v-for="(view, i) in scriptViews" :key="i" class="scriptView box" open>
+        <summary class="titreCategory">{{ view.title }}</summary>
+        <div v-if="view.html" v-html="view.html" />
+        <button v-for="action of view.actions" :key="action.label" class="bouton m-2px" @click="action.run()">
+          {{ action.label }}
+        </button>
+      </details>
       <div class="min-h-100px"> </div>
     </template>
     <template v-else-if="store.mode === 'references'">
@@ -132,6 +143,12 @@ export default {
 
     panel() {
       return panels[this.typeName]?.is;
+    },
+
+    /** Recomputed per selection, which is also the only time a script's answer could change. */
+    scriptViews() {
+      if (!this.item) return [];
+      return this.store.scripts.get_panel_views(this.item, this.catalogue);
     },
 
     panelProps() {

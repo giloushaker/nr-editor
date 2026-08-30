@@ -41,6 +41,17 @@
         <span class="icontext">Discord</span>
       </a>
 
+      <!--
+        A script running on its own -- a hook, not a button. It borrows the titlebar because there
+        is no card to draw a bar on, and it is quiet enough to sit through a repeated auto-run
+        without becoming noise the way a toast would.
+      -->
+      <div v-if="scripts.background" class="script-running" :title="progressTitle">
+        <span class="spinner" />
+        <span class="label">{{ scripts.background.label }}</span>
+        <span v-if="progressText" class="count">{{ progressText }}</span>
+      </div>
+
       <div v-if="electron">
         <img src="/assets/icons/electron32.png" />
       </div>
@@ -53,6 +64,7 @@
 </template>
 <script lang="ts">
 import { useSettingsStore } from "~/stores/settingsState";
+import { useScriptsStore } from "~/stores/scriptsStore";
 import Settings from "./Settings.vue";
 import Prompt from "./Prompt.vue";
 
@@ -69,9 +81,22 @@ export default {
     };
   },
   setup() {
-    return { version: useRuntimeConfig().public.clientVersion, settings: useSettingsStore() };
+    return {
+      version: useRuntimeConfig().public.clientVersion,
+      settings: useSettingsStore(),
+      scripts: useScriptsStore(),
+    };
   },
   computed: {
+    progressText(): string {
+      const p = this.scripts.background?.progress;
+      if (!p) return "";
+      return p.max ? `${p.current} / ${p.max}` : String(p.current);
+    },
+    progressTitle(): string {
+      const p = this.scripts.background?.progress;
+      return [this.scripts.background?.label, p?.message].filter(Boolean).join(" — ");
+    },
     electron() {
       return Boolean(globalThis.electron);
     },
@@ -97,6 +122,39 @@ export default {
 
 .titletext {
   color: white;
+}
+
+.script-running {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ffffff;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.script-running .count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* Borders rather than an image, so it takes the bar's own colour and needs no asset. */
+.spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+  animation: titlebar-spin 0.7s linear infinite;
+}
+
+@keyframes titlebar-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .titlebar-left {
@@ -126,7 +184,8 @@ export default {
 svg.icon {
   width: 28px;
   height: 28px;
-  color: #fff;
+  /* Black like the PNG icons, so the global --image-filter lightens it on the dark theme the same way. */
+  color: #000;
 }
 .static-icon {
   margin: auto;

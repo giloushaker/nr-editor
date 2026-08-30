@@ -16,11 +16,17 @@
           <span class="hint">Keep parent entries pinned when they scroll out of view.</span>
         </label>
       </div>
-      <div class="row">
+      <!--
+        Hidden on purpose since f24b7bf, not by accident: both features still work (Characteristics
+        beforePaste, LinkPanel's rename), but the rows only appear for someone who already has the
+        setting on. Guarding a row on its own value reads like a bug -- it means you can switch it
+        off and never back on -- so leave this comment in place of fixing it.
+      -->
+      <div class="row" v-if="settings.autoFormatCharacteristics">
         <input type="checkbox" id="auto-format" v-model="settings.autoFormatCharacteristics" />
         <label for="auto-format">Format characteristics automatically on paste</label>
       </div>
-      <div class="row">
+      <div class="row" v-if="settings.autoRenameInfoLinkParent">
         <input type="checkbox" id="auto-rename" v-model="settings.autoRenameInfoLinkParent" />
         <label for="auto-rename">Rename the parent entry when assigning an info link</label>
       </div>
@@ -133,12 +139,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "@/shared_components/css/vars.scss";
+@use "@/shared_components/css/vars.scss" as *;
 
 .settings {
   min-width: 460px;
   max-width: 560px;
 }
+
+
 
 fieldset {
   border: 1px solid $box_border;

@@ -52,6 +52,17 @@ You may want to reload the system through the Systems tab"
           <span v-if="loading_all">({{ loading_progress }} / {{ loading_progress_max }})</span>
         </button>
       </template>
+      <!-- Buttons contributed by scripts. After the built-in ones so a plugin cannot push
+           Save All off the visible part of the bar. -->
+      <button
+        v-for="action of toolbarActions"
+        :key="action.label"
+        class="bouton ml-10px"
+        @click="action.run()"
+      >
+        <img v-if="action.icon" class="icon inline mr-4px" :src="action.icon" alt="" />
+        {{ action.label }}
+      </button>
     </Teleport>
   </div>
 </template>
@@ -165,8 +176,23 @@ export default defineComponent({
         catalogueId: this.$route.query.id || this.$route.query.systemId,
       };
     },
+    /**
+     * Whether this page is the one on screen -- NOT `$route.name`, which cannot answer it.
+     *
+     * Nuxt rewrites every `$route` in a page, template and script alike (its
+     * route-injection-plugin), to the route the page was created with, so a page being torn down
+     * keeps seeing its own params. Under `<NuxtPage :keepalive>` the page is never torn down, so
+     * `$route.name === "catalogue"` is simply always true here -- and the titlebar Teleport below
+     * stayed mounted after navigating away, beside the one the next page added. $router is left
+     * alone by that rewrite, so its currentRoute is the live one.
+     */
     route_is_catalogue() {
-      return this.$route.name === "catalogue";
+      return this.$router.currentRoute.value.name === "catalogue";
+    },
+    /** Depends on `cat` so switching catalogue re-asks the hooks. */
+    toolbarActions() {
+      if (!this.cat) return [];
+      return this.store.get_toolbar_actions();
     },
   },
   watch: {

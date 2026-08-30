@@ -116,6 +116,17 @@ export async function unwatchFile(path: string) {
   await electron.invoke("chokidarUnwatchFile", path);
 }
 
+/**
+ * Opens a file with whatever the OS uses for it. Electron only -- a browser cannot, so callers
+ * check the return and say so rather than appearing to do nothing.
+ */
+export async function openPath(filePath: string): Promise<boolean> {
+  if (!electron) return false;
+  const error = (await electron.invoke("openPath", filePath)) as string;
+  if (error) throw new Error(error);
+  return true;
+}
+
 export async function getFolderRemote(path: string): Promise<string | null> {
   if (!electron) return null;
   return (await electron.invoke("getFolderRemote", path)) as string | null;

@@ -968,7 +968,11 @@ function addBattleMarchPoints(catalogues: Catalogue[]) {
 
 export default {
   name: "[TOW 4] Matched Play Constraints",
-  description: "Warhammer: The Old World only. Writes the matched play composition limits onto every root entry: Battle March points and category caps, Grand Melee, Combined Arms, and the one-per-thousand-points marker. Each element is tagged with a comment and removed before being rewritten, so the script is safe to re-run.",
+  description:
+    "Warhammer: The Old World only.\n" +
+    "Writes the matched play composition limits onto every root entry: Battle March points and category caps,\n" +
+    "Grand Melee, Combined Arms, and the one-per-thousand-points marker.\n" +
+    "Each element is tagged with a comment and removed before being rewritten, so the script is safe to re-run.",
   arguments: [
     {
       name: "catalogues",

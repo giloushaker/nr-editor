@@ -5,7 +5,9 @@ import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main
 
 export default {
   name: "List all rule/profile text refs",
-  description: "Lists all rules/profiles that are referenced in other rule/profile texts, sorted by most referenced. Optionally filter by name to only show references to a specific rule/profile.",
+  description:
+    "Lists all rules/profiles that are referenced in other rule/profile texts, sorted by most referenced.\n" +
+    "Optionally filter by name to only show references to a specific rule/profile.",
   arguments: [
     {
       name: "catalogues",

@@ -1,5 +1,6 @@
 import type { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { ScriptRunContext } from "~/stores/scriptsStore";
 export function findParentWhere<T extends { parent?: T }>(self: T, fn: (node: T) => any): T | undefined {
     let current = self.parent;
     while (current && !Object.is(current, current.parent)) {
@@ -8,18 +9,76 @@ export function findParentWhere<T extends { parent?: T }>(self: T, fn: (node: T)
     }
     return undefined;
 }
-export default {
-    name: "Fix profiles",
-    description: "Repairs profiles against their profile type: wrong typeName, wrong characteristic and attribute typeIds or names, missing characteristics, wrong order, and extra characteristics that the type does not define. Writes to the data, and reports the text of anything it drops.",
-    arguments: [{
-        name: "catalogues",
-        type: "catalogue[]"
-    }],
-    run: (catalogues: Catalogue[]) => {
+/**
+ * Coalesces runs per game system.
+ *
+ * Editing a profile type touches every profile in every catalogue, and the right panel emits a
+ * `change` per blur, so a burst of edits has to produce one pass rather than one each.
+ */
+const timers: Record<string, ReturnType<typeof setTimeout>> = {};
+const DEBOUNCE_MS = 800;
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+function queue(systemId: string) {
+    if (timers[systemId]) clearTimeout(timers[systemId]);
+    timers[systemId] = setTimeout(async () => {
+        delete timers[systemId];
+        const system = $store.get_system(systemId);
+        if (system) {
+            await system.loadAll();
+            const catalogues = system.getAllLoadedCatalogues();
+            catalogues.map((o) => o.processForEditor());
+            // run_background so the whole repair pass is one undo entry, a throw is reported the
+            // same way any other script failure is, and the titlebar says it is happening.
+            const output = await $store.scripts.run_background("Fix profiles", (ctx) => run(catalogues, ctx));
+
+            // run() returns [...notes, fixes], or ["No Issues found"] -- whose last element is a
+            // string, and reading .length off that reports 15 repairs for a run that did nothing.
+            const last = Array.isArray(output) ? output[output.length - 1] : undefined;
+            const fixes = (Array.isArray(last) ? last : []) as Array<[EditorBase, string]>;
+
+            if (fixes.length) {
+                // A profile usually collects several fixes at once -- a wrong typeName and three
+                // renamed characteristics is four entries on one profile -- so counting entries
+                // and calling them "things" overstates it and says nothing about what changed.
+                const profiles = new Set(fixes.map(([node]) => node)).size;
+                // Collapsed, with every node passed through as a second argument so it can be
+                // expanded and clicked in devtools. `output` rides along on the header line, which
+                // is where the removals -- the destructive half -- are.
+                console.groupCollapsed(
+                    `Fix profiles: ${plural(fixes.length, "change")} on ${plural(profiles, "profile")}, ` +
+                    `across ${plural(catalogues.length, "catalogue")}`,
+                    output,
+                );
+                for (const [node, message] of fixes) {
+                    console.log(`${node.getCatalogue()?.name} › ${node.getName()}: ${message}`, node);
+                }
+                console.groupEnd();
+                // Toast only when it changed something: this fires on every edit to a profile
+                // type, and "nothing to do" after each one is noise rather than feedback.
+                notify(`Fix profiles: updated ${plural(profiles, "profile")}`);
+            } else {
+                console.log(`Fix profiles: nothing to repair in ${plural(catalogues.length, "catalogue")}`);
+            }
+        } else {
+            throw new Error("Couldn't queue fix-profiles: Failed to get system with id " + systemId);
+        }
+    }, DEBOUNCE_MS);
+}
+
+/**
+ * `ctx` is the editor's run context, handed in after the declared arguments. Optional, because
+ * the change hook below calls this directly with nothing to report progress to.
+ */
+const run = async (catalogues: Catalogue[], ctx?: ScriptRunContext) => {
         const result = [] as [EditorBase, string][];
         const output = [] as Array<Array<string | object> | string>
         catalogues.map(o => o.processForEditor())
-        for (const catalogue of catalogues) {
+        for (const [index, catalogue] of catalogues.entries()) {
+            // Awaited once per catalogue rather than per node: it yields to let the bar paint, and
+            // a yield per profile would cost more than the repair does.
+            await ctx?.progress(index, catalogues.length, catalogue.name)
             catalogue.forEachObjectWhitelist((obj: EditorBase) => {
                 if (obj.isProfile() && !obj.isLink() && obj.typeId) {
                     const type = obj.catalogue.findOptionById(obj.typeId) as ProfileType;
@@ -32,7 +91,7 @@ export default {
                     }
                     // Fix characteristic with wrong typeId
                     for (const c of obj.characteristics || []) {
-                        const ct = type.characteristicTypes?.find(ct => ct.name === c.name)!
+                        const ct = type.characteristicTypes?.find(ct => ct.name === c.name)
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
                             $store.edit_node(c as unknown as EditorBase, { typeId: ct.id })
@@ -40,7 +99,7 @@ export default {
                     }
                     // Fix attribute with wrong typeId
                     for (const c of obj.attributes || []) {
-                        const ct = type.attributeTypes?.find(ct => ct.name === c.name)!
+                        const ct = type.attributeTypes?.find(ct => ct.name === c.name)
                         if (ct && c.typeId !== ct.id) {
                             result.push([obj, `fixed typeId: ${c.name}`])
                             $store.edit_node(c as unknown as EditorBase, { typeId: ct.id })
@@ -49,7 +108,7 @@ export default {
 
                     // Fix characteristic with wrong name
                     for (const c of obj.characteristics || []) {
-                        const ct = type.characteristicTypes?.find(ct => ct.id === c.typeId)!
+                        const ct = type.characteristicTypes?.find(ct => ct.id === c.typeId)
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed characteristic name: ${c.name} -> ${ct.name}`])
                             $store.edit_node(c as unknown as EditorBase, { name: ct.name })
@@ -58,7 +117,7 @@ export default {
 
                     // Fix attribute with wrong name
                     for (const c of obj.attributes || []) {
-                        const ct = type.attributeTypes?.find(ct => ct.id === c.typeId)!
+                        const ct = type.attributeTypes?.find(ct => ct.id === c.typeId)
                         if (ct && c.name !== ct.name) {
                             result.push([obj, `fixed attribute name: ${c.name} -> ${ct.name}`])
                             $store.edit_node(c as unknown as EditorBase, { name: ct.name })
@@ -130,5 +189,31 @@ export default {
             return ["No Issues found"]
         }
         return [...output, result]
-    }
+}
+
+export default {
+    name: "Fix profiles",
+    description:
+        "Repairs profiles against their profile type: wrong typeName, wrong characteristic and attribute typeIds\n" +
+        "or names, missing characteristics, wrong order, and extra characteristics the type does not define.\n" +
+        "Writes to the data, and reports the text of anything it drops.\n" +
+        "Also runs itself whenever a profile type is edited.",
+    arguments: [{
+        name: "catalogues",
+        type: "catalogue[]"
+    }],
+    run,
+    hooks: {
+        /**
+         * The editor used to call this script by name from its own `changed()` handler, which
+         * meant the store knew about one particular script and no other script could ask for the
+         * same notice. It subscribes like any plugin would now.
+         */
+        change(_event: unknown, { node }: { node: EditorBase }) {
+            if (node.editorTypeName !== "profileType" && !findParentWhere(node, (o) => o.editorTypeName === "profileType")) {
+                return;
+            }
+            queue(node.getCatalogue().getSystemId())
+        },
+    },
 }

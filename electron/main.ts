@@ -144,6 +144,13 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
       }
     }
   });
+  // Opens a file in whatever the OS has registered for it -- the editor's "Open file" on a
+  // script. Returns "" on success, an error string otherwise, which is shell.openPath's contract.
+  // `filePath`, not `path`: the module of that name is in scope here and shadowing it broke
+  // normalize. openPath wants a native path, and the rest of the app speaks forward slashes.
+  handle("openPath", async (event: null | any, filePath: any) => {
+    return await shell.openPath(path.normalize(String(filePath)));
+  });
   handle("getFolderRemote", async (event: null | any, path: any) => {
     try {
       const git = simpleGit({

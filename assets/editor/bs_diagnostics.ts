@@ -279,3 +279,15 @@ export function registerDiagnostic(rule: Diagnostic): void {
   if (at >= 0) DIAGNOSTICS[at] = rule;
   else DIAGNOSTICS.push(rule);
 }
+
+/**
+ * Drops a rule again, for when the script that added it is reloaded or removed.
+ *
+ * The engine can only clear ids of rules it still runs, so whatever this rule already wrote
+ * on a node stays there: the caller has to pass the returned rule to clearDiagnostics() on
+ * the nodes it may have touched. scriptsStore.revalidate_system does both in one walk.
+ */
+export function unregisterDiagnostic(id: string): Diagnostic | undefined {
+  const at = DIAGNOSTICS.findIndex((o) => o.id === id);
+  return at >= 0 ? DIAGNOSTICS.splice(at, 1)[0] : undefined;
+}

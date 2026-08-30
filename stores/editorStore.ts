@@ -21,7 +21,6 @@ import {
   textSearchRegex,
   zipCompress,
   forEachParent,
-  addObj,
   type MaybeArray,
   isObject,
   isDefaultObject,
@@ -36,8 +35,6 @@ import {
   entriesToJson,
   entryToJson,
   rootToJson,
-  Characteristic,
-  Rule,
   getDataObject,
   getDataDbId,
   arrayKeys,
@@ -130,6 +127,8 @@ export interface IEditorStore {
   mode: "edit" | "references";
   clipboardmode: "json" | "none";
   gameSystemsLoaded: boolean;
+  /** Folder/db loads in flight. Tools answering while this is >0 answer from half a system. */
+  loading: number;
   gameSystems: Record<string, GameSystemFiles>;
 
   unsavedCount: number;
@@ -187,9 +186,29 @@ let lastFieldEdit: FieldEditMark | null = null;
 // ponytail: data folders keep catalogues at the root or one folder down; deeper is where
 // backups, exports and vendor copies live. Raise if someone nests legitimately.
 const LOAD_FOLDER_DEPTH = 1;
-const FIX_PROFILES_DEBOUNCE_MS = 800;
-const fixProfilesTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
+/** Windows-safe file name from a catalogue name, or null when nothing survives. */
+function sanitizeFileName(fileName: string): string | null {
+  const clean = fileName
+    // eslint-disable-next-line no-control-regex -- control characters are exactly what a file name must not contain
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+    .trim()
+    .replace(/^[. ]+|[. ]+$/g, "");
+  return clean.length ? clean : null;
+}
+
+/** Catalogue extension matching the game system file: .json stays .json, .gstz -> .catz, else .cat */
+function catalogueExtension(gstPath: string): string {
+  switch (getExtension(gstPath)) {
+    case "json":
+      return "json";
+    case "gstz":
+      return "catz";
+    default:
+      return "cat";
+  }
+}
+
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorStore => ({
     selections: [],
@@ -215,6 +234,7 @@ export const useEditorStore = defineStore("editor", {
 
     gameSystems: {},
     gameSystemsLoaded: false,
+    loading: 0,
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
@@ -293,6 +313,37 @@ export const useEditorStore = defineStore("editor", {
       this.saveCatalogue(data);
       return files;
     },
+    /**
+     * Register a new catalogue in a loaded system: file name from its name, extension from the
+     * game system's file, marked edited so Save writes it. Nothing is written to disk here -- the
+     * user (or nr_save) does that; on web it lands in IndexedDB like any other edit.
+     */
+    async create_catalogue(system: GameSystemFiles, data: BSIDataCatalogue): Promise<BSIDataCatalogue> {
+      if (!system.gameSystem) {
+        throw new Error("Cannot create catalogue: no game system");
+      }
+      const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
+      copy.catalogue.battleScribeVersion = "2.03";
+      const fileName = sanitizeFileName(copy.catalogue.name);
+      if (!fileName) {
+        throw new Error("Cannot create catalogue: couldn't create filename using provided name (only invalid chars)");
+      }
+      const systemPath = getDataObject(system.gameSystem).fullFilePath;
+      if (electron && !systemPath) {
+        throw new Error("Cannot create catalogue: game system has no path set");
+      }
+      if (systemPath && (electron || (await hasRoot(systemPath)))) {
+        copy.catalogue.fullFilePath = `${dirname(systemPath)}/${fileName}.${catalogueExtension(systemPath)}`;
+      }
+      system.setCatalogue(copy);
+      useCataloguesStore().setEdited(getDataDbId(copy), true);
+      this.set_catalogue_changed(copy, true);
+      this.get_catalogue_state(copy).incremented = true;
+      if (!electron) {
+        db.catalogues.put({ content: copy, id: getDataDbId(copy) });
+      }
+      return copy;
+    },
     saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
       const stringed = rootToJson(data);
       const isCatalogue = Boolean(data.gameSystemId);
@@ -349,6 +400,17 @@ export const useEditorStore = defineStore("editor", {
       state.isChangedOnDisk = false;
     },
     async load_systems_from_folder(
+      folder: string,
+      progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
+    ) {
+      this.loading++;
+      try {
+        return await this._load_systems_from_folder(folder, progress);
+      } finally {
+        this.loading--;
+      }
+    },
+    async _load_systems_from_folder(
       folder: string,
       progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
     ) {
@@ -437,6 +499,14 @@ export const useEditorStore = defineStore("editor", {
       }
     },
     async load_system_from_db(id: string) {
+      this.loading++;
+      try {
+        return await this._load_system_from_db(id);
+      } finally {
+        this.loading--;
+      }
+    },
+    async _load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);
       const system = dbsystem?.content;
       if (!system) {
@@ -519,6 +589,10 @@ export const useEditorStore = defineStore("editor", {
         this.gameSystems[id] = new GameSystemFiles();
         await this.load_system_from_db(id);
       }
+      // Before anything calls processForEditor: a script's diagnostics have to be registered
+      // by the time the first catalogue is validated, or they only apply to whatever is edited
+      // afterwards. load() caches per system, so repeat calls cost a lookup.
+      await this.scripts.load(this.gameSystems[id]);
       return this.gameSystems[id];
     },
     get_system(id: string) {
@@ -549,52 +623,23 @@ export const useEditorStore = defineStore("editor", {
         if (!state.unsaved) {
           this.unsavedCount += 1;
           state.unsaved = changedState;
+          // A never-saved file has no save position to come back to, so the position it went
+          // dirty from stands in: every write applies before it pushes its undo entry, so the
+          // stack is still at the clean position here. Undoing back to it clears the flag
+          // (sync_unsaved_with_undo), instead of the file reading as unsaved until reload.
+          if (state.savedUndoPos === undefined) state.savedUndoPos = this.undoStackPos;
         }
       } else {
         state.unsaved = changedState;
       }
     },
-    /**
-     * Coalesces "Fix profiles" runs per game system. Editing a profile type touches every
-     * profile in every catalogue, so a burst of edits should produce one pass, not one each.
-     */
-    queue_fix_profiles(systemId: string) {
-      if (fixProfilesTimers[systemId]) clearTimeout(fixProfilesTimers[systemId]);
-      fixProfilesTimers[systemId] = setTimeout(async () => {
-        delete fixProfilesTimers[systemId];
-        try {
-          const system = this.get_system(systemId);
-          await system.loadAll();
-          const catalogues = system.getAllLoadedCatalogues();
-          catalogues.map((o) => o.processForEditor());
-          console.log(await this.scripts.run_script("Fix profiles", catalogues));
-        } catch (e) {
-          console.error("Fix profiles failed", e);
-        }
-      }, FIX_PROFILES_DEBOUNCE_MS);
-    },
     async changed(node: EditorBase | Catalogue) {
-      function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
-        const result = [] as NonNullable<T>[];
-        let cur = node as typeof node;
-        while (cur.parent) {
-          result.push(cur.parent);
-          cur = cur.parent as any as typeof node;
-        }
-        return result;
-      }
-
-      if (
-        node.editorTypeName === "profileType" ||
-        getParents(node).find((o) => o.editorTypeName === "profileType")
-      ) {
-        // "Fix profiles" loads every catalogue in the system and walks every object in each.
-        // This fires on any `change` event under a profile type (the right panel catches them
-        // by bubbling), so coalesce instead of running it once per blur.
-        this.queue_fix_profiles(node.getCatalogue().getSystemId());
-      }
-
       const catalogue = node.getCatalogue();
+      // The editor's own "something was edited" event. Fires for every change the right panel
+      // bubbles, so a hook here has to be cheap and do its own coalescing -- see fix-profiles,
+      // which used to be called by name from right here.
+      this.scripts.emit("change", undefined, { node, catalogue });
+
       if (catalogue) {
         // Re-check the node here, not only in set_field. Several right-panel fields bind
         // v-model straight to the node -- Query's includeChild* checkboxes, ComplexQuery's
@@ -632,6 +677,11 @@ export const useEditorStore = defineStore("editor", {
       if (incrementRevision === "no") {
         state.incremented = true;
       }
+      // Awaited, and before the write: a `save` hook exists to fix up the catalogue on its way
+      // out (stamp a version, regenerate derived entries), which is worth nothing if the file
+      // is already on disk by the time it runs. Every hook runs; one throwing does not stop
+      // the save, because a broken script must not be able to lock the editor's data in.
+      await this.scripts.emit("save", undefined, { catalogue, system });
       this.saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
@@ -804,6 +854,7 @@ export const useEditorStore = defineStore("editor", {
           const entry: any = foundEntries[i];
           entry.select();
         }
+        this.emit_selection();
         return;
       }
       if (!e?.ctrlKey && !e?.metaKey) {
@@ -816,6 +867,7 @@ export const useEditorStore = defineStore("editor", {
         this.selectedItem = el;
         this.mode = "edit";
       }
+      this.emit_selection();
     },
     do_rightclick_select(e: MouseEvent, el: VueComponent) {
       if (this.is_selected(el)) return;
@@ -823,6 +875,17 @@ export const useEditorStore = defineStore("editor", {
     },
     clear_selections() {
       this.unselect();
+      this.emit_selection();
+    },
+    /**
+     * One place the `select` hook fires from.
+     *
+     * Called by the three entry points that change what is selected rather than from unselect(),
+     * which they all funnel through -- firing there would emit an empty selection immediately
+     * before every real one.
+     */
+    emit_selection() {
+      this.scripts.emit("select", undefined, { selections: this.get_selections() });
     },
     get_selections(): EditorBase[] {
       const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
@@ -848,9 +911,12 @@ export const useEditorStore = defineStore("editor", {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
     set_selections(entry_or_entries: MaybeArray<EditorBase>) {
-      this.clear_selections();
+      // unselect(), not clear_selections(): that one emits, and this would then fire an empty
+      // selection immediately before the real one.
+      this.unselect();
       const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries];
       this.selectedEntries = arr.map((o) => ({ obj: o, onunselected: () => null }));
+      this.emit_selection();
     },
     toggle_selections() {
       const bases = this.get_selections();
@@ -994,6 +1060,15 @@ export const useEditorStore = defineStore("editor", {
     get_context_actions() {
       return this.scripts.run_hooks_sync("context", undefined, this.get_script_args());
     },
+    /** Buttons a script contributes to the editor titlebar. Not tied to a selection. */
+    get_toolbar_actions() {
+      const catalogue = globalThis.$catalogue as Catalogue | undefined;
+      if (!catalogue) return [];
+      return this.scripts.run_hooks_sync("toolbar", undefined, {
+        catalogue,
+        system: catalogue.getSystem(),
+      });
+    },
     async pasteLink() {
       const obj = await this.get_clipboard();
       if (!obj || !obj.parentKey || Array.isArray(obj)) {
@@ -1074,6 +1149,11 @@ export const useEditorStore = defineStore("editor", {
 
       const catalogue = foundEntries[0].getCatalogue();
       const sysId = catalogue.getSystemId();
+
+      // Awaited, and before anything is unlinked, so a hook can still read what is about to go.
+      // It cannot veto: a script that wants to stop a deletion should not have been given the
+      // chance to fail halfway through one.
+      await this.scripts.emit("beforeRemove", undefined, { nodes: foundEntries, catalogue });
 
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
@@ -2095,6 +2175,10 @@ export const useEditorStore = defineStore("editor", {
       if (!this.filtered.includes(obj)) {
         this.filtered.push(obj);
       }
+      this.mark_shown(obj, highlight);
+    },
+    /** show() without the bookkeeping on `filtered`, for a caller that has already set it. */
+    mark_shown(obj: EditorBase, highlight = true) {
       obj.showInEditor = true;
       obj.showChildsInEditor = true;
       if (highlight) {
@@ -2107,6 +2191,12 @@ export const useEditorStore = defineStore("editor", {
     async goto(obj?: EditorBase) {
       if (!obj) return;
       const targetCatalogue = obj.getCatalogue();
+      // Removal deletes a node's catalogue and parent; a stale reference (a search result, a
+      // script's output) can still point at it.
+      if (!targetCatalogue) {
+        notify({ type: "error", text: `"${getName(obj)}" no longer exists` });
+        return;
+      }
       this.put_current_state_in_history();
       const uistate = useEditorUIState();
       uistate.get_data(targetCatalogue.id).selection = getEntryPath(obj);
@@ -2285,17 +2375,22 @@ export const useEditorStore = defineStore("editor", {
       }
       if (filter.length > 1) {
         this.set_filter(filter);
-        this.filtered = catalogue.findOptionsByText(filter) as EditorBase[];
+        // The query language, bare words included: unlike findOptionsByText it walks every node, so
+        // a word is also found in comments, rule descriptions and characteristic text.
+        let results = search(catalogue, filter);
         if (ignoreProfilesRules) {
-          this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+          results = results.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup() && !o.isCharacteristic());
         }
-        for (const p of this.filtered) {
-          this.show(p as EditorBase);
+        // The raw array, not this.filtered: show() checks `filtered.includes` per node, which through
+        // the reactive proxy made a three-letter search with thousands of matches quadratic.
+        this.filtered = results;
+        for (const p of results) {
+          this.mark_shown(p);
         }
         await (globalThis.$nextTick && globalThis.$nextTick());
 
-        if (this.filtered.length < 300) {
-          for (const p of this.filtered) {
+        if (results.length < 300) {
+          for (const p of results) {
             if (!p.parent) continue;
             try {
               await this.open(p as EditorBase, false, true);
@@ -2310,57 +2405,15 @@ export const useEditorStore = defineStore("editor", {
       }
       return this.filtered;
     },
-    async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
-      const result = [] as Base[];
-
+    /**
+     * The query language over a whole system, every catalogue loaded first. Uncapped: an
+     * aggregation over the result needs all of it, and the page pages what it shows.
+     */
+    async system_search(system: GameSystemFiles, query: { filter: string }) {
       const { filter } = query;
       if (!filter) return null;
-      const regx = textSearchRegex(filter);
-      let more = false;
-
       await system.loadAll();
-      function search(val: Base, parent?: Base) {
-        try {
-          if (result.length >= max) return;
-          if ((val as unknown as Link).targetId) {
-            if (val.target && val.target.isCategory() && !parent?.isForce()) {
-              return;
-            }
-          }
-
-          const name = val.getName?.call(val);
-          const text = (val as any as Characteristic).$text;
-          const desc = (val as any as Rule).description;
-          const id = val.id;
-          if (id === filter) {
-            result.push(val);
-          } else if ((name && String(name).match(regx)) || id === filter) {
-            result.push(val);
-          } else if (text && String(text).match(regx)) {
-            result.push(val);
-          } else if (desc && String(desc).match(regx)) {
-            result.push(val);
-          }
-        } catch (e) {
-          console.error("Error while searching:", e);
-        }
-      }
-
-      for (const file of system.getAllLoadedCatalogues()) {
-        search(file);
-        file.forEachObjectWhitelist(search);
-        if (result.length >= max) {
-          more = true;
-          break;
-        }
-      }
-      console.log("Search for", `"${filter}"`, "found", result.length, "results");
-      const grouped = {} as Record<string, Base[]>;
-      for (const found of result) {
-        const catalogueName = found.getCatalogue().name;
-        addObj(grouped, catalogueName, found);
-      }
-      return { grouped, all: result, more };
+      return search([...system.getAllLoadedCatalogues()], filter);
     },
     /**
      * `progress_cb` is awaited, so a caller that yields in it lets the loading screen paint:
@@ -2394,6 +2447,10 @@ export const useEditorStore = defineStore("editor", {
         await progress_cb?.(0, 0, `Processing ${imported.name ?? ""}`);
         imported.processForEditor();
       }
+
+      // After processForEditor, not before: a hook that walks the tree needs it indexed, and
+      // diagnostics have already run by this point.
+      await this.scripts.emit("load", undefined, { system, catalogue: loaded });
 
       return { system, catalogue: loaded };
     },
