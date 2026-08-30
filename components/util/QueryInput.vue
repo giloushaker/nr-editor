@@ -28,7 +28,7 @@
         @input="typed"
         @focus="open = true"
       />
-      <div v-if="open && suggestions.length" class="suggestions" :class="up ? 'above' : 'below'">
+      <div v-if="open && suggestions.length" class="suggestions" :class="up ? 'above' : 'below'" ref="list">
         <div
           v-for="(s, i) in suggestions"
           :key="i"
@@ -116,6 +116,8 @@ export default defineComponent({
     up: { type: Boolean, default: false },
     /** The aggregation box: same pills, the `by:` / `count:` / `sort:` / `files:` vocabulary. */
     then: { type: Boolean, default: false },
+    /** What `catalogue:` offers. Defaults to the catalogue and its imports; a whole-system page passes every file. */
+    catalogues: { type: Array as PropType<string[]>, required: false },
     /** How an id in a pill becomes a name. Defaults to the catalogue; a whole-system page passes the system's. */
     resolve: { type: Function as PropType<(id: string) => { getName?: () => string } | undefined>, required: false },
   },
@@ -202,7 +204,9 @@ export default defineComponent({
       if (key === "type") return words(TYPES);
       if (key === "kind") return words(profileKinds);
       if (BOOLEANS.has(key)) return words(["true", "false"], "boolean");
-      if (key === "catalogue") return words([this.catalogue, ...(this.catalogue.imports ?? [])].map((c) => c.name), "file");
+      if (key === "catalogue") {
+        return words(this.catalogues ?? [this.catalogue, ...(this.catalogue.imports ?? [])].map((c) => c.name), "file");
+      }
       if (!ID_KEYS.has(key)) return [];
 
       const keywords =
@@ -348,6 +352,11 @@ export default defineComponent({
     },
   },
   watch: {
+    /** Keep the keyboard-selected row in view; the list scrolls, the selection does not on its own. */
+    active(i: number) {
+      if (i < 0) return;
+      this.$nextTick(() => (this.$refs.list as HTMLElement | undefined)?.children[i]?.scrollIntoView({ block: "nearest" }));
+    },
     modelValue(v: string) {
       if (v === this.lastEmitted) return;
       Object.assign(this, partition(v));
@@ -458,6 +467,8 @@ export default defineComponent({
   max-width: 380px;
   max-height: 300px;
   border-radius: 4px;
+  // scrollIntoView stops short of the sticky help row at the bottom instead of under it.
+  scroll-padding-bottom: 2em;
   &.above {
     bottom: 100%;
     margin-bottom: 3px;

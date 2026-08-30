@@ -2,7 +2,7 @@
   <div class="page">
     <div class="bars" v-if="catalogue">
       <span class="lbl">find</span>
-      <UtilQueryInput v-model="filter" :catalogue="catalogue" :resolve="resolve" @submit="search" class="box" />
+      <UtilQueryInput v-model="filter" :catalogue="catalogue" :catalogues="files" :resolve="resolve" @submit="search" class="box" />
       <div class="side">
         <button class="inputstyle" @click="search">Search</button>
         <span v-if="searching">Searching…</span>
@@ -20,7 +20,7 @@
         </div>
       </div>
       <span class="lbl">then</span>
-      <UtilQueryInput v-model="then" :catalogue="catalogue" :resolve="resolve" then placeholder="by:id count:>1 sort:-count" @submit="search" class="box" />
+      <UtilQueryInput v-model="then" :catalogue="catalogue" :catalogues="files" :resolve="resolve" then placeholder="by:id count:>1 sort:-count" @submit="search" class="box" />
       <div class="presets">
         <span class="muted">Presets</span>
         <span
@@ -133,6 +133,7 @@ import NodePath from "~/components/util/NodePath.vue";
 import { aggregate, parse, type Group } from "~/assets/editor/bs_search";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
+import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { useEditorStore } from "~/stores/editorStore";
 
 interface Preset {
@@ -275,6 +276,10 @@ export default defineComponent({
     /** Results inside the groups shown, since `count:` can drop most of what find matched. */
     grouped(): number {
       return (this.groups ?? []).reduce((n, g) => n + g.nodes.length, 0);
+    },
+    /** Every file of the system, loaded or not, for `catalogue:` suggestions. */
+    files(): string[] {
+      return (this.system?.getAllCatalogueFiles() ?? []).map((f) => getDataObject(f).name ?? "").filter(Boolean);
     },
     lastPage(): number {
       const n = this.groups ? this.groups.length : this.rows.length;
