@@ -81,7 +81,7 @@
         <input class="cursor-pointer" v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
         <label class="unselectable cursor-pointer" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
       </span>
-      <input v-model="filter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
+      <UtilQueryInput v-model="filter" ref="editor-searchbox" :catalogue="catalogue" class="w-full" up />
     </div>
   </div>
 </template>
@@ -351,6 +351,8 @@ export default defineComponent({
   position: sticky;
   margin-top: auto;
   bottom: 0;
+  // Above the tree's collapsible boxes (z-index 100 - depth), so the search suggestions open over them.
+  z-index: 101;
 }
 
 input:focus::placeholder {

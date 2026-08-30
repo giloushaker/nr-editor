@@ -101,7 +101,8 @@ export default {
   components: { NodePath },
 };
 </script>
-<style scope>
+<!-- `scoped`, not `scope`: unscoped, this !important rule leaked into every table in the app. -->
+<style scoped>
 td {
   padding: 1px 4px 1px 4px !important;
   text-align: left !important;

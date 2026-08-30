@@ -278,7 +278,7 @@ export function getTypeName(key: string & keyof typeof entries, obj?: Base): key
  * Short forms for the few type names that are a mouthful. Only `is` reads these --
  * `editorTypeName` keeps the long names, which are saved in filters and compared by name.
  */
-const shortNames = {
+export const shortNames = {
   selectionEntry: "entry",
   selectionEntryGroup: "group",
   selectionEntryLink: "entryLink",

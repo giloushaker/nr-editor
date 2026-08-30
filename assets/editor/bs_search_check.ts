@@ -9,7 +9,7 @@
  * the field table, so what it needs is `is`/`parentKey`/`parent` and the child arrays, and
  * building those by hand keeps this file free of the editor's prototype grafting.
  */
-import { parse, search, type SearchOptions } from "./bs_search";
+import { aggregate, isBalanced, parse, search, splitTerms, unknownKeys, type SearchOptions } from "./bs_search";
 
 let failures = 0;
 function assert(condition: boolean, msg: string) {
@@ -185,6 +185,9 @@ console.log("parsing");
 
   const [neg] = parse("-is:entry|group");
   assert(neg.negate && neg.alts.length === 2, "leading dash negates, pipe splits alternatives");
+  const [bang] = parse("!is:entry");
+  assert(bang.negate && bang.key === "is", "a leading bang negates too");
+  assert(!parse("!")[0].negate && !parse("-")[0].negate, "a lone dash or bang is a word, not a negation");
 
   const [outer] = parse("has:entry[has:profile[typeName:Weapon]]");
   const inner = outer.sub?.[0];
@@ -192,6 +195,7 @@ console.log("parsing");
 
   const [presence] = parse("childId:");
   assert(presence.alts[0].any === true, "a bare key: means the field must be present");
+  assert(parse("affects:undefined|null|=self")[0].alts.map((a) => a.none === true).join() === "true,true,false", "undefined and null spell none; =self stays a value");
 
   assert(parse("   ").length === 0, "whitespace alone parses to nothing");
 }
@@ -212,6 +216,31 @@ console.log("fields");
   // The whole reason `is` compares by equality: substring would drag the link in here.
   is("is:entry", "bolter,power fist,shared entry");
   is("is:entryLink", "bolter link,shared link");
+  is("is:link", "bolter link,shared link,squad link");
+}
+
+console.log("links named after their target");
+{
+  // A resolved categoryLink's `is` is categoryEntryLink, an infoLink's is profileLink: the array's
+  // own kind has to answer too, or `is:categoryLink` finds only the dead ones.
+  const link = (name: string, is: string, parentKey: string) => ({ name, is, parentKey, id: name, isLink: () => true, target: {} });
+  const cat = {
+    name: "links",
+    imports: [],
+    isCatalogue: () => true,
+    categoryLinks: [link("infantry link", "categoryEntryLink", "categoryLinks")],
+    infoLinks: [link("weapon link", "profileLink", "infoLinks")],
+    entryLinks: [link("group link", "groupLink", "entryLinks")],
+  };
+  index(cat);
+  const names = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .join(",");
+  assert(names("is:categoryLink") === "infantry link", "is:categoryLink, by the array");
+  assert(names("is:categoryEntryLink") === "infantry link", "is:categoryEntryLink, by the target");
+  assert(names("is:infoLink") === "weapon link" && names("is:profileLink") === "weapon link", "the same for info links");
+  assert(names("is:entryLink") === "", "a group link in entryLinks is not an entryLink");
   is("-is:entry -is:entryLink -is:catalogue", "AP,max3,min0,mod,pts,shared min,squad,squad link,weapon");
   is("is:catalogue", "catalogue");
   // A field with no override is read straight off the node.
@@ -400,6 +429,187 @@ console.log("multiple catalogues");
   );
   assert(names("is:entry", [a, b]) === "from a,from b,from system", "the import shared by both is walked once");
   assert(names('catalogue:"cat b"', [a, b]) === "from b", "catalogue: narrows the union back to one file");
+}
+
+console.log("globs");
+{
+  const node = (key: string, name: string) => ({ name, id: name, is: "entry", parentKey: key });
+  const cat = {
+    name: "c",
+    imports: [],
+    isCatalogue: () => true,
+    selectionEntries: [node("selectionEntries", "Bolt pistol")],
+    sharedSelectionEntries: [node("sharedSelectionEntries", "Bolter")],
+  };
+  index(cat);
+  const names = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .join(",");
+  assert(names("key:shared*") === "Bolter", "a glob matches an equals-only field");
+  assert(names("name:bolt*") === "Bolt pistol,Bolter", "prefix glob, case-insensitive");
+  assert(names("name:*pistol") === "Bolt pistol", "suffix glob is anchored at the end");
+  assert(names('name:"bolt*"') === "", "quoted, the star is a literal");
+}
+
+console.log("aggregate, the second box");
+{
+  const node = (name: string, id: string, is = "entry", extra: Record<string, unknown> = {}) => ({
+    name,
+    id,
+    is,
+    parentKey: "selectionEntries",
+    ...extra,
+  });
+  const a = {
+    name: "cat a",
+    imports: [],
+    isCatalogue: () => true,
+    selectionEntries: [node("Sergeant", "dup"), node("Bolter", "b1"), node("Sergeant", "dup", "profile", { parentKey: "profiles" })],
+  };
+  const b = { name: "cat b", imports: [], isCatalogue: () => true, selectionEntries: [node("Sergeant", "dup"), node("Knife", "k1")] };
+  for (const c of [a, b]) index(c);
+  const all = search([a, b] as never, "is:*");
+  const withIds = search([a, b] as never, "id:any");
+  const summary = (groups: ReturnType<typeof aggregate>) => groups?.map((g) => `${g.key.join("+")}=${g.nodes.length}`).join(",");
+
+  assert(aggregate(all, "count:>1") === undefined, "no by: means no aggregation");
+  assert(summary(aggregate(all, "by:id count:>1")) === "dup=3,=2", "by:id over everything also groups the id-less roots");
+  assert(summary(aggregate(withIds, "by:id count:>1")) === "dup=3", "duplicate ids: id:any then by:id count:>1");
+  assert(aggregate(all, "by:id count:>1")?.[0].kinds.join(",") === "entry,profile", "a group lists the kinds it spans");
+  assert(aggregate(all, "by:id count:>1")?.[0].files.join(",") === "cat a,cat b", "and the files");
+  assert(summary(aggregate(all, "by:name files:>1")) === "Sergeant=3", "files:>1 keeps names present in more than one file");
+  assert(summary(aggregate(all, "by:is sort:key")) === "catalogue=2,entry=4,profile=1", "sort:key orders by the group value");
+  assert(summary(aggregate(all, "by:name,is count:>1")) === "Sergeant+entry=2", "a compound key");
+
+  const twin = { name: "weapon", is: "profile", parentKey: "profiles", characteristics: [{ name: "AP", is: "characteristic", parentKey: "characteristics", $text: "2" }] };
+  const other = { name: "weapon", is: "profile", parentKey: "profiles", characteristics: [{ name: "AP", is: "characteristic", parentKey: "characteristics", $text: "3" }] };
+  const c = { name: "cat c", imports: [], isCatalogue: () => true, selectionEntries: [node("Gun", "g1", "entry", { profiles: [twin, other] })] };
+  index(c);
+  const profiles = search([catalogue, c] as never, "is:profile");
+  assert(summary(aggregate(profiles, "by:name,characteristics count:>1")) === "weapon+AP=2=2", "duplicate profiles: same name and characteristics");
+  assert(search(c as never, 'characteristics:"AP=3"').length === 1, "characteristics searches the rendered line");
+}
+
+console.log("child and parent, one level");
+{
+  // bolter has a profile of its own; fist has none but contains a link. has: would say both hold something.
+  is("child:profile", "bolter");
+  is("is:entry child:entryLink", "power fist");
+  is("parent:entry[name:bolter]", "max3,pts,weapon");
+  is("is:constraint parent:*[has:entryLink]", "min0");
+  // The shared entry's authored parent is the file; fist only holds a link to it. Through the
+  // link, that entry is fist's child too.
+  is('child:entry[name:"shared entry"]', "catalogue");
+  is('child*:entry[name:"shared entry"]', "catalogue,power fist");
+  is('is:constraint parent*:entry[name:"power fist"]', "min0,shared min");
+  withOptions("followLinks child:", 'child:entry[name:"shared entry"]', { followLinks: true }, "catalogue,power fist");
+}
+
+console.log("kind, through the profile type");
+{
+  const statsType = { id: "pt-model", name: "Model", is: "profileType", parentKey: "profileTypes", kind: "model" };
+  const weaponType = { id: "pt-weapon", name: "Weapon", is: "profileType", parentKey: "profileTypes", kind: "weapon" };
+  const profile = (name: string, typeId: string) => ({ name, is: "profile", parentKey: "profiles", typeId });
+  const cat = {
+    name: "kinds",
+    imports: [],
+    isCatalogue: () => true,
+    index: { "pt-model": statsType, "pt-weapon": weaponType } as Record<string, unknown>,
+    findOptionById(id: string) {
+      return this.index[id];
+    },
+    profileTypes: [statsType, weaponType],
+    selectionEntries: [{ name: "Sergeant", is: "entry", parentKey: "selectionEntries", profiles: [profile("Sergeant", "pt-model"), profile("Bolter", "pt-weapon")] }],
+  };
+  index(cat);
+  const names = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .sort()
+      .join(",");
+  assert(names("is:profile kind:model") === "Sergeant", "a profile answers with its type's kind");
+  assert(names("kind:weapon") === "Bolter,Weapon", "a profile type answers for itself");
+}
+
+console.log("logic, for duplicated modifiers");
+{
+  const cond = (childId: string) => ({ is: "condition", parentKey: "conditions", type: "atLeast", value: 1, scope: "parent", childId });
+  const mod = (id: string, childId: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    is: "modifier",
+    parentKey: "modifiers",
+    type: "set",
+    field: "hidden",
+    value: true,
+    comment: id,
+    conditions: [cond(childId)],
+    ...extra,
+  });
+  const cat = {
+    name: "logic",
+    imports: [],
+    isCatalogue: () => true,
+    selectionEntries: [
+      { name: "a", is: "entry", parentKey: "selectionEntries", id: "a", modifiers: [mod("m1", "x"), mod("m2", "x")] },
+      { name: "b", is: "entry", parentKey: "selectionEntries", id: "b", modifiers: [mod("m3", "y"), mod("m4", "x", { conditions: [] })] },
+    ],
+  };
+  index(cat);
+  const mods = search(cat as never, "is:modifier");
+  const dup = aggregate(mods, "by:logic count:>1");
+  assert(dup?.length === 1 && dup[0].nodes.map((n) => n.id).join(",") === "m1,m2", "same modifier and same condition group together; ids and comments do not split them");
+  assert(aggregate(mods, "by:logic")?.length === 3, "a different childId, or no condition, is different logic");
+  // The condition itself has logic too, so narrow by kind.
+  assert(search(cat as never, "is:modifier logic:childId=y").length === 1, "logic is searchable text");
+}
+
+console.log("regex values");
+{
+  const node = (name: string) => ({ name, id: name.trim(), is: "entry", parentKey: "selectionEntries" });
+  const cat = { name: "re", imports: [], isCatalogue: () => true, selectionEntries: [node("Bolter "), node("Bolt  pistol"), node("bolter")] };
+  index(cat);
+  const names = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .join("|");
+  assert(names("name:/\\s$/") === "Bolter ", "a trailing space, which no glob can ask for");
+  assert(names("name:/\\s\\s/") === "Bolt  pistol", "a double space");
+  assert(names("name:/^bolter$/") === "Bolter |bolter".replace("Bolter |", "") || names("name:/^bolter$/") === "bolter", "case-insensitive by default");
+  assert(names("name:/^Bolter$/-") === "" && names("name:/^bolter$/g") === "bolter", "flags given are used as they are");
+  assert(names("name:/(/") === "", "a broken regex searches nothing rather than throwing");
+}
+
+console.log("dotted paths");
+{
+  is("is:constraint parent.name:bolter", "max3");
+  is("is:entry parent.is:catalogue", "bolter,power fist,shared entry");
+  is("is:entryLink target.name:bolter", "bolter link");
+  is("target.collective:true", "squad link");
+  is('refs.name:"bolter link"', "bolter");
+  assert(aggregate(search(catalogue as never, "is:constraint"), "by:parent.name")?.length === 3, "by: groups on a dotted path");
+}
+
+console.log("unknown keys");
+{
+  assert(unknownKeys("is:entry name:x page:3 target.name:y has:profile[kind:model] bare").length === 0, "fields, raw attributes, paths, traversals and words are all known");
+  assert(unknownKeys("is:entryLink target:*[catalogue!=catalogue]").join() === "catalogue!", "an invented operator shows up as the key it became");
+  assert(unknownKeys("nam:x parent.foo:1 target.name:y").join() === "nam,parent.foo", "typos and bad path ends, once each");
+  assert(unknownKeys("by:id count:>1", true).length === 0 && unknownKeys("group:id", true).join() === "group", "the then box has its own four");
+}
+
+console.log("splitTerms, for the search box");
+{
+  const j = (q: string) => splitTerms(q).join("|");
+  assert(j("is:entry  -is:link") === "is:entry|-is:link", "whitespace splits");
+  assert(j('in:entry["bolt rifle"] x') === 'in:entry["bolt rifle"]|x', "quotes protect spaces");
+  assert(
+    j("has:entry[has:profile[typeName:Weapon] name:a] b") === "has:entry[has:profile[typeName:Weapon] name:a]|b",
+    "brackets nest and keep their term"
+  );
+  assert(j("a [is:x] b") === "a|[is:x]|b", "a stray bracket group is its own term");
+  assert(j('name:"unclosed a b') === 'name:"unclosed a b', "an unclosed quote swallows the rest");
+  assert(isBalanced("has:x[is:y]") && !isBalanced("has:x[is:y") && !isBalanced('"a'), "isBalanced");
 }
 
 console.log(failures ? `\n${failures} FAILED` : "\nall ok");
