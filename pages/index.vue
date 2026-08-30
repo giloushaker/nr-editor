@@ -24,6 +24,7 @@
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
+              <CreatePR v-if="gst.github" :system="gst" />
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
               <span class="legendLine"></span>
               <span class="legendTools">
@@ -116,6 +117,7 @@ import { closeWindow, dirname, showMessageBox } from "~/electron/node_helpers";
 import { hasRoot } from "~/electron/web_fs";
 import IconContainer from "~/components/IconContainer.vue";
 import SplitView from "~/components/SplitView.vue";
+import CreatePR from "~/components/CreatePR.vue";
 import { getExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { useSettingsStore } from "~/stores/settingsState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
@@ -141,6 +143,7 @@ export default defineComponent({
     CataloguesCreate,
     IconContainer,
     SplitView,
+    CreatePR,
   },
   head() {
     return {

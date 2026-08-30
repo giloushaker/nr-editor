@@ -243,6 +243,7 @@ const defaultState = {
   activeSystems: [] as string[],
   systemsSort: "edited" as "edited" | "opened" | "name",
   catalogueLayout: "list" as "grid" | "list",
+  githubToken: "" as string,
   showOnlyEnabledCategories: false,
   globalDuplicateIdError: false,
   useNewCategoriesUI: false,
