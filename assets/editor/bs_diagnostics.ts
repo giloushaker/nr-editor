@@ -13,12 +13,11 @@
  * To add a diagnostic: append one entry to DIAGNOSTICS, or call registerDiagnostic() from
  * outside. That is the whole procedure -- no piping, no cleanup.
  */
-import { Association, AssociationLink, Condition, Constraint, Modifier, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
+import { Condition, Constraint, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
 import type { Link, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_main";
 import { splitScopeSelf, validScopes } from "~/assets/shared/battlescribe/bs_condition";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { pointlessAffects, pointlessAssociation, pointlessLocalGroup } from "./bs_recursion";
 import type { Diagnostic } from "./bs_diagnostics_engine";
 
 export type { Diagnostic, DiagnosticContext, DiagnosticFinding, DiagnosticResult } from "./bs_diagnostics_engine";
@@ -203,35 +202,6 @@ export const DIAGNOSTICS: Diagnostic[] = [
       };
     },
     related: (node, ctx) => ctx.idCollisions(node),
-  },
-
-  {
-    /**
-     * A recursive query that never had anything to recurse into.
-     *
-     * Recursion is not free -- a recursive query listens on every scope it reaches -- and a
-     * recursive flag that changes nothing is nearly always a copy-paste from a query where it
-     * did. bs_recursion.ts holds the reasoning, including what it declines to judge.
-     */
-    id: "pointless-recursion",
-    severity: "warning",
-    // Cheapest gate first: `affects` is absent on the overwhelming majority of modifiers, and
-    // the rest are rare enough that the checks past it only run once. Local condition groups
-    // are matched on parentKey rather than instanceof -- they are not in protoMap, so they
-    // carry Base.prototype and there is no class to test against.
-    applies: (node) =>
-      node instanceof Modifier
-        ? Boolean(node.affects)
-        : node instanceof Association ||
-          node instanceof AssociationLink ||
-          node.parentKey === "localConditionGroups",
-    check(node) {
-      if (node instanceof Modifier) return pointlessAffects(node as EditorBase & Modifier);
-      if (node.parentKey === "localConditionGroups") {
-        return pointlessLocalGroup(node as EditorBase & LocalConditionGroup);
-      }
-      return pointlessAssociation(node as EditorBase & (Association | AssociationLink));
-    },
   },
 ];
 
