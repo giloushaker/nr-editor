@@ -240,7 +240,39 @@ export default defineComponent({
         console.error(e);
       }
     },
+    /** The loaded system ids behind a row: the row's own for db rows, whatever was loaded from its folder otherwise. */
+    rowSystemIds(row: SystemRow): string[] {
+      if (row.id) return [row.id];
+      const prefix = `${row.path}/`;
+      return Object.entries(this.store.gameSystems)
+        .filter(([, sys]) => sys.gameSystem?.gameSystem.fullFilePath?.startsWith(prefix))
+        .map(([id]) => id);
+    },
+    rowHasUnsaved(row: SystemRow): boolean {
+      const ids = this.rowSystemIds(row);
+      return Object.entries(this.store.unsavedChanges).some(
+        ([key, state]) => state.unsaved && ids.some((id) => key.includes(id)),
+      );
+    },
     async openRow(row: SystemRow) {
+      // A reload re-reads the files and would silently drop any unsaved edits.
+      if (this.isLoaded(row) && this.rowHasUnsaved(row)) {
+        const reload = await globalThis.customPrompt({
+          html: `<b>${row.name}</b> has unsaved changes.<br/>Reloading re-reads the files from disk, and edits that were never saved are lost.`,
+          accept: "Reload anyway",
+          cancel: "Open without reloading",
+          danger: true,
+        });
+        // null = dismissed (veil/Esc): stay here, do nothing.
+        if (reload === null) return;
+        if (reload === false) {
+          const ids = this.rowSystemIds(row);
+          for (const id of ids) this.cataloguesStore.touchOpened(id, row.path);
+          if (row.kind === "db" || !this.isElectron) this.settings.activeSystems = ids;
+          this.$router.push(`/?id=${ids.join(",")}`);
+          return;
+        }
+      }
       this.opening = true;
       this.progress_msg = "";
       try {
