@@ -82,13 +82,13 @@ export default {
   methods: {
     menu(ref: string) {
       return {
-        show: (event: MouseEvent, e: any) => {
+        show: (event: MouseEvent, e?: any) => {
           this.contextmenuopen = true;
           this.$nextTick(() => {
             (this.$refs[ref] as any)?.show(event, e);
           });
         },
-        close: (event: MouseEvent, e: any) => {
+        close: (event: MouseEvent, e?: any) => {
           (this.$refs[ref] as any)?.close(event, e);
           this.contextmenuopen = false;
         },

@@ -561,9 +561,20 @@ export function getEntryPath(entry: EditorBase): EntryPathEntry[] {
   result.reverse();
   return result;
 }
-export function getEntryPathInfo(entry: EditorBase): EntryPathEntry[] {
+export function getEntryPathInfo(entry: EditorBase): EntryPathEntryExtended[] {
   if (!entry.parent && !entry.isCatalogue()) {
-    return [{ id: entry.id, key: entry.parentKey, index: 0 }];
+    // Same shape as the loop below builds, so a caller reading display/name gets one either way.
+    return [
+      {
+        id: entry.id,
+        key: entry.parentKey,
+        index: 0,
+        name: entry.getName(),
+        display: getName(entry),
+        type: entry.editorTypeName,
+        label: entry.getTypeName(),
+      },
+    ];
   }
   const result = [] as EntryPathEntryExtended[];
   do {

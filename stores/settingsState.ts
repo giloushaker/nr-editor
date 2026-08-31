@@ -287,7 +287,7 @@ export const useSettingsStore = defineStore("settings", {
           background: "#2b2b2b",
           bga: "100",
           borderColor: "#5e5e5e",
-          colorGray: "#737283" || "#76909f",
+          colorGray: "#737283",
           colorBlue: "#2d9ce1",
           colorLightblue: "#009cbd",
           colorRed: "#c74343",

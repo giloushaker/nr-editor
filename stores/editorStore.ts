@@ -14,6 +14,8 @@ import {
   getNameExtra,
   siblingArray,
 } from "~/assets/editor/bs_editor";
+import type { EntryPathEntry, ItemTypes } from "~/assets/editor/bs_editor";
+import type { RouteLocationNormalizedLoaded } from "vue-router";
 import {
   enumerate_zip,
   generateBattlescribeId,
@@ -375,7 +377,7 @@ export const useEditorStore = defineStore("editor", {
         const content = rootToJson(data);
         await writeFile(path, content);
       } else {
-        const xml = convertToXml(data);
+        const xml = await convertToXml(data);
         const shouldZip = isZipExtension(extension);
         const name = filename(path);
         const nameInZip = name.replace(".gstz", ".gst").replace(".catz", ".cat");
@@ -1404,7 +1406,7 @@ export const useEditorStore = defineStore("editor", {
           };
         case "sharedProfiles":
         case "profiles":
-          const profileType = parent?.getCatalogue().iterateProfileTypes().next().value;
+          const profileType = parent?.getCatalogue().iterateProfileTypes().next().value || undefined;
           const name = !parent || parent?.isCatalogue() ? undefined : parent?.getName();
           return {
             name: name || "New Profile",

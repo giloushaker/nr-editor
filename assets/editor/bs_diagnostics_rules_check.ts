@@ -25,7 +25,7 @@ const rule = DIAGNOSTICS.find((d) => d.id === "no-target")!;
 /** Runs the rule the way the engine does, and flattens whatever shape it returned to a string. */
 function check(node: unknown, findByIdGlobal: (id: string) => unknown): string | undefined {
   const ctx = { catalogue: home, findById: () => undefined, findByIdGlobal, isCyclicLink: () => false, idCollisions: () => [] };
-  const found = rule.check(node as never, ctx as never);
+  const found = rule.check(node as never, ctx as never) || undefined;
   return typeof found === "string" ? found : found?.msg;
 }
 

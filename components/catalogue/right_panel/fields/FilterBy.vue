@@ -64,6 +64,7 @@ import {
   getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "@/assets/ts/catalogue/catalogue_helpers";
 import { getNameExtra } from "~/assets/editor/bs_editor";
 import { filterByItems } from "~/assets/editor/bs_editor";
 import { fieldToText } from "~/assets/shared/battlescribe/bs_modifiers";

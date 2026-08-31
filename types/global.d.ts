@@ -1,4 +1,7 @@
+import type { RouteLocationNormalizedLoaded, Router } from "vue-router";
 import type { NotificationsOptions } from "@kyvg/vue3-notification";
+import type { Base } from "~/assets/shared/battlescribe/bs_main";
+import type { BSIData, BSIDataCatalogue, BSIDataSystem } from "~/assets/shared/battlescribe/bs_types";
 import type { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import type { useEditorStore } from "~/stores/editorStore";
@@ -40,4 +43,37 @@ declare global {
    */
   var $t: (key: string, ...args: any[]) => string;
   var showMessage: (text: string) => unknown;
+}
+
+/**
+ * `this.$route` / `this.$router` in Options API components.
+ *
+ * vue-router ships this augmentation itself, but it targets `declare module "vue"`, and vue
+ * 3.5 only re-exports ComponentCustomProperties from @vue/runtime-core through `export *` --
+ * which augmentation does not merge across, so it silently declared a second, unused interface.
+ * Augmenting the package that actually owns the interface is what reaches the instance type.
+ */
+declare module "@vue/runtime-core" {
+  interface ComponentCustomProperties {
+    $route: RouteLocationNormalizedLoaded;
+    $router: Router;
+  }
+}
+
+/**
+ * Keep the BattleScribe graph out of Vue's type-level ref unwrapping.
+ *
+ * A node reached through `data()` or a store was rewritten by UnwrapNestedRefs into a
+ * structural copy of itself, and TypeScript then gave up comparing that copy to the class it
+ * came from -- the graph is recursive and enormous, so it hit the depth limit and every use
+ * of a search result read as a type error. This is the extension point Vue documents for it;
+ * it is types-only, runtime reactivity is untouched.
+ */
+declare module "@vue/reactivity" {
+  export interface RefUnwrapBailTypes {
+    battlescribeBailTypes: Base | Catalogue | GameSystemFiles;
+    // The file-shaped data objects too: plain JSON that never holds a ref, and the rewrite
+    // turned nested fields into `unknown` where a component prop still wanted the real type.
+    battlescribeDataBailTypes: BSIData | BSIDataCatalogue | BSIDataSystem;
+  }
 }

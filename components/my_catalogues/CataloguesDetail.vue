@@ -177,10 +177,10 @@ export default {
     },
   },
   methods: {
-    download_file() {
+    async download_file() {
       const data = getDataObject(this.catalogue);
       const loaded = this.store.get_system(data.gameSystemId || data.id).getLoadedCatalogue({ targetId: data.id });
-      const xml = convertToXml(loaded || data);
+      const xml = await convertToXml(loaded || data);
       const fileName = data.fullFilePath ? removeExtension(filename(data.fullFilePath)) : data.name;
       const extension = data.gameSystemId ? `cat` : `gst`;
       saveFilePickerOrDownload(`${fileName}.${extension}`, "application/xml", xml);
@@ -224,7 +224,7 @@ export default {
         const isSystem = Boolean((file as BSIDataSystem).gameSystem);
         const loaded = sys.getLoadedCatalogue({ targetId: file_data.id });
         const base = file_data.fullFilePath ? removeExtension(filename(file_data.fullFilePath)) : file_data.name;
-        zip.file(`${base}.${isSystem ? "gst" : "cat"}`, convertToXml(loaded || file_data));
+        zip.file(`${base}.${isSystem ? "gst" : "cat"}`, await convertToXml(loaded || file_data));
       }
       const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
       saveFilePickerOrDownload(`${data.name}.zip`, "application/zip", blob);

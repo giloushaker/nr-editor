@@ -133,6 +133,7 @@ import {
   getSearchElements,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
+import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { filterByItems, getNameExtra } from "~/assets/editor/bs_editor";
 import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
 import type { AffectsQuery } from "~/assets/shared/battlescribe/bs_main";
