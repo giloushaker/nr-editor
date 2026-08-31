@@ -60,8 +60,8 @@ function replaceTagged(
   newModifiers: BSIModifier[],
 ) {
   $store.edit_node(rootEntry as EditorBase, {
-    constraints: (rootEntry.constraints || []).filter((elt) => elt.comment !== comment).concat(newConstraints),
-    modifiers: (rootEntry.modifiers || []).filter((elt) => elt.comment !== comment).concat(newModifiers),
+    constraints: (rootEntry.constraints || []).filter((elt) => elt.comment !== comment).concat(newConstraints as never[]),
+    modifiers: (rootEntry.modifiers || []).filter((elt) => elt.comment !== comment).concat(newModifiers as never[]),
   });
 }
 
@@ -604,7 +604,7 @@ function editModifierConditions(catalogues: Catalogue[]) {
 
             $store.edit_node(modifier as any, {
               conditions: modifier.conditions!.filter((elt) => elt != foundCondition),
-              conditionGroups: (modifier.conditionGroups || []).concat(newConditionGroup),
+              conditionGroups: (modifier.conditionGroups || []).concat(newConditionGroup as never),
             });
           }
         }
@@ -733,7 +733,7 @@ function addBattleMarchFloor(catalogues: Catalogue[]) {
 
     // Single write at the end: the previous version edited rootEntry.modifiers while iterating it.
     if (toAdd.length || kept.length !== modifiers.length) {
-      $store.edit_node(rootEntry as EditorBase, { modifiers: kept.concat(toAdd) });
+      $store.edit_node(rootEntry as EditorBase, { modifiers: kept.concat(toAdd as never[]) });
     }
   });
 }

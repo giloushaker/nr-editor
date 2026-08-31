@@ -81,13 +81,6 @@ export default defineNuxtConfig({
       // <nr-icon> is the icon wrapper element (shared_components/svg/NrIcon.vue): a custom tag
       // so generic CSS selectors like "a > span" or ".x img" never catch icons
       isCustomElement: (tag) => tag === "nr-icon",
-    },
-  },
-  typescript: {
-    strict: true,
-  },
-  vue: {
-    compilerOptions: {
       /**
        * Every right-panel field is a bare <table><tr> -- 25 of them across 23 files. The parser
        * inserts the <tbody> itself, and nothing here renders on a server (ssr is false), so there
@@ -102,6 +95,9 @@ export default defineNuxtConfig({
         }
       },
     },
+  },
+  typescript: {
+    strict: true,
   },
   electron: {
     build: [
