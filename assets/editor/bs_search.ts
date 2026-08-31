@@ -11,6 +11,7 @@
  *   is:*                            every node -- the whole tree, which is what to walk from
  *   is:constraint|condition         node kind, either of two
  *   -is:entryLink                   negated; `!is:entryLink` is the same
+ *   name!=Scouts / name!:scout      not equal / not containing -- the ! rides the operator
  *   is:condition childId:any        field is present (`any`, `*`, or a bare `childId:`)
  *   is:entry id:none                field is absent -- `none` is the complement of `any`; `undefined`/`null` spell it too
  *   name=Scouts                     exact, not substring; same as `name:=Scouts`
@@ -37,6 +38,7 @@ import { entries } from "~/assets/shared/battlescribe/entries";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { forEachParent, type MaybeArray } from "~/assets/shared/battlescribe/bs_helpers";
+import { InfoIndex } from "~/assets/shared/battlescribe/bs_info_index";
 import { getName, shortNames, siblingArray } from "./bs_editor";
 import { types } from "~/assets/shared/battlescribe/entries";
 
@@ -157,7 +159,7 @@ function parseVal(raw: string): Val {
 export const NEGATION = /^[-!](?=.)/;
 
 function parseTerm(tok: string): Term {
-  const negate = NEGATION.test(tok);
+  let negate = NEGATION.test(tok);
   const body = negate ? tok.slice(1) : tok;
   const colon = indexOutside(body, ":");
   const equals = indexOutside(body, "=");
@@ -174,8 +176,12 @@ function parseTerm(tok: string): Term {
   const at = exact ? equals : colon;
   // A leading separator, or none at all, is plaintext.
   if (at <= 0) return { negate, key: "text", alts: [parseVal(body)] };
+  // `name!=x` and `name!:x`: the ! rides the operator and negates the term, so with | it reads
+  // as "none of these". Composes with a leading - by cancelling, for whoever writes -name!=x.
+  const bang = at > 1 && body[at - 1] === "!";
+  if (bang) negate = !negate;
   const alts = splitOutside(body.slice(at + 1), "|").map((alt) => parseVal(exact ? `=${alt}` : alt));
-  return { negate, key: body.slice(0, at), alts };
+  return { negate, key: body.slice(0, bang ? at - 1 : at), alts };
 }
 
 function parseQuery(toks: string[], pos: { i: number }): Query {
@@ -519,6 +525,8 @@ export const queryKeys: string[] = [
     "max",
     "affects",
     "kind",
+    "textRefs",
+    "textMentions",
   ]),
 ];
 
@@ -542,8 +550,13 @@ export function unknownKeys(query: string, then = false): string[] {
   const known = (key: string): boolean => {
     if (then) return THEN.has(key);
     const dot = key.indexOf(".");
-    if (dot > 0) return PATH_STEPS.has(key.slice(0, dot)) && known(key.slice(dot + 1));
-    return key in fields || goodJsonKeys.has(key) || TRAVERSALS.has(key);
+    if (dot > 0) {
+      if (key.endsWith(".length")) return known(key.slice(0, -".length".length));
+      // characteristics.<any name> is legal; the name is data, not vocabulary.
+      if (key.slice(0, dot) === "characteristics") return true;
+      return PATH_STEPS.has(key.slice(0, dot)) && known(key.slice(dot + 1));
+    }
+    return key in fields || goodJsonKeys.has(key) || TRAVERSALS.has(key) || key === "textRefs" || key === "textMentions";
   };
   const walk = (terms: Query) => {
     for (const term of terms) {
@@ -555,13 +568,74 @@ export function unknownKeys(query: string, then = false): string[] {
   return out;
 }
 
+/** A few words per suggestible key, for the box's dropdown. Unlisted raw attributes fall back by kind. */
+export const keyHints: Record<string, string> = {
+  is: "kind",
+  name: "stored name",
+  label: "tree label",
+  id: "id, or target id",
+  text: "what bare words search",
+  comment: "text",
+  description: "rule/profile text",
+  $text: "characteristic value",
+  characteristics: "stat line",
+  logic: "logic as one line",
+  kind: "profile type kind",
+  type: "min/max, set/append, unit/model",
+  catalogue: "file",
+  key: "array name",
+  target: "link target",
+  refs: "links here",
+  mentions: "named by logic",
+  shared: "true/false",
+  link: "true/false",
+  collective: "true/false",
+  collapsible: "true/false",
+  flatten: "true/false",
+  hidden: "true/false",
+  import: "true/false",
+  exportable: "true/false",
+  error: "error message text",
+  has: "below, any depth",
+  in: "above, any depth",
+  "has*": "below, through links",
+  "in*": "above, through links",
+  child: "direct child",
+  parent: "direct parent",
+  "child*": "child, through links",
+  "parent*": "parent, through links",
+  value: "number",
+  page: "number",
+  min: "number",
+  max: "number",
+  affects: "self/entries/…",
+  textRefs: "times named in texts",
+  textMentions: "names its own text uses",
+  typeName: "profile type name",
+  by: "group by field(s)",
+  count: "group size",
+  files: "files spanned",
+  sort: "count / key / files",
+};
+for (const key of idFields) keyHints[key] = keyHints[key] ?? "id or name";
+
 function read(node: EditorBase, key: string): unknown {
   const dot = key.indexOf(".");
   if (dot > 0) {
     const head = key.slice(0, dot);
     const next = head === "mentions" ? node.other_refs : (node as unknown as Record<string, unknown>)[head];
-    if (!next || typeof next !== "object") return undefined;
     const rest = key.slice(dot + 1);
+    // `description.length:>100` -- the one dotted step that lands on a string rather than a node.
+    if (rest === "length" && typeof next === "string") return next.length;
+    // `characteristics.S:>4`, `characteristics."Unit Strength":1`: ONE characteristic's value,
+    // by name -- unlike `characteristics:"S=4"`, which substring-matches the whole line and
+    // catches BS=4 too. Quotes around the name protect a spaced one from the tokenizer.
+    if (head === "characteristics" && Array.isArray(next)) {
+      const wanted = unquote(rest).toLowerCase();
+      const found = (next as Array<{ name?: string; $text?: string }>).find((c) => c.name?.toLowerCase() === wanted);
+      return found?.$text;
+    }
+    if (!next || typeof next !== "object") return undefined;
     return Array.isArray(next) ? next.map((n) => read(n as EditorBase, rest)) : read(next as EditorBase, rest);
   }
   const field = fields[key];
@@ -666,16 +740,42 @@ export function aggregate(nodes: EditorBase[], then: string): Group[] | undefine
   const desc = sortText.startsWith("-");
   const sortKey = desc ? sortText.slice(1) : sortText;
 
+  // The text keys live outside the field table; their values come from the one scan, made over
+  // the universe the nodes were found in when it is known.
+  const wantsText = by.some((k) => k === "textRefs" || k === "textMentions");
+  const textRefs = wantsText
+    ? textRefsOf((nodes as EditorBase[] & { $universe?: EditorBase[] }).$universe ?? nodes)
+    : undefined;
+
+  /**
+   * The keys one node contributes to. Usually one; `textMentions` EXPLODES -- a text naming
+   * three rules joins three groups, which is what "group by what they mention" means. A node
+   * can therefore sit in several groups, and the counts sum past the node count, like tags.
+   */
+  const keysOf = (node: EditorBase): string[][] => {
+    let variants: string[][] = [[]];
+    for (const k of by) {
+      const values =
+        k === "textMentions"
+          ? [...new Set(textRefs!.mentions.get(node) ?? [])]
+          : [k === "textRefs" ? String(textRefs!.counts.get(node) ?? 0) : groupValue(node, k)];
+      const parts = values.length ? values : [""];
+      variants = variants.flatMap((v) => parts.map((value) => [...v, value]));
+    }
+    return variants;
+  };
+
   const groups = new Map<string, Group>();
   for (const node of nodes) {
-    const key = by.map((k) => groupValue(node, k));
-    const id = key.join("\t");
-    let group = groups.get(id);
-    if (!group) groups.set(id, (group = { key, nodes: [], kinds: [], files: [] }));
-    group.nodes.push(node);
-    if (node.is && !group.kinds.includes(node.is)) group.kinds.push(node.is);
-    const file = node.catalogue?.name ?? "";
-    if (!group.files.includes(file)) group.files.push(file);
+    for (const key of keysOf(node)) {
+      const id = key.join("\t");
+      let group = groups.get(id);
+      if (!group) groups.set(id, (group = { key, nodes: [], kinds: [], files: [] }));
+      group.nodes.push(node);
+      if (node.is && !group.kinds.includes(node.is)) group.kinds.push(node.is);
+      const file = node.catalogue?.name ?? "";
+      if (!group.files.includes(file)) group.files.push(file);
+    }
   }
 
   const measure = (g: Group) => (sortKey === "files" ? g.files.length : sortKey === "key" ? g.key.join(" ") : g.nodes.length);
@@ -696,6 +796,66 @@ export function aggregate(nodes: EditorBase[], then: string): Group[] | undefine
 // #region traversal
 
 type Traversal = "has" | "has*" | "in" | "in*" | "child" | "child*" | "parent" | "parent*" | "target" | "refs" | "mentions";
+
+// #region text references
+
+/**
+ * How often each indexable node's name appears in OTHER rules' and characteristics' text --
+ * the references the roster app auto-links, which no id records, so refs/mentions cannot see
+ * them. Indexes what the engine's indexInfo() does: rules, profiles, categories and infoGroups,
+ * minus noindex. Built over the whole universe, only when a query says `textRefs`, and
+ * remembered per universe so the other terms get it for free.
+ */
+interface TextRefs {
+  /** target -> how many texts name it. */
+  counts: Map<EditorBase, number>;
+  /** text owner -> the names its text mentions, one entry per mention. */
+  mentions: Map<EditorBase, string[]>;
+}
+const textRefCache = new WeakMap<EditorBase[], TextRefs>();
+
+export function textRefCounts(universe: EditorBase[]): Map<EditorBase, number> {
+  return textRefsOf(universe).counts;
+}
+
+function textRefsOf(universe: EditorBase[]): TextRefs {
+  const cached = textRefCache.get(universe);
+  if (cached) return cached;
+  const index = new InfoIndex<EditorBase>();
+  const INDEXED = new Set(["rule", "profile", "categoryEntry", "infoGroup"]);
+  for (const node of universe) {
+    if (node.isLink?.()) continue;
+    if (!INDEXED.has(node.is)) continue;
+    // Like the engine: noindex suppresses the name, aliases are indexed regardless.
+    if (!(node as { noindex?: boolean }).noindex) index.add(node.getName?.(), node);
+    for (const alias of (node as { alias?: string[] }).alias ?? []) index.add(alias, node);
+  }
+  const counts = new Map<EditorBase, number>();
+  const mentions = new Map<EditorBase, string[]>();
+  const scan = (owner: EditorBase | undefined, text: unknown) => {
+    if (typeof text !== "string" || !text || !owner) return;
+    for (const part of index.match(text)) {
+      for (const target of part.match ?? []) {
+        if (target === owner) continue;
+        counts.set(target, (counts.get(target) ?? 0) + 1);
+        let out = mentions.get(owner);
+        if (!out) mentions.set(owner, (out = []));
+        out.push(target.getName?.() ?? "");
+      }
+    }
+  };
+  for (const node of universe) {
+    if (node.is === "rule") scan(node, (node as { description?: string }).description);
+    // A characteristic's owner is its profile: a profile naming itself in its own text is not a ref.
+    if (node.is === "characteristic") scan(node.parent, (node as { $text?: string }).$text);
+  }
+  const result = { counts, mentions };
+  textRefCache.set(universe, result);
+  return result;
+}
+
+// #endregion
+
 
 /**
  * Which keys run their `[...]` somewhere other than on the node itself. `has`/`in` are the two
@@ -821,6 +981,18 @@ function isInside(matches: Set<EditorBase>): (node: EditorBase) => boolean {
 // #region evaluation
 
 function compile(term: Term, universe: EditorBase[], follow: boolean): (node: EditorBase) => boolean {
+  if (term.key === "textRefs") {
+    const counts = textRefCounts(universe);
+    const test = (node: EditorBase) => term.alts.some((alt) => matchValue(counts.get(node) ?? 0, alt, undefined));
+    return term.negate ? (node) => !test(node) : test;
+  }
+  // The same scan, read the other way: what this node's own text names. A rule's mentions sit
+  // on the rule; a characteristic's on its profile. Numbers compare the count, text matches names.
+  if (term.key === "textMentions") {
+    const { mentions } = textRefsOf(universe);
+    const test = (node: EditorBase) => term.alts.some((alt) => matchValue(mentions.get(node) ?? [], alt, undefined));
+    return term.negate ? (node) => !test(node) : test;
+  }
   const kind = traversalOf(term, follow);
   const test = kind
     ? traverse(term, kind, universe, follow)
@@ -925,7 +1097,13 @@ export function search(catalogues: MaybeArray<Catalogue>, query: string, options
   const universe = collect(Array.isArray(catalogues) ? catalogues : [catalogues], options);
   if (!parsed.length) return universe;
   const matches = run(parsed, universe, options.followLinks === true);
-  return universe.filter((node) => matches.has(node));
+  const result = universe.filter((node) => matches.has(node));
+  // For aggregate(): a by:textRefs/textMentions over the RESULT has to scan the texts of the
+  // whole universe, or every mention whose owner or target fell outside the matches is lost.
+  // configurable, or reading it through a Vue reactive proxy (a page storing the results in
+  // data) violates the Proxy invariant for non-configurable properties and throws.
+  Object.defineProperty(result, "$universe", { value: universe, configurable: true });
+  return result;
 }
 
 // #endregion

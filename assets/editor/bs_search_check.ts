@@ -187,6 +187,11 @@ console.log("parsing");
   assert(neg.negate && neg.alts.length === 2, "leading dash negates, pipe splits alternatives");
   const [bang] = parse("!is:entry");
   assert(bang.negate && bang.key === "is", "a leading bang negates too");
+  const [ne] = parse("name!=Scouts");
+  assert(ne.negate && ne.key === "name" && ne.alts[0].cmp === "=", "name!=x is -name=x");
+  const [nc] = parse("name!:scout|bolt");
+  assert(nc.negate && nc.key === "name" && nc.alts.length === 2 && !nc.alts[0].cmp, "name!:a|b is none-of, substring");
+  assert(!parse("-name!=x")[0].negate, "a leading - and a !-operator cancel");
   assert(!parse("!")[0].negate && !parse("-")[0].negate, "a lone dash or bang is a word, not a negation");
 
   const [outer] = parse("has:entry[has:profile[typeName:Weapon]]");
@@ -288,6 +293,7 @@ console.log("exact");
   // Every alternative is exact, not just the first -- the bug from applying `=` to one alt.
   is("name=bolter|fist", "bolter");
   is('name=bolter|"power fist"', "bolter,power fist");
+  is("name!=bolter", "AP,bolter link,catalogue,infantry link,max3,min0,mod,power fist,pts,shared entry,shared link,shared min,squad,squad link,weapon".replace(",infantry link", ""));
   is("-name=bolter", "AP,bolter link,catalogue,max3,min0,mod,power fist,pts,shared entry,shared link,shared min,squad,squad link,weapon");
   // `:` wins when it comes first, so a value may still contain `=`, and a quoted word is text.
   is("is:constraint value:>0", "max3,shared min");
@@ -582,6 +588,13 @@ console.log("regex values");
 
 console.log("dotted paths");
 {
+  is("is:profile characteristics.AP:2", "weapon");
+  is("is:profile characteristics.AP:>1", "weapon");
+  is("is:profile characteristics.ap:3", "");
+  is('characteristics."AP":2', "weapon");
+  assert(unknownKeys('characteristics."Unit Strength":>1').length === 0, "a quoted characteristic name is a known key");
+  is("is:entry name.length:>7", "power fist,shared entry");
+  is("is:entry name.length:<7", "bolter");
   is("is:constraint parent.name:bolter", "max3");
   is("is:entry parent.is:catalogue", "bolter,power fist,shared entry");
   is("is:entryLink target.name:bolter", "bolter link");
@@ -593,9 +606,78 @@ console.log("dotted paths");
 console.log("unknown keys");
 {
   assert(unknownKeys("is:entry name:x page:3 target.name:y has:profile[kind:model] bare").length === 0, "fields, raw attributes, paths, traversals and words are all known");
-  assert(unknownKeys("is:entryLink target:*[catalogue!=catalogue]").join() === "catalogue!", "an invented operator shows up as the key it became");
+  // Since != became real syntax this parses -- as "not the literal word", not a field compare.
+  assert(unknownKeys("is:entryLink target:*[catalogue!=catalogue]").length === 0, "catalogue!= is the catalogue key, negated");
+  assert(unknownKeys("catalogue~:x").join() === "catalogue~", "a truly invented operator still shows as the key it became");
   assert(unknownKeys("nam:x parent.foo:1 target.name:y").join() === "nam,parent.foo", "typos and bad path ends, once each");
+  assert(unknownKeys("description.length:>50 target.name.length:>7 foo.length:>1").join() === "foo.length", ".length is known wherever its field is");
+  assert(unknownKeys("textRefs:>1").length === 0, "textRefs is a known key despite living outside the field table");
   assert(unknownKeys("by:id count:>1", true).length === 0 && unknownKeys("group:id", true).join() === "group", "the then box has its own four");
+}
+
+console.log("textRefs, the name-in-text references");
+{
+  const rule = (name: string, description: string, id: string) => ({ name, id, is: "rule", parentKey: "sharedRules", description, getName: () => name });
+  const smoke = rule("Smoke", "The bearer is obscured.", "r1");
+  const frenzy = rule("Frenzy", "See ^^**Smoke**^^ and fight twice.", "r2");
+  const lonely = rule("Lonely", "Nothing refers to this.", "r3");
+  const ap = { name: "AP", is: "characteristic", parentKey: "characteristics", $text: "Grants Smoke while moving.", getName: () => "AP" };
+  const prof = { name: "Launcher", id: "p1", is: "profile", parentKey: "profiles", characteristics: [ap], getName: () => "Launcher" };
+  const cavalry = { name: "Cavalry", id: "c1", is: "categoryEntry", parentKey: "categoryEntries", getName: () => "Cavalry" };
+  const charge = rule("Charge", "^^**Cavalry**^^ models fight first.", "r9");
+  const cat = { name: "texts", imports: [], isCatalogue: () => true, sharedRules: [smoke, frenzy, lonely, charge], sharedProfiles: [prof], categoryEntries: [cavalry] };
+  index(cat);
+  const names = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .sort()
+      .join(",");
+  assert(names("is:rule textRefs:>0") === "Smoke", "a rule named in another rule's text and a characteristic's");
+  assert(names("is:rule textRefs:0") === "Charge,Frenzy,Lonely", "textRefs:0 is the rules nothing names");
+  assert(names("is:rule textRefs:2") === "Smoke", "counted once per text");
+
+  // Code blocks are not references, and prototype-property names must be safe to index.
+  const fenced = rule("Fenced", "```\nSmoke\n```", "r4");
+  const inline = rule("Inline", "as `Smoke` shows", "r5");
+  const real = rule("Real", "Smoke, then `code`.", "r6");
+  const ctor = rule("Constructor", "a name Object.prototype already has", "r7");
+  const cat2 = { name: "blocks", imports: [], isCatalogue: () => true, sharedRules: [smoke, fenced, inline, real, ctor] };
+  index(cat2);
+  const counts = search(cat2 as never, "is:rule textRefs:>0")
+    .map((n) => (n as { name?: string }).name)
+    .join(",");
+  assert(counts === "Smoke", "a name inside inline or fenced code does not count; outside code it does");
+
+  // The same scan the other way: who mentions what.
+  const who = (q: string) =>
+    search(cat as never, q)
+      .map((n) => (n as { name?: string }).name)
+      .sort()
+      .join(",");
+  assert(who("textMentions:Smoke") === "Frenzy,Launcher", "textMentions:X is everything whose text names X, profiles via their characteristics");
+  assert(who("is:rule textMentions:0") === "Lonely,Smoke", "rules whose text names nothing");
+  assert(who("textMentions:any") === "Charge,Frenzy,Launcher", "textMentions:any is every text that references something");
+  assert(who("is:categoryEntry textRefs:>=1") === "Cavalry", "a category named in a rule's text is tracked");
+  assert(who("textMentions:Cavalry") === "Charge", "and the mentioning text finds it by name");
+
+  // by:textMentions groups by what a text references, scanning the universe the find ran over.
+  const referencing = search(cat as never, "textMentions:any");
+  const grouped = aggregate(referencing, "by:textMentions");
+  const smokeGroup = grouped?.find((g) => g.key[0] === "Smoke");
+  assert(
+    grouped?.length === 2 && smokeGroup?.nodes.length === 2,
+    "by:textMentions puts the two Smoke-referencing texts in one group"
+  );
+  // A text naming several rules joins each of their groups: one group per mention, not per set.
+  const both = rule("Both", "Combines ^^**Smoke**^^ with ^^**Frenzy**^^.", "r8");
+  const cat3 = { name: "multi", imports: [], isCatalogue: () => true, sharedRules: [smoke, frenzy, both] };
+  index(cat3);
+  const exploded = aggregate(search(cat3 as never, "textMentions:any"), "by:textMentions sort:key");
+  assert(
+    exploded?.map((g) => `${g.key[0]}=${g.nodes.length}`).join(",") === "Frenzy=1,Smoke=2",
+    "a text mentioning two rules sits in both groups"
+  );
+  assert(aggregate(search(cat as never, "is:rule"), "by:textRefs sort:-key")?.[0].key[0] === "2", "by:textRefs groups by the incoming count");
 }
 
 console.log("splitTerms, for the search box");
