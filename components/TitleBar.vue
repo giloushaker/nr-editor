@@ -3,7 +3,7 @@
     <div class="titlebar-content titlebar-left" id="titlebar-content">
       <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable" :title="`New Recruit - Editor v${version}`">
         <h1 class="flex titletext">
-          <img class="logo" src="/assets/icons/logo-menu.svg" />
+          <img class="logo" src="/assets/favicon.ico" />
           <span v-if="$route.name !== 'catalogue'" class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>

@@ -323,10 +323,18 @@ function restoreBounds(win: Electron.BrowserWindow, iniPath: string) {
   }
 }
 
+// Linux takes the window/taskbar icon from the window itself -- Windows and macOS take it from
+// the executable, which is why it was never set and only Linux showed the stock Electron icon.
+// Packaged builds have favicon.png at the app root (.output/public); dev runs read it from public/.
+const windowIcon = [path.join(app.getAppPath(), "favicon.png"), path.join(app.getAppPath(), "public/favicon.png")].find(
+  (p: string) => existsSync(p),
+);
+
 const createWindow = () => {
   const iniPath = `${app.getPath("userData")}/ini.json`;
   const win: Electron.BrowserWindow = new BrowserWindow({
     autoHideMenuBar: true,
+    icon: windowIcon,
     width: 1200,
     height: 900,
     webPreferences: {
