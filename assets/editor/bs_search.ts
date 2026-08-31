@@ -615,7 +615,7 @@ export const keyHints: Record<string, string> = {
   by: "group by field(s)",
   count: "group size",
   files: "files spanned",
-  sort: "count / key / files; without by: name / kind / refs / textRefs",
+  sort: "count / key / files, or a column when flat",
 };
 for (const key of idFields) keyHints[key] = keyHints[key] ?? "id or name";
 
