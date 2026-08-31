@@ -36,11 +36,93 @@
       </div>
     </div>
 
+    <div v-if="selected.size" class="actionbar">
+      <span class="bold">{{ selected.size.toLocaleString() }} selected</span>
+      <button class="inputstyle" @click="selected.clear()">Clear</button>
+      <span class="sep"></span>
+      <span class="copywrap" v-click-outside="{ handler: () => (copyMenu = false), capture: true }">
+        <button class="inputstyle" @click="copyMenu = !copyMenu">Copy ▾</button>
+        <div v-if="copyMenu" class="copymenu">
+          <div @click="copySelected('names')">Names</div>
+          <div @click="copySelected('list')">Name — path, by file</div>
+          <div @click="copySelected('ids')">Ids</div>
+          <div @click="copySelected('query')">As query (id:a|b|…)</div>
+        </div>
+      </span>
+      <button class="inputstyle danger" @click="deleteOpen = true">Delete</button>
+      <span class="copywrap" v-click-outside="{ handler: () => (actionsMenu = false), capture: true }">
+        <button class="inputstyle" @click="openActions">Actions ▾</button>
+        <div v-if="actionsMenu" class="copymenu">
+          <div v-if="!scriptActions.length" class="muted none">No script actions for this selection</div>
+          <div v-for="a in scriptActions" :key="a.label" @click="runAction(a)">{{ a.label }}</div>
+          <div class="addown" @click="((actionsMenu = false), (actionsHelp = true))">Add your own…</div>
+        </div>
+      </span>
+      <span class="sep"></span>
+      <span class="muted">set</span>
+      <UtilAutocomplete class="editfield" v-model="editKey" :options="editOptions" placeholder="field" nullable>
+        <template #option="{ option }">{{ option ?? "field" }}</template>
+      </UtilAutocomplete>
+      <span class="muted">to</span>
+      <input
+        class="editvalue"
+        type="text"
+        v-model="editValue"
+        placeholder="value"
+        :title="'true/false and numbers are typed as such; quote to force text; empty deletes the attribute'"
+        @keydown.enter="applyEdit"
+      />
+      <button class="inputstyle" :disabled="!editKey.trim()" @click="applyEdit">Apply</button>
+    </div>
+
+    <PopupDialog v-if="deleteOpen" v-model="deleteOpen" button="Delete" @button="applyDelete">
+      <template #header>Delete {{ selected.size }} nodes?</template>
+      <div class="editform">
+        <div v-for="[file, n] in deleteSummary.perFile" :key="file">{{ n }} in {{ file }}</div>
+        <p v-if="deleteSummary.linked" class="warn">
+          {{ deleteSummary.linked }} of them are still linked or named from outside the selection — those links go dead.
+        </p>
+        <p class="muted small">Undoable with Ctrl+Z. Files are only written when you save them.</p>
+      </div>
+    </PopupDialog>
+
+    <PopupDialog v-if="actionsHelp" v-model="actionsHelp" x slotstyle="max-width: 640px">
+      <template #header>Adding your own actions</template>
+      <div class="actionshelp">
+        <p>
+          Any script with a <code>context</code> hook shows up in this menu. When the menu opens, the hook is handed the
+          selected rows and returns the entries it wants to offer — or nothing to stay hidden. The same hook powers the
+          tree's right-click menu.
+        </p>
+        <pre>export default {
+  name: "My action",
+  hooks: {
+    context(event, { selections, catalogues, system }) {
+      if (!selections.length) return
+      return {
+        label: "Comment " + selections.length + " nodes",
+        run: () => {
+          for (const node of selections) {
+            $store.edit_node(node, { comment: "todo: check this" })
+          }
+        },
+      }
+    },
+  },
+}</pre>
+        <p class="muted">
+          <NuxtLink :to="`/scripts/${$route.params.id}`">Scripts page</NuxtLink> → New script → the “Menu action”
+          template starts you off.
+        </p>
+      </div>
+    </PopupDialog>
+
     <!-- Groups: the then box had a by: -->
     <div v-if="groups" class="results" ref="results">
       <table>
         <thead>
           <tr>
+            <th class="check"><input type="checkbox" :checked="allPageSelected" @change="togglePage" /></th>
             <th class="w-26px"></th>
             <th>{{ byKeys.join(" + ") }}</th>
             <th class="num">count</th>
@@ -51,6 +133,9 @@
         <tbody>
           <template v-for="(g, i) in pageGroups" :key="i">
             <tr class="row" :class="{ open: expanded[g.key.join('\t')] }" @click="toggleGroup(g)">
+              <td class="check" @click.stop>
+                <input type="checkbox" :checked="g.nodes.every((n) => selected.has(n))" @change="toggleMany(g.nodes, ($event.target as HTMLInputElement).checked)" />
+              </td>
               <td><span class="chev" :class="{ down: expanded[g.key.join('\t')] }"></span></td>
               <td>
                 <div v-if="byKeys.length === 1 && byKeys[0] === 'logic'" class="logic">
@@ -72,9 +157,15 @@
             </tr>
             <template v-if="expanded[g.key.join('\t')]">
               <tr v-for="item in g.nodes" :key="item.id ?? getName(item)" class="row member" @click="store.goto(item)">
+                <td class="check" @click.stop>
+                  <input type="checkbox" :checked="selected.has(item)" @change="toggle(item)" />
+                </td>
                 <td></td>
                 <td>
-                  <span class="name"><img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />{{ getName(item) }}</span>
+                  <span class="name">
+                    <img class="typeIcon" :src="`assets/bsicons/${item.editorTypeName}.png`" />{{ getName(item) }}
+                    <span class="extra">{{ getNameExtra(item, false) }}</span>
+                  </span>
                 </td>
                 <td class="kind">{{ item.is }}</td>
                 <td class="files"><span class="file"><img class="typeIcon" src="assets/bsicons/catalogue.png" />{{ item.catalogue?.name }}</span></td>
@@ -91,17 +182,22 @@
       <table>
         <thead>
           <tr>
+            <th class="check"><input type="checkbox" :checked="allPageSelected" @change="togglePage" /></th>
             <th class="sortable" @click="sortBy('name')">Name <span v-if="sort.key === 'name'">{{ sort.desc ? "▾" : "▴" }}</span></th>
             <th class="sortable" @click="sortBy('kind')">Kind <span v-if="sort.key === 'kind'">{{ sort.desc ? "▾" : "▴" }}</span></th>
             <th>In</th>
             <th class="num sortable" @click="sortBy('refs')">Refs <span v-if="sort.key === 'refs'">{{ sort.desc ? "▾" : "▴" }}</span></th>
+            <th v-if="textCounts" class="num sortable" @click="sortBy('textRefs')">Text refs <span v-if="sort.key === 'textRefs'">{{ sort.desc ? "▾" : "▴" }}</span></th>
             <th>Comment</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="r in pageRows" :key="r.id">
             <tr v-if="r.file" class="group" @click="collapsed[r.file] = !collapsed[r.file]">
-              <td colspan="5">
+              <td class="check" @click.stop>
+                <input type="checkbox" :checked="fileItems(r.file).every((n) => selected.has(n))" @change="toggleMany(fileItems(r.file), ($event.target as HTMLInputElement).checked)" />
+              </td>
+              <td :colspan="textCounts ? 6 : 5">
                 <span class="name">
                   <span class="chev" :class="{ down: !collapsed[r.file] }"></span>
                   <img class="typeIcon" src="assets/bsicons/catalogue.png" />
@@ -111,12 +207,19 @@
               </td>
             </tr>
             <tr v-else-if="r.item" class="row" @click="store.goto(r.item)">
+              <td class="check" @click.stop>
+                <input type="checkbox" :checked="selected.has(r.item)" @change="toggle(r.item)" />
+              </td>
               <td>
-                <span class="name"><img class="typeIcon" :src="`assets/bsicons/${r.item.editorTypeName}.png`" />{{ getName(r.item) }}</span>
+                <span class="name">
+                  <img class="typeIcon" :src="`assets/bsicons/${r.item.editorTypeName}.png`" />{{ getName(r.item) }}
+                  <span class="extra">{{ getNameExtra(r.item, false) }}</span>
+                </span>
               </td>
               <td class="kind">{{ r.item.is }}</td>
               <td class="path" @click.stop><NodePath :path="path(r.item)" @nodeclick="pathClicked(r.item, $event)" /></td>
               <td class="num">{{ r.item.refs?.length || "" }}</td>
+              <td v-if="textCounts" class="num">{{ textCounts.get(r.item) || "" }}</td>
               <td class="comment">{{ r.item.comment }}</td>
             </tr>
           </template>
@@ -128,13 +231,14 @@
 </template>
 
 <script lang="ts">
-import { getAtEntryPath, getEntryPathInfo, getName, shortNames, type EntryPathEntry } from "~/assets/editor/bs_editor";
+import { getAtEntryPath, getEntryPathInfo, getName, getNameExtra, shortNames, type EntryPathEntry } from "~/assets/editor/bs_editor";
 import NodePath from "~/components/util/NodePath.vue";
-import { aggregate, parse, type Group } from "~/assets/editor/bs_search";
+import { aggregate, parse, textRefCounts, type Group } from "~/assets/editor/bs_search";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
+import { getDataObject, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { useEditorStore } from "~/stores/editorStore";
+import type { HookAction } from "~/stores/scriptsStore";
 
 interface Preset {
   label: string;
@@ -145,11 +249,14 @@ interface Preset {
 const presets: Preset[] = [
   { label: "Duplicate ids", find: "id:any -is:constraint|condition", then: "by:id count:>1" },
   // key:shared*, not shared:true -- that flag also sits on conditions and modifiers.
-  { label: "Unused shared", find: "key:shared* refs:0 mentions:0", then: "" },
+  { label: "Unused shared", find: "key:shared* refs:0 mentions:0 textRefs:0", then: "" },
   { label: "Dead links", find: "is:*link -target:*", then: "" },
   { label: "Same name, several files", find: "is:entry key:shared*", then: "by:name files:>1" },
   { label: "Duplicate profiles", find: "is:profile", then: "by:name,characteristics count:>1" },
   { label: "Duplicate rules", find: "is:rule", then: "by:name,description count:>1" },
+  // The copy-pasted-with-an-argument smell: same long text, different names ("Frenzy (1)", "Frenzy (2)").
+  { label: "Same rule text, different names", find: "is:rule description.length:>50", then: "by:description count:>1" },
+  { label: "Same profile text, different names", find: "is:profile characteristics:/.{50,}/", then: "by:characteristics count:>1" },
   { label: "Duplicate modifiers", find: "is:modifier", then: "by:logic count:>1" },
   { label: "Same name, same parent", find: "is:entry|group !parent:catalogue|gameSystem", then: "by:name,parent.id count:>1" },
   // The entry's own type attribute: a profile sitting on a type:unit entry that contains type:model entries.
@@ -166,7 +273,11 @@ const presets: Preset[] = [
   { label: "Categories by use", find: "is:categoryLink", then: "by:targetId" },
   // { label: "Constraint patterns", find: "is:constraint", then: "by:logic" },
   { label: "Most linked entries", find: "is:entryLink|groupLink", then: "by:targetId" },
+  { label: "By in-text references", find: "textMentions:>=1", then: "by:textMentions" },
 ];
+/** Editing these in bulk breaks identity or references; never offer them. */
+const UNEDITABLE = new Set(["id", "targetId", "typeId", "childId", "scope", "field"]);
+
 /** How many preset chips show before "more". */
 const PRESETS_SHOWN = 9;
 
@@ -204,6 +315,8 @@ export default defineComponent({
     if (this.all?.some((n) => !n.catalogue)) {
       this.all = this.all.filter((n) => n.catalogue);
       this.groups = aggregate(this.all, this.then) ?? null;
+      for (const n of this.selected) if (!n.catalogue) this.selected.delete(n);
+      this.page = Math.min(this.page, this.lastPage);
     }
     this.$nextTick(() => {
       const results = this.$refs.results as HTMLElement | undefined;
@@ -232,9 +345,18 @@ export default defineComponent({
       searching: false,
       page: 0,
       perPage: 100,
-      sort: { key: "" as "" | "name" | "kind" | "refs", desc: false },
+      sort: { key: "" as "" | "name" | "kind" | "refs" | "textRefs", desc: false },
       collapsed: {} as Record<string, boolean>,
       expanded: {} as Record<string, boolean>,
+      selected: new Set<EditorBase>(),
+      textCounts: null as Map<EditorBase, number> | null,
+      copyMenu: false,
+      editKey: "",
+      editValue: "",
+      deleteOpen: false,
+      actionsHelp: false,
+      actionsMenu: false,
+      scriptActions: [] as HookAction[],
     };
   },
   computed: {
@@ -243,7 +365,13 @@ export default defineComponent({
       const { key, desc } = this.sort;
       if (!key) return all;
       const measure = (n: EditorBase): string | number =>
-        key === "refs" ? n.refs?.length ?? 0 : key === "kind" ? n.is ?? "" : getName(n).toLowerCase();
+        key === "refs"
+          ? n.refs?.length ?? 0
+          : key === "textRefs"
+            ? this.textCounts?.get(n) ?? 0
+            : key === "kind"
+              ? n.is ?? ""
+              : getName(n).toLowerCase();
       const sorted = [...all].sort((a, b) => {
         const x = measure(a);
         const y = measure(b);
@@ -281,6 +409,42 @@ export default defineComponent({
     files(): string[] {
       return (this.system?.getAllCatalogueFiles() ?? []).map((f) => getDataObject(f).name ?? "").filter(Boolean);
     },
+    /**
+     * Fields the selection can actually carry: what the selected nodes already store, the few
+     * commons, and one "characteristic: X" entry per characteristic the selected profiles have.
+     */
+    editOptions(): string[] {
+      const keys = new Set(["name", "comment", "hidden"]);
+      const chars = new Set<string>();
+      for (const node of this.selected) {
+        for (const key of Object.keys(node)) {
+          if (goodJsonKeys.has(key) && !UNEDITABLE.has(key)) keys.add(key);
+        }
+        for (const c of (node as unknown as { characteristics?: Array<{ name?: string }> }).characteristics ?? []) {
+          if (c.name) chars.add(`characteristic: ${c.name}`);
+        }
+      }
+      return [...[...keys].sort(), ...[...chars].sort()];
+    },
+    /** What the header checkbox covers: this page's nodes. */
+    pageNodes(): EditorBase[] {
+      if (this.groups) return this.pageGroups.flatMap((g) => g.nodes);
+      return this.pageRows.flatMap((r) => (r.item ? [r.item] : []));
+    },
+    allPageSelected(): boolean {
+      return this.pageNodes.length > 0 && this.pageNodes.every((n) => this.selected.has(n));
+    },
+    deleteSummary(): { perFile: Array<[string, number]>; linked: number } {
+      const perFile = new Map<string, number>();
+      let linked = 0;
+      for (const node of this.selected) {
+        const file = node.catalogue?.name ?? "?";
+        perFile.set(file, (perFile.get(file) ?? 0) + 1);
+        const outside = (ref: EditorBase) => !this.selected.has(ref);
+        if (node.refs?.some(outside) || node.other_refs?.some(outside)) linked++;
+      }
+      return { perFile: [...perFile], linked };
+    },
     lastPage(): number {
       const n = this.groups ? this.groups.length : this.rows.length;
       return Math.max(0, Math.ceil(n / this.perPage) - 1);
@@ -288,6 +452,7 @@ export default defineComponent({
   },
   methods: {
     getName,
+    getNameExtra,
     /** The ancestors between the file and the node, for NodePath. */
     path(node: EditorBase) {
       return getEntryPathInfo(node).slice(1, -1);
@@ -321,9 +486,11 @@ export default defineComponent({
      */
     describe(node: EditorBase, depth = 0): Array<{ node: EditorBase; depth: number }> {
       const lines = [{ node, depth }];
-      const record = node as unknown as Record<string, EditorBase[] | undefined>;
+      const record = node as unknown as Record<string, unknown>;
       for (const key of ["conditions", "conditionGroups", "localConditionGroups", "repeats", "modifiers", "modifierGroups"]) {
-        for (const child of record[key] ?? []) lines.push(...this.describe(child, depth + 1));
+        // isArray, not ?? []: on a repeat node, `repeats` is the NUMBER of repeats, not children.
+        const list = record[key];
+        if (Array.isArray(list)) for (const child of list) lines.push(...this.describe(child, depth + 1));
       }
       return lines;
     },
@@ -331,13 +498,118 @@ export default defineComponent({
     display(value: string): string {
       return this.resolve(value)?.getName?.() ?? value;
     },
-    sortBy(key: "name" | "kind" | "refs") {
+    sortBy(key: "name" | "kind" | "refs" | "textRefs") {
       this.sort = this.sort.key === key ? { key: this.sort.desc ? "" : key, desc: !this.sort.desc } : { key, desc: false };
       this.page = 0;
     },
     toggleGroup(g: Group) {
       const id = g.key.join("\t");
       this.expanded[id] = !this.expanded[id];
+    },
+    /**
+     * The same actions a right-click on this selection would offer in the tree: every script's
+     * `context` hook, fed the search selection. Collected on open -- hooks read the selection.
+     */
+    openActions() {
+      const selections = [...this.selected];
+      const catalogues = [...new Set(selections.map((o) => o.getCatalogue()))];
+      this.scriptActions = this.store.scripts.run_hooks_sync("context", undefined, {
+        selections,
+        system: catalogues[0]?.getSystem(),
+        catalogues,
+      });
+      this.actionsMenu = !this.actionsMenu;
+    },
+    async runAction(action: HookAction) {
+      this.actionsMenu = false;
+      await action.run();
+      // A script may have edited or removed what the table shows.
+      if (this.all) {
+        this.all = this.all.filter((n) => n.catalogue);
+        this.groups = aggregate(this.all, this.then) ?? null;
+      }
+    },
+    toggle(node: EditorBase) {
+      if (this.selected.has(node)) this.selected.delete(node);
+      else this.selected.add(node);
+    },
+    toggleMany(nodes: EditorBase[], on: boolean) {
+      for (const node of nodes) (on ? this.selected.add(node) : this.selected.delete(node));
+    },
+    togglePage(e: Event) {
+      this.toggleMany(this.pageNodes, (e.target as HTMLInputElement).checked);
+    },
+    fileItems(file: string): EditorBase[] {
+      return this.sorted.filter((n) => (n.catalogue?.name ?? "") === file);
+    },
+    async copySelected(what: "names" | "list" | "ids" | "query") {
+      const nodes = [...this.selected];
+      let lines: string[];
+      if (what === "names") lines = nodes.map((n) => getName(n));
+      else if (what === "ids") lines = nodes.flatMap((n) => (n.id ? [n.id] : []));
+      else if (what === "query") lines = [`id:${nodes.flatMap((n) => (n.id ? [n.id] : [])).join("|")}`];
+      else {
+        // Grouped under a heading per file, so a paste reads as a report rather than a dump.
+        const byFile = new Map<string, string[]>();
+        for (const n of nodes) {
+          const line = [getName(n), this.path(n).map((e) => e.name).join(" > ")].filter(Boolean).join(" — ");
+          const file = n.catalogue?.name ?? "?";
+          byFile.get(file)?.push(line) ?? byFile.set(file, [line]);
+        }
+        lines = [...byFile].flatMap(([file, rows], i) => [...(i ? [""] : []), `# ${file}`, ...rows]);
+      }
+      await navigator.clipboard.writeText(lines.join("\n"));
+      this.copyMenu = false;
+      notify(`Copied ${what === "query" ? "query for" : ""} ${nodes.length} nodes`);
+    },
+    applyEdit() {
+      const key = this.editKey.trim();
+      if (!key) return;
+      const raw = this.editValue.trim();
+      // A characteristic is a child node, not an attribute: edit the $text of the one by that
+      // name on each selected profile. Text stays text -- no true/number coercion here.
+      if (key.startsWith("characteristic:")) {
+        const name = key.slice("characteristic:".length).trim();
+        const chars = [...this.selected].flatMap(
+          (n) => ((n as unknown as { characteristics?: EditorBase[] }).characteristics ?? []).filter((c) => (c as { name?: string }).name === name),
+        );
+        if (!chars.length) return notify({ type: "error", text: `Nothing selected has a "${name}" characteristic` });
+        this.store.edit({ $text: raw }, chars);
+        return notify(`Set ${name} on ${chars.length} profiles — Ctrl+Z undoes it`);
+      }
+      // Typed the way the files store them; quotes force text, empty deletes.
+      const value =
+        raw === ""
+          ? undefined
+          : /^".*"$/.test(raw)
+            ? raw.slice(1, -1)
+            : raw === "true" || raw === "false"
+              ? raw === "true"
+              : /^-?\d+(\.\d+)?$/.test(raw)
+                ? Number(raw)
+                : raw;
+      this.store.edit({ [key]: value }, [...this.selected]);
+      notify(`Set ${key} on ${this.selected.size} nodes — Ctrl+Z undoes it`);
+    },
+    async applyDelete() {
+      // remove() resolves paths against the first node's catalogue, so one call per file.
+      const byFile = new Map<string, EditorBase[]>();
+      for (const node of this.selected) {
+        const id = node.catalogue?.id ?? "?";
+        byFile.get(id)?.push(node) ?? byFile.set(id, [node]);
+      }
+      const total = this.selected.size;
+      // One remove() per file (it resolves paths against a single catalogue), one undo entry overall.
+      const from = this.store.undoStackPos;
+      for (const nodes of byFile.values()) await this.store.remove(nodes);
+      this.store.collapse_undo(from, "remove");
+      this.selected.clear();
+      this.deleteOpen = false;
+      if (this.all) {
+        this.all = this.all.filter((n) => n.catalogue);
+        this.groups = aggregate(this.all, this.then) ?? null;
+      }
+      notify(`Deleted ${total} nodes in ${byFile.size} files — Ctrl+Z undoes it; save when happy`);
     },
     usePreset(p: Preset) {
       this.filter = p.find;
@@ -352,12 +624,26 @@ export default defineComponent({
         await new Promise((resolve) => setTimeout(resolve, 5));
         const system = await this.store.get_or_load_system((this.$route.params as { id: string }).id);
         this.all = await this.store.system_search(system, { filter: this.filter });
-        this.groups = this.all ? aggregate(this.all, this.then) ?? null : null;
+        // Separately caught: a grouping failure should say so, not silently show the flat table.
+        try {
+          this.groups = this.all ? aggregate(this.all, this.then) ?? null : null;
+        } catch (e) {
+          this.groups = null;
+          console.error(e);
+          notify({ type: "error", text: `Grouping failed: ${(e as Error).message}` });
+        }
+        // A query about text references earns its own column. Counted over everything, not the
+        // result set: the texts doing the referencing are usually not among the matches.
+        this.textCounts =
+          this.all && /\btextRefs\b/.test(this.filter)
+            ? textRefCounts(this.store.query("is:*", [...system.getAllLoadedCatalogues()]))
+            : null;
         this.byKeys = parse(this.then)
           .find((t) => t.key === "by")
           ?.alts.flatMap((a) => a.text.split(",")) ?? [];
         this.expanded = {};
         this.collapsed = {};
+        this.selected.clear();
       } catch (e) {
         console.error(e);
       } finally {
@@ -503,6 +789,10 @@ tr.group {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  .extra {
+    color: $gray;
+    font-size: 13px;
+  }
 }
 .typeIcon,
 :deep(.typeIcon) {
@@ -566,6 +856,107 @@ th.num {
   transition: transform 0.1s;
   &.down {
     transform: rotate(45deg);
+  }
+}
+.actionbar {
+  // Above the sticky table header, or the autocomplete's dropdown slides under it.
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  .sep {
+    width: 1px;
+    align-self: stretch;
+    background: $box_border;
+  }
+  .danger {
+    border-color: $red;
+  }
+}
+.copywrap {
+  position: relative;
+}
+.editfield {
+  width: 150px;
+}
+.editvalue {
+  width: 140px;
+}
+.copymenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 3px;
+  z-index: 20;
+  .none {
+    cursor: default;
+    &:hover {
+      background: none;
+    }
+  }
+  background: $input_background;
+  border: 1px solid $box_border;
+  box-shadow: $box_shadow;
+  white-space: nowrap;
+  > div {
+    padding: 4px 10px;
+    cursor: pointer;
+    &:hover {
+      background: $light_blue;
+    }
+  }
+}
+.addown {
+  border-top: 1px solid $box_border;
+  color: gray;
+}
+.actionshelp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 600px;
+  pre {
+    background: rgba(128, 128, 128, 0.12);
+    border: 1px solid $box_border;
+    padding: 8px 10px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  code {
+    background: rgba(128, 128, 128, 0.12);
+    padding: 0 3px;
+  }
+}
+th.check,
+td.check {
+  width: 26px;
+  input {
+    cursor: pointer;
+  }
+}
+.editform {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 320px;
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    input {
+      flex: 1;
+    }
+  }
+  .small {
+    font-size: 13px;
+    margin: 0;
+  }
+  .warn {
+    color: $red;
+    margin: 0;
   }
 }
 .pager {
