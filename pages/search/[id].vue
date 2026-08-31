@@ -118,7 +118,7 @@
     </PopupDialog>
 
     <!-- Groups: the then box had a by: -->
-    <div v-if="groups" class="results" ref="results">
+    <div v-if="groups" class="results" ref="results" @scroll.passive="scroll = $event.target.scrollTop">
       <table>
         <thead>
           <tr>
@@ -178,7 +178,7 @@
     </div>
 
     <!-- Flat results, grouped by file -->
-    <div v-else-if="all" class="results" ref="results">
+    <div v-else-if="all" class="results" ref="results" @scroll.passive="scroll = $event.target.scrollTop">
       <table>
         <thead>
           <tr>
@@ -306,10 +306,9 @@ export default defineComponent({
     this.system = system;
     this.catalogue = gst;
   },
-  // Pages are kept alive, so results survive a trip to the editor; the scroll container does not.
-  deactivated() {
-    this.scroll = (this.$refs.results as HTMLElement | undefined)?.scrollTop ?? 0;
-  },
+  // Pages are kept alive, so results survive a trip to the editor; the scroll container does
+  // not: keep-alive detaches the DOM (zeroing scrollTop) BEFORE deactivated() fires, so the
+  // position is recorded as it happens instead of on the way out.
   activated() {
     // Anything deleted in the editor meanwhile drops out; a removed node has no catalogue.
     if (this.all?.some((n) => !n.catalogue)) {
