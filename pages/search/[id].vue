@@ -156,7 +156,7 @@
                 </div>
                 <span v-else class="name">
                   <img v-if="icon(g)" class="typeIcon" :src="`assets/bsicons/${icon(g)}.png`" />
-                  <span v-for="(k, j) in g.key" :key="j"><span v-if="j" class="muted"> + </span>{{ display(k) || "(none)" }}</span>
+                  <span v-for="(k, j) in g.key" :key="j"><span v-if="j" class="muted"> + </span>{{ groupLabel(g, k, j) }}</span>
                 </span>
               </td>
               <td class="num">{{ g.nodes.length }}</td>
@@ -496,6 +496,18 @@ export default defineComponent({
     /** A group value that is an id shows as the name it resolves to. */
     display(value: string): string {
       return this.resolve(value)?.getName?.() ?? value;
+    },
+    /**
+     * What a group's key reads as. A key that is a node's id resolves to its name; one whose
+     * node is not in the option index -- a catalogue root, a modifier group -- is read straight
+     * off a member instead, so `by:parent` never falls back to showing a raw id.
+     */
+    groupLabel(g: Group, key: string, i: number): string {
+      if (!key) return "(none)";
+      const named = this.resolve(key)?.getName?.();
+      if (named) return named;
+      const own = (g.nodes[0] as unknown as Record<string, any>)?.[this.byKeys[i]];
+      return own?.getName?.() ?? own?.name ?? key;
     },
     /** Shared by the flat table and by the members inside each group. */
     orderNodes(nodes: EditorBase[]): EditorBase[] {

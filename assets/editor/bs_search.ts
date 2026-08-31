@@ -713,7 +713,13 @@ function groupValue(node: EditorBase, key: string): string {
     const first = value.find((v) => v !== undefined && v !== null && v !== "");
     return typeof first === "object" ? String(value.length) : first === undefined ? "" : String(first);
   }
-  if (typeof value === "object") return "";
+  // A node-valued field (`by:parent`) groups by the node itself. The id is the key -- names
+  // repeat across files -- and the search page renders an id back as its name, the same way it
+  // does for `by:target`. Without this every node landed in one "(none)" group.
+  if (typeof value === "object") {
+    const node = value as { id?: string; getName?: () => string };
+    return node.id ?? node.getName?.() ?? "";
+  }
   return String(value);
 }
 

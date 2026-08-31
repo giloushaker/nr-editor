@@ -601,6 +601,13 @@ console.log("dotted paths");
   is("target.collective:true", "squad link");
   is('refs.name:"bolter link"', "bolter");
   assert(aggregate(search(catalogue as never, "is:constraint"), "by:parent.name")?.length === 3, "by: groups on a dotted path");
+  // A node-valued field groups by that node, not into one empty bucket.
+  const byParent = aggregate(search(catalogue as never, "is:constraint"), "by:parent");
+  assert(byParent?.length === 3, "by:parent groups by the parent node");
+  assert(
+    byParent!.every((g) => g.key[0] !== ""),
+    "and keys on the parent's id rather than the empty string"
+  );
 }
 
 console.log("unknown keys");
