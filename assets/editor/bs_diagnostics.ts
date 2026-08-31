@@ -13,9 +13,10 @@
  * To add a diagnostic: append one entry to DIAGNOSTICS, or call registerDiagnostic() from
  * outside. That is the whole procedure -- no piping, no cleanup.
  */
-import { Condition, Constraint, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
+import { Association, AssociationLink, Condition, Constraint, Modifier, basicQueryFields } from "~/assets/shared/battlescribe/bs_main";
 import type { Link, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_main";
 import { splitScopeSelf, validScopes } from "~/assets/shared/battlescribe/bs_condition";
+import { pointlessAffects, pointlessAssociation, pointlessLocalGroup } from "./bs_recursion";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { Diagnostic } from "./bs_diagnostics_engine";
@@ -233,7 +234,32 @@ export const UNUSED_DIAGNOSTIC: Diagnostic = {
  * -- nr_diagnosis runs these on request without registering them, so nothing is written to the
  * node and the editor's own error list is untouched.
  */
-export const OPTIONAL_DIAGNOSTICS: Diagnostic[] = [UNUSED_DIAGNOSTIC];
+/**
+ * A recursive query that never had anything to recurse into. Correct but judged not worth the
+ * default noise; bs_recursion.ts holds the reasoning, including what it declines to judge.
+ */
+export const POINTLESS_RECURSION_DIAGNOSTIC: Diagnostic = {
+  id: "pointless-recursion",
+  severity: "warning",
+  // Cheapest gate first: `affects` is absent on the overwhelming majority of modifiers. Local
+  // condition groups are matched on parentKey rather than instanceof -- they are not in
+  // protoMap, so they carry Base.prototype and there is no class to test against.
+  applies: (node) =>
+    node instanceof Modifier
+      ? Boolean(node.affects)
+      : node instanceof Association ||
+        node instanceof AssociationLink ||
+        node.parentKey === "localConditionGroups",
+  check(node) {
+    if (node instanceof Modifier) return pointlessAffects(node as EditorBase & Modifier);
+    if (node.parentKey === "localConditionGroups") {
+      return pointlessLocalGroup(node as EditorBase & LocalConditionGroup);
+    }
+    return pointlessAssociation(node as EditorBase & (Association | AssociationLink));
+  },
+};
+
+export const OPTIONAL_DIAGNOSTICS: Diagnostic[] = [UNUSED_DIAGNOSTIC, POINTLESS_RECURSION_DIAGNOSTIC];
 
 /** Every rule addressable by id, registered or not. */
 export function diagnosticById(id: string): Diagnostic | undefined {
