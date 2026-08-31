@@ -649,6 +649,16 @@ export default defineComponent({
         this.byKeys = parse(this.then)
           .find((t) => t.key === "by")
           ?.alts.flatMap((a) => a.text.split(",")) ?? [];
+        // With no by:, a sort: falls through to the flat table's column sort -- otherwise it
+        // only ever meant group order and was silently ignored on flat results.
+        if (!this.groups) {
+          const want = parse(this.then).find((t) => t.key === "sort")?.alts[0]?.text ?? "";
+          const desc = want.startsWith("-");
+          const key = desc ? want.slice(1) : want;
+          if (["name", "kind", "refs", "textRefs"].includes(key)) {
+            this.sort = { key: key as "name" | "kind" | "refs" | "textRefs", desc };
+          }
+        }
         this.expanded = {};
         this.collapsed = {};
         this.selected.clear();
