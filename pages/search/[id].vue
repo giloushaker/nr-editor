@@ -283,6 +283,7 @@ const presets: Preset[] = [
   // { label: "Constraint patterns", find: "is:constraint", then: "by:logic" },
   { label: "Most linked entries", find: "is:entryLink|groupLink", then: "by:targetId" },
   { label: "By in-text references", find: "textMentions:>=1", then: "by:textMentions" },
+  { label: "Most in-text references", find: "textRefs:>=1", then: "sort:-textRefs" },
 ];
 /** Editing these in bulk breaks identity or references; never offer them. */
 const UNEDITABLE = new Set(["id", "targetId", "typeId", "childId", "scope", "field"]);
