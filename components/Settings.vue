@@ -90,23 +90,16 @@
         </div>
 
         <template v-if="!mcp.connected">
-          <div class="step">
-            <span class="num">1</span>
-            <div>
-              Install the WebMCP bridge extension, then reload this page.
-              <span class="hint">Needs a Chromium-based browser &mdash; Chrome, Edge, Brave or Opera.</span>
-            </div>
+          <div>
+            For Claude Code, register the relay once:
+            <code>claude mcp add --scope user webmcp -- npx @mcp-b/webmcp-local-relay</code>
+            <span class="hint">Claude Code starts the relay itself. Start a session, then reload this page.</span>
           </div>
-          <div class="step">
-            <span class="num">2</span>
-            <div>
-              Or run the relay in a terminal, then reload:
-              <code>npx @mcp-b/webmcp-local-relay</code>
-              <span class="hint">
-                Already using that port? Open the editor with <code class="inline">?webmcpPort=9876</code>.
-              </span>
-            </div>
-          </div>
+          <span class="hint">
+            Other setups: run <code class="inline">npx @mcp-b/webmcp-local-relay</code> in a terminal, or install the
+            WebMCP bridge extension (Chromium browsers only) &mdash; then reload. If the port is taken, open the editor
+            with <code class="inline">?webmcpPort=9876</code>.
+          </span>
         </template>
         <div class="hint" v-else>Untick to cut it off. The relay keeps running until you stop it in its terminal.</div>
       </div>
@@ -226,24 +219,6 @@ legend {
 
   &.waiting {
     background-color: $orange;
-  }
-}
-
-.step {
-  display: flex;
-  gap: 10px;
-
-  .num {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    border: 1px solid $box_border;
-    border-radius: 4px;
-    background-color: $input_background;
-    font-size: 12.5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 }
 
