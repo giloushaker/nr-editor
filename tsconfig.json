@@ -14,6 +14,13 @@
     "static",
     "public"
   ],
+  // Nuxt 4's generated config turned these on; this project deliberately runs non-strict
+  // (CLAUDE.md), so turn them back off at the top level.
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitOverride": false,
+    "noUncheckedIndexedAccess": false
+  },
   "ts-node": {
     "compilerOptions": {
       "target": "ES2018",

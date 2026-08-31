@@ -118,7 +118,7 @@
     </PopupDialog>
 
     <!-- Groups: the then box had a by: -->
-    <div v-if="groups" class="results" ref="results" @scroll.passive="scroll = $event.target.scrollTop">
+    <div v-if="groups" class="results" ref="results" @scroll.passive="scroll = ($event.target as HTMLElement).scrollTop">
       <table>
         <thead>
           <tr>
@@ -178,7 +178,7 @@
     </div>
 
     <!-- Flat results, grouped by file -->
-    <div v-else-if="all" class="results" ref="results" @scroll.passive="scroll = $event.target.scrollTop">
+    <div v-else-if="all" class="results" ref="results" @scroll.passive="scroll = ($event.target as HTMLElement).scrollTop">
       <table>
         <thead>
           <tr>
