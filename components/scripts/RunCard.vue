@@ -236,6 +236,10 @@ export default defineComponent({
         this.result = await this.store.scripts.invoke(this.script.name, () =>
           this.script.run!(...args, ctx),
         );
+      } catch (e) {
+        // invoke() returns script errors; this catches what happens BEFORE it -- a stale
+        // remembered catalogue name failing to resolve -- which used to render, and must again.
+        this.result = e;
       } finally {
         this.running = false;
         this.stopping = false;

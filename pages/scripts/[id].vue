@@ -4,6 +4,9 @@
       <h1>Scripts</h1>
       <span class="mono folder" v-if="folder">{{ folder }}</span>
       <div class="right">
+        <button v-if="folder" class="bouton" title="Scan the scripts folder for files added outside the editor" @click="rescan">
+          Refresh
+        </button>
         <button class="bouton" :disabled="!system" @click="creating = true">New script</button>
       </div>
     </div>
@@ -163,6 +166,10 @@ export default defineComponent({
       creating: false,
     };
   },
+  // The folder is scanned once per session; coming back to the page picks up hand-added files.
+  activated() {
+    if (this.system) this.store.scripts.rescan_folder(this.system);
+  },
   async mounted() {
     this.system = await this.store.get_or_load_system((this.$route.params as { id: string }).id);
     // get_or_load_system already loads them; this is the same cached array.
@@ -199,6 +206,10 @@ export default defineComponent({
     },
   },
   methods: {
+    async rescan() {
+      const added = await this.store.scripts.rescan_folder(this.system!);
+      notify(added ? `Found ${added} new script${added === 1 ? "" : "s"}` : "No new files in the scripts folder");
+    },
     created(script: ScriptDef) {
       // write_script pushed it into the same array `load` returned, so nothing to re-fetch.
       this.creating = false;

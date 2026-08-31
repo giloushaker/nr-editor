@@ -4,7 +4,6 @@ import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system"
 import fixLinkNames from "~/default-scripts/fix-link-names.js";
 import fixProfiles from "~/default-scripts/fix-profiles";
 import listRefs from "~/default-scripts/list-refs";
-import listAutomaticRefs from "~/default-scripts/list-automatic-profile-rule-text-refs";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import { dirname, filename, listFolder, readFile, watchFile, writeFile } from "~/electron/node_helpers";
 import findDuplicatesProfiles from "~/default-scripts/find-duplicates-profiles";
@@ -152,7 +151,6 @@ const GENERIC: ScriptDef[] = [
   fixProfiles,
   listRefs,
   findDuplicatesProfiles,
-  listAutomaticRefs,
 ] as ScriptDef[];
 
 const byName = (a: ScriptDef, b: ScriptDef) => (a.name || "").localeCompare(b.name || "");
@@ -344,6 +342,33 @@ export const useScriptsStore = defineStore("scripts", {
         if (file.directory || !file.path.endsWith(".js")) continue;
         await this.load_script_file(system, file.path);
       }
+    },
+
+    /**
+     * Picks up .js files dropped into the folder by hand since the first scan. Files already
+     * loaded are left to their own save-watchers; only unknown paths are imported.
+     */
+    async rescan_folder(system?: GameSystemFiles) {
+      const id = system?.gameSystem?.gameSystem?.id;
+      const list = id ? this.loaded[id] : undefined;
+      if (!system || !list) return;
+      const folder = this.script_folder(system);
+      if (!folder) return;
+      let files: Array<{ name: string; path: string; directory: boolean }>;
+      try {
+        files = await listFolder(folder);
+      } catch {
+        return;
+      }
+      let added = 0;
+      for (const file of files) {
+        if (file.directory || !file.path.endsWith(".js")) continue;
+        if (list.some((o) => o.path === file.path)) continue;
+        await this.load_script_file(system, file.path);
+        added++;
+      }
+      if (added) list.sort(byName);
+      return added;
     },
 
     /**
