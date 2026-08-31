@@ -3001,7 +3001,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   // default anyone chose. Registration happens once, the first time it is switched on -- neither
   // modelContext nor the relay embed can be taken back out of the page, so `mcpEnabled` is
   // enforced per call below instead, which also makes switching it off take effect immediately.
-  if (settings.mcpEnabled) {
+  // An automated browser (Puppeteer/Playwright/WebDriver) IS a session an agent chose, so it gets
+  // MCP without flipping the persisted setting — a shared profile's normal sessions stay opted out.
+  if (settings.mcpEnabled || mcpImplicitlyOn()) {
     start();
     return;
   }
@@ -3014,6 +3016,11 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
   );
 });
+
+// True when the browser is driven by automation (Puppeteer/Playwright/WebDriver set navigator.webdriver).
+function mcpImplicitlyOn(): boolean {
+  return navigator.webdriver === true;
+}
 
 let started = false;
 
@@ -3040,7 +3047,8 @@ function start() {
       ...tool,
       execute: async (args: ToolArgs) => {
         // The only enforcement point that works after registration, so it is the one that counts.
-        if (!settings.mcpEnabled) throw new Error("MCP is switched off in the editor's options.");
+        if (!settings.mcpEnabled && !mcpImplicitlyOn())
+          throw new Error("MCP is switched off in the editor's options.");
         await untilLoaded();
         if (!mcpStatus.connected) {
           mcpStatus.connected = true;
