@@ -1,13 +1,16 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable">
+      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable" :title="`New Recruit - Editor v${version}`">
         <h1 class="flex titletext">
           <img class="w-30px h-30px" src="/assets/icons/icon.png" />
-          <span class="m-auto version">
+          <span v-if="$route.name !== 'catalogue'" class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
         </h1>
+      </NuxtLink>
+      <NuxtLink v-if="searchLink" class="iconbox no-underline unselectable" :to="searchLink" title="Search the whole system">
+        <img class="icon" src="/assets/icons/search.png" />
       </NuxtLink>
       <slot />
     </div>
@@ -88,6 +91,11 @@ export default {
     };
   },
   computed: {
+    /** The system search page for whatever system is open; the editor is the page that knows one. */
+    searchLink(): string | null {
+      const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
+      return id ? `/search/${id}` : null;
+    },
     progressText(): string {
       const p = this.scripts.background?.progress;
       if (!p) return "";
