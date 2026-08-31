@@ -1,22 +1,41 @@
 <template>
   <div class="titlebar">
     <div class="titlebar-content titlebar-left" id="titlebar-content">
-      <NuxtLink :to="{ name: 'index' }" class="titlecolor no-underline unselectable" :title="`New Recruit - Editor v${version}`">
+      <!-- Straight home, not history back: in-app clicks (selections, pages) pollute history, so
+           "back" would step through those instead of going up a level. Only on nested pages. -->
+      <NuxtLink v-if="nested" class="iconbox no-underline unselectable" :to="{ name: 'index' }" title="Back to home">
+        <svg class="icon back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 5 L8 12 L15 19" />
+        </svg>
+      </NuxtLink>
+      <!-- On nested pages the chevron plus the page's own teleported breadcrumb are the identity. -->
+      <NuxtLink
+        v-if="!nested"
+        :to="{ name: 'index' }"
+        class="titlecolor no-underline unselectable"
+        :title="`New Recruit - Editor v${version}`"
+      >
         <h1 class="flex titletext">
           <img class="logo" src="/assets/favicon.ico" />
-          <span v-if="$route.name !== 'catalogue'" class="m-auto version">
+          <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
         </h1>
       </NuxtLink>
       <NuxtLink v-if="searchLink" class="iconbox no-underline unselectable" :to="searchLink" title="Search the whole system">
-        <img class="icon" src="/assets/icons/search.png" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10.5" cy="10.5" r="6.2" />
+          <path d="M15.2 15.2 L20.5 20.5" />
+        </svg>
       </NuxtLink>
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
       <div class="iconbox no-underline unselectable" @click="settingsOpen = true">
-        <IconsGear class="icon-svg" :size="21" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3.2" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
         <span class="icontext">Settings</span>
       </div>
       <!-- The icon shows what clicking gets you, not what you are already in: sun to go light,
@@ -32,11 +51,19 @@
         <span class="icontext">Theme</span>
       </div>
       <NuxtLink class="iconbox no-underline unselectable" to="/system">
-        <IconsGames class="icon-svg" :size="22" />
+        <!-- Outline version of shared_components/svg/Games.vue's stacking-toy tower -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+          <rect x="6.5" y="2.9" width="11" height="5" rx="2.2" />
+          <rect x="4" y="9.5" width="16" height="5" rx="2.2" />
+          <rect x="1.5" y="16.1" width="21" height="5" rx="2.2" />
+        </svg>
         <span class="icontext">Systems</span>
       </NuxtLink>
       <a class="iconbox no-underline" href="https://newrecruit-docs.pages.dev/" target="_blank">
-        <img class="icon" src="/assets/icons/book.svg" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5.6 C10 3.9 7.6 3.3 4.4 3.3 V18.4 C7.6 18.4 10 19 12 20.7 C14 19 16.4 18.4 19.6 18.4 V3.3 C16.4 3.3 14 3.9 12 5.6 Z" />
+          <path d="M12 5.6 V20.7" />
+        </svg>
         <span class="icontext">Docs</span>
       </a>
       <a class="iconbox no-underline" href="https://discord.gg/cCtqGbugwb" target="_blank">
@@ -91,6 +118,10 @@ export default {
     };
   },
   computed: {
+    /** Pages a level below the index: the ones whose titlebar earns a back chevron. */
+    nested(): boolean {
+      return ["catalogue", "scripts-id", "search-id"].includes(this.$route.name as string);
+    },
     /** The system search page for whatever system is open; the editor is the page that knows one. */
     searchLink(): string | null {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
@@ -188,19 +219,20 @@ export default {
   padding: 4px;
   max-height: 20px;
 }
-/* Inline svg icons inherit the titlebar's white font color (currentColor) instead of being
-   flat black PNGs on the pastel-blue bar. Not named ".icon": that class carries the global
-   --image-filter, which would re-invert artwork that already follows the theme. */
-.icon-svg {
-  margin: 2px auto;
-}
 
+/* One family for every nav glyph: 24-viewBox outline svgs, 1.8 stroke, 20px box. Black so the
+   global --image-filter (app.vue's svg.icon rule) lightens them all together on the dark theme. */
 svg.icon {
-  width: 28px;
-  height: 28px;
-  /* Black like the PNG icons, so the global --image-filter lightens it on the dark theme the same way. */
+  width: 20px;
+  height: 20px;
   color: #000;
 }
+/* The chevron stands alone with no label, so it gets more of the bar's height than the glyphs above text. */
+svg.icon.back {
+  width: 28px;
+  height: 28px;
+}
+/* Deliberately outside the monochrome pipeline: the Discord roundel keeps its brand colours. */
 .static-icon {
   margin: auto;
   padding: 4px;

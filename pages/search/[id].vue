@@ -1,5 +1,14 @@
 <template>
   <div class="page">
+    <!-- Breadcrumb in the title bar. Guarded on $router.currentRoute, not $route: under keep-alive
+         $route stays frozen on this page's own route forever (see catalogue.vue's route_is_catalogue),
+         and the teleport would linger in the bar on other pages. -->
+    <Teleport to="#titlebar-content" v-if="system && $router.currentRoute.value.name === 'search-id'">
+      <span class="ml-10px">
+        {{ system.gameSystem?.gameSystem?.name || "System" }}
+        <span class="crumb-sep">&rsaquo;</span> Search
+      </span>
+    </Teleport>
     <div class="bars" v-if="catalogue">
       <span class="lbl">find</span>
       <UtilQueryInput v-model="filter" :catalogue="catalogue" :catalogues="files" :resolve="resolve" @submit="search" class="box" />
@@ -656,6 +665,12 @@ export default defineComponent({
 
 <style scoped lang="scss">
 @use "@/shared_components/css/vars.scss" as *;
+
+/* Teleported into the title bar. */
+.crumb-sep {
+  color: #cbd5e1; // the text-slate-300 the bar's secondary text already uses
+  margin: 0 2px;
+}
 
 // The query bars stay put; only the results scroll.
 .page {

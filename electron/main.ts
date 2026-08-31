@@ -361,6 +361,13 @@ const createWindow = () => {
     if (mainWindow === win) mainWindow = null;
   });
 
+  // Windows fires app-command for the mouse's back/forward thumb buttons; navigate like a browser.
+  win.on("app-command", (_e: unknown, cmd: string) => {
+    const nav = win.webContents.navigationHistory;
+    if (cmd === "browser-backward" && nav.canGoBack()) nav.goBack();
+    if (cmd === "browser-forward" && nav.canGoForward()) nav.goForward();
+  });
+
   // Use the user's primary browser when opening links
   win.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
     console.log("opening url", url);

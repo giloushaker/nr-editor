@@ -1,10 +1,5 @@
 <template>
-  <p class="info">
-    To return to this page, simply click on the 'New Recruit' icon located in the top-left corner of the screen.
-    <br />
-    Returning to this page will not cause you to lose your changes.
-  </p>
-  <div class="mx-10px box">
+  <div class="mx-10px mt-10px box">
     <SplitView showMiddle :showRight="!isNarrow || !!selectedItem" :rightWidth="300" id="systemView">
       <template #middle>
         <div class="scrollable">
