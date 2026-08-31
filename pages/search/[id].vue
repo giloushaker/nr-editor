@@ -135,8 +135,10 @@
             <th class="w-26px"></th>
             <th>{{ byKeys.join(" + ") }}</th>
             <th class="num">count</th>
+            <th v-if="textCounts" class="num">Text refs</th>
             <th>kinds</th>
             <th>files</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -158,14 +160,16 @@
                 </span>
               </td>
               <td class="num">{{ g.nodes.length }}</td>
+              <td v-if="textCounts" class="num">{{ groupTextRefs(g) || "" }}</td>
               <td class="kind">{{ g.kinds.join(" · ") }}</td>
               <td class="files">
                 <span v-for="f in g.files.slice(0, 3)" :key="f" class="file"><img class="typeIcon" src="assets/bsicons/catalogue.png" />{{ f }}</span>
                 <span v-if="g.files.length > 3" class="muted">+{{ g.files.length - 3 }}</span>
               </td>
+              <td></td>
             </tr>
             <template v-if="expanded[g.key.join('\t')]">
-              <tr v-for="item in g.nodes" :key="item.id ?? getName(item)" class="row member" @click="store.goto(item)">
+              <tr v-for="item in members(g)" :key="item.id ?? getName(item)" class="row member" @click="store.goto(item)">
                 <td class="check" @click.stop>
                   <input type="checkbox" :checked="selected.has(item)" @change="toggle(item)" />
                 </td>
@@ -176,6 +180,8 @@
                     <span class="extra">{{ getNameExtra(item, false) }}</span>
                   </span>
                 </td>
+                <td></td>
+                <td v-if="textCounts" class="num">{{ textCounts.get(item) || "" }}</td>
                 <td class="kind">{{ item.is }}</td>
                 <td class="files"><span class="file"><img class="typeIcon" src="assets/bsicons/catalogue.png" />{{ item.catalogue?.name }}</span></td>
                 <td class="path" @click.stop><NodePath :path="path(item)" @nodeclick="pathClicked(item, $event)" /></td>
@@ -370,23 +376,7 @@ export default defineComponent({
   },
   computed: {
     sorted(): EditorBase[] {
-      const all = this.all ?? [];
-      const { key, desc } = this.sort;
-      if (!key) return all;
-      const measure = (n: EditorBase): string | number =>
-        key === "refs"
-          ? n.refs?.length ?? 0
-          : key === "textRefs"
-            ? this.textCounts?.get(n) ?? 0
-            : key === "kind"
-              ? n.is ?? ""
-              : getName(n).toLowerCase();
-      const sorted = [...all].sort((a, b) => {
-        const x = measure(a);
-        const y = measure(b);
-        return typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
-      });
-      return desc ? sorted.reverse() : sorted;
+      return this.sort.key ? this.orderNodes(this.all ?? []) : this.all ?? [];
     },
     /** File headers and their nodes, in one list, so paging is a slice. */
     rows(): Row[] {
@@ -506,6 +496,32 @@ export default defineComponent({
     /** A group value that is an id shows as the name it resolves to. */
     display(value: string): string {
       return this.resolve(value)?.getName?.() ?? value;
+    },
+    /** Shared by the flat table and by the members inside each group. */
+    orderNodes(nodes: EditorBase[]): EditorBase[] {
+      const { key, desc } = this.sort;
+      const measure = (n: EditorBase): string | number =>
+        key === "refs"
+          ? n.refs?.length ?? 0
+          : key === "textRefs"
+            ? this.textCounts?.get(n) ?? 0
+            : key === "kind"
+              ? n.is ?? ""
+              : getName(n).toLowerCase();
+      const sorted = [...nodes].sort((a, b) => {
+        const x = measure(a);
+        const y = measure(b);
+        return typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
+      });
+      return desc ? sorted.reverse() : sorted;
+    },
+    /** A group's rows, in the order `sort:` asked for; unsorted is the order they were found. */
+    members(g: Group): EditorBase[] {
+      return this.sort.key ? this.orderNodes(g.nodes) : g.nodes;
+    },
+    /** How often the whole group is named in other texts. */
+    groupTextRefs(g: Group): number {
+      return this.textCounts ? g.nodes.reduce((n, node) => n + (this.textCounts!.get(node) ?? 0), 0) : 0;
     },
     sortBy(key: "name" | "kind" | "refs" | "textRefs") {
       this.sort = this.sort.key === key ? { key: this.sort.desc ? "" : key, desc: !this.sort.desc } : { key, desc: false };
@@ -644,22 +660,21 @@ export default defineComponent({
         // A query about text references earns its own column. Counted over everything, not the
         // result set: the texts doing the referencing are usually not among the matches.
         this.textCounts =
-          this.all && /\btextRefs\b/.test(this.filter)
+          this.all && /\btextRefs\b/.test(`${this.filter} ${this.then}`)
             ? textRefCounts(this.store.query("is:*", [...system.getAllLoadedCatalogues()]))
             : null;
         this.byKeys = parse(this.then)
           .find((t) => t.key === "by")
           ?.alts.flatMap((a) => a.text.split(",")) ?? [];
-        // With no by:, a sort: falls through to the flat table's column sort -- otherwise it
-        // only ever meant group order and was silently ignored on flat results.
-        if (!this.groups) {
-          const want = parse(this.then).find((t) => t.key === "sort")?.alts[0]?.text ?? "";
-          const desc = want.startsWith("-");
-          const key = desc ? want.slice(1) : want;
-          if (["name", "kind", "refs", "textRefs"].includes(key)) {
-            this.sort = { key: key as "name" | "kind" | "refs" | "textRefs", desc };
-          }
-        }
+        // A sort: naming a node field orders the rows: the flat table directly, and the members
+        // inside each group when there is a by:. aggregate() only knows count/key/files, so it
+        // would otherwise be dropped on the floor.
+        const want = parse(this.then).find((t) => t.key === "sort")?.alts[0]?.text ?? "";
+        const desc = want.startsWith("-");
+        const key = desc ? want.slice(1) : want;
+        this.sort = ["name", "kind", "refs", "textRefs"].includes(key)
+          ? { key: key as "name" | "kind" | "refs" | "textRefs", desc }
+          : { key: "", desc: false };
         this.expanded = {};
         this.collapsed = {};
         this.selected.clear();
