@@ -43,9 +43,9 @@
   <!-- <button class="bouton"> Load from all catalogues </button> -->
 </template>
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { findParentWhere, sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
-import { getEntryPathInfo, getName } from "~/assets/shared/battlescribe/bs_editor";
+import { getEntryPathInfo, getName } from "~/assets/editor/bs_editor";
 import { ProfileType } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
@@ -101,7 +101,8 @@ export default {
   components: { NodePath },
 };
 </script>
-<style scope>
+<!-- `scoped`, not `scope`: unscoped, this !important rule leaked into every table in the app. -->
+<style scoped>
 td {
   padding: 1px 4px 1px 4px !important;
   text-align: left !important;

@@ -47,7 +47,7 @@ export default {
   emits: ["button", "close", "update:modelValue", "cancel"],
 
   methods: {
-    stop(event: any) {
+    stop(event: Event) {
       event.stopImmediatePropagation();
     },
 
@@ -67,7 +67,8 @@ export default {
 
     click_buttons(button: PopupButton) {
       if (button.event) {
-        this.$emit(button.event as any, button);
+        // @ts-ignore
+        this.$emit(button.event, button);
       }
       if (button.function) {
         button.function();
@@ -101,9 +102,6 @@ export default {
       this.$emit("update:modelValue", this.content);
       this.$emit("cancel");
       this.$emit("close");
-
-      // Notify iOS of popup closed (only on iOS platforms)
-      globalThis.notifyPopupStatus?.(false);
     },
 
     popstate(e: PopStateEvent) {
@@ -121,7 +119,7 @@ export default {
 
     before_print(e: Event) {
       const node = this.$refs.content as HTMLElement;
-      let cloned = node.cloneNode(true) as HTMLElement;
+      const cloned = node.cloneNode(true) as HTMLElement;
       document.body.appendChild(cloned);
       cloned.classList.add("printable");
       const after_print = () => {
@@ -131,9 +129,9 @@ export default {
     },
     isMobile() {
       // @ts-ignore
-      var match = window.matchMedia || window.msMatchMedia;
+      const match = window.matchMedia || window.msMatchMedia;
       if (match) {
-        var mq = match("(pointer:coarse)");
+        const mq = match("(pointer:coarse)");
         return mq.matches;
       }
       return false;
@@ -141,14 +139,6 @@ export default {
   },
 
   watch: {
-    content: {
-      handler(newVal) {
-        // Notify iOS when popup content changes (only on iOS platforms)
-        globalThis.notifyPopupStatus?.(!!newVal);
-      },
-      immediate: false,
-    },
-
     modelValue(n) {
       this.content = n;
     },
@@ -170,8 +160,6 @@ export default {
       );
     }
 
-    // Notify iOS of popup opened (only on iOS platforms)
-    globalThis.notifyPopupStatus?.(true);
     addEventListener("popstate", this.popstate);
 
     addEventListener("beforepush", this.doClose);
@@ -185,8 +173,6 @@ export default {
     removeEventListener("popstate", this.popstate);
     removeEventListener("beforepush", this.doClose);
 
-    // Notify iOS of popup closed (only on iOS platforms)
-    globalThis.notifyPopupStatus?.(false);
   },
 
   props: {

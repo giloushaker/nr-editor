@@ -4,7 +4,9 @@ import type { BSIProfile, BSIRule } from "~/assets/shared/battlescribe/bs_types"
 
 export default {
     name: "Find Duplicate Profiles",
-    description: "Lists profiles defined more than once, so the copies can be replaced by links to a single shared profile. Matching is tunable with the options below.",
+    description:
+        "Lists profiles defined more than once, so the copies can be replaced by links to a single shared profile.\n" +
+        "Matching is tunable with the options below.",
     arguments: [
         {
             name: "catalogues",
@@ -37,7 +39,7 @@ export default {
                         // remove all whitespace and newlines to avoid differences due to spacing
                         .replace(/\s+/g, " ")
                         // replace numbers with a # to avoid differences due to values (if matchNumbers is true)
-                        .replace(/\d+/g, matchNumbers ? (match) => match : "#")
+                        .replace(/\d+/g, (match) => (matchNumbers ? match : "#"))
                         // remove punctuation and special characters
                         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
                         .trim()

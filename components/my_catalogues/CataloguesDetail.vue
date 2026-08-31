@@ -54,6 +54,15 @@
       <button class="bouton" @click="$emit('edit', catalogue)">Edit</button>
       <button class="bouton" @click="deletePopup = true">Delete</button>
       <button class="bouton" @click="download_file" v-if="!electron">Download</button>
+      <button class="bouton" @click="download_all" v-if="isSystem && !electron">Download all (zip)</button>
+      <button
+        class="bouton"
+        v-if="canSaveToFolder"
+        title="Pick a folder; every file of this system is written there and saves go there from then on. A scripts folder next to the .gst works too."
+        @click="save_to_folder"
+      >
+        Save to folder…
+      </button>
       <button class="bouton" v-if="isSystem && electron" @click="popup_change_format">Change File Format</button>
       <button class="bouton" v-if="isSystem && electron" @click="popup_change_ids">Change Ids</button>
     </div>
@@ -101,12 +110,13 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { convertToXml, removeExtension } from "~/assets/shared/battlescribe/bs_convert";
 import { addOne, generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { getDataObject, getDataDbId } from "~/assets/shared/battlescribe/bs_main";
 import type { BSIDataCatalogue, BSIDataSystem, BSICatalogue, BSIGameSystem } from "~/assets/shared/battlescribe/bs_types";
 import { deleteFile, filename } from "~/electron/node_helpers";
+import { hasRoot, pickFolder, supported as webFsSupported } from "~/electron/web_fs";
 import { useCataloguesStore } from "~/stores/cataloguesState";
 import { useEditorStore } from "~/stores/editorStore";
 
@@ -152,7 +162,19 @@ export default {
       changeIdsPopup: false,
       format: "gst" as "gstz" | "gst" | "json",
       deleteExistingFiles: false,
+      canSaveToFolder: false,
     };
+  },
+  watch: {
+    /** Web-only, systems only, and only while the files are not already folder-backed. */
+    catalogue: {
+      immediate: true,
+      async handler() {
+        if (globalThis.electron || !this.isSystem || !webFsSupported()) return (this.canSaveToFolder = false);
+        const path = this.cataloguedata.fullFilePath;
+        this.canSaveToFolder = !path || !(await hasRoot(path));
+      },
+    },
   },
   methods: {
     download_file() {
@@ -162,6 +184,50 @@ export default {
       const fileName = data.fullFilePath ? removeExtension(filename(data.fullFilePath)) : data.name;
       const extension = data.gameSystemId ? `cat` : `gst`;
       saveFilePickerOrDownload(`${fileName}.${extension}`, "application/xml", xml);
+    },
+    /**
+     * Web: a github- or db-only system becomes folder-backed. The picked folder is registered as
+     * an FSA root, every file's path is rewritten to sit flat inside it, and saveCatalogue's own
+     * hasRoot check starts passing -- so from here on saves write to disk as well as IndexedDB.
+     */
+    async save_to_folder() {
+      try {
+        const folder = await pickFolder();
+        if (!folder) return;
+        const data = getDataObject(this.catalogue);
+        const sys = this.store.get_system(data.gameSystemId || data.id);
+        const files = sys.getAllCatalogueFiles();
+        for (const file of files) {
+          const file_data = getDataObject(file);
+          const isSystem = Boolean((file as BSIDataSystem).gameSystem);
+          const name = file_data.fullFilePath
+            ? filename(file_data.fullFilePath)
+            : `${file_data.name}.${isSystem ? "gst" : "cat"}`;
+          file_data.fullFilePath = `${folder}/${name}`;
+          this.store.saveCatalogue(file);
+        }
+        this.canSaveToFolder = false;
+        notify(`Saved ${files.length} files to "${folder}" — saves now write there`);
+      } catch (e) {
+        // Closing the picker is a cancel, not an error.
+        if ((e as Error)?.name !== "AbortError") notify({ type: "error", text: (e as Error).message });
+      }
+    },
+    /** Every file of the system, as XML, in one zip named after it. */
+    async download_all() {
+      const data = getDataObject(this.catalogue);
+      const sys = this.store.get_system(data.gameSystemId || data.id);
+      const jszip = (await import("jszip")).default;
+      const zip = new jszip();
+      for (const file of sys.getAllCatalogueFiles()) {
+        const file_data = getDataObject(file);
+        const isSystem = Boolean((file as BSIDataSystem).gameSystem);
+        const loaded = sys.getLoadedCatalogue({ targetId: file_data.id });
+        const base = file_data.fullFilePath ? removeExtension(filename(file_data.fullFilePath)) : file_data.name;
+        zip.file(`${base}.${isSystem ? "gst" : "cat"}`, convertToXml(loaded || file_data));
+      }
+      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+      saveFilePickerOrDownload(`${data.name}.zip`, "application/zip", blob);
     },
     popup_change_format() {
       this.changeFormatPopup = true;

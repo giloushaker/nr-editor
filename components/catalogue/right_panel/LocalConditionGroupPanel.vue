@@ -8,6 +8,7 @@
 
 <script lang="ts">
 import { Base, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_main";
+import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
@@ -17,13 +18,10 @@ import NumberInput from "~/components/util/NumberInput.vue";
 export default {
   props: {
     item: {
-      type: Object as PropType<LocalConditionGroup>,
+      type: Object as PropType<LocalConditionGroup & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
   computed: {
     allowNonInstanceOf() {

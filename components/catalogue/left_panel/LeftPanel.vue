@@ -81,14 +81,14 @@
         <input class="cursor-pointer" v-model="ignoreProfilesRules" type="checkbox" id="ignoreProfilesRules" />
         <label class="unselectable cursor-pointer" for="ignoreProfilesRules">Ignore Profiles/Rules</label>
       </span>
-      <input v-model="filter" ref="editor-searchbox" type="search" placeholder="search... ctrl+f" class="w-full" />
+      <UtilQueryInput v-model="filter" ref="editor-searchbox" :catalogue="catalogue" class="w-full" up />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { getAtEntryPath } from "~/assets/shared/battlescribe/bs_editor";
-import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import { getAtEntryPath } from "~/assets/editor/bs_editor";
+import type { EntryPathEntry } from "~/assets/editor/bs_editor";
 import type { Catalogue, EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { get_ctx, useEditorStore } from "~/stores/editorStore";
 import { useEditorUIState } from "~/stores/editorUIState";
@@ -113,15 +113,15 @@ export default defineComponent({
   async mounted() {
     this.load();
     addEventListener("keydown", this.keydown);
-    addEventListener("copy", this.copy);
-    addEventListener("paste", this.paste);
-    addEventListener("cut", this.cut);
+    document.addEventListener("copy", this.copy);
+    document.addEventListener("paste", this.paste);
+    document.addEventListener("cut", this.cut);
   },
   unmounted() {
     removeEventListener("keydown", this.keydown);
-    removeEventListener("copy", this.copy);
-    removeEventListener("paste", this.paste);
-    removeEventListener("cut", this.cut);
+    document.removeEventListener("copy", this.copy);
+    document.removeEventListener("paste", this.paste);
+    document.removeEventListener("cut", this.cut);
   },
   props: {
     catalogue: {
@@ -129,7 +129,7 @@ export default defineComponent({
       required: true,
     },
     defaults: {
-      type: Object as PropType<{ showImported?: boolean }>,
+      type: Object as PropType<Partial<typeof LeftPanelDefaults>>,
       default: {},
     },
   },
@@ -152,7 +152,7 @@ export default defineComponent({
               if (el) {
                 const ctx = get_ctx(el);
                 await ctx.do_select();
-                this.store.mode = this.defaults.mode;
+                this.store.mode = this.defaults.mode ?? LeftPanelDefaults.mode;
                 this.shouldScrollToElement = el;
               }
             }
@@ -222,8 +222,14 @@ export default defineComponent({
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;
       if (!e.target) return;
-      const tagName = (e.target as HTMLSelectElement)?.tagName?.toLowerCase();
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
       const key = e.key.toLowerCase();
+      // Editor shortcuts apply anywhere except text entry, where the browser's own
+      // undo/selection/caret keys have to keep working. Gating on `body` instead meant
+      // that merely clicking a button or a contenteditable left every shortcut dead.
+      const typing =
+        tagName === "input" || tagName === "textarea" || tagName === "select" || target?.isContentEditable === true;
       if (e.ctrlKey && key === "f") {
         e.preventDefault();
         (this.$refs["editor-searchbox"] as HTMLInputElement).focus();
@@ -234,8 +240,9 @@ export default defineComponent({
         this.store.update_catalogue_search(this.catalogue, this.filterData);
       }
 
-      if (tagName === "body") {
-        if (key === " ") {
+      if (!typing) {
+        // Space and Enter still belong to a focused button.
+        if (key === " " && tagName !== "button") {
           /** Space */ e.preventDefault();
           this.store.toggle_selections();
         }
@@ -344,6 +351,8 @@ export default defineComponent({
   position: sticky;
   margin-top: auto;
   bottom: 0;
+  // Above the tree's collapsible boxes (z-index 100 - depth), so the search suggestions open over them.
+  z-index: 101;
 }
 
 input:focus::placeholder {

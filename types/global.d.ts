@@ -13,6 +13,8 @@ declare global {
   var $delete: (o: any, k: any) => unknown;
   var $catalogue: Catalogue & { manager: GameSystemFiles; fullFilePath: string };
   var $store: ReturnType<typeof useEditorStore>;
+  /** Console handle for the WebMCP tools; see plugins/webmcp.client.ts. */
+  var $mcp: (name: string, args?: Record<string, unknown>) => Promise<unknown>;
   var $node: typeof nodeHelpers;
   var $helpers: typeof bsHelpers;
   function $toRaw<T extends Object>(o: T): T;
@@ -30,6 +32,11 @@ declare global {
         on: (channel: string, ...args: any) => unknown;
       };
   var cataloguesdexie: CatDexie;
+  /**
+   * Provided by nuxt-nr, which shares assets/shared with this repo. Neither is reachable
+   * from nr-editor at runtime ($t only from util.ts's time formatters, showMessage only
+   * from GithubGameSystemFiles), so these are declarations, not shims.
+   */
+  var $t: (key: string, ...args: any[]) => string;
+  var showMessage: (text: string) => unknown;
 }
-
-console.log($store);

@@ -1,7 +1,7 @@
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import type { BSICharacteristic, BSIInfoLink, BSIProfile, BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
+import type { BSICharacteristic, BSIProfile } from "~/assets/shared/battlescribe/bs_types";
 import { findRule } from "./rule_importer";
 import { charac } from "./util";
 
@@ -45,7 +45,7 @@ export interface T9AProfile {
 
 function findProfileType(catalogues: Catalogue[], name: string) {
   const gst = catalogues[0];
-  for (let prf of gst.profileTypes || []) {
+  for (const prf of gst.profileTypes || []) {
     if (prf.name === name) return prf;
   }
   return null;
@@ -76,13 +76,14 @@ export default class ProfileImporter {
   private importProfile(unit: EditorBase, profile: T9AProfile, armyName: string) {
     let target = unit;
     unit.forEach((child) => {
-      if (child.type === "model") {
-        target = child as EditorBase;
+      // `type` is declared on the node subclasses, not Base; children here are Base | Link.
+      if ((child as { type?: string }).type === "model") {
+        target = child;
       }
     });
 
     // While we are at it, we can change the unit type of single models to model
-    if (target === unit) unit.type = "model";
+    if (target === unit) (unit as unknown as { type?: string }).type = "model";
     const profileTypes = {
       global: findProfileType(this.catalogues, "Global"),
       defensive: findProfileType(this.catalogues, "Defensive"),
@@ -109,13 +110,13 @@ export default class ProfileImporter {
           charac(profileTypes.global, "Dis", profile.global.Di),
           charac(profileTypes.global, "Height", profile.height),
           charac(profileTypes.global, "Model Rules", profile.globalrules?.map((elt) => elt.name).join(", ")),
-        ].filter((elt) => elt != null),
+        ].filter((elt): elt is BSICharacteristic => elt != null),
       };
       globalPrf.characteristics.push();
 
       $store.add(globalPrf, "profiles", target);
 
-      for (let rule of profile.globalrules || []) {
+      for (const rule of profile.globalrules || []) {
         const link = findRule(this.catalogues, armyName, rule.name);
         if (link) {
           $store.add(link, "infoLinks", target);
@@ -138,12 +139,12 @@ export default class ProfileImporter {
           charac(profileTypes.defensive, "HP", profile.defense.HP),
           charac(profileTypes.defensive, "Res", profile.defense.Re),
           charac(profileTypes.defensive, "Model Rules", profile.defenserules?.map((elt) => elt.name).join(", ")),
-        ].filter((elt) => elt != null),
+        ].filter((elt): elt is BSICharacteristic => elt != null),
       };
       globalPrf.characteristics.push();
       $store.add(globalPrf, "profiles", target);
 
-      for (let rule of profile.defenserules || []) {
+      for (const rule of profile.defenserules || []) {
         const link = findRule(this.catalogues, armyName, rule.name);
         if (link) {
           $store.add(link, "rules", target);
@@ -167,12 +168,12 @@ export default class ProfileImporter {
           charac(profileTypes.offensive, "Off", profile.offense.Of),
           charac(profileTypes.offensive, "Str", profile.offense.St),
           charac(profileTypes.offensive, "Model Rules", profile.offenserules?.map((elt) => elt.name).join(", ")),
-        ].filter((elt) => elt != null),
+        ].filter((elt): elt is BSICharacteristic => elt != null),
       };
       globalPrf.characteristics.push();
       $store.add(globalPrf, "profiles", target);
 
-      for (let rule of profile.offenserules || []) {
+      for (const rule of profile.offenserules || []) {
         const link = findRule(this.catalogues, armyName, rule.name);
         if (link) {
           $store.add(link, "rules", target);
@@ -182,18 +183,18 @@ export default class ProfileImporter {
   }
 
   public import() {
-    for (let armyShort in this.book.units) {
+    for (const armyShort in this.book.units) {
       const armyName = bookNames[armyShort];
       if (armyName) {
         const catalogue = this.catalogues.find((elt) => elt.name === armyName);
         if (catalogue) {
-          for (let unitId in this.book.units[armyShort]) {
+          for (const unitId in this.book.units[armyShort]) {
             const t9aProfile = this.book.units[armyShort][unitId];
             const unit = catalogue.entryLinks?.find((entry) => entry.target?.name === t9aProfile.name);
             if (unit) {
               // Root entries are all links
               const target = unit.target;
-              this.importProfile(target as EditorBase, t9aProfile, armyName);
+              this.importProfile(target, t9aProfile, armyName);
             }
           }
         }

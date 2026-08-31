@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getNameExtra } from "~/assets/editor/bs_editor";
 import { Group } from "~/assets/shared/battlescribe/bs_main";
 
 export default {

@@ -51,6 +51,7 @@
 </template>
 
 <script lang="ts">
+import type { QueryNode } from "./props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSICondition } from "~/assets/shared/battlescribe/bs_types";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -63,15 +64,14 @@ import {
   getSearchCatalogues,
   scopeIsId,
 } from "@/assets/ts/catalogue/catalogue_helpers";
-import type { EditorSearchItem } from "@/assets/ts/catalogue/catalogue_helpers";
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import { filterByItems } from "~/assets/shared/battlescribe/bs_editor";
+import { getNameExtra } from "~/assets/editor/bs_editor";
+import { filterByItems } from "~/assets/editor/bs_editor";
 import { fieldToText } from "~/assets/shared/battlescribe/bs_modifiers";
 import { Base, Condition, Constraint } from "~/assets/shared/battlescribe/bs_main";
 export default {
   props: {
     item: {
-      type: Object as PropType<(Condition | Constraint) & EditorBase>,
+      type: Object as PropType<QueryNode>,
       required: true,
     },
 
@@ -152,7 +152,7 @@ export default {
     },
 
     instanceOf() {
-      return ["instanceOf", "notInstanceOf"].includes(this.item?.type);
+      return ["instanceOf", "notInstanceOf"].includes(this.item?.type ?? "");
     },
 
     allEntries(): EditorSearchItem[] {

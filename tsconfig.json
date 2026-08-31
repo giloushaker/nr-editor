@@ -1,6 +1,26 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
+  // .nuxt/tsconfig.json only excludes dist and .output, so the electron bundles and the .diagcheck
+  // output of `npm run check` were being type-checked as source. Declaring exclude here replaces
+  // the inherited list, hence dist/.output are repeated.
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-electron",
+    ".output",
+    ".release",
+    ".diagcheck",
+    "static",
+    "public"
+  ],
+  // Nuxt 4's generated config turned these on; this project deliberately runs non-strict
+  // (CLAUDE.md), so turn them back off at the top level.
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitOverride": false,
+    "noUncheckedIndexedAccess": false
+  },
   "ts-node": {
     "compilerOptions": {
       "target": "ES2018",

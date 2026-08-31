@@ -1,13 +1,7 @@
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { bookNames } from "./profile_import";
-import type {
-  BSIEntryLink,
-  BSIInfoLink,
-  BSIRule,
-  BSISelectionEntry,
-  BSISelectionEntryGroup,
-} from "~/assets/shared/battlescribe/bs_types";
+import type { BSIRule, BSISelectionEntry } from "~/assets/shared/battlescribe/bs_types";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 
 interface T9ARule {
@@ -83,7 +77,7 @@ export default class RulesImporter {
   }
 
   public async import() {
-    for (let rule in this.book.rules) {
+    for (const rule in this.book.rules) {
       await this.importRule(this.catalogues, rule, this.book.rules[rule]);
     }
   }
@@ -97,10 +91,10 @@ export function findRule(catalogues: Catalogue[], bookName: string, rulename: st
   }
   cats.push(catalogues[0]);
 
-  for (let cat of cats) {
-    for (let rule of cat?.sharedSelectionEntries || []) {
+  for (const cat of cats) {
+    for (const rule of cat?.sharedSelectionEntries || []) {
       if (rule.name === rulename) {
-        return rule as EditorBase;
+        return rule;
       }
     }
   }

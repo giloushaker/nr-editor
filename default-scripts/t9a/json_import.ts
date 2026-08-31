@@ -24,7 +24,7 @@ export default {
     parsed.loc.en["standardbearer"] = "Standard Bearer";
 
     // Add units from the army list
-    for (let entry of parsed.armyList) {
+    for (const entry of parsed.armyList) {
       if (!entry.inherits) {
         const selectionEntry = toEntry(entry, parsed.loc.en);
         selectionEntry.editorTypeName = "sharedSelectionEntries";

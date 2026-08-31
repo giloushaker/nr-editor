@@ -15,7 +15,7 @@ export async function insertUnitRarity(catalogue: Catalogue) {
     Legendary: { total: 0, limit: 1, perpoints: null },
   };
 
-  for (let elt of entries) {
+  for (const elt of entries) {
     elt.forEach((child) => {
       if (child.comment?.startsWith("Rarity")) {
         const rarity = child.comment.split(":")[1].trim();
@@ -47,8 +47,8 @@ export async function insertUnitRarity(catalogue: Catalogue) {
         };
 
         if (!child.modifiers) child.modifiers = [];
-        $store.add(constraint, "constraints", child as EditorBase);
-        $store.add(modifier, "modifiers", child as EditorBase);
+        $store.add(constraint, "constraints", child);
+        $store.add(modifier, "modifiers", child);
       }
     });
   }

@@ -13,12 +13,12 @@
 </template>
 
 <script lang="ts">
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Force } from "~/assets/shared/battlescribe/bs_main";
 
 export default {
   props: {
     item: {
-      type: Object as PropType<Catalogue>,
+      type: Object as PropType<Force>,
       required: true,
     },
   },

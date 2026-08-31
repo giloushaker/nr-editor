@@ -11,7 +11,8 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Category } from "~/assets/shared/battlescribe/bs_main";
 import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
@@ -22,10 +23,7 @@ export default {
       type: Object as PropType<Category & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
 };
 </script>

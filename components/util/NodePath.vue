@@ -22,17 +22,17 @@
   </div>
 </template>
 <script lang="ts">
-import type { EntryPathEntryExtended } from "~/assets/shared/battlescribe/bs_editor";
+import type { EntryPathEntryExtended, EntryPathEntry } from "~/assets/editor/bs_editor";
 
 export default defineComponent({
   props: {
-    path: { type: Array<EntryPathEntryExtended>, required: true },
+    path: { type: Array<Partial<EntryPathEntryExtended> & EntryPathEntry>, required: true },
     maxLength: { type: Number, default: 80, required: false },
     endArrow: { type: Boolean, default: false },
     text: { type: String },
   },
   methods: {
-    onClick(node: EntryPathEntryExtended, i: number) {
+    onClick(node: EntryPathEntryExtended | EntryPathEntry, i: number) {
       const path = this.path.slice(0, i + 1);
       this.$emit("nodeclick", { path, node, i });
     },

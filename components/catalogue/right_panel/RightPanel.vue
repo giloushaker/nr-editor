@@ -1,38 +1,19 @@
 <template>
-  <div class="rightPanel" v-if="item" :key="key" @change="store.changed(item)" @changed="store.changed(item)">
+  <div class="rightPanel" v-if="item" @change="store.changed(item)" @changed="store.changed(item)">
     <NodePath :path="path(item)" class="inline p-1px pl-2px" @nodeclick="clicked" />
     <template v-if="store.mode === 'edit'">
-      <CatalogueRightPanelPublicationPanel v-if="typeName == 'publication'" :item="item" />
-
-      <CatalogueRightPanelCostTypesPanel v-else-if="typeName == 'costType'" :item="item">
-      </CatalogueRightPanelCostTypesPanel>
-
-      <CatalogueRightPanelProfileTypesPanel v-else-if="typeName == 'profileType'" :item="item" />
-      <CatalogueRightPanelCharacteristicTypePanel v-else-if="typeName == 'characteristicType' || typeName === 'attributeType'" :item="item" />
-      <CatalogueRightPanelCategoryEntriesPanel v-else-if="typeName == 'categoryEntry'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelForceEntriesPanel v-else-if="typeName == 'forceEntry'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelProfilesPanel v-else-if="typeName == 'profile'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelRulesPanel v-else-if="typeName == 'rule'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelSelectionEntryPanel v-else-if="typeName == 'selectionEntry'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'forceEntryLink'" :item="item" :catalogue="catalogue" :type="'force'" />
-      <CatalogueRightPanelLinkPanel v-else-if="links.includes(typeName)" :item="item" :catalogue="catalogue" :type="'entry'" />
-      <CatalogueRightPanelLinkPanel v-else-if="infoLinks.includes(typeName)" :item="item" :catalogue="catalogue" :type="'info'" />
-      <CatalogueRightPanelModifierPanel v-else-if="typeName == 'modifier'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelConstraintPanel v-else-if="typeName == 'constraint'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelConditionGroupPanel v-else-if="typeName == 'conditionGroup'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelConditionPanel v-else-if="typeName == 'condition'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelLocalConditionGroupPanel v-else-if="typeName === 'localConditionGroup'" :item="item" :catalogue="catalogue" />
-      <!-- resolved category links report their target's type + Link, so both names route here -->
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'categoryLink' || typeName == 'categoryEntryLink'" :item="item" :catalogue="catalogue" type="category" />
-      <CatalogueRightPanelModifierGroupPanel v-else-if="typeName == 'modifierGroup'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelInfoGroupPanel v-else-if="typeName == 'infoGroup'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelSelectionEntryGroupPanel v-else-if="typeName == 'selectionEntryGroup'" :item="item" :catalogue="catalogue" />
-      <CatalogueRightPanelLinkPanel v-else-if="typeName == 'catalogueLink'" :item="item" :catalogue="catalogue" type="catalogue" />
-      <CatalogueRightPanelCataloguePanel v-else-if="typeName == 'catalogue' || typeName == 'gameSystem'" :item="item" :catalogue="catalogue" type="catalogue" />
-      <CatalogueRightPanelRepeatPanel v-else-if="typeName == 'repeat'" :item="item" :catalogue="catalogue" type="catalogue" />
-      <CatalogueRightPanelAssociationLinkPanel v-else-if="typeName == 'associationLink'" :item="item" :catalogue="catalogue" type="catalogue" />
-      <CatalogueRightPanelAssociationPanel v-else-if="typeName == 'association'" :item="item" :catalogue="catalogue" type="catalogue" />
-
+      <component v-if="panel" :is="panel" v-bind="panelProps" />
+      <!--
+        Boxes contributed by scripts. Below the real panel, collapsed, so a plugin can show what
+        it computed about the selected node without competing with the fields being edited.
+      -->
+      <details v-for="(view, i) in scriptViews" :key="i" class="scriptView box" open>
+        <summary class="titreCategory">{{ view.title }}</summary>
+        <div v-if="view.html" v-html="view.html" />
+        <button v-for="action of view.actions" :key="action.label" class="bouton m-2px" @click="action.run()">
+          {{ action.label }}
+        </button>
+      </details>
       <div class="min-h-100px"> </div>
     </template>
     <template v-else-if="store.mode === 'references'">
@@ -42,30 +23,91 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useEditorStore } from "~/stores/editorStore";
 import NodePath from "~/components/util/NodePath.vue";
-import { getAtEntryPath, getEntryPathInfo } from "~/assets/shared/battlescribe/bs_editor";
-import type { EntryPathEntryExtended } from "~/assets/shared/battlescribe/bs_editor";
+import { getAtEntryPath, getEntryPathInfo } from "~/assets/editor/bs_editor";
+import type { EntryPathEntryExtended } from "~/assets/editor/bs_editor";
+
+import AssociationLinkPanel from "./AssociationLinkPanel.vue";
+import AssociationPanel from "./AssociationPanel.vue";
+import CataloguePanel from "./CataloguePanel.vue";
+import CategoryEntriesPanel from "./CategoryEntriesPanel.vue";
+import CharacteristicTypePanel from "./CharacteristicTypePanel.vue";
+import ConditionGroupPanel from "./ConditionGroupPanel.vue";
+import ConditionPanel from "./ConditionPanel.vue";
+import ConstraintPanel from "./ConstraintPanel.vue";
+import CostTypesPanel from "./CostTypesPanel.vue";
+import ForceEntriesPanel from "./ForceEntriesPanel.vue";
+import InfoGroupPanel from "./InfoGroupPanel.vue";
+import LinkPanel from "./LinkPanel.vue";
+import LocalConditionGroupPanel from "./LocalConditionGroupPanel.vue";
+import ModifierGroupPanel from "./ModifierGroupPanel.vue";
+import ModifierPanel from "./ModifierPanel.vue";
+import ProfileTypesPanel from "./ProfileTypesPanel.vue";
+import ProfilesPanel from "./ProfilesPanel.vue";
+import PublicationPanel from "./PublicationPanel.vue";
+import RepeatPanel from "./RepeatPanel.vue";
+import RulesPanel from "./RulesPanel.vue";
+import SelectionEntryGroupPanel from "./SelectionEntryGroupPanel.vue";
+import SelectionEntryPanel from "./SelectionEntryPanel.vue";
+
+/**
+ * editorTypeName -> panel. `type` is LinkPanel's discriminator; every other panel ignores it.
+ * Resolved category links report their target's type + "Link", so both names are listed.
+ */
+const panels: Record<string, { is: any; type?: string }> = {
+  publication: { is: PublicationPanel },
+  costType: { is: CostTypesPanel },
+  profileType: { is: ProfileTypesPanel },
+  characteristicType: { is: CharacteristicTypePanel },
+  attributeType: { is: CharacteristicTypePanel },
+
+  categoryEntry: { is: CategoryEntriesPanel },
+  forceEntry: { is: ForceEntriesPanel },
+  profile: { is: ProfilesPanel },
+  rule: { is: RulesPanel },
+  selectionEntry: { is: SelectionEntryPanel },
+  selectionEntryGroup: { is: SelectionEntryGroupPanel },
+  infoGroup: { is: InfoGroupPanel },
+  modifier: { is: ModifierPanel },
+  modifierGroup: { is: ModifierGroupPanel },
+  constraint: { is: ConstraintPanel },
+  condition: { is: ConditionPanel },
+  conditionGroup: { is: ConditionGroupPanel },
+  localConditionGroup: { is: LocalConditionGroupPanel },
+  repeat: { is: RepeatPanel },
+  association: { is: AssociationPanel },
+  associationLink: { is: AssociationLinkPanel },
+  catalogue: { is: CataloguePanel },
+  gameSystem: { is: CataloguePanel },
+
+  forceEntryLink: { is: LinkPanel, type: "force" },
+  link: { is: LinkPanel, type: "entry" },
+  entryLink: { is: LinkPanel, type: "entry" },
+  selectionEntryLink: { is: LinkPanel, type: "entry" },
+  selectionEntryGroupLink: { is: LinkPanel, type: "entry" },
+  infoLink: { is: LinkPanel, type: "info" },
+  profileLink: { is: LinkPanel, type: "info" },
+  ruleLink: { is: LinkPanel, type: "info" },
+  infoGroupLink: { is: LinkPanel, type: "info" },
+  categoryLink: { is: LinkPanel, type: "category" },
+  categoryEntryLink: { is: LinkPanel, type: "category" },
+  catalogueLink: { is: LinkPanel, type: "catalogue" },
+};
+
+/** These declare `item` only; passing a catalogue would leak onto their root element. */
+const itemOnly = new Set(["publication", "costType", "profileType", "characteristicType", "attributeType"]);
+
 export default {
   components: { NodePath },
   setup() {
     return { store: useEditorStore() };
   },
   props: {
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      links: ["link", "entryLink", "selectionEntryLink", "selectionEntryGroupLink", "forceEntryLink"],
-      infoLinks: ["infoLink", "profileLink", "ruleLink", "infoGroupLink"],
-      key: 0,
-    };
+    ...catalogueProp,
   },
 
   methods: {
@@ -98,10 +140,24 @@ export default {
     typeName() {
       return this.item?.editorTypeName as any as string;
     },
-  },
-  watch: {
-    item() {
-      this.key++;
+
+    panel() {
+      return panels[this.typeName]?.is;
+    },
+
+    /** Recomputed per selection, which is also the only time a script's answer could change. */
+    scriptViews() {
+      if (!this.item) return [];
+      return this.store.scripts.get_panel_views(this.item, this.catalogue);
+    },
+
+    panelProps() {
+      const entry = panels[this.typeName];
+      return {
+        item: this.item,
+        ...(itemOnly.has(this.typeName) ? {} : { catalogue: this.catalogue }),
+        ...(entry?.type ? { type: entry.type } : {}),
+      };
     },
   },
 };
@@ -133,6 +189,10 @@ export default {
 }
 
 .rightPanel {
+  fieldset {
+    min-inline-size: 0;
+  }
+
   padding-top: 10px;
   padding-right: 10px;
   padding-left: 5px;

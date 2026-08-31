@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIProfileType } from "~/assets/shared/battlescribe/bs_types";
 import { useEditorStore } from "~/stores/editorStore";

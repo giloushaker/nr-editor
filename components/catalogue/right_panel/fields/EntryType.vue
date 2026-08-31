@@ -22,13 +22,14 @@
 </template>
 
 <script lang="ts">
+import type { PropType } from "vue";
+import type { BSISelectionEntry } from "~/assets/shared/battlescribe/bs_types";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+
 export default {
   props: {
     item: {
-      type: Object as PropType<{
-        type: "model" | "unit" | "upgrade";
-        subType?: "mount" | "crew" | "unit-group";
-      }>,
+      type: Object as PropType<BSISelectionEntry & EditorBase>,
       required: true,
     },
   },

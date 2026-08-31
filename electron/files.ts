@@ -1,14 +1,6 @@
 const { readFile, readdir, stat } = require("fs/promises");
+import { isAllowedExtension, isZipExtension } from "../assets/shared/battlescribe/bs_convert";
 
-const zipExtensions = ["gstz", "zip", "catz"];
-function getExtension(extension_or_file: string) {
-  const extension = extension_or_file.split(".").pop()?.toLowerCase() || "";
-  return extension;
-}
-function isZipExtension(extension_or_file: string) {
-  const extension = getExtension(extension_or_file);
-  return zipExtensions.includes(extension);
-}
 function replaceSlashes(path: string) {
   return path.replace(/\\/g, "/");
 }
@@ -51,14 +43,14 @@ export async function getFolderMtime(folderPath: string): Promise<number | undef
   return max || undefined;
 }
 
-var AdmZip = require("adm-zip");
+const AdmZip = require("adm-zip");
 export async function readAndUnzipFile(path: string) {
   try {
     if (!(await isFile(path))) return undefined;
     const isZip = isZipExtension(path);
     if (isZip) {
-      var zip = new AdmZip(path);
-      var zipEntries = zip.getEntries();
+      const zip = new AdmZip(path);
+      const zipEntries = zip.getEntries();
       const entry = zipEntries[0];
       return entry.getData().toString("utf-8");
     } else {
@@ -74,28 +66,43 @@ export async function getFile(filePath: any) {
   return await readAndUnzipFile(filePath).then((data) => ({ data, name: filename(filePath), path: filePath }));
 }
 
-export async function getFolderFiles(folderPath: any, recursive = false, skip?: string[]) {
-  const toSkip = new Set(skip ?? [])
-  const fileObjects = [];
-  const isPathFile = await isFile(folderPath);
-  if (isPathFile) {
-    folderPath = dirname(folderPath);
-  }
-
-
-  const stack = [folderPath]
+// Listing only: no reads, no extension filter. getFolderFiles is the batch loader that
+// wants every catalogue's content in one round trip; anything else wants names.
+export async function listFolder(folderPath: string, depth = 0, skip?: string[]) {
+  const toSkip = new Set(skip ?? []);
+  const result = [] as Array<{ name: string; path: string; directory: boolean }>;
+  const stack = [{ path: replaceSlashes(folderPath), level: 0 }];
   while (stack.length) {
-    const curPath = stack.pop();
-    const entries = await readdir(curPath, { withFileTypes: true });
+    const current = stack.pop()!;
+    let entries;
+    try {
+      entries = await readdir(current.path, { withFileTypes: true });
+    } catch {
+      continue;
+    }
     for (const entry of entries) {
-      const filePath = `${curPath}/${entry.name}`;
-      if (entry.isDirectory()) {
-        if (recursive && !toSkip?.has(entry.name)) stack.push(filePath)
-      } else {
-        fileObjects.push(readAndUnzipFile(filePath).then((data) => ({ data, name: entry.name, path: filePath })));
+      const path = `${current.path}/${entry.name}`;
+      const directory = entry.isDirectory();
+      if (directory && current.level < depth && !toSkip.has(entry.name)) {
+        stack.push({ path, level: current.level + 1 });
       }
+      result.push({ name: entry.name, path, directory });
     }
   }
+  return result;
+}
 
-  return (await Promise.all(fileObjects)).filter((o) => o.data);
+export async function getFolderFolders(folderPath: string) {
+  const entries = await listFolder(folderPath);
+  return entries.filter((entry) => entry.directory).map(({ name, path }) => ({ name, path }));
+}
+
+export async function getFolderFiles(folderPath: any, depth = 0, skip?: string[]) {
+  if (await isFile(folderPath)) folderPath = dirname(folderPath);
+  const entries = await listFolder(folderPath, depth, skip);
+  const files = entries
+    // reading a nested pdf or zip just to drop it later costs the whole file in memory
+    .filter((entry) => !entry.directory && isAllowedExtension(entry.name))
+    .map((entry) => readAndUnzipFile(entry.path).then((data) => ({ data, name: entry.name, path: entry.path })));
+  return (await Promise.all(files)).filter((o) => o.data);
 }

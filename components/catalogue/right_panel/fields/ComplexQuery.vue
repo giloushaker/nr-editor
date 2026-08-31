@@ -133,8 +133,7 @@ import {
   getSearchElements,
   getParentScopes,
 } from "~/assets/ts/catalogue/catalogue_helpers";
-import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
-import { filterByItems, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { filterByItems, getNameExtra } from "~/assets/editor/bs_editor";
 import { construct_affects_query, deconstruct_affects_query, Modifier } from "~/assets/shared/battlescribe/bs_main";
 import type { AffectsQuery } from "~/assets/shared/battlescribe/bs_main";
 import { selfableScopes, splitScopeSelf } from "~/assets/shared/battlescribe/bs_condition";
@@ -243,8 +242,8 @@ export default defineComponent({
       return this.item.editorTypeName;
     },
     costTypes() {
-      let res: BSICostType[] = [];
-      for (let elt of this.catalogue.iterateCostTypes()) {
+      const res: BSICostType[] = [];
+      for (const elt of this.catalogue.iterateCostTypes()) {
         res.push(elt);
       }
       return res;

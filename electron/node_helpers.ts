@@ -8,83 +8,25 @@ export function filename(path: string) {
   const split = path.replaceAll("\\", "/").split("/");
   return split[split.length - 1];
 }
-export async function getFolderFiles(folderPath: string, recursive = false, skip?: string[]) {
-  if (!electron) return web_fs.getFolderFiles(folderPath, recursive, skip);
-  return (await electron.invoke("getFolderFiles", folderPath, recursive, skip)) as Array<{
+export async function getFolderFiles(folderPath: string, depth = 0, skip?: string[]) {
+  if (!electron) return web_fs.getFolderFiles(folderPath, depth, skip);
+  return (await electron.invoke("getFolderFiles", folderPath, depth, skip)) as Array<{
     name: string;
     path: string;
     data: string;
   }>;
 }
-// export async function getFolderFiles(folderPath: string) {
-//   if (!electron) return;
-//   try {
-//     const fileObjects = [];
-//     const isPathFile = (await electron.invoke("isFile", folderPath)) as boolean;
-//     if (isPathFile) {
-//       folderPath = dirname(folderPath);
-//     }
-
-//     const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
-
-//     for (const entry of entries) {
-//       const filePath = `${folderPath}/${entry}`;
-
-//       try {
-//         const isFile = (await electron.invoke("isFile", filePath)) as boolean;
-//         if (isFile) {
-//           const data = await electron.invoke("readFileSync", filePath, isZipExtension(entry) ? undefined : "utf-8");
-//           const fileObject = {
-//             name: entry,
-//             data: data,
-//             path: filePath,
-//           };
-//           fileObjects.push(fileObject);
-//         }
-//       } catch (error) {
-//         console.error("Error reading file:", filePath, error);
-//         continue;
-//       }
-//     }
-
-//     return fileObjects;
-//   } catch (error) {
-//     console.error("Error:", error);
-//     throw error;
-//   }
-// }
+export async function listFolder(folderPath: string, depth = 0, skip?: string[]) {
+  if (!electron) return web_fs.listFolder(folderPath, depth, skip);
+  return (await electron.invoke("listFolder", folderPath, depth, skip)) as Array<{
+    name: string;
+    path: string;
+    directory: boolean;
+  }>;
+}
 export async function getFolderFolders(folderPath: string) {
   if (!electron) return web_fs.getFolderFolders(folderPath);
-  try {
-    const fileObjects = [];
-    const pathIsDir = (await electron.invoke("isDirectory", folderPath)) as boolean;
-    if (!pathIsDir) return [];
-
-    const entries = (await electron.invoke("readdirSync", folderPath)) as string[];
-
-    for (const entry of entries) {
-      const filePath = `${folderPath}/${entry}`;
-
-      try {
-        const isDir = (await electron.invoke("isDirectory", filePath)) as boolean;
-        if (isDir) {
-          const fileObject = {
-            name: entry,
-            path: filePath,
-          };
-          fileObjects.push(fileObject);
-        }
-      } catch (error) {
-        console.error("Error reading dir:", filePath, error);
-        continue;
-      }
-    }
-
-    return fileObjects;
-  } catch (error) {
-    console.error("Error:", error);
-    throw error;
-  }
+  return (await electron.invoke("getFolderFolders", folderPath)) as Array<{ name: string; path: string }>;
 }
 
 export async function isDirectory(path: string) {
@@ -158,17 +100,31 @@ export async function watchFile(path: string, callback: (path: string, stats: St
   if (!initialized) {
     initialized = true;
     electron.on("fileChanged", (_: any, _path: string, _stats: Stats) => {
-      const cb = watchers[_path];
+      const cb = watchers[_path.replaceAll("\\", "/")];
       cb && cb(_path, _stats);
     });
   }
+  // the main process keys watchers by forward-slash path; same spelling here or the callback never fires
+  path = path.replaceAll("\\", "/");
   await electron.invoke("chokidarWatchFile", path);
   watchers[path] = callback;
 }
 export async function unwatchFile(path: string) {
   if (!electron) return web_fs.unwatchFile(path);
+  path = path.replaceAll("\\", "/");
   delete watchers[path];
   await electron.invoke("chokidarUnwatchFile", path);
+}
+
+/**
+ * Opens a file with whatever the OS uses for it. Electron only -- a browser cannot, so callers
+ * check the return and say so rather than appearing to do nothing.
+ */
+export async function openPath(filePath: string): Promise<boolean> {
+  if (!electron) return false;
+  const error = (await electron.invoke("openPath", filePath)) as string;
+  if (error) throw new Error(error);
+  return true;
 }
 
 export async function getFolderRemote(path: string): Promise<string | null> {

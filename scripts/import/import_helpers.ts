@@ -18,7 +18,7 @@ export function removeTextInParentheses(str: string) {
   return str.replace(/\([^()]*\)/g, '');
 }
 export function getOnlyTextInParentheses(str: string) {
-  let matches = str.match(/\(([^)]+)\)/g);
+  const matches = str.match(/\(([^)]+)\)/g);
   if (matches) {
     return matches.map(match => match.slice(1, -1)).join('; ');
   } else {
@@ -29,7 +29,7 @@ export function getOnlyTextInParentheses(str: string) {
 export function extractTextAndDetails(str: string) {
   const result = []
   let inDetails = false
-  let current = { text: "", details: "" as string | null }
+  const current = { text: "", details: "" as string | null }
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
     if (char === "(") {
@@ -134,7 +134,7 @@ export function parseSpecialRule(rule: string) {
   let ruleName = match[1].trim();
   let param = null;
   let specification = null;
-  let asterisks = match[2].length + match[4].length
+  const asterisks = match[2].length + match[4].length
   if (match[3]) {
     const pieces = match[3].split(", ")
     param = pieces[0]

@@ -1,4 +1,4 @@
-import type { EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+import type { EntryPathEntry } from "~/assets/editor/bs_editor";
 
 export const LeftPanelDefaults = {
     showImported: false,
@@ -6,5 +6,5 @@ export const LeftPanelDefaults = {
     filter: "",
     scroll: 0,
     selection: undefined as EntryPathEntry[] | undefined,
-    mode: "edit",
+    mode: "edit" as "edit" | "references",
   };

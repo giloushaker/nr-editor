@@ -13,3 +13,7 @@ dist
 nr-win32-x64
 dist-electron
 *.pfx
+.diagcheck/
+
+# electron-builder output from `npm run buildelectron`
+.release-test/

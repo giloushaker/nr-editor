@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 
 type OptionArray = Array<{ option: any; selected?: boolean }>;
 
@@ -68,7 +68,7 @@ export default {
     },
 
     targetSelected(opt: any) {
-      let res = opt.option;
+      const res = opt.option;
       this.selectedOption = {
         option: opt.option,
         selected: true,

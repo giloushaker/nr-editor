@@ -4,7 +4,7 @@
 <style lang="scss" scoped>
 @use "@/shared_components/css/vars.scss" as *;
 hr {
-  border-top: 1px;
-  border-color: $box_border;
+  border: none;
+  border-top: 1px solid $box_border;
 }
 </style>

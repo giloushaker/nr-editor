@@ -13,11 +13,18 @@
     "dev": "nuxi dev --port 3005",
     "start": "nuxi start",
     "generate": "nuxi generate",
-    "preview": "electron dist",
+    "preview": "electron .output/public",
     "postinstall": "nuxt prepare",
     "electron": "npx nuxi generate --electron && node scripts/run-electron.cjs",
-    "deploy": "nuxi generate --ghpages && gh-pages -d dist -t true",
-    "increment-version": "npm version patch --force"
+    "deploy": "nuxi generate --ghpages && gh-pages -d .output/public -t true",
+    "increment-version": "npm version patch --force",
+    "lint": "eslint . --quiet",
+    "lint:all": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "typecheck:fix": "npm run lint:fix",
+    "typecheck:ts": "tsc -p tsconfig.typecheck.json --noEmit",
+    "check": "tsc assets/editor/bs_diagnostics_engine.ts assets/editor/bs_diagnostics_check.ts assets/editor/bs_reference_index.ts assets/editor/bs_reference_index_check.ts stores/field_edit_stack.ts stores/field_edit_stack_check.ts stores/merge_children.ts stores/merge_children_check.ts stores/open_state.ts stores/open_state_check.ts assets/editor/bs_link_cycles.ts assets/editor/bs_link_cycles_check.ts assets/editor/bs_initialize.ts assets/editor/bs_initialize_check.ts --ignoreConfig --outDir .diagcheck --module node16 --target es2020 --moduleResolution node16 --types node --skipLibCheck && node .diagcheck/assets/editor/bs_diagnostics_check.js && node .diagcheck/assets/editor/bs_reference_index_check.js && node .diagcheck/stores/field_edit_stack_check.js && node .diagcheck/stores/merge_children_check.js && node .diagcheck/stores/open_state_check.js && node .diagcheck/assets/editor/bs_link_cycles_check.js && node .diagcheck/assets/editor/bs_initialize_check.js && npx vite-node -c vite.check.config.mjs assets/editor/bs_search_check.ts && npx vite-node -c vite.check.config.mjs assets/editor/bs_diagnostics_rules_check.ts && npx vite-node -c vite.check.config.mjs assets/editor/bs_recursion_check.ts"
   },
   "build": {
     "appId": "nr-editor",
@@ -26,20 +33,20 @@
       "output": ".release"
     },
     "win": {
-      "icon": "dist/favicon.ico"
+      "icon": "public/favicon.ico"
     },
     "mac": {
-      "icon": "dist/favicon.icns",
+      "icon": "public/favicon.icns",
       "category": "public.app-category.utilities"
     },
     "linux": {
       "category": "Utility",
-      "icon": "dist/favicon.png",
+      "icon": "public/favicon.png",
       "target": "AppImage"
     },
     "files": [
       {
-        "from": "dist",
+        "from": ".output/public",
         "to": ""
       },
       {
@@ -61,11 +68,19 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/lodash.merge": "^4.6.9",
     "@types/node": "^24",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
     "electron": "^44.0.0",
     "electron-builder": "^26.15.3",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "eslint-plugin-vue": "^10.10.0",
     "gh-pages": "^5.0.0",
+    "globals": "^17.11.0",
     "nuxt": "^4.5.2",
     "nuxt-electron": "^0.7.0",
     "nuxt-windicss": "^3.0.1",
@@ -73,10 +88,13 @@
     "vite": "^8.2.0",
     "vite-plugin-commonjs": "^0.10.4",
     "vite-plugin-electron": "^0.11.2",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vue-eslint-parser": "^10.4.1",
+    "vue-tsc": "^3.3.11"
   },
   "dependencies": {
     "@kyvg/vue3-notification": "^2.9.1",
+    "@mcp-b/webmcp-polyfill": "^5.0.1",
     "@pinia/nuxt": "^1.0.2",
     "@rollup/plugin-typescript": "^11.1.6",
     "adm-zip": "^0.5.10",
@@ -97,5 +115,13 @@
   "prettier": {
     "printWidth": 120,
     "htmlWhitespaceSensitivity": "strict"
+  },
+  "overrides": {
+    "mlly": "^1.8.2"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "electron-winstaller@5.4.0": true,
+    "esbuild@0.28.2": true
   }
 }

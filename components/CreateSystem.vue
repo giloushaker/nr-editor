@@ -24,7 +24,7 @@ import { useSettingsStore } from "~/stores/settingsState";
 export default {
   emits: ["created"],
   data() {
-    return { open: false, text: "", format: "gst" };
+    return { open: false, text: "", format: "json" };
   },
   setup() {
     return { store: useEditorStore(), settings: useSettingsStore() };

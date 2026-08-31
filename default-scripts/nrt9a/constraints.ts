@@ -20,7 +20,8 @@ export async function hasNotOption(
   res: Record<string, any>
 ) {
   let foundCondition = false;
-  if (node[field] && node[field].length) {
+  const options = node[field];
+  if (options && options.length) {
     const modifier: BSIModifier = {
       type: "set",
       value: true,
@@ -40,7 +41,7 @@ export async function hasNotOption(
       res.modifiers = [];
     }
 
-    for (let opt of node[field]) {
+    for (const opt of options) {
       let hasOptionBlock = opt;
       if (typeof hasOptionBlock === "string") {
         hasOptionBlock = {
@@ -55,7 +56,7 @@ export async function hasNotOption(
         conditionGroups: [],
       };
 
-      for (let ref of hasOptionBlock.refs) {
+      for (const ref of hasOptionBlock.refs) {
         // if the node has itself as a ref, we insert a simple constraint, not a modifier
         if (node.refs) {
           if (node.refs.map((elt) => convertRef(elt)).find((r) => r.ref == ref)) {
@@ -104,7 +105,8 @@ export async function hasOption(
   node: ArmyBookOption,
   res: Record<string, any>
 ) {
-  if (node[field] && node[field].length) {
+  const options = node[field];
+  if (options && options.length) {
     const modifier: BSIModifier = {
       type: "set",
       value: false,
@@ -125,7 +127,7 @@ export async function hasOption(
     }
     res.modifiers.push(modifier);
 
-    for (let opt of node[field]) {
+    for (const opt of options) {
       let hasOptionBlock = opt;
       if (typeof hasOptionBlock === "string") {
         hasOptionBlock = {
@@ -159,7 +161,7 @@ export async function initConstraintCategories(importer: T9AImporter) {
   const catalogue = importer.catalogues.find((elt) => elt.name === "Categories");
   if (!catalogue) return;
 
-  for (let ref in importer.refCatalogue) {
+  for (const ref in importer.refCatalogue) {
     const item = importer.refCatalogue[ref];
     if (item.amount > 1) {
       const existing = catalogue.categoryEntries || [];
@@ -239,9 +241,9 @@ export async function armyConstraints(importer: T9AImporter) {
   const res: Record<string, any> = {};
   const army = importer.book.army[0];
   if (army) {
-    for (let elt of army.armyHasNotOption || []) {
+    for (const elt of army.armyHasNotOption || []) {
       const block = elt as ArmyBookCondition;
-      let modifiers: BSIModifier[] = [];
+      const modifiers: BSIModifier[] = [];
 
       const constraint: BSIConstraint = {
         id: generateBattlescribeId(),
@@ -277,13 +279,13 @@ export async function armyConstraints(importer: T9AImporter) {
         modifiers.push(modifier);
       }
 
-      for (let ref of block.refs) {
+      for (const ref of block.refs) {
         const cat = findRefCategory(importer, ref);
         if (!cat) {
           console.log("Could not find category for ref: " + ref);
         } else {
           await $store.add(constraint, "constraints", cat as any);
-          await $store.add(modifiers, "modifiers", cat as any);
+          await $store.add(modifiers, "modifiers", cat);
         }
       }
     }

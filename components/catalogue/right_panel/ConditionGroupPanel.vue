@@ -7,8 +7,9 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import type { BSIConditionGroup } from "~/assets/shared/battlescribe/bs_types";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import ConditionGroup from "./fields/ConditionGroup.vue";
 import QuickConditions from "./fields/QuickConditions.vue";
@@ -26,12 +27,12 @@ export default {
     },
   },
   methods: {
-    getChilds(item: EditorBase) {
+    getChilds(item: EditorBase): Base[] {
       return [
         ...(item.conditions || []),
         ...(item.conditionGroups || []),
-        ...(item.repeats || []),
-        ...(item.localConditionGroups || []),
+        ...((item.repeats || []) as unknown as Base[]),
+        ...((item.localConditionGroups || []) as unknown as Base[]),
       ];
     },
   },

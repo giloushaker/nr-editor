@@ -12,8 +12,8 @@ import {
   removeEntry,
   getName,
   getNameExtra,
-} from "~/assets/shared/battlescribe/bs_editor";
-import type { ItemTypes, EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
+  siblingArray,
+} from "~/assets/editor/bs_editor";
 import {
   enumerate_zip,
   generateBattlescribeId,
@@ -21,9 +21,9 @@ import {
   textSearchRegex,
   zipCompress,
   forEachParent,
-  addObj,
   type MaybeArray,
   isObject,
+  isDefaultObject,
   sortByDescendingInplace,
   sortByAscendingInplace,
 } from "~/assets/shared/battlescribe/bs_helpers";
@@ -34,16 +34,30 @@ import {
   Link,
   entriesToJson,
   entryToJson,
-  goodJsonKeys,
   rootToJson,
-  Characteristic,
-  Rule,
   getDataObject,
   getDataDbId,
   arrayKeys,
   ProfileType,
 } from "~/assets/shared/battlescribe/bs_main";
-import { setPrototypeRecursive } from "~/assets/shared/battlescribe/bs_main_types";
+import { setPrototype } from "~/assets/shared/battlescribe/bs_main_types";
+import { initializeSubtree } from "~/assets/editor/bs_initialize";
+import { search, type SearchOptions } from "~/assets/editor/bs_search";
+
+/**
+ * Initializes a subtree the editor is inserting. The shared setPrototypeRecursive stops at the
+ * first node that already has a prototype, which is right for freshly parsed JSON but wrong here:
+ * fix_object merges defaults over caller data, so an insert can arrive part live and part plain,
+ * and everything plain below the first live node used to stay that way until the system reloaded.
+ */
+function initializeInserted(wrapper: object): number {
+  return initializeSubtree(wrapper, { initialized: (node) => !isDefaultObject(node), initialize: setPrototype });
+}
+// Side-effect import: grafts the editor half onto Catalogue.prototype and registers the
+// per-parentKey prototype hook. Must be in place before any catalogue is loaded, and this
+// store is where they all come from.
+import "~/assets/editor/catalogue_editor";
+import { REFERENCE_FIELDS } from "~/assets/editor/bs_references";
 import { useCataloguesStore } from "./cataloguesState";
 import type {
   BSICatalogue,
@@ -80,8 +94,10 @@ import type { EditorUIState } from "./editorUIState";
 import { db } from "~/assets/shared/battlescribe/cataloguesdexie";
 import { getNextRevision, parseGitHubUrl } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { toRaw } from "vue";
-import type { Router, RouteLocationNormalizedLoaded } from "vue-router";
+import { nextTick, toRaw } from "vue";
+import { continuesFieldEdit, fieldEditType, type FieldEditMark } from "./field_edit_stack";
+import { planMerge } from "./merge_children";
+import type { Router } from "vue-router";
 import { useSettingsStore } from "./settingsState";
 import { useScriptsStore } from "./scriptsStore";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
@@ -90,7 +106,7 @@ type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>;
 const enableGithubIntegrationWithGitFolder = false;
 export interface IEditorStore {
-  selectionsParent?: Object | null;
+  selectionsParent?: object | null;
   selections: Array<{ obj: any; onunselected: () => unknown; payload?: any }>;
   selectedEntries: Array<{ obj: EditorBase; onunselected: () => unknown; payload?: any }>;
   selectedElementGroup: VueComponent[] | null;
@@ -111,6 +127,8 @@ export interface IEditorStore {
   mode: "edit" | "references";
   clipboardmode: "json" | "none";
   gameSystemsLoaded: boolean;
+  /** Folder/db loads in flight. Tools answering while this is >0 answer from half a system. */
+  loading: number;
   gameSystems: Record<string, GameSystemFiles>;
 
   unsavedCount: number;
@@ -131,9 +149,10 @@ export interface CatalogueState {
   changed: boolean;
   unsaved: boolean;
   incremented?: boolean;
+  /** Where the undo stack stood when this catalogue was last saved; undoing back to it means clean. */
+  savedUndoPos?: number;
   savingPromise?: Promise<any>;
   isChangedOnDisk?: boolean;
-  isSaving?: boolean;
 }
 
 export function get_ctx(el: any): any {
@@ -147,7 +166,7 @@ export function get_ctx(el: any): any {
  */
 export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorBase {
   if (vue_el instanceof Base) {
-    return vue_el as EditorBase;
+    return vue_el;
   }
   const p1 = vue_el.$parent;
   if (p1.item) return p1.item;
@@ -157,26 +176,39 @@ export function get_base_from_vue_el(vue_el: VueComponent | EditorBase): EditorB
   return p3.item;
 }
 
-function markSaving(file: CatalogueState) {
-  file.isSaving = true;
-}
-function markChangedOnDisk(file: CatalogueState) {
-  if (file.isSaving) {
-    file.isSaving = false;
-    return;
-  }
-  file.isChangedOnDisk = true;
-}
-function unmarkChangedOnDisk(file: CatalogueState) {
-  if (file.isChangedOnDisk) {
-    file.isChangedOnDisk = false;
-  }
-  if (file.isSaving === undefined) {
-    file.isSaving = false;
-  }
-}
 type VueComponent = any;
+/**
+ * Consecutive edits to the same field collapse into one undo entry while the user is still
+ * typing, so ctrl+Z steps back a word at a time rather than a character at a time.
+ */
+const FIELD_COALESCE_MS = 700;
+let lastFieldEdit: FieldEditMark | null = null;
+// ponytail: data folders keep catalogues at the root or one folder down; deeper is where
+// backups, exports and vendor copies live. Raise if someone nests legitimately.
+const LOAD_FOLDER_DEPTH = 1;
 const editorFields = new Set<string>(["select", "showInEditor", "showChildsInEditor"]);
+/** Windows-safe file name from a catalogue name, or null when nothing survives. */
+function sanitizeFileName(fileName: string): string | null {
+  const clean = fileName
+    // eslint-disable-next-line no-control-regex -- control characters are exactly what a file name must not contain
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+    .trim()
+    .replace(/^[. ]+|[. ]+$/g, "");
+  return clean.length ? clean : null;
+}
+
+/** Catalogue extension matching the game system file: .json stays .json, .gstz -> .catz, else .cat */
+function catalogueExtension(gstPath: string): string {
+  switch (getExtension(gstPath)) {
+    case "json":
+      return "json";
+    case "gstz":
+      return "catz";
+    default:
+      return "cat";
+  }
+}
+
 export const useEditorStore = defineStore("editor", {
   state: (): IEditorStore => ({
     selections: [],
@@ -202,6 +234,7 @@ export const useEditorStore = defineStore("editor", {
 
     gameSystems: {},
     gameSystemsLoaded: false,
+    loading: 0,
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
@@ -280,6 +313,37 @@ export const useEditorStore = defineStore("editor", {
       this.saveCatalogue(data);
       return files;
     },
+    /**
+     * Register a new catalogue in a loaded system: file name from its name, extension from the
+     * game system's file, marked edited so Save writes it. Nothing is written to disk here -- the
+     * user (or nr_save) does that; on web it lands in IndexedDB like any other edit.
+     */
+    async create_catalogue(system: GameSystemFiles, data: BSIDataCatalogue): Promise<BSIDataCatalogue> {
+      if (!system.gameSystem) {
+        throw new Error("Cannot create catalogue: no game system");
+      }
+      const copy = JSON.parse(JSON.stringify(data)) as BSIDataCatalogue;
+      copy.catalogue.battleScribeVersion = "2.03";
+      const fileName = sanitizeFileName(copy.catalogue.name);
+      if (!fileName) {
+        throw new Error("Cannot create catalogue: couldn't create filename using provided name (only invalid chars)");
+      }
+      const systemPath = getDataObject(system.gameSystem).fullFilePath;
+      if (electron && !systemPath) {
+        throw new Error("Cannot create catalogue: game system has no path set");
+      }
+      if (systemPath && (electron || (await hasRoot(systemPath)))) {
+        copy.catalogue.fullFilePath = `${dirname(systemPath)}/${fileName}.${catalogueExtension(systemPath)}`;
+      }
+      system.setCatalogue(copy);
+      useCataloguesStore().setEdited(getDataDbId(copy), true);
+      this.set_catalogue_changed(copy, true);
+      this.get_catalogue_state(copy).incremented = true;
+      if (!electron) {
+        db.catalogues.put({ content: copy, id: getDataDbId(copy) });
+      }
+      return copy;
+    },
     saveCatalogueInDb(data: Catalogue | BSICatalogue | BSIGameSystem) {
       const stringed = rootToJson(data);
       const isCatalogue = Boolean(data.gameSystemId);
@@ -323,7 +387,6 @@ export const useEditorStore = defineStore("editor", {
     saveCatalogue(data: Catalogue | BSIData) {
       const state = this.get_catalogue_state(data);
       const obj = getDataObject(data);
-      markSaving(state);
       if (electron) {
         this.saveCatalogueInFiles(obj);
       } else {
@@ -334,16 +397,27 @@ export const useEditorStore = defineStore("editor", {
         }
         this.saveCatalogueInDb(obj);
       }
-      unmarkChangedOnDisk(state);
+      state.isChangedOnDisk = false;
     },
     async load_systems_from_folder(
+      folder: string,
+      progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
+    ) {
+      this.loading++;
+      try {
+        return await this._load_systems_from_folder(folder, progress);
+      } finally {
+        this.loading--;
+      }
+    },
+    async _load_systems_from_folder(
       folder: string,
       progress?: (current: number, max: number, msg?: string) => MaybePromise<unknown>,
     ) {
       if (!globalThis.electron && !(await hasRoot(folder))) {
         throw new Error(`No file access for folder ${folder}`);
       }
-      const files = await getFolderFiles(folder, true, [".git", ".github"]);
+      const files = await getFolderFiles(folder, LOAD_FOLDER_DEPTH, [".git", ".github"]);
       if (!files?.length) return;
 
       console.log("Loading", files.length, "files");
@@ -351,7 +425,12 @@ export const useEditorStore = defineStore("editor", {
       const result_files = [];
       const systems = [] as GameSystemFiles[];
 
-      const allowed = files.filter((o) => isAllowedExtension(o.name));
+      const allowed = files
+        .filter((o) => isAllowedExtension(o.name))
+        // a backup keeps the id of the file it copied, and catalogueFiles is keyed by id, so the
+        // deeper copy used to silently replace the real one. Shallowest path wins, rest are skipped.
+        .sort((a, b) => a.path.split("/").length - b.path.split("/").length);
+      const seen = new Set<string>();
       for (const file of allowed) {
         try {
           progress && (await progress(result_files.length, allowed.length, file.path));
@@ -363,18 +442,26 @@ export const useEditorStore = defineStore("editor", {
           obj.fullFilePath = file.path.replaceAll("\\", "/");
           const systemId = json?.gameSystem?.id;
           const catalogueId = json?.catalogue?.id;
+          const id = systemId ?? catalogueId;
+          if (id) {
+            if (seen.has(id)) {
+              console.warn(`Skipping ${file.path}: ${obj.name} is already loaded from a shallower file`);
+              continue;
+            }
+            seen.add(id);
+          }
           if (systemId) {
             const systemFiles = this.get_system(systemId);
-            systemFiles.setSystem(shallowReactive(json));
+            systemFiles.setSystem(shallowReactive(json) as BSIDataSystem);
             systems.push(systemFiles);
             result_system_ids.push(systemId);
           }
           if (catalogueId) {
-            const systemFiles = this.get_system(json.catalogue.gameSystemId);
-            systemFiles.catalogueFiles[catalogueId] = shallowReactive(json);
+            const systemFiles = this.get_system(json.catalogue!.gameSystemId);
+            systemFiles.catalogueFiles[catalogueId] = shallowReactive(json) as BSIDataCatalogue;
             if (!globalThis.electron) {
               // cache in the browser db so refreshing the index restores the full system
-              db.catalogues.put({ content: json, path: obj.fullFilePath, id: getDataDbId(json) });
+              db.catalogues.put({ content: json as BSIDataCatalogue, path: obj.fullFilePath, id: getDataDbId(json) });
             }
           }
           result_files.push(json);
@@ -404,14 +491,22 @@ export const useEditorStore = defineStore("editor", {
     async load_systems_from_db(force = false) {
       if (!this.gameSystemsLoaded && !force) {
         this.gameSystemsLoaded = true;
-        let systems = (await db.systems.offset(0).keys()) as string[];
-        for (let system of systems) {
+        const systems = (await db.systems.offset(0).keys()) as string[];
+        for (const system of systems) {
           if (system in this.gameSystems) continue;
           this.load_system_from_db(system);
         }
       }
     },
     async load_system_from_db(id: string) {
+      this.loading++;
+      try {
+        return await this._load_system_from_db(id);
+      } finally {
+        this.loading--;
+      }
+    },
+    async _load_system_from_db(id: string) {
       const dbsystem = await db.systems.get(id);
       const system = dbsystem?.content;
       if (!system) {
@@ -424,7 +519,7 @@ export const useEditorStore = defineStore("editor", {
       const dbcatalogues = await db.catalogues.where({ "content.catalogue.gameSystemId": id });
       const systemFiles = this.get_system(system.gameSystem.id);
       systemFiles.setSystem(system);
-      for (let { content, path } of await dbcatalogues.toArray()) {
+      for (const { content, path } of await dbcatalogues.toArray()) {
         const catalogueId = content.catalogue.id;
         if (!content.catalogue.fullFilePath) {
           content.catalogue.fullFilePath = path;
@@ -487,13 +582,17 @@ export const useEditorStore = defineStore("editor", {
     },
     on_file_changed(file: BSIDataCatalogue | BSIDataSystem) {
       console.log(getDataObject(file).name, "changed");
-      markChangedOnDisk(this.get_catalogue_state(file));
+      this.get_catalogue_state(file).isChangedOnDisk = true;
     },
     async get_or_load_system(id: string) {
       if (!(id in this.gameSystems)) {
         this.gameSystems[id] = new GameSystemFiles();
         await this.load_system_from_db(id);
       }
+      // Before anything calls processForEditor: a script's diagnostics have to be registered
+      // by the time the first catalogue is validated, or they only apply to whatever is edited
+      // afterwards. load() caches per system, so repeat calls cost a lookup.
+      await this.scripts.load(this.gameSystems[id]);
       return this.gameSystems[id];
     },
     get_system(id: string) {
@@ -524,35 +623,30 @@ export const useEditorStore = defineStore("editor", {
         if (!state.unsaved) {
           this.unsavedCount += 1;
           state.unsaved = changedState;
+          // A never-saved file has no save position to come back to, so the position it went
+          // dirty from stands in: every write applies before it pushes its undo entry, so the
+          // stack is still at the clean position here. Undoing back to it clears the flag
+          // (sync_unsaved_with_undo), instead of the file reading as unsaved until reload.
+          if (state.savedUndoPos === undefined) state.savedUndoPos = this.undoStackPos;
         }
       } else {
         state.unsaved = changedState;
       }
     },
     async changed(node: EditorBase | Catalogue) {
-      function getParents<T>(node: { parent?: T }): NonNullable<T>[] {
-        const result = [] as NonNullable<T>[];
-        let cur = node as typeof node;
-        while (cur.parent) {
-          result.push(cur.parent);
-          cur = cur.parent as any as typeof node;
-        }
-        return result;
-      }
-
-      if (
-        (node as EditorBase).editorTypeName === "profileType" ||
-        getParents(node as EditorBase).find((o) => o.editorTypeName === "profileType")
-      ) {
-        const system = this.get_system(node.getCatalogue().getSystemId());
-        await system.loadAll();
-        const catalogues = system.getAllLoadedCatalogues();
-        catalogues.map((o) => o.processForEditor());
-        console.log(await this.scripts.run_script("Fix profiles", catalogues));
-      }
-
       const catalogue = node.getCatalogue();
+      // The editor's own "something was edited" event. Fires for every change the right panel
+      // bubbles, so a hook here has to be cheap and do its own coalescing -- see fix-profiles,
+      // which used to be called by name from right here.
+      this.scripts.emit("change", undefined, { node, catalogue });
+
       if (catalogue) {
+        // Re-check the node here, not only in set_field. Several right-panel fields bind
+        // v-model straight to the node -- Query's includeChild* checkboxes, ComplexQuery's
+        // whole affects builder -- so they never pass through set_field, and this bubbled
+        // `change` is the only notice a rule reading those fields ever gets. Skipped for the
+        // catalogue itself, which processForEditor's pass does not validate either.
+        if (node !== catalogue) catalogue.revalidate(node as EditorBase);
         this.set_catalogue_changed(catalogue);
       }
     },
@@ -583,6 +677,11 @@ export const useEditorStore = defineStore("editor", {
       if (incrementRevision === "no") {
         state.incremented = true;
       }
+      // Awaited, and before the write: a `save` hook exists to fix up the catalogue on its way
+      // out (stamp a version, regenerate derived entries), which is worth nothing if the file
+      // is already on disk by the time it runs. Every hook runs; one throwing does not stop
+      // the save, because a broken script must not be able to lock the editor's data in.
+      await this.scripts.emit("save", undefined, { catalogue, system });
       this.saveCatalogue(catalogue);
       const cataloguesStore = useCataloguesStore();
       const id = getDataDbId(catalogue);
@@ -593,6 +692,7 @@ export const useEditorStore = defineStore("editor", {
         this.unsavedCount--;
         state.unsaved = false;
       }
+      if (state) state.savedUndoPos = this.undoStackPos;
       return catalogue.revision !== revision;
     },
     async prompt_revision(catalogue: Catalogue | GameSystemFiles) {
@@ -728,7 +828,7 @@ export const useEditorStore = defineStore("editor", {
     select(obj: VueComponent | EditorBase, onunselected: () => unknown, payload?: any) {
       if (!this.is_selected(obj)) {
         if (obj instanceof Base) {
-          this.selectedEntries.push({ obj: obj as EditorBase, onunselected, payload });
+          this.selectedEntries.push({ obj, onunselected, payload });
         } else {
           this.selections.push({ obj, onunselected, payload });
         }
@@ -754,6 +854,7 @@ export const useEditorStore = defineStore("editor", {
           const entry: any = foundEntries[i];
           entry.select();
         }
+        this.emit_selection();
         return;
       }
       if (!e?.ctrlKey && !e?.metaKey) {
@@ -766,6 +867,7 @@ export const useEditorStore = defineStore("editor", {
         this.selectedItem = el;
         this.mode = "edit";
       }
+      this.emit_selection();
     },
     do_rightclick_select(e: MouseEvent, el: VueComponent) {
       if (this.is_selected(el)) return;
@@ -773,6 +875,17 @@ export const useEditorStore = defineStore("editor", {
     },
     clear_selections() {
       this.unselect();
+      this.emit_selection();
+    },
+    /**
+     * One place the `select` hook fires from.
+     *
+     * Called by the three entry points that change what is selected rather than from unselect(),
+     * which they all funnel through -- firing there would emit an empty selection immediately
+     * before every real one.
+     */
+    emit_selection() {
+      this.scripts.emit("select", undefined, { selections: this.get_selections() });
     },
     get_selections(): EditorBase[] {
       const result = this.selections.map((o) => get_base_from_vue_el(o.obj));
@@ -798,9 +911,12 @@ export const useEditorStore = defineStore("editor", {
       return this.selectedItem && get_base_from_vue_el(this.selectedItem);
     },
     set_selections(entry_or_entries: MaybeArray<EditorBase>) {
-      this.clear_selections();
+      // unselect(), not clear_selections(): that one emits, and this would then fire an empty
+      // selection immediately before the real one.
+      this.unselect();
       const arr = Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries];
       this.selectedEntries = arr.map((o) => ({ obj: o, onunselected: () => null }));
+      this.emit_selection();
     },
     toggle_selections() {
       const bases = this.get_selections();
@@ -886,6 +1002,21 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.undo();
         this.undoStackPos--;
+        this.sync_unsaved_with_undo();
+      }
+    },
+    /**
+     * A catalogue whose save position the undo stack has come back to is byte-for-byte what is
+     * on disk, so it stops reading as unsaved. Only that direction: moving away from the saved
+     * position cannot tell whether the entries crossed touched this file or another one, and
+     * those entries already flagged it through changed() when they were made.
+     */
+    sync_unsaved_with_undo() {
+      for (const state of Object.values(this.unsavedChanges)) {
+        if (state.unsaved && state.savedUndoPos === this.undoStackPos) {
+          state.unsaved = false;
+          this.unsavedCount--;
+        }
       }
     },
     can_redo() {
@@ -897,17 +1028,18 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.redo();
         this.undoStackPos++;
+        this.sync_unsaved_with_undo();
       }
     },
-    async cut(event: ClipboardEvent) {
+    async cut(event?: ClipboardEvent) {
       await this.set_clipboard(this.get_selections(), event);
       this.remove();
     },
-    async copy(event: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
+    async copy(event?: ClipboardEvent | MouseEvent, selections?: MaybeArray<EditorBase>) {
       const toCopy = selections ? (Array.isArray(selections) ? selections : [selections]) : this.get_selections();
       await this.set_clipboard(toCopy, event);
     },
-    async paste(event: ClipboardEvent) {
+    async paste(event?: ClipboardEvent) {
       const clip = await this.get_clipboard(event);
       const script_result = await this.scripts.run_hooks("paste", event, clip);
       if (script_result) {
@@ -927,6 +1059,15 @@ export const useEditorStore = defineStore("editor", {
     },
     get_context_actions() {
       return this.scripts.run_hooks_sync("context", undefined, this.get_script_args());
+    },
+    /** Buttons a script contributes to the editor titlebar. Not tied to a selection. */
+    get_toolbar_actions() {
+      const catalogue = globalThis.$catalogue as Catalogue | undefined;
+      if (!catalogue) return [];
+      return this.scripts.run_hooks_sync("toolbar", undefined, {
+        catalogue,
+        system: catalogue.getSystem(),
+      });
     },
     async pasteLink() {
       const obj = await this.get_clipboard();
@@ -972,7 +1113,7 @@ export const useEditorStore = defineStore("editor", {
           if (!Array.isArray(arr)) {
             throw new Error(`Couldn't duplicate: parent[${item.parentKey}] is not an array`);
           }
-          setPrototypeRecursive({ [item.parentKey]: copy });
+          initializeInserted({ [item.parentKey]: copy });
           scrambleIds(catalogue, copy);
           arr.push(copy);
           onAddEntry(copy, catalogue, item.parent, this.get_system(sysId));
@@ -993,10 +1134,10 @@ export const useEditorStore = defineStore("editor", {
      * Remove the current selections.
      */
     async remove(entry_or_entries?: MaybeArray<Base>) {
-      let foundEntries = [] as EditorBase[];
+      const foundEntries = [] as EditorBase[];
       if (entry_or_entries) {
         for (const entry of Array.isArray(entry_or_entries) ? entry_or_entries : [entry_or_entries]) {
-          foundEntries.push(entry as EditorBase);
+          foundEntries.push(entry);
         }
       } else {
         const selections = this.get_selections();
@@ -1008,6 +1149,11 @@ export const useEditorStore = defineStore("editor", {
 
       const catalogue = foundEntries[0].getCatalogue();
       const sysId = catalogue.getSystemId();
+
+      // Awaited, and before anything is unlinked, so a hook can still read what is about to go.
+      // It cannot veto: a script that wants to stop a deletion should not have been given the
+      // chance to fail halfway through one.
+      await this.scripts.emit("beforeRemove", undefined, { nodes: foundEntries, catalogue });
 
       let paths = [] as EntryPathEntry[][];
       let removeds = [] as EditorBase[];
@@ -1066,7 +1212,7 @@ export const useEditorStore = defineStore("editor", {
       }
       const catalogue = parentsWithPayload[0].obj.getCatalogue();
       const fixedEntries = foundEntries.map((o) =>
-        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parents[0] : undefined),
+        this.fix_object(childKey || o.parentKey, o, catalogue, parents ? parentsWithPayload[0].obj : undefined),
       );
       const sysId = catalogue.getSystemId();
 
@@ -1106,7 +1252,7 @@ export const useEditorStore = defineStore("editor", {
             delete copy.parentKey;
 
             // Initialize classes from the json
-            setPrototypeRecursive({ [key]: copy });
+            initializeInserted({ [key]: copy });
             toAdd.push({ key, entry: copy });
           }
 
@@ -1331,11 +1477,12 @@ export const useEditorStore = defineStore("editor", {
           }
         }
       }
-      const missing = profileType.characteristicTypes?.filter(
+      const characteristicTypes = profileType.characteristicTypes;
+      const missing = characteristicTypes?.filter(
         (ct) => !profile.characteristics.find((c) => c.typeId === ct.id),
       );
       const badIndex = profile.characteristics.find(
-        (c, i) => i !== profileType.characteristicTypes.findIndex((ct) => ct.id === c.typeId),
+        (c, i) => i !== characteristicTypes.findIndex((ct) => ct.id === c.typeId),
       );
       if (missing?.length || badIndex) {
         const out_characteristics = [];
@@ -1431,7 +1578,18 @@ export const useEditorStore = defineStore("editor", {
      * @param data The fields to add on to the generated object, overwrites default fields
      * @returns The added object
      */
-    add_node(_key: string & keyof typeof entries, parent: EditorBase, data?: Record<string, any>) {
+    /**
+     * Creates a node under `parent` and returns it.
+     *
+     * Returns undefined when the key is not an allowed child or the target is not an array,
+     * which callers have to handle -- the return type used to be inferred as a bare object,
+     * so neither the node-ness nor the bail-out was visible to anyone calling it.
+     */
+    add_node(
+      _key: string & keyof typeof entries,
+      parent: EditorBase,
+      data?: Record<string, any>,
+    ): EditorBase | undefined {
       const key = fixKey(parent, _key);
       if (!key) {
         throw new Error(`Invalid key: ${_key} in ${parent.editorTypeName}`);
@@ -1440,7 +1598,6 @@ export const useEditorStore = defineStore("editor", {
       const sysId = catalogue.getSystemId();
 
       const obj = {
-        // @ts-ignore
         ...this.fix_object(key, data, catalogue),
         ...data,
       };
@@ -1459,19 +1616,19 @@ export const useEditorStore = defineStore("editor", {
       delete obj.parentKey;
 
       // Initialize classes from the json
-      setPrototypeRecursive({ [key]: obj });
+      initializeInserted({ [key]: obj });
 
       // Add it to its parent
       arr.push(obj as EditorBase);
       onAddEntry(obj as EditorBase, catalogue, parent, this.get_system(sysId));
       this.changed(obj as EditorBase);
-      return obj;
+      return obj as EditorBase;
     },
     del_node(entry: Base) {
       try {
         const catalogue = entry.catalogue;
         const manager = catalogue.manager;
-        const path = getEntryPath(entry as EditorBase);
+        const path = getEntryPath(entry);
         const removed = popAtEntryPath(catalogue, path);
         this.removed(removed);
         onRemoveEntry(removed, manager);
@@ -1483,35 +1640,298 @@ export const useEditorStore = defineStore("editor", {
       if (obj.isLink()) return false;
       return true;
     },
+    /**
+     * The single path a field edit takes.
+     *
+     * Right-panel inputs used to write straight to the object with v-model, so nothing
+     * downstream could tell what changed: no undo entry, no revalidation, and `changed()`
+     * had to walk ancestors guessing whether a profile type was involved. Everything that
+     * needs to react to a field write hangs off here.
+     *
+     * Passing `default` deletes the key when the value matches it, which keeps the key out
+     * of the saved file rather than writing a redundant value.
+     */
+    set_field(node: EditorBase, key: string, value: unknown, options?: { default?: unknown }) {
+      // Identity for coalescing must be the raw object (the proxy is a fresh wrapper each
+      // time), but the write itself has to go through the reactive one -- writing to the raw
+      // target skips Vue entirely, so undo would change the model without redrawing the input.
+      const raw = $toRaw(node) as Record<string, any>;
+      const target = node as unknown as Record<string, any>;
+      const previous = target[key];
+      const next = options && "default" in options && value === options.default ? undefined : value;
+      if (previous === next) return false;
+
+      const apply = (v: unknown) => {
+        if (v === undefined) delete target[key];
+        else target[key] = v;
+        const catalogue = node.getCatalogue();
+        // Writing targetId/childId/scope/typeId/value moves an edge: reindexing revalidates
+        // the target it left as well as the one it arrived at.
+        if (catalogue && REFERENCE_FIELDS.has(key)) catalogue.reindexReferences(node);
+        catalogue?.revalidate(node);
+        this.changed(node);
+      };
+
+      // Still typing in the same box: rewrite the entry on top of the stack instead of
+      // stacking a new one, but keep the value from before the burst started.
+      const now = performance.now();
+      const top = this.undoStack[this.undoStackPos];
+      const continues = continuesFieldEdit(lastFieldEdit, {
+        node: raw,
+        key,
+        now,
+        stackPos: this.undoStackPos,
+        topType: top?.type,
+        coalesceMs: FIELD_COALESCE_MS,
+      });
+
+      if (continues && top) {
+        const from = lastFieldEdit!.from;
+        apply(next);
+        top.undo = () => apply(from);
+        top.redo = () => apply(next);
+        lastFieldEdit!.at = now;
+        return true;
+      }
+
+      apply(next);
+      this.push_undo(fieldEditType(key), () => apply(previous), () => apply(next));
+      lastFieldEdit = { node: raw, key, at: now, from: previous, stackPos: this.undoStackPos };
+      return true;
+    },
+
+    /**
+     * Records an action that has already been applied, dropping any redo branch.
+     *
+     * The synchronous counterpart to do_action, which runs the action itself and so has to be
+     * awaited. Anything that mutates the tree must go through one of the two, or the edit is
+     * invisible to undo -- see edit_node, which for a long time did not.
+     */
+    push_undo(type: string, undo: () => unknown, redo: () => unknown) {
+      const entry = { type, undo, redo };
+      if (this.undoStackPos < this.undoStack.length - 1) {
+        this.undoStack.splice(this.undoStackPos + 1, this.undoStack.length - this.undoStackPos - 1, entry);
+      } else {
+        this.undoStack.push(entry);
+      }
+      this.undoStackPos += 1;
+    },
+
+    /**
+     * Replaces every entry pushed since `from` with one entry that undoes/redoes all of them.
+     *
+     * One user gesture is one Ctrl+Z, however many nodes it touched -- which is what makes a
+     * bulk action safe to offer at all. Left alone if the position moved backwards instead
+     * (something called undo() in between), since then there is no run of new entries to fold.
+     */
+    collapse_undo(from: number, type = "batch") {
+      const added = this.undoStackPos - from;
+      if (added < 2) return;
+      const entries = this.undoStack.slice(from + 1, this.undoStackPos + 1);
+      this.undoStack.splice(from + 1, added, {
+        type,
+        undo: async () => {
+          for (const entry of [...entries].reverse()) await entry.undo();
+        },
+        redo: async () => {
+          for (const entry of entries) await entry.redo();
+        },
+      });
+      this.undoStackPos = from + 1;
+    },
+
+    /** Ends the current coalescing window, so the next edit starts a fresh undo entry. */
+    end_field_edit() {
+      lastFieldEdit = null;
+    },
+
+    /**
+     * Sets several fields at once, as one undo entry.
+     *
+     * Was a bare `entry[key] = val` loop: the write landed but nothing recorded it, so an
+     * edit_node change could not be undone and left the reference index stale when it wrote
+     * one of REFERENCE_FIELDS. It now does what set_field does, once for the whole batch,
+     * which is what makes it safe to hand to a script or an agent.
+     */
     edit_node(entry: EditorBase, data?: Record<string, any>) {
-      let changed = false;
+      const target = entry as unknown as Record<string, any>;
+      const catalogue = entry.getCatalogue();
+      const changes = [] as Array<{ key: string; from: unknown; to: unknown; inserted?: EditorBase }>;
       for (const key in data) {
         const val = data[key];
-        // @ts-ignore
-        if (entry[key] !== val) {
-          if (isObject(val)) {
-            const catalogue = entry.getCatalogue();
-            const sysId = catalogue.getSystemId();
-
-            // @ts-ignore
-            const fixed_obj = this.fix_object(key, val, catalogue);
-            setPrototypeRecursive({ [key]: fixed_obj });
-
-            // @ts-ignore
-            entry[key] = fixed_obj;
-            onAddEntry(fixed_obj, catalogue, entry, this.get_system(sysId));
-          } else {
-            // @ts-ignore
-            entry[key] = val;
-          }
-          changed = true;
+        if (target[key] === val) continue;
+        if (isObject(val)) {
+          // @ts-ignore
+          const fixed_obj = this.fix_object(key, val, catalogue);
+          initializeInserted({ [key]: fixed_obj });
+          changes.push({ key, from: target[key], to: fixed_obj, inserted: fixed_obj });
+        } else {
+          changes.push({ key, from: target[key], to: val });
         }
       }
-      if (changed) {
+      if (!changes.length) return false;
+
+      const sysId = catalogue.getSystemId();
+      const apply = (dir: "to" | "from") => {
+        for (const change of changes) {
+          const value = change[dir];
+          if (value === undefined) delete target[change.key];
+          else target[change.key] = value;
+          // An inserted object has to be registered/unregistered as well as assigned, or undo
+          // leaves it in the indexes with nothing pointing at it.
+          if (change.inserted) {
+            if (dir === "to") onAddEntry(change.inserted, catalogue, entry, this.get_system(sysId));
+            else onRemoveEntry(change.inserted);
+          }
+          if (REFERENCE_FIELDS.has(change.key)) catalogue.reindexReferences(entry);
+        }
+        catalogue.revalidate(entry);
         this.changed(entry);
+      };
+
+      apply("to");
+      this.push_undo("edit", () => apply("from"), () => apply("to"));
+      return true;
+    },
+    /**
+     * Sets the same fields on several nodes, as one undo entry.
+     *
+     * Data first and target last-and-optional, like add(): omit `nodes` and it edits the
+     * current selection. edit_node is the single-node form this is built from.
+     */
+    edit(data: Record<string, any>, nodes?: MaybeArray<EditorBase>) {
+      const targets = nodes ? (Array.isArray(nodes) ? nodes : [nodes]) : this.get_selections();
+      if (!targets.length) {
+        console.error("Couldn't edit: no selection or node(s) provided");
+        return false;
       }
+      const from = this.undoStackPos;
+      let changed = false;
+      for (const node of targets) {
+        if (this.edit_node(node, data)) changed = true;
+      }
+      this.collapse_undo(from, "edit");
       return changed;
     },
+
+    /**
+     * Applies generated data onto an existing node, in place.
+     *
+     * For the regenerate loop: a script builds a whole unit, you change the script and run it
+     * again. Deleting the old entry and adding the new one gives every node a fresh id, so
+     * every link pointing into the unit dangles. Merging keeps the id of anything that still
+     * exists, so references survive. It works because generator scripts give their nodes
+     * deterministic ids -- scripts/import's id() hashes a semantic path -- so the same logical
+     * child comes back with the same id, and add() keeps a preferred id when it is free.
+     *
+     * Never deletes: anything in the catalogue that the data no longer mentions is returned in
+     * `extra` for the caller to remove(), so a hand-made addition survives a regeneration.
+     * Only arrays that `data` actually mentions are looked at, and only those that are real
+     * child arrays for that node -- characteristics, costs and the like are set wholesale, the
+     * way the right panel sets them.
+     *
+     * Matching is by id when every incoming child has one and by typeName/name otherwise; pass
+     * `key` to decide it yourself. `id` itself is never written: it is what identifies a node,
+     * and overwriting it is how references break.
+     */
+    async merge(target: EditorBase, data: Record<string, any>, options?: { key?: (node: any) => string }) {
+      const from = this.undoStackPos;
+      const stats = { updated: 0, added: 0, extra: [] as EditorBase[] };
+
+      const merge_into = async (node: EditorBase, incoming: Record<string, any>) => {
+        const allowed = allowed_children(node, node.parentKey);
+        const fields = {} as Record<string, any>;
+        const childArrays = [] as Array<[string, any[]]>;
+        for (const [key, value] of Object.entries(incoming)) {
+          if (key === "id") continue;
+          if (Array.isArray(value) && allowed?.has(key)) childArrays.push([key, value]);
+          else fields[key] = value;
+        }
+        if (this.edit_node(node, fields)) stats.updated += 1;
+
+        for (const [key, children] of childArrays) {
+          const existing = ((node as any)[key] ?? []) as EditorBase[];
+          const plan = planMerge(existing.slice(), children, options?.key);
+          for (const { existing: match, incoming: child } of plan.pairs) {
+            await merge_into(match, child as Record<string, any>);
+          }
+          for (const child of plan.added) {
+            await this.add(child, key as string & keyof typeof entries, node);
+            stats.added += 1;
+          }
+          stats.extra.push(...plan.extra);
+        }
+      };
+
+      await merge_into(target, data);
+      this.collapse_undo(from, "merge");
+      return stats;
+    },
+
+    /**
+     * Repoints everything referring to `duplicates` at `keep`, then deletes them.
+     *
+     * Deliberately mechanical: deciding *which* entries are duplicates and which copy to keep
+     * is a judgement about the game data (see the find-duplicate-* scripts), and belongs in
+     * the caller. What the caller cannot be expected to get right is the repointing -- the id
+     * lives in a different field per node type (targetId on a link, typeId on a profile,
+     * childId/scope on a condition, value on a modifier), so the field is found from
+     * REFERENCE_FIELDS rather than assumed to be targetId. Miss one and the reference dangles,
+     * showing up as a validation error somewhere else entirely.
+     *
+     * Repointing goes through set_field and deletion through remove, so the whole merge is
+     * one undo entry.
+     *
+     * Called with no arguments it merges the current selection into its first node, ordered by
+     * position in the tree rather than by click order so the survivor does not depend on how
+     * the selection was made.
+     *
+     * Not to be confused with merge(), which applies generated data onto one node.
+     */
+    async merge_duplicates(keep?: EditorBase, duplicates?: MaybeArray<EditorBase>) {
+      if (!keep) {
+        const selections = this.get_sorted_selections();
+        if (selections.length < 2) {
+          console.error("Couldn't merge: select at least two entries, or pass them in");
+          return { merged: 0, repointed: 0 };
+        }
+        keep = selections[0];
+        duplicates = selections.slice(1);
+      }
+      const survivor = keep;
+      const dupes = (Array.isArray(duplicates) ? duplicates : duplicates ? [duplicates] : []).filter(
+        (dupe) => $toRaw(dupe) !== $toRaw(survivor)
+      );
+      if (!dupes.length) return { merged: 0, repointed: 0 };
+
+      // Merging across types would repoint references at something that cannot answer for
+      // them; from a selection it is an easy misclick, so it is refused rather than attempted.
+      const mismatch = dupes.find((dupe) => dupe.editorTypeName !== survivor.editorTypeName);
+      if (mismatch) {
+        throw new Error(
+          `Cannot merge a ${mismatch.editorTypeName} into a ${survivor.editorTypeName} (${getName(mismatch)})`
+        );
+      }
+
+      const from = this.undoStackPos;
+      let repointed = 0;
+      for (const dupe of dupes) {
+        // Snapshot: refs/other_refs are accessors over the reference index, which set_field
+        // rewrites as we go.
+        for (const ref of [...dupe.refs, ...dupe.other_refs]) {
+          for (const key of REFERENCE_FIELDS) {
+            if ((ref as unknown as Record<string, unknown>)[key] !== dupe.id) continue;
+            if (this.set_field(ref, key, survivor.id)) repointed += 1;
+            // Each write starts its own undo entry rather than extending the previous one.
+            this.end_field_edit();
+          }
+        }
+      }
+      await this.remove(dupes);
+      this.collapse_undo(from, "merge_duplicates");
+      return { merged: dupes.length, repointed };
+    },
+
     get_move_targets(obj: EditorBase): Array<{ target: Catalogue; type: "root" | "shared" }> | undefined {
       const catalogue = obj.catalogue;
       if (!catalogue) return;
@@ -1590,7 +2010,7 @@ export const useEditorStore = defineStore("editor", {
         onRemoveEntry(obj);
         const copy = JSON.parse(entryToJson(obj, editorFields));
 
-        setPrototypeRecursive({ [catalogueKey]: copy });
+        initializeInserted({ [catalogueKey]: copy });
         // @ts-ignore
         if (!to[catalogueKey]) to[catalogueKey] = [];
 
@@ -1616,7 +2036,7 @@ export const useEditorStore = defineStore("editor", {
             link.collective = obj.collective;
           }
           const linkKey = obj.isGroup() || obj.isEntry() ? "entryLinks" : "infoLinks";
-          setPrototypeRecursive({ [linkKey]: link });
+          initializeInserted({ [linkKey]: link });
           path[path.length - 1].key = linkKey;
           addAtEntryPath(from, path, link);
           onAddEntry(link, from, parent, this.get_system(from.getSystemId()));
@@ -1643,16 +2063,19 @@ export const useEditorStore = defineStore("editor", {
         return head.length ? head[0].children[0] : undefined;
       }
 
+      // These wait on the global nextTick, not the box's: all they need is for the level
+      // they just opened to be in the DOM before the next one is looked up, and depending on
+      // the box exposing $nextTick tied navigation to that component's API surface.
       async function open_el(el: any) {
         const context = get_ctx(el);
         get_base_from_vue_el(context).showInEditor = true;
         context.open();
-        await context.$nextTick();
+        await nextTick();
       }
       async function close_el(el: any) {
         const context = get_ctx(el);
         context.close();
-        await context.$nextTick();
+        await nextTick();
       }
 
       const path = getEntryPath(obj);
@@ -1752,18 +2175,28 @@ export const useEditorStore = defineStore("editor", {
       if (!this.filtered.includes(obj)) {
         this.filtered.push(obj);
       }
+      this.mark_shown(obj, highlight);
+    },
+    /** show() without the bookkeeping on `filtered`, for a caller that has already set it. */
+    mark_shown(obj: EditorBase, highlight = true) {
       obj.showInEditor = true;
       obj.showChildsInEditor = true;
       if (highlight) {
         obj.highlightInEditor = true;
       }
-      forEachParent(obj as EditorBase, (parent) => {
+      forEachParent(obj, (parent) => {
         parent.showInEditor = true;
       });
     },
     async goto(obj?: EditorBase) {
       if (!obj) return;
       const targetCatalogue = obj.getCatalogue();
+      // Removal deletes a node's catalogue and parent; a stale reference (a search result, a
+      // script's output) can still point at it.
+      if (!targetCatalogue) {
+        notify({ type: "error", text: `"${getName(obj)}" no longer exists` });
+        return;
+      }
       this.put_current_state_in_history();
       const uistate = useEditorUIState();
       uistate.get_data(targetCatalogue.id).selection = getEntryPath(obj);
@@ -1773,17 +2206,17 @@ export const useEditorStore = defineStore("editor", {
       await this.scrollto(obj);
     },
     async scroll_to_el(el: Element) {
-      el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" });
+      el.scrollIntoView({ block: "center", inline: "start", behavior: "instant" as ScrollBehavior });
     },
     async scrollto(obj: EditorBase) {
-      const el = await this.open(obj as EditorBase);
+      const el = await this.open(obj);
       if (el) {
         const context = get_ctx(el);
         this.do_select(null, context);
         this.scroll_to_el(el);
       } else {
         setTimeout(async () => {
-          const el = await this.open(obj as EditorBase);
+          const el = await this.open(obj);
           if (el) {
             const context = get_ctx(el);
             this.do_select(null, context);
@@ -1801,12 +2234,12 @@ export const useEditorStore = defineStore("editor", {
     },
     async follow(obj?: EditorBase & Link) {
       if (obj?.target) {
-        await this.goto(obj.target as EditorBase);
+        await this.goto(obj.target);
       }
     },
     async move_up(obj: EditorBase) {
       if (obj.parent) {
-        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const arr = siblingArray(obj.parent, obj.parentKey)!;
         const index = arr.indexOf(obj);
         if (index > 0) {
           const temp = arr.splice(index, 1)[0];
@@ -1817,7 +2250,7 @@ export const useEditorStore = defineStore("editor", {
     },
     async move_down(obj: EditorBase) {
       if (obj.parent) {
-        const arr = obj.parent[obj.parentKey] as EditorBase[];
+        const arr = siblingArray(obj.parent, obj.parentKey)!;
         const index = arr.indexOf(obj);
         if (index >= 0 && index < arr.length - 1) {
           const temp = arr.splice(index, 1)[0];
@@ -1832,41 +2265,11 @@ export const useEditorStore = defineStore("editor", {
       return entry?.editorTypeName !== "forceEntry";
     },
     get_leftpanel_open_collapsible_boxes() {
-      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
-        const cls = `depth-${depth} collapsible-box opened`;
-        const results = elt.getElementsByClassName(cls);
-        if (!results?.length) return;
-        for (var i = 0; i < results.length; i++) {
-          const cur = results[i];
-          const item = get_base_from_vue_el(get_ctx(cur));
-          const key = item.parentKey;
-          const parent = item.parent;
-
-          if (parent) {
-            const val = parent[key];
-            if (!val || !Array.isArray(val)) continue;
-            const index = val.indexOf(item as any);
-            if (!(key in obj)) obj[key] = {};
-            if (!(index in obj[key])) obj[key][index] = {};
-            find_open_recursive(cur, obj[key][index], depth + 1);
-          } else {
-            const arr = [];
-            for (var i = 0; i < cur.classList.length; i++) {
-              const cur_class = cur.classList[i];
-              arr.push(cur_class);
-            }
-            const keys = arr.filter((o) => arrayKeys.has(o) || o.startsWith("label-"));
-            for (const key of keys) {
-              obj[key] = {};
-              obj[key][0] = {};
-            }
-            find_open_recursive(cur, obj[keys[0]][0], depth + 1);
-          }
-        }
-      }
-      const result = {};
-      find_open_recursive(document.documentElement, result);
-      return result;
+      const id = this.catalogueComponent?.cat?.id;
+      if (!id) return {};
+      // Copied, not aliased: this goes into the history stack, and the live tree keeps
+      // changing as the user expands things. Values are plain {}, so JSON round-trips.
+      return JSON.parse(JSON.stringify(useEditorUIState().get_data(id).open ?? {}));
     },
     get_leftpanel_state() {
       if (!this.catalogueComponent) return {};
@@ -1946,6 +2349,18 @@ export const useEditorStore = defineStore("editor", {
         this.load_state(this.historyStack[this.historyStackPos]!);
       }
     },
+    /**
+     * The query language, over whatever is loaded. Defaults to every catalogue of every open
+     * system, so a query can follow a link out of one file and into another; pass `where` to
+     * pin it to one.
+     *
+     * Separate from update_catalogue_search below, which is the tree's plain-substring filter
+     * and owns the showInEditor flags. This one just answers.
+     */
+    query(query: string, where?: Catalogue | Catalogue[], options?: SearchOptions): EditorBase[] {
+      const scope = where ?? Object.values(this.gameSystems).flatMap((s) => [...s.getAllLoadedCatalogues()]);
+      return search(scope, query, options);
+    },
     async update_catalogue_search(catalogue: Catalogue, data: { filter: string; ignoreProfilesRules: boolean }) {
       const { filter, ignoreProfilesRules } = data;
       const prev = this.filtered as EditorBase[];
@@ -1953,24 +2368,29 @@ export const useEditorStore = defineStore("editor", {
         delete p.showInEditor;
         delete p.showChildsInEditor;
         delete p.highlightInEditor;
-        forEachParent(p as EditorBase, (parent) => {
+        forEachParent(p, (parent) => {
           delete parent.showInEditor;
           delete p.showChildsInEditor;
         });
       }
       if (filter.length > 1) {
         this.set_filter(filter);
-        this.filtered = catalogue.findOptionsByText(filter) as EditorBase[];
+        // The query language, bare words included: unlike findOptionsByText it walks every node, so
+        // a word is also found in comments, rule descriptions and characteristic text.
+        let results = search(catalogue, filter);
         if (ignoreProfilesRules) {
-          this.filtered = this.filtered.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup());
+          results = results.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup() && !o.isCharacteristic());
         }
-        for (const p of this.filtered) {
-          this.show(p as EditorBase);
+        // The raw array, not this.filtered: show() checks `filtered.includes` per node, which through
+        // the reactive proxy made a three-letter search with thousands of matches quadratic.
+        this.filtered = results;
+        for (const p of results) {
+          this.mark_shown(p);
         }
         await (globalThis.$nextTick && globalThis.$nextTick());
 
-        if (this.filtered.length < 300) {
-          for (const p of this.filtered) {
+        if (results.length < 300) {
+          for (const p of results) {
             if (!p.parent) continue;
             try {
               await this.open(p as EditorBase, false, true);
@@ -1985,71 +2405,52 @@ export const useEditorStore = defineStore("editor", {
       }
       return this.filtered;
     },
-    async system_search(system: GameSystemFiles, query: { filter: string }, max = 1000) {
-      const result = [] as Base[];
-
+    /**
+     * The query language over a whole system, every catalogue loaded first. Uncapped: an
+     * aggregation over the result needs all of it, and the page pages what it shows.
+     */
+    async system_search(system: GameSystemFiles, query: { filter: string }) {
       const { filter } = query;
       if (!filter) return null;
-      const regx = textSearchRegex(filter);
-      let more = false;
-
       await system.loadAll();
-      function search(val: Base, parent?: Base) {
-        try {
-          if (result.length >= max) return;
-          if ((val as unknown as Link).targetId) {
-            if (val.target && val.target.isCategory() && !parent?.isForce()) {
-              return;
-            }
-          }
-
-          const name = val.getName?.call(val);
-          const text = (val as any as Characteristic).$text;
-          const desc = (val as any as Rule).description;
-          const id = val.id;
-          if (id === filter) {
-            result.push(val);
-          } else if ((name && String(name).match(regx)) || id === filter) {
-            result.push(val);
-          } else if (text && String(text).match(regx)) {
-            result.push(val);
-          } else if (desc && String(desc).match(regx)) {
-            result.push(val);
-          }
-        } catch (e) {
-          console.error("Error while searching:", e);
-        }
-      }
-
-      for (const file of system.getAllLoadedCatalogues()) {
-        search(file);
-        file.forEachObjectWhitelist(search);
-        if (result.length >= max) {
-          more = true;
-          break;
-        }
-      }
-      console.log("Search for", `"${filter}"`, "found", result.length, "results");
-      const grouped = {} as Record<string, Base[]>;
-      for (const found of result) {
-        const catalogueName = found.getCatalogue().name;
-        addObj(grouped, catalogueName, found);
-      }
-      return { grouped, all: result, more };
+      return search([...system.getAllLoadedCatalogues()], filter);
     },
-    async open_catalogue(systemId: string, catalogueId?: string) {
+    /**
+     * `progress_cb` is awaited, so a caller that yields in it lets the loading screen paint:
+     * processForEditor is synchronous and blocks for as long as it runs, and there is one call
+     * per import, so without a yield in between the whole open is a single frozen frame.
+     */
+    async open_catalogue(
+      systemId: string,
+      catalogueId?: string,
+      progress_cb?: (current: number, max: number, msg?: string) => void | Promise<void>
+    ) {
       const system = await this.get_or_load_system(systemId);
       let loaded = system.getLoadedCatalogue({ targetId: catalogueId || systemId });
       if (!loaded) {
+        await progress_cb?.(0, 0, "Reading files");
         loaded = await system.loadCatalogue({
           targetId: catalogueId || systemId,
         });
       }
       globalThis.$catalogue = loaded as any;
+      // Order matters: processForEditor is what populates `imports` (init -> generateImports),
+      // so the root has to be processed before its imports can be listed at all.
+      //
+      // Messages only, no counter: loadAll runs straight after this over the whole system, and
+      // two counters on different scales drive the one progress bar backwards when the second
+      // starts. This phase is a prelude to that count, not a count of its own.
+      await progress_cb?.(0, 0, `Processing ${loaded.name ?? ""}`);
       loaded.processForEditor();
-      for (const imported of loaded.imports) {
+      const imports = loaded.imports ?? [];
+      for (const imported of imports) {
+        await progress_cb?.(0, 0, `Processing ${imported.name ?? ""}`);
         imported.processForEditor();
       }
+
+      // After processForEditor, not before: a hook that walks the tree needs it indexed, and
+      // diagnostics have already run by this point.
+      await this.scripts.emit("load", undefined, { system, catalogue: loaded });
 
       return { system, catalogue: loaded };
     },

@@ -1,10 +1,11 @@
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
 import { Base, getDataObject } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue, getAllPossibleParents } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import type { BSICondition, BSIConstraint, BSIDataCatalogue } from "~/assets/shared/battlescribe/bs_types";
+import { getAllPossibleParents } from "~/assets/editor/catalogue_editor";
+import type { BSIDataCatalogue, BSIQuery } from "~/assets/shared/battlescribe/bs_types";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
-import { findSelfOrParentWhere, sortByAscendingInplace } from "~/assets/shared/battlescribe/bs_helpers";
+import { findSelfOrParentWhere } from "~/assets/shared/battlescribe/bs_helpers";
 
 export interface EditorSearchItem {
   id: string;
@@ -76,7 +77,7 @@ export function getSearchElements(
   catalogue: Catalogue | EditorBase,
   type: keyof Catalogue | EditorBase
 ): EditorSearchItem[] {
-  let res: EditorSearchItem[] = [];
+  const res: EditorSearchItem[] = [];
   for (const imported of (catalogue as Catalogue).imports || []) {
     recursive(imported, type as string, res);
   }
@@ -135,7 +136,7 @@ export function getSearchSelectionsWithCategory(
 
 export function getSearchCategories(catalogue: Catalogue): EditorSearchItem[] {
   const res: EditorSearchItem[] = [];
-  for (let elt of catalogue.iterateCategoryEntries()) {
+  for (const elt of catalogue.iterateCategoryEntries()) {
     const child = elt as any;
     if (child.isCatalogue()) {
       continue;
@@ -213,9 +214,9 @@ export function getParentSelections(item: EditorBase): EditorSearchItem[] {
   return parentElements;
 }
 
-export function scopeIsId(item: BSICondition | BSIConstraint) {
+export function scopeIsId(item: Partial<BSIQuery>) {
   return (
-    ["self", "parent", "ancestor", "primary-category", "primary-catalogue", "force", "roster"].includes(item.scope) ==
+    ["self", "parent", "ancestor", "primary-category", "primary-catalogue", "force", "roster"].includes(item.scope ?? "") ==
     false
   );
 }
@@ -232,9 +233,9 @@ export function getFirstAncestor(item: EditorBase): EditorBase {
   return parent;
 }
 
-export function getFilterSelections(item: (BSICondition | BSIConstraint) & EditorBase, catalogue: Catalogue): EditorSearchItem[] {
+export function getFilterSelections(item: EditorBase & Partial<BSIQuery>, catalogue: Catalogue): EditorSearchItem[] {
   const includeAllRootEntries = ["primary-catalogue", "roster", "force", "ancestor"];
-  if (includeAllRootEntries.includes(item.scope)) {
+  if (includeAllRootEntries.includes(item.scope ?? "")) {
     return getSearchSelections(catalogue, true);
   }
 
@@ -262,7 +263,7 @@ export function getFilterSelections(item: (BSICondition | BSIConstraint) & Edito
     return getSearchSelectionsWithCategory(getFirstAncestor(item), catalogue);
   }
 
-  const parent = catalogue.findOptionById(item.scope) as EditorBase;
+  const parent = item.scope ? catalogue.findOptionById(item.scope) : undefined;
   if (parent) {
     return res.concat(getParentSelections(parent));
   }

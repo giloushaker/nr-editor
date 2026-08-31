@@ -41,8 +41,8 @@ function readRefs(
   opt: ArmyBookOption,
   type: "foundInBook" | "foundInSpecial"
 ) {
-  for (let ref of opt.refs || []) {
-    let actualRef = convertRef(ref);
+  for (const ref of opt.refs || []) {
+    const actualRef = convertRef(ref);
 
     if (!res[actualRef.ref]) {
       res[actualRef.ref] = initRef(actualRef.ref, opt.option_id, catalogue);
@@ -66,7 +66,7 @@ export function catalogueAllRefs(importer: T9AImporter, book: ArmyBookBook, res:
   }
 
   if (book.dictionnary) {
-    for (let cat of book.dictionnary) {
+    for (const cat of book.dictionnary) {
       deepTrasverse(cat, (child) => {
         const opt = child as ArmyBookOption;
         readRefs(catalogue, res, opt, "foundInBook");

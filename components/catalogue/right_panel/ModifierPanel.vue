@@ -6,7 +6,8 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Catalogue, Publication } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
@@ -14,10 +15,7 @@ import type { BSIModifier } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
     item: {
       type: Object as PropType<BSIModifier & EditorBase>,
       required: true,

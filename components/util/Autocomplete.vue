@@ -12,7 +12,7 @@
       v-if="editing"
     />
     <div v-else @click="startEditing" class="autocomplete-input">
-      <span class="gray" v-if="!selectedOption">{{ placeholder }}</span>
+      <span class="gray" v-if="!selectedOption?.option">{{ placeholder }}</span>
       <slot v-else v-bind="selectedOption" name="option"></slot>
     </div>
     <div class="suggestions" :class="{ hidden: !editing }">
@@ -24,12 +24,12 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 
 export default {
   emits: ["update:modelValue"],
   props: {
-    modelValue: String,
+    modelValue: [String, Number, Boolean],
     placeholder: {
       type: String,
       default: "Search...",
@@ -50,12 +50,12 @@ export default {
     },
 
     valueField: {
-      type: [String, Function],
+      type: [String, Function] as PropType<string | ((option: any) => string)>,
       default: "",
     },
 
     filterField: {
-      type: [String, Function],
+      type: [String, Function] as PropType<string | ((option: any) => string)>,
       default: "",
     },
 
@@ -107,7 +107,7 @@ export default {
       const end = this.max || data.length;
       for (let i = 0; i < data.length; i++) {
         const cur = data[i];
-        let val = this.getField(cur);
+        const val = this.getField(cur);
         if (val && val.match && val.match(regex)) {
           result.push({ option: cur });
           if (result.length >= end - 1) break;
@@ -165,7 +165,7 @@ export default {
       this.searchPattern = "";
       this.selectedOption = null;
       if (this.modelValue) {
-        let found = this.computedOptions.find((opt: any) => {
+        const found = this.computedOptions.find((opt: any) => {
           let item = opt;
           if (this.valueField) {
             item = typeof this.valueField === "function" ? this.valueField(opt) : opt[this.valueField];

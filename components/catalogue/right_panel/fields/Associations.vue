@@ -89,12 +89,28 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { NRAssociation } from "~/assets/shared/battlescribe/bs_types";
 import InfoButton from "~/components/InfoButton.vue";
+import { useEditorStore } from "~/stores/editorStore";
 
 export default {
+  setup() {
+    return { store: useEditorStore() };
+  },
+  methods: {
+    /**
+     * Marks the catalogue unsaved. These edits deliberately bypass store.set_field -- the id
+     * has to move the node in the index, min/max are raw v-model, categories mutate a links
+     * array -- and set_field is what otherwise reports the change, so without this the edit
+     * lands but the save indicator never lights up. Was calling a `changed()` that no
+     * component defined, so it threw instead.
+     */
+    changed() {
+      this.store.changed(this.item as EditorBase);
+    },
+  },
   props: {
     item: {
       type: Object as PropType<NRAssociation & EditorBase>,

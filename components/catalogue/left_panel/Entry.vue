@@ -27,7 +27,7 @@
   </span>
 </template>
 <script lang="ts">
-import { getName, getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
+import { getName, getNameExtra } from "~/assets/editor/bs_editor";
 import { sortByDescending } from "~/assets/shared/battlescribe/bs_helpers";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import { useSettingsStore } from "~/stores/settingsState";

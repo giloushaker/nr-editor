@@ -1,8 +1,7 @@
 import { defineStore } from "pinia";
-import { type EntryPathEntry } from "~/assets/shared/battlescribe/bs_editor";
-import { arrayKeys } from "~/assets/shared/battlescribe/bs_main";
-import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import { get_base_from_vue_el, get_ctx } from "./editorStore";
+import { type EntryPathEntry } from "~/assets/editor/bs_editor";
+import { get_ctx } from "./editorStore";
+import { isOpen, setOpen, type OpenTree } from "./open_state";
 
 /**
  * This class represents a snapsnot of the editor's current state, in order to reload it for navigating around
@@ -30,7 +29,7 @@ export const useEditorUIState = defineStore("editor-ui", {
         const deepestCls = `depth-${depth} collapsible-box opened`;
         const results = document.documentElement.getElementsByClassName(deepestCls);
         if (results?.length) {
-          for (var i = 0; i < results.length; i++) {
+          for (let i = 0; i < results.length; i++) {
             const cur = results[i];
             get_ctx(cur)?.close();
           }
@@ -46,7 +45,7 @@ export const useEditorUIState = defineStore("editor-ui", {
       const results = document.documentElement.getElementsByClassName(cls);
       let maxDepth = -1;
       if (results?.length) {
-        for (var i = 0; i < results.length; i++) {
+        for (let i = 0; i < results.length; i++) {
           const cur = results[i];
           cur.classList.forEach((val) => {
             if (val.startsWith("depth-")) {
@@ -57,49 +56,30 @@ export const useEditorUIState = defineStore("editor-ui", {
       }
       this.collapse_level(maxDepth);
     },
+    /** The live `open` tree for a catalogue, created on first write. */
+    open_tree(id: string): OpenTree {
+      const existing = this.$state.catalogues[id];
+      if (existing) return (existing.open ??= {});
+      this.$state.catalogues[id] = { open: {} };
+      return this.$state.catalogues[id].open;
+    },
+    /** Records a category box (a direct child of the catalogue) as open or closed. */
+    set_root_open(id: string, key: string, open: boolean) {
+      const tree = this.open_tree(id);
+      if (open) tree[key] ??= { 0: {} };
+      else delete tree[key];
+    },
+    /** Records an entry box as open or closed. */
+    set_open(id: string, path: EntryPathEntry[], open: boolean) {
+      if (!path.length) return;
+      setOpen(this.open_tree(id), path, open);
+    },
     set_state(id: string, data: Partial<EditorUIState>) {
-      // Get all open collapsible boxes and save their state
-      function find_open_recursive(elt: Element, obj: Record<string, any>, depth = 0) {
-        const cls = `depth-${depth} collapsible-box opened`;
-        const results = elt.getElementsByClassName(cls);
-        if (results?.length) {
-          for (var i = 0; i < results.length; i++) {
-            const cur = results[i];
-            const item = get_base_from_vue_el(get_ctx(cur));
-            const key = item.parentKey;
-            const parent = item.parent;
-
-            let next = obj;
-            if (parent) {
-              const arr = parent[key] as EditorBase[];
-              if (!arr || !Array.isArray(arr)) continue;
-              const index = arr.indexOf(item);
-              if (!(key in obj)) obj[key] = {};
-              const obj_arr = obj[key];
-              if (!(index in obj_arr)) obj_arr[index] = {};
-              next = obj_arr[index];
-            } else {
-              const arr = []
-              for (let i = 0; i < cur.classList.length; i++) {
-                arr.push(cur.classList[i])
-              }
-              const keys = arr.filter((o) => arrayKeys.has(o));
-              for (const key of keys) {
-                obj[key] = {};
-                obj[key][0] = {};
-                next = obj[key][0];
-              }
-            }
-
-            find_open_recursive(cur, next, depth + 1);
-          }
-        }
-      }
-      const open = {};
-      find_open_recursive(document.documentElement, open);
-      const result = { ...data, open: open };
+      const current = this.$state.catalogues[id];
+      const result = { ...current, ...data } as EditorUIState;
+      result.open ??= {};
       this.$state.catalogues[id] = result;
-      return open;
+      return result.open;
     },
 
     get_data(id: string): Record<string, any> {
@@ -108,28 +88,12 @@ export const useEditorUIState = defineStore("editor-ui", {
       return current;
     },
     get_root(id: string, key: string): boolean {
-      let current = this.$state.catalogues[id];
-      if (!current) return false;
-      current = current.open[key];
-      if (!current) return false;
-      return true;
+      const current = this.$state.catalogues[id];
+      if (!current?.open) return false;
+      return Boolean(current.open[key]);
     },
     get(id: string, path: EntryPathEntry[]): boolean {
-      if (!path.length) return false;
-      let current = this.$state.catalogues[id];
-      if (!current) return false;
-      let current_node = current.open[path[0].key];
-      if (!current_node) return false;
-      current_node = current_node[0];
-      if (!current_node) return false;
-      for (const node of path) {
-        const arr = current_node[node.key];
-        if (!arr) return false;
-        const entry = arr[node.index];
-        if (!entry) return false;
-        current_node = entry;
-      }
-      return true;
+      return isOpen(this.$state.catalogues[id]?.open, path);
     },
   },
 });

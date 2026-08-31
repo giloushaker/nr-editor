@@ -9,7 +9,7 @@
 export default {
   props: {
     item: {
-      type: Object as PropType<{ description: string }>,
+      type: Object as PropType<{ description?: string }>,
       required: true,
     },
     link: {

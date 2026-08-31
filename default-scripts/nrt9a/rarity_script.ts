@@ -12,7 +12,7 @@ export default {
 
   async run(catalogues: Catalogue[], book: string, clean: boolean) {
     catalogues.map((elt) => elt.processForEditor());
-    for (let cat of catalogues) {
+    for (const cat of catalogues) {
       insertUnitRarity(cat);
     }
   },

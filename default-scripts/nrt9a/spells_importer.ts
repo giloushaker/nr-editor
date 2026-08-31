@@ -1,5 +1,4 @@
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
-import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { ArmyBookOption, ArmyBookPath, ArmyBookUnit } from "./army_book_interfaces";
 import type {
   BSIInfoGroup,
@@ -11,7 +10,6 @@ import { charac, toTitleCaseWords } from "./util";
 import { sortByAscending } from "~/scripts/import/import_helpers";
 import T9AImporter from "./t9a_importer";
 import { convertRef } from "./refs";
-import { deepTrasverse } from "./option_tree";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
 
 interface T9ARule {
@@ -56,7 +54,7 @@ export default class SpellsImporter {
       profiles: [],
     };
 
-    for (let spell of path.spells) {
+    for (const spell of path.spells) {
       const spellProfile: BSIProfile = {
         comment: `spell:${spell.ref}`,
         id: generateBattlescribeId(),
@@ -100,7 +98,7 @@ export default class SpellsImporter {
   }
 
   public async import() {
-    for (let pathid in this.book.paths) {
+    for (const pathid in this.book.paths) {
       const path = this.book.paths[pathid];
       await this.importPath(this.catalogues, path);
     }
@@ -131,7 +129,7 @@ export function insertSpells(
   if (!spellBook) return;
   const wizardLevelIds = getWizardIds(importer);
 
-  for (let elt of opt.refs) {
+  for (const elt of opt.refs) {
     const ref = convertRef(elt);
     const pathInfoGroup = findPath(spellBook, ref.ref);
     if (pathInfoGroup) {

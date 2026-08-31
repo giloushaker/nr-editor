@@ -40,7 +40,7 @@ export function getConditionFromHasOption(
 ) {
   const res: BSIConditionGroup[] = [];
 
-  for (let ref of hasOptionBlock.refs) {
+  for (const ref of hasOptionBlock.refs) {
     const refs = importer.refCatalogue[ref];
     let id = refs?.category_id || refs?.option_id;
 

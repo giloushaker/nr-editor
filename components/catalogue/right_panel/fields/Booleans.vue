@@ -16,9 +16,8 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import { Base } from "~/assets/shared/battlescribe/bs_main";
-import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { useEditorStore } from "~/stores/editorStore";
+import { itemProp, fieldValue } from "./props";
 
 enum BOOLEAN_STATUS {
   UNAVAILABLE = -1,
@@ -33,34 +32,29 @@ interface BooleanField {
   default?: boolean;
 }
 export default {
-  props: {
-    item: {
-      type: Object as PropType<Base & EditorBase>,
-      required: true,
-    },
+  setup() {
+    return { store: useEditorStore() };
   },
+  props: itemProp,
 
   methods: {
     isDifferentOnTarget(field: BooleanField) {
       if (!this.item.target) return false;
-      const selfValue = this.item[field.field] ?? field.default
+      const selfValue = fieldValue(this.item, field.field) ?? field.default
       const targetValue = this.item.target[field.field] ?? field.default
       if (selfValue === targetValue) return false;
       return targetValue !== field.default
     },
     getCheckedValue(field: BooleanField) {
-      if (this.item[field.field] === undefined) {
+      if (fieldValue(this.item, field.field) === undefined) {
         return field.default ?? false
       }
-      return Boolean(this.item[field.field]);
+      return Boolean(fieldValue(this.item, field.field));
     },
     handleChange(event: Event, field: BooleanField) {
       const target = event.target as HTMLInputElement;
-      if (target.checked === field.default) {
-        delete this.item[field.field];
-      } else {
-        this.item[field.field] = target.checked;
-      }
+      this.store.set_field(this.item, field.field, target.checked, { default: field.default });
+      this.store.end_field_edit();
     },
   },
 

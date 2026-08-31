@@ -20,21 +20,18 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
+import type { BSISelectionEntry } from "~/assets/shared/battlescribe/bs_types";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 
 export default {
   props: {
-    item: {
-      type: Object as PropType<any>,
-      required: true,
-    },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    // RightPanel routes only "selectionEntry" here, and EntryType edits type/subType.
+    item: { type: Object as PropType<BSISelectionEntry & EditorBase>, required: true as const },
+    ...catalogueProp,
   },
   methods: {
     getChilds(item: EditorBase) {

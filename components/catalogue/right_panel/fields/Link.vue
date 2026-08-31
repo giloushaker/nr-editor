@@ -66,7 +66,7 @@
       <tr v-if="type === 'catalogue'">
         <td></td>
         <td>
-          <input id="importRoot" type="checkbox" v-model="item.importRootEntries" />
+          <input id="importRoot" type="checkbox" v-model="importRootEntries" />
           <label for="importRoot">Import Root Entries</label>
         </td>
       </tr>
@@ -75,11 +75,11 @@
 </template>
 
 <script lang="ts">
-import { getNameExtra } from "~/assets/shared/battlescribe/bs_editor";
-import type { ItemTypes } from "~/assets/shared/battlescribe/bs_editor";
+import { getNameExtra } from "~/assets/editor/bs_editor";
+import type { ItemTypes } from "~/assets/editor/bs_editor";
 import { sortByAscending } from "~/assets/shared/battlescribe/bs_helpers";
 import { Base, Link } from "~/assets/shared/battlescribe/bs_main";
-import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import { CatalogueLink, Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { EditorSearchItem } from "~/assets/ts/catalogue/catalogue_helpers";
 import { useEditorStore } from "~/stores/editorStore";
@@ -112,6 +112,19 @@ export default {
   },
 
   computed: {
+    /**
+     * Only reachable under `type === 'catalogue'`, where the node is a CatalogueLink -- the one
+     * link kind that carries importRootEntries. The prop type covers every kind this panel edits,
+     * so the narrowing the v-if does is not visible to the template.
+     */
+    importRootEntries: {
+      get(): boolean {
+        return Boolean((this.item as unknown as CatalogueLink).importRootEntries);
+      },
+      set(value: boolean) {
+        (this.item as unknown as CatalogueLink).importRootEntries = value;
+      },
+    },
     allowed(){
       const result = []
       if (!(this.item.parent?.isCatalogue() && this.item.parentKey === "entryLinks")) {
@@ -164,15 +177,12 @@ export default {
 
     async updateLink() {
       if (this.type === "catalogue" && this.item.targetId) {
-        const oldTarget = this.item.target as (Catalogue & EditorBase) | undefined;
-        if (oldTarget) {
-          this.catalogue.removeRef(this.catalogue as Base as EditorBase, oldTarget);
-        }
         const sysId = this.catalogue.gameSystemId || this.catalogue.id;
         await this.catalogue.reload(this.store.get_system(sysId));
+        // The catalogueLink's own targetId is the reference; reload() reads the inverse.
+        this.catalogue.reindexReferences(this.item as EditorBase);
         const target = this.item.target as (Catalogue & EditorBase) | undefined;
         if (target) {
-          this.catalogue.addRef(this.catalogue as Base as EditorBase, target);
           this.item.name = target.name;
           this.item.type = target.editorTypeName;
         } else {

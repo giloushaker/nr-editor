@@ -1,5 +1,6 @@
 <template>
-  <div class="scrollable" v-if="!loading">
+  <Loading v-if="opening" :progress_msg="progress_msg" :progress_max="progress_max" :progress="progress" />
+  <div class="scrollable" v-else>
     <div class="roster">
     <div class="head">
       <h1 class="brand">Systems</h1>
@@ -46,6 +47,14 @@
       <button class="grant" @click="grantAccess">Grant access</button>
     </div>
 
+    <Loading
+      v-if="loading"
+      class="listload"
+      :progress_msg="progress_msg"
+      :progress_max="progress_max"
+      :progress="progress"
+    />
+    <template v-else>
     <div class="list" v-if="filteredRows.length">
       <div v-for="row in filteredRows" :key="row.key" class="row" @click="openRow(row)">
         <span class="nm">{{ row.name }}</span>
@@ -95,9 +104,9 @@
       </div>
     </template>
     <div v-else class="subline">No systems match "{{ query }}".</div>
+    </template>
     </div>
   </div>
-  <Loading v-else :progress_msg="progress_msg" :progress_max="progress_max" :progress="progress" />
   <GithubRepoDialog v-model="githubOpen" @uploaded="uploaded" />
 </template>
 
@@ -138,6 +147,9 @@ export default defineComponent({
   data() {
     return {
       loading: true,
+      // Opening a system navigates away, so it takes over the page; `loading` is only the
+      // list refreshing in place, which leaves the header and search usable.
+      opening: false,
       needsPermission: false,
       rows: [] as SystemRow[],
       query: "",
@@ -229,7 +241,7 @@ export default defineComponent({
       }
     },
     async openRow(row: SystemRow) {
-      this.loading = true;
+      this.opening = true;
       this.progress_msg = "";
       try {
         if (row.kind === "db" && row.id) {
@@ -259,7 +271,7 @@ export default defineComponent({
           this.$router.push(`/?id=${loaded.join(",")}`);
         }
       } finally {
-        this.loading = false;
+        this.opening = false;
       }
     },
     async grantAccess() {
@@ -573,6 +585,11 @@ export default defineComponent({
     cursor: pointer;
   }
 }
+/* Loading's root is height:100%, which resolves to nothing inside the auto-height roster */
+.listload {
+  min-height: 240px;
+}
+
 .list {
   border: 1px solid $box_border;
   border-radius: 8px;

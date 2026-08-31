@@ -5,7 +5,7 @@ import { getConditionFromHasOption } from "./conditions";
 
 export function override(importer: T9AImporter, node: ArmyBookOption, res: Record<string, any>) {
   if (node.override) {
-    for (let overrideNode of node.override) {
+    for (const overrideNode of node.override) {
       overrideFromComment(importer, overrideNode, res, "leafMaxCost");
       overrideFromComment(importer, overrideNode, res, "minSize");
       overrideFromComment(importer, overrideNode, res, "maxSize");
@@ -14,11 +14,11 @@ export function override(importer: T9AImporter, node: ArmyBookOption, res: Recor
 }
 
 function insertConditions(importer: T9AImporter, modifier: BSIModifier, overrideNode: ArmyBookOverride) {
-  for (let elt of overrideNode.hasOption || []) {
+  for (const elt of overrideNode.hasOption || []) {
     modifier.conditionGroups?.push(...getConditionFromHasOption(importer, elt, "hasOption"));
   }
 
-  for (let elt of overrideNode.armyHasOption || []) {
+  for (const elt of overrideNode.armyHasOption || []) {
     modifier.conditionGroups?.push(...getConditionFromHasOption(importer, elt, "armyHasOption"));
   }
 }
@@ -30,15 +30,18 @@ export function overrideFromComment(
   res: Record<string, any>,
   comment: CommentModifiable
 ) {
-  if (overrideNode.options[comment]) {
+  // Hoisted: the index access is re-read on each use, so the truthiness checks below do not
+  // narrow away the `undefined` that BSIModifier.value rejects.
+  const overrideValue = overrideNode.options[comment];
+  if (overrideValue) {
     // Find the leaf max cost constraint in the res
     const constraint = res["constraints"]?.find((elt: any) => elt.comment === comment);
-    if (constraint && overrideNode.options[comment]) {
+    if (constraint) {
       // Create a modifier
       const modifier: BSIModifier = {
         type: "set",
         field: constraint.id,
-        value: overrideNode.options[comment],
+        value: overrideValue,
         conditionGroups: [],
       };
 

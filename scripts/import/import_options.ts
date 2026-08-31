@@ -1,4 +1,3 @@
-import { debug } from "console";
 
 function removeSuffix(from: string, suffix: string): string {
     if (from.endsWith(suffix)) {
@@ -12,7 +11,7 @@ function removePrefix(from: string, prefix: string): string {
     }
     return from;
 }
-function removeUndefineds<T extends Object>(object: T): T {
+function removeUndefineds<T extends object>(object: T): T {
     for (const key in object) {
         if ((object)[key as keyof typeof object] === undefined) delete object[key as keyof typeof object]
     }
@@ -217,7 +216,7 @@ function parseOptionsLine(line: string): ParsedOptionsLine {
 function processLines(text: string) {
     // Split the text into lines
     const lines = text.split('\n').map(o => o.trim());
-    let result = [];
+    const result = [];
     let previousLine = "";
 
     lines.forEach(line => {

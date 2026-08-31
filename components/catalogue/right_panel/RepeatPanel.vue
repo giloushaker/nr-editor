@@ -8,20 +8,19 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { PropType } from "vue";
+import { catalogueProp } from "./fields/props";
 import { Catalogue } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { BSIRepeat } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {
     item: {
-      type: Object as PropType<BSIRepeat>,
+      type: Object as PropType<BSIRepeat & EditorBase>,
       required: true,
     },
-    catalogue: {
-      type: Object as PropType<Catalogue>,
-      required: true,
-    },
+    ...catalogueProp,
   },
 };
 </script>

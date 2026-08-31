@@ -207,8 +207,8 @@ export default class T9AImporter {
       res.comment = `Rarity: ${opt.rarity}`;
     }
     // Add Category Links from Constraint Categories
-    for (let ref of opt.refs || []) {
-      let actualRef = convertRef(ref);
+    for (const ref of opt.refs || []) {
+      const actualRef = convertRef(ref);
       const category = this.categoryCatalogue.categoryEntries?.find((elt) => elt.comment === actualRef.ref);
 
       if (category) {
@@ -223,14 +223,14 @@ export default class T9AImporter {
     }
 
     // Convertis les child soit en selectionEntry ou en selectionEntryGroup
-    for (let child of opt.options || []) {
+    for (const child of opt.options || []) {
       const converted = this.convertOption(child, parentArmy, parentUnit);
 
       // Make a link for shared items
       if (child.shared && child.cost) {
         // Find the target in the special catalogue
-        for (let group of this.specialCatalogue.sharedSelectionEntryGroups || []) {
-          for (let entry of group.selectionEntries || []) {
+        for (const group of this.specialCatalogue.sharedSelectionEntryGroups || []) {
+          for (const entry of group.selectionEntries || []) {
             if (entry.name === converted.name) {
               // Found
               converted.targetId = entry.id;
@@ -298,9 +298,9 @@ export default class T9AImporter {
     const dictionnaries = [this.book.dictionnary];
 
     // Add dictionnary
-    for (let dict of dictionnaries) {
-      for (let elt of dict) {
-        for (let ref of elt.refs) {
+    for (const dict of dictionnaries) {
+      for (const elt of dict) {
+        for (const ref of elt.refs) {
           const opt: ArmyBookOption = {
             ...elt,
             option_id: generateBattlescribeId(),
@@ -310,7 +310,7 @@ export default class T9AImporter {
 
           let root: Group | null = null;
           // Find an existing entry group in the catalogue
-          for (let elt of this.catalogue.sharedSelectionEntryGroups || []) {
+          for (const elt of this.catalogue.sharedSelectionEntryGroups || []) {
             if (elt.name === opt.name) {
               root = elt;
             }
@@ -323,7 +323,7 @@ export default class T9AImporter {
             await $store.add(converted, "sharedSelectionEntryGroups", this.catalogue as any);
           } else {
             // Else add entries to the existing group
-            for (let child of opt.options || []) {
+            for (const child of opt.options || []) {
               const entry = this.convertOption(child, this.book.army ? this.book.army[0] : null);
               await $store.add(entry, "selectionEntries", root as any);
             }
@@ -339,7 +339,7 @@ export default class T9AImporter {
 
     // Add Units
     if (army) {
-      for (let cat of army.options) {
+      for (const cat of army.options) {
         const catRef = cat.refs ? cat.refs[0] : "?";
 
         // Add Category entry to the book if it does not exist
@@ -369,7 +369,7 @@ export default class T9AImporter {
         }
 
         // Add Units
-        for (let unit of cat.options) {
+        for (const unit of cat.options) {
           const converted = this.convertOption(unit, army, unit);
           converted.type = "unit";
           const elt = (await $store.add(converted, "sharedSelectionEntries", this.catalogue as any)) as EditorBase;
@@ -385,7 +385,7 @@ export default class T9AImporter {
             };
 
             elt.forEach(async (elt) => {
-              await setSpecialEquipment(elt as EditorBase);
+              await setSpecialEquipment(elt);
             });
 
             // Add Primary Category

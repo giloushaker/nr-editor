@@ -16,7 +16,7 @@ function removeTextInParentheses(str) {
 function extractTextAndDetails(str) {
     const result = [];
     let inDetails = false;
-    let current = { text: "", details: "" };
+    const current = { text: "", details: "" };
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
         if (char === "(") {
@@ -111,7 +111,7 @@ function parseSpecialRule(rule) {
     let ruleName = match[1].trim();
     let param = null;
     let specification = null;
-    let asterisks = match[2].length + match[4].length;
+    const asterisks = match[2].length + match[4].length;
     if (match[3]) {
         const pieces = match[3].split(", ");
         param = pieces[0];
@@ -583,7 +583,7 @@ function parseOptionsLine(line) {
 function processLines(text) {
     // Split the text into lines
     const lines = text.split('\n').map(o => o.trim());
-    let result = [];
+    const result = [];
     let previousLine = "";
     lines.forEach(line => {
         // Check if the line starts with " - " or " • "
@@ -1129,7 +1129,7 @@ function findRootUnit(cat, name) {
     return cat.entryLinks?.find(o => o.name === name);
 }
 function splitSpecialRules(str) {
-    let result = [];
+    const result = [];
     let start = 0;
     let level = 0; // To keep track of parentheses depth
     for (let i = 0; i < str.length; i++) {
@@ -1255,7 +1255,7 @@ function getEquipment(cat, name, profileName, unit) {
         }
         for (const equipment of foundEquipment) {
             for (const item of splitAnd(equipment.text)) {
-                let target = findImportedEntry(cat, item, "upgrade");
+                const target = findImportedEntry(cat, item, "upgrade");
                 if (!target) {
                     if (!equipment.details) {
                         console.log(`[EQUIPMENT] Couldn't find Entry ${item}`);
@@ -1268,7 +1268,7 @@ function getEquipment(cat, name, profileName, unit) {
             if (!equipment.details)
                 continue;
             for (const item of splitAnd(equipment.details)) {
-                let target = findImportedEntry(cat, item, "upgrade");
+                const target = findImportedEntry(cat, item, "upgrade");
                 if (!target) {
                     console.log(`[EQUIPMENT] Couldn't find Entry(${item}) From: ${equipment.text}/${equipment.details} ${item}`);
                 }
@@ -1649,7 +1649,7 @@ async function modifyUnit(cat, unit, source) {
                     const perModelCost = parsedEntry.scope === "unit" && parsedEntry.details?.includes('per model');
                     const baseCost = parsedEntry.details ? (perModelCost ? "0" : parseDetails(parsedEntry.details)) : 0;
                     const text = parsedEntry.what;
-                    let ruleText = parsedEntry.what.replace(/special rule(s)?/, "").replace(/^The /, "");
+                    const ruleText = parsedEntry.what.replace(/special rule(s)?/, "").replace(/^The /, "");
                     const { ruleName, param } = parseSpecialRule(ruleText);
                     const ruleEntry = toEntry(ruleText, `${groupHash}/${text}`, baseCost);
                     if (perModelCost) {

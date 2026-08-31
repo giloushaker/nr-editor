@@ -22,13 +22,14 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
+import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { PropType } from "vue";
 import type { BSICostType } from "~/assets/shared/battlescribe/bs_types";
 
 export default {
   props: {
     item: {
-      type: Object as PropType<BSICostType>,
+      type: Object as PropType<BSICostType & EditorBase>,
       required: true,
     },
   },

@@ -87,12 +87,12 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
-import type { BSICharacteristicType } from "~/assets/shared/battlescribe/bs_types";
+import type { PropType } from "vue";
+import type { BSICharacteristicType, IFormatRule } from "~/assets/shared/battlescribe/bs_types";
 import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import EditableDiv from "~/components/util/EditableDiv.vue";
 import InfoButton from "~/components/InfoButton.vue";
-import { FormatRule } from "~/assets/shared/battlescribe/bs_main";
+import { Base } from "~/assets/shared/battlescribe/bs_main";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
@@ -120,8 +120,8 @@ export default {
         type: "regex",
       })
     },
-    removeRule(rule: FormatRule) {
-      this.store.del_node(rule);
+    removeRule(rule: IFormatRule) {
+      this.store.del_node(rule as unknown as Base);
     },
     onDragStart(event: DragEvent, index: number) {
       this.draggingIndex = index;
