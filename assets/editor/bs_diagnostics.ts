@@ -18,7 +18,7 @@ import type { Link, LocalConditionGroup } from "~/assets/shared/battlescribe/bs_
 import { splitScopeSelf, validScopes } from "~/assets/shared/battlescribe/bs_condition";
 import { pointlessAffects, pointlessAssociation, pointlessLocalGroup } from "./bs_recursion";
 import { getModifierOrConditionParent } from "~/assets/shared/battlescribe/bs_modifiers";
-import type { EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
+import type { Catalogue, EditorBase, IErrorMessage } from "~/assets/shared/battlescribe/bs_main_catalogue";
 import type { Diagnostic } from "./bs_diagnostics_engine";
 
 export type { Diagnostic, DiagnosticContext, DiagnosticFinding, DiagnosticResult } from "./bs_diagnostics_engine";
@@ -64,6 +64,28 @@ export function isScopeValid(parent: EditorBase, scope: string) {
     if (current.refs) stack.push(...current.refs);
   }
   return false;
+}
+
+/**
+ * The chain of catalogue imports leading from `target` back to `from`, if there is one.
+ *
+ * Compared by id rather than identity: a catalogue is reached here both raw and through a Vue
+ * proxy, and those two are not `===`.
+ */
+function catalogueLinkChain(from?: Catalogue, target?: Catalogue): string[] | undefined {
+  if (!from || !target) return;
+  const name = (catalogue: Catalogue) => catalogue.name?.trim() || catalogue.id;
+  const seen = new Set<string>();
+  const stack: Array<[Catalogue, string[]]> = [[target, [name(from), name(target)]]];
+  while (stack.length) {
+    const [cur, chain] = stack.pop()!;
+    if (cur.id === from.id) return chain;
+    if (seen.has(cur.id)) continue;
+    seen.add(cur.id);
+    for (const link of cur.catalogueLinks || []) {
+      if (link.target) stack.push([link.target, [...chain, name(link.target)]]);
+    }
+  }
 }
 
 export const DIAGNOSTICS: Diagnostic[] = [
@@ -120,6 +142,26 @@ export const DIAGNOSTICS: Diagnostic[] = [
       }
       const target = ctx.findById(link.targetId) as EditorBase | undefined;
       if (target?.isLink()) return "Link target Cannot be a Link";
+    },
+  },
+
+  {
+    /**
+     * Two catalogues that import each other, directly or round through others.
+     *
+     * The loader refuses to follow the loop rather than hanging on it (see bs_load_data), but
+     * the data is still wrong: what each side of the loop ends up importing depends on which
+     * file was opened first, so the same catalogue resolves differently between sessions.
+     *
+     * Reported with the whole chain, because either link on its own reads as innocuous -- the
+     * one that closes the loop is usually in a file nobody was looking at.
+     */
+    id: "catalogue-link-cycle",
+    severity: "error",
+    applies: (node) => node.editorTypeName === "catalogueLink",
+    check(node) {
+      const chain = catalogueLinkChain(node.catalogue as Catalogue, node.target as Catalogue);
+      if (chain) return `Recursive catalogue link: ${chain.join(" -> ")}`;
     },
   },
 
