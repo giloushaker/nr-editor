@@ -199,12 +199,16 @@ function setupUpdater() {
   // electron-updater emits "error"; with no listener node throws it as an unhandled error
   autoUpdater.on("error", (e: Error) => console.error("updater:", e));
   autoUpdater.on("update-available", (info: any) => {
+    // with fullChangelog, releaseNotes is one {version, note} per release since the installed one
+    const notes = Array.isArray(info.releaseNotes)
+      ? info.releaseNotes.map((r: { version: string; note: string }) => `${r.version}:\n${stripHtml(r.note)}`).join("\n\n")
+      : stripHtml(info.releaseNotes);
     dialog
       .showMessageBox({
         type: "info",
         title: "Update Available",
         message: "A new update is available. Do you want to install it?",
-        detail: `Changelog:\n${stripHtml(info.releaseNotes)}`,
+        detail: `Changelog:\n${notes}`,
         buttons: ["Install", "Cancel"],
       })
       .then((result: { response: number }) => {
@@ -250,6 +254,7 @@ function setupUpdater() {
     autoUpdater.quitAndInstall(true, true);
   });
 
+  autoUpdater.fullChangelog = true;
   autoUpdater.autoDownload = false;
   autoUpdater.autoRunAppAfterInstall = true;
   autoUpdater.autoInstallOnAppQuit = true;
