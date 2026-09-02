@@ -387,15 +387,11 @@ const createWindow = () => {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  // Launching the exe again should still give the user another editor -- as a new window in
+  // this process, so the updater still only has one process to quit.
   app.on("second-instance", () => {
-    const win = mainWindow ?? BrowserWindow.getAllWindows()[0];
-    if (!win) {
-      mainWindow = createWindow();
-      return;
-    }
-    if (win.isMinimized()) win.restore();
-    win.show();
-    win.focus();
+    mainWindow = createWindow();
+    mainWindow.focus();
   });
 
   app.on("window-all-closed", () => {
