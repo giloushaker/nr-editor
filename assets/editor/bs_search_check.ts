@@ -568,6 +568,21 @@ console.log("logic, for duplicated modifiers");
   assert(aggregate(mods, "by:logic")?.length === 3, "a different childId, or no condition, is different logic");
   // The condition itself has logic too, so narrow by kind.
   assert(search(cat as never, "is:modifier logic:childId=y").length === 1, "logic is searchable text");
+  // A boolean value answers only to true/false -- `value:"Scouts 6"` must not match `set hidden true`.
+  assert(search(cat as never, 'is:modifier value:"Scouts 6"').length === 0, "text does not match a boolean value");
+  assert(search(cat as never, "is:modifier value:true").length === 4, "true still matches boolean values");
+  assert(search(cat as never, "is:modifier value:false").length === 0, "false matches no true boolean");
+}
+
+console.log("typed values are not substrings");
+{
+  // pts has value 13: a number is a quantity, not digits.
+  is("is:cost value:1", "");
+  is("is:cost value:13", "pts");
+  is("is:cost value:>10", "pts");
+  // A raw child-array read holds objects; text must not match their String() form.
+  is("is:entry constraints:object", "");
+  is("is:entry constraints:*", "bolter,power fist,shared entry");
 }
 
 console.log("regex values");

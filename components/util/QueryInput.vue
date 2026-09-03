@@ -505,8 +505,10 @@ export default defineComponent({
           break;
         case " ":
           // Only a key term ends on space; plain words stay free text, "feel no pain" is one phrase.
+          // And only at the end of the text: a space typed inside -- editing a pill, or with the
+          // cursor moved back between quotes -- is an edit, not a commit.
           if (!this.text.trim()) e.preventDefault();
-          else if (/[:=]/.test(this.text) && isBalanced(this.text)) {
+          else if (input.selectionStart === this.text.length && /[:=]/.test(this.text) && isBalanced(this.text)) {
             e.preventDefault();
             this.commit();
           }

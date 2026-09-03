@@ -678,7 +678,18 @@ function matchValue(value: unknown, val: Val, mode: Field["match"]): boolean {
     if (NUMERIC.test(val.text)) return compare(value.filter(present).length, val.cmp, Number(val.text));
     return value.some((v) => matchValue(v, val, mode));
   }
-  if (typeof value === "boolean") return value === (val.text.toLowerCase() !== "false");
+  // A node answers to has:/child:/dotted paths, not to text -- String(node) is "[object Object]",
+  // which would make `constraints:object` match everything that has constraints.
+  if (typeof value === "object") return false;
+  // A number is a quantity, not digits: `value:1` must not match 13 the way "bolter" matches
+  // "bolter link". Non-numeric text (globs, regexes, "6\"") still reads it as a string below.
+  if (typeof value === "number" && NUMERIC.test(val.text)) return compare(value, val.cmp, Number(val.text));
+  if (typeof value === "boolean") {
+    // Only the words true/false address a boolean; any other text must not match it, or
+    // `value:"Scouts 6"` matches every `set hidden true` in the file.
+    const wanted = val.text.toLowerCase();
+    return (wanted === "true" || wanted === "false") && value === (wanted === "true");
+  }
   if (val.cmp && val.cmp !== "=") return NUMERIC.test(val.text) && compare(Number(value), val.cmp, Number(val.text));
 
   if (val.regex) return val.regex.test(String(value));
