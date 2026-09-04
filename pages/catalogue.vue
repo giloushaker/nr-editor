@@ -22,7 +22,7 @@
       </SplitView>
     </template>
 
-    <Teleport to="#titlebar-content" v-if="cat && route_is_catalogue">
+    <Teleport to="#titlebar-content" v-if="cat && page_active && route_is_catalogue">
       <span class="ml-10px">
         Editing
         <img
@@ -111,6 +111,11 @@ export default defineComponent({
       cat: null as Catalogue | null,
       defaults: {} as Partial<typeof LeftPanelDefaults>,
       key: 1,
+      // KeepAlive keeps this page mounted after navigating away, and Vue leaves the nodes a
+      // Teleport pushed into #titlebar-content behind when the page is deactivated - the
+      // route check alone never gets to remove them, so the titlebar ended up with two
+      // "Save All" buttons. Unmounting the Teleport from the deactivated hook clears them.
+      page_active: true,
       route: null as { catalogueId: string; gameSystemId: string } | null,
     };
   },
@@ -133,9 +138,11 @@ export default defineComponent({
     document.removeEventListener("keydown", this.onKeydown, true);
   },
   activated() {
+    this.page_active = true;
     window.addEventListener("beforeunload", this.beforeUnload);
   },
   deactivated() {
+    this.page_active = false;
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   beforeRouteUpdate() {

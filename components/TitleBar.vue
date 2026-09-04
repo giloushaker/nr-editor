@@ -16,7 +16,7 @@
         :title="`New Recruit - Editor v${version}`"
       >
         <h1 class="flex titletext">
-          <img class="logo" src="/assets/favicon.ico" />
+          <img class="logo" src="/assets/icons/logo-menu.svg" />
           <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
@@ -81,9 +81,9 @@
         <span class="label">{{ scripts.background.label }}</span>
         <span v-if="progressText" class="count">{{ progressText }}</span>
       </div>
-
-      <div v-if="electron">
-        <img src="/assets/icons/electron32.png" />
+      
+      <div v-if="electron" class="iconbox-static" title="Running in the desktop app">
+        <IconsElectron :size="32" />
       </div>
       <PopupDialog v-if="settingsOpen" v-model="settingsOpen">
         <Settings />
@@ -220,12 +220,15 @@ export default {
   max-height: 20px;
 }
 
-/* One family for every nav glyph: 24-viewBox outline svgs, 1.8 stroke, 20px box. Black so the
-   global --image-filter (app.vue's svg.icon rule) lightens them all together on the dark theme. */
+/* One family for every nav glyph: 24-viewBox outline svgs, 1.8 stroke, 20px box. The bar keeps
+   a dark slate in both themes (#708090 light, #525252 dark) and its text is hardcoded white, so
+   the glyphs are white too - and opt out of the global --image-filter (app.vue's svg.icon rule),
+   which would otherwise flip them back to black on the dark theme. */
 svg.icon {
   width: 20px;
   height: 20px;
-  color: #000;
+  color: #fff;
+  filter: none;
 }
 /* The chevron stands alone with no label, so it gets more of the bar's height than the glyphs above text. */
 svg.icon.back {
@@ -237,6 +240,13 @@ svg.icon.back {
   margin: auto;
   padding: 4px;
   max-height: 20px;
+}
+/* Electron indicator: a status marker, not a button - no label and no hover box, so it keeps
+   the standalone 32px footprint the old <img> had, centered on the bar */
+.iconbox-static {
+  display: flex;
+  align-items: center;
+  color: #fff;
 }
 .icontext {
   font-size: smaller;

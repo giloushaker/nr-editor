@@ -84,7 +84,7 @@
         </div>
       </template>
     </SplitView>
-    <Teleport to="#titlebar-content" v-if="has_unsaved_changes && route_is_index">
+    <Teleport to="#titlebar-content" v-if="has_unsaved_changes && page_active && $route.name == 'index'">
       <template v-if="has_unsaved_changes">
         <button class="bouton save ml-10px !w-100px" @click="saveAll">Save All</button>
       </template>
@@ -136,6 +136,9 @@ export default defineComponent({
       isNarrow: false,
       queries: {} as Record<string, string>,
       narrowQuery: null as MediaQueryList | null,
+      // See pages/catalogue.vue: teleported titlebar nodes survive KeepAlive deactivation,
+      // so the Teleport has to be unmounted from the deactivated hook.
+      page_active: true,
       onNarrowChange: null as ((e: MediaQueryListEvent) => void) | null,
     };
   },
@@ -167,9 +170,11 @@ export default defineComponent({
     }
   },
   activated() {
+    this.page_active = true;
     window.addEventListener("beforeunload", this.beforeUnload);
   },
   deactivated() {
+    this.page_active = false;
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   computed: {
