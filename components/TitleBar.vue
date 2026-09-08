@@ -16,7 +16,7 @@
         :title="`New Recruit - Editor v${version}`"
       >
         <h1 class="flex titletext">
-          <img class="logo" src="/assets/icons/logo-menu.svg" />
+          <img class="logo" src="/assets/favicon.ico" />
           <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
@@ -153,7 +153,7 @@ export default {
   width: 100%;
   height: 50px;
   background-color: var(--titleBarColor, #708090);
-  color: #fff;
+  color: #c0c0c0;
   padding: 8px;
   box-sizing: border-box;
   z-index: 2;
