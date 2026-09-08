@@ -192,9 +192,6 @@ export default defineComponent({
       return true;
     },
   },
-  mounted() {
-    this.fields = deconstruct_affects_query(this.item.affects);
-  },
   computed: {
     scope: {
       get() {
@@ -335,6 +332,13 @@ export default defineComponent({
     },
   },
   watch: {
+    // Component instance is reused when clicking between modifiers; re-sync local fields from the new item.
+    item: {
+      immediate: true,
+      handler() {
+        this.fields = deconstruct_affects_query(this.item.affects);
+      },
+    },
     fields: {
       deep: true,
       handler(fields) {
@@ -342,12 +346,14 @@ export default defineComponent({
           this.fields.forces = false
         }
         const built = construct_affects_query(fields);
+        // Selecting another modifier re-syncs `fields` from its affects; that is not an edit, so
+        // don't write (and normalize) the query back. Only a real change to the fields differs here.
+        if (construct_affects_query(deconstruct_affects_query(this.item.affects)) === built) return;
         if (!built || built === "self") {
           delete this.item.affects;
         } else {
           this.item.affects = built;
         }
-        console.log(built);
       },
     },
   },
