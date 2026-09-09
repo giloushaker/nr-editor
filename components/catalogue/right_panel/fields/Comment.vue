@@ -19,10 +19,10 @@ export default {
   computed: {
     comment: {
       get(): string {
-        return (Array.isArray(this.item.comment) ? this.item.comment[0] : this.item.comment) || "";
+        return String(this.item.comment ?? "");
       },
       set(str: string) {
-        this.item.comment = str ? str : undefined;
+        this.item.comment = String(str ?? "").trim();
       },
     },
   },
