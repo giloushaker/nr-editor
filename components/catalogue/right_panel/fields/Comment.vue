@@ -22,7 +22,10 @@ export default {
         return String(this.item.comment ?? "");
       },
       set(str: string) {
-        this.item.comment = String(str ?? "");
+        if (str.trim() === "") delete this.item.comment;
+        else {
+          this.item.comment = String(str ?? ""); 
+        }
       },
     },
   },
