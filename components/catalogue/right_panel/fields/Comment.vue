@@ -1,7 +1,7 @@
 <template>
   <fieldset>
     <legend>Comment</legend>
-    <UtilEditableDiv v-model="comment" />
+    <UtilEditableDiv v-model="comment" @blur="comment = comment.trim()" />
   </fieldset>
 </template>
 
@@ -22,7 +22,7 @@ export default {
         return String(this.item.comment ?? "");
       },
       set(str: string) {
-        this.item.comment = String(str ?? "").trim();
+        this.item.comment = String(str ?? "");
       },
     },
   },
