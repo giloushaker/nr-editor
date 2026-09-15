@@ -16,7 +16,7 @@
         :title="`New Recruit - Editor v${version}`"
       >
         <h1 class="flex titletext">
-          <img class="logo" src="/assets/favicon.ico" />
+          <img class="logo" src="/assets/icons/logo-menu.svg" />
           <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
