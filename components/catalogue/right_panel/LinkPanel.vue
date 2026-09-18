@@ -12,6 +12,7 @@
   />
 
   <CatalogueRightPanelFieldsCosts v-if="isEntry" :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsCosts field="displayCosts" v-if="isEntry" :item="item" :catalogue="catalogue" class="section" />
   <CatalogueRightPanelFieldsCreation v-if="isEntry" :item="item" :catalogue="catalogue" class="section" />
 
   <CatalogueRightPanelFieldsBooleans :item="item" class="section" v-if="type != 'catalogue'">

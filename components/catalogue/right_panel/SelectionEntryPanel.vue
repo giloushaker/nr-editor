@@ -8,6 +8,7 @@
   <CatalogueRightPanelFieldsCreation :item="item" class="section" />
 
   <CatalogueRightPanelFieldsCosts :item="item" :catalogue="catalogue" class="section" />
+  <CatalogueRightPanelFieldsCosts field="displayCosts" :item="item" :catalogue="catalogue" class="section" />
 
   <CatalogueRightPanelFieldsBooleans :item="item" class="section"> Entry </CatalogueRightPanelFieldsBooleans>
 
