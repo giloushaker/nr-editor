@@ -1783,7 +1783,7 @@ export const useEditorStore = defineStore("editor", {
           // leaves it in the indexes with nothing pointing at it.
           if (change.inserted) {
             if (dir === "to") onAddEntry(change.inserted, catalogue, entry, this.get_system(sysId));
-            else onRemoveEntry(change.inserted);
+            else onRemoveEntry(change.inserted, undefined, catalogue);
           }
           if (REFERENCE_FIELDS.has(change.key)) catalogue.reindexReferences(entry);
         }

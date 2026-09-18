@@ -490,8 +490,11 @@ export function removeEntry(entry: EditorBase) {
   }
 }
 
-export function onRemoveEntry(removed: EditorBase, manager?: BSCatalogueManager) {
-  const catalogue = removed.catalogue;
+export function onRemoveEntry(removed: EditorBase, manager?: BSCatalogueManager, fallback?: Catalogue) {
+  // An inserted array (edit_node's `characteristics`) carries no catalogue of its own: the
+  // caller says which one, or nothing here can be unindexed.
+  const catalogue = removed.catalogue ?? fallback;
+  if (!catalogue) return;
   forEachEntryRecursive(removed, (entry) => {
     catalogue.removeFromIndex(entry);
     if (entry.isLink && entry.isLink()) {

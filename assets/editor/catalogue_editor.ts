@@ -344,12 +344,13 @@ class CatalogueEditor extends Catalogue {
     this.removeErrors(cur);
     this.unindexReferences(cur);
     // Whatever pointed here now dangles: drop the resolved target and let the diagnostics
-    // report it. Iterated over a copy, since revalidating may reindex.
-    for (const ref of [...cur.refs]) {
+    // report it. Iterated over a copy, since revalidating may reindex. A plain object handed
+    // in by edit_node's undo (a characteristic) has no refs at all.
+    for (const ref of [...(cur.refs ?? [])]) {
       delete (ref as Partial<Link>).target;
       ref.catalogue?.refreshErrors(ref);
     }
-    for (const ref of [...cur.other_refs]) {
+    for (const ref of [...(cur.other_refs ?? [])]) {
       ref.catalogue?.refreshErrors(ref, true);
     }
   }
@@ -534,7 +535,11 @@ class CatalogueEditor extends Catalogue {
   }
 
   updateLink(link: Link & EditorBase) {
-    const target = resolveId(link.targetId, this.getIndexes());
+    const found = resolveId(link.targetId, this.getIndexes());
+    // A link is never a valid target: pointing at one (or at itself, when the ids collide) makes
+    // every delegating method on Link recurse forever. The shared loader refuses it too; the
+    // bad-link-target diagnostic reports it.
+    const target = found?.isLink() ? undefined : found;
     // Written through Base, where `target` is already declared optional. Link narrows it to
     // always-present because everywhere but here a link has been resolved already -- this is the
     // code that resolves it, so it is the one place that legitimately stores a miss.
