@@ -1,0 +1,28 @@
+Weapon	Range	S	AP	Type
+Autocannon	48"	7	4	Heavy 2
+Boltgun	24"	4	5	Rapid Fire
+Bolt pistol	12"	4	5	Pistol
+Flamer	Template	4	5	Assault 1
+Frag grenade	8"	3	-	Assault 1, Blast
+Grenade launcher				
+- Frag grenade	24"	3	6	Assault 1, Blast
+- Krak grenade	24"	6	4	Assault 1
+Heavy bolter	36"	5	4	Heavy 3
+Heavy stubber	36"	4	6	Heavy 3
+Hellstrike missile	72"	8	3	Ordnance 1, One use only
+Hot-shot lasgun	18"	3	3	Rapid Fire
+Hot-shot laspistol	6"	3	3	Pistol
+Hot-shot volley gun	24"	4	3	Salvo 2/4
+Krak grenade	8"	6	4	Assault 1
+Lascannon	48"	9	2	Heavy 1
+Meltagun	12"	8	1	Assault 1, Melta
+Multi-laser	36"	6	6	Heavy 3
+Multiple rocket pod	24"	4	6	Heavy 1, Large Blast
+Plasma gun	24"	7	2	Rapid Fire, Gets Hot
+Plasma pistol	12"	7	2	Pistol, Gets Hot
+Storm bolter	24"	4	5	Assault 2
+Taurox battle cannon	48"	7	4	Heavy 1, Blast
+Taurox gatling cannon	24"	4	-	Heavy 10
+Taurox missile launcher				
+- Frag missile	48"	4	6	Heavy 2, Blast
+- Krak missile	48"	8	3	Heavy 2

@@ -143,7 +143,7 @@ export default defineNuxtConfig({
   // reorders rules -- that pushed rules above `@use`, which sass rejects. Nothing here uses @apply /
   // @screen / theme(), so the transform only ever had a downside. Class scanning is unaffected.
   windicss: { transformCSS: false },
-  css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss"],
+  css: ["~/shared_components/css/vars.scss", "~/shared_components/css/style.scss", "~/features/ui/tokens.scss"],
   vite: {
     plugins: [commonjs()],
     build: {

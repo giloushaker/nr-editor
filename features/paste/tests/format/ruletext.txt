@@ -1,0 +1,12 @@
+The bearer and all Legionnaire models in his unit have the Feel No Pain special rule.
+Furthermore, whenever an enemy unit fails a Fear, Pinning or Morale check within 12" of
+the bearer, one randomly determined model in that unit is immediately removed as a
+casualty with no saves of any kind allowed (though Look Out, Sir rolls can taken as
+normal). For each model slain in this manner, the bearer's unit receives a +1 modifier to
+their Feel No Pain rolls (to a maximum of 2+) until the end of the Player turn.
+
+===
+
+The bearer and all Legionnaire models in his unit have the Feel No Pain special rule.
+Furthermore, whenever an enemy unit fails a Fear, Pinning or Morale check within 12" of the bearer, one randomly determined model in that unit is immediately removed as a casualty with no saves of any kind allowed (though Look Out, Sir rolls can taken as normal). 
+For each model slain in this manner, the bearer's unit receives a +1 modifier to their Feel No Pain rolls (to a maximum of 2+) until the end of the Player turn.

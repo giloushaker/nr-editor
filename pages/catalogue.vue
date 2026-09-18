@@ -22,6 +22,14 @@
       </SplitView>
     </template>
 
+    <!-- Text pasted over the tree: read it as stat lines of a profile type, under what was selected. -->
+    <NrModal :open="!!(cat && store.textPaste)" :title="`Paste into ${pasteTargetName}`" width="1000px" @close="store.textPaste = null">
+      <div class="textpaste">
+        <PasteBox v-if="store.textPaste && pasteTypes.length" :type="pasteType" :types="pasteTypes" :existing-names="pasteExisting" :initial="store.textPaste.text" allow-rule allow-entries @accept="acceptTextPaste" @rule="acceptTextRule" @lines="acceptTextLines" />
+        <p v-else>No profile types yet.</p>
+      </div>
+    </NrModal>
+
     <Teleport to="#titlebar-content" v-if="cat && page_active && route_is_catalogue">
       <span class="ml-10px">
         Editing
@@ -78,6 +86,13 @@ import { showMessageBox, closeWindow } from "~/electron/node_helpers";
 import { getNextRevision } from "~/assets/shared/battlescribe/github";
 import { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
+import PasteBox from "~/features/paste/PasteBox.vue";
+import { NrModal } from "~/features/ui";
+import type { PasteSuccess } from "~/features/paste/model";
+import { pasteIntoTree, pasteLinesIntoTree, pasteRuleIntoTree } from "~/features/paste/tree";
+import type { PastedLine } from "~/features/paste/text";
+import type { SetupProfileType } from "~/features/setup/model";
+import { toProfileType } from "~/features/setup/bs_adapter";
 
 /**
  * Shortest gap between two yields while loading a system, and how much slower than the yield
@@ -94,7 +109,7 @@ const LOAD_YIELD_MIN_MS = 100;
 const LOAD_YIELD_RATIO = 5;
 
 export default defineComponent({
-  components: { LeftPanel },
+  components: { LeftPanel, PasteBox, NrModal },
   data() {
     return {
       error: null as string | null,
@@ -157,6 +172,26 @@ export default defineComponent({
   },
   beforeRouteEnter() {},
   computed: {
+    pasteTypes() {
+      const cat = this.cat as Catalogue | null;
+      if (!cat || !this.store.textPaste) return [];
+      return [...cat.iterateProfileTypes()].map((t) => toProfileType(t as any)).filter((t) => t.columns.length);
+    },
+    /** The type the paste most likely is: what the target already has a line of, a model's stat line for a model, else the first. */
+    pasteType(): SetupProfileType | undefined {
+      const types = this.pasteTypes as SetupProfileType[];
+      const t = this.store.textPaste?.target as any;
+      const has = t?.profiles?.[0]?.typeId;
+      return types.find((x) => x.id === has) ?? (t?.type === "model" ? types.find((x) => x.kind === "model") : undefined) ?? types[0];
+    },
+    pasteExisting(): string[] {
+      const cat = this.cat as Catalogue | null;
+      return cat ? [cat, ...(cat.imports || [])].flatMap((c) => (c.sharedSelectionEntries || []).map((e) => e.name)) : [];
+    },
+    pasteTargetName(): string {
+      const t = this.store.textPaste?.target as any;
+      return t?.isCatalogue?.() ? `${t.name} (shared)` : t?.getName?.() ?? t?.name ?? "";
+    },
     has_unsaved_changes() {
       const changes = this.store.unsavedChanges;
       for (const key in changes) {
@@ -232,6 +267,24 @@ export default defineComponent({
     },
   },
   methods: {
+    async acceptTextRule(name: string, text: string) {
+      const p = this.store.textPaste;
+      if (!p || !this.cat) return;
+      await pasteRuleIntoTree(this.store as any, this.cat, p.target, name, text);
+      this.store.textPaste = null;
+    },
+    async acceptTextLines(lines: PastedLine[]) {
+      const p = this.store.textPaste;
+      if (!p || !this.cat) return;
+      await pasteLinesIntoTree(this.store as any, this.cat, p.target, lines);
+      this.store.textPaste = null;
+    },
+    async acceptTextPaste(r: PasteSuccess) {
+      const p = this.store.textPaste;
+      if (!p || !this.cat) return;
+      await pasteIntoTree(this.store as any, this.cat, p.target, r);
+      this.store.textPaste = null;
+    },
     file_changed(catalogue: Catalogue) {
       return this.store.get_catalogue_state(catalogue).isChangedOnDisk;
     },
@@ -397,6 +450,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* The popup box has no height cap of its own: a long table scrolls here. */
+.textpaste :deep(.box) {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
 .save {
   width: 100px;
 }

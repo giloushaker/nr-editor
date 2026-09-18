@@ -214,10 +214,15 @@ export default defineComponent({
       }
     },
     async paste(e: ClipboardEvent) {
-      if (this.should_capture_paste(e)) {
-        e.preventDefault();
-        await this.store.paste(e);
+      if (!this.should_capture_paste(e)) return;
+      e.preventDefault();
+      // Copied nodes are JSON. Anything else is text from a book: read it as stat lines.
+      const text = e.clipboardData?.getData("text/plain") ?? "";
+      if (text.trim() && !/^\s*[[{]/.test(text)) {
+        this.store.textPaste = { text, target: this.store.get_selections()[0] ?? this.catalogue };
+        return;
       }
+      await this.store.paste(e);
     },
     async keydown(e: KeyboardEvent) {
       if (this.$route.name !== "catalogue") return;

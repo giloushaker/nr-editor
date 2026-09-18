@@ -1,0 +1,117 @@
+/*
+ * Design tokens for the feature pages (features/*). Independent of the appearance settings the
+ * catalogue editor uses: those are user-tunable per field, these are a fixed palette with a light
+ * and a dark face, switched by the same html.dark class appearance.ts sets.
+ *
+ * Roles, not colours: a component says "line" or "accent", never a hex.
+ */
+:root {
+  --nr-font: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --nr-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  --nr-bg: #f4f3ef; /* page */
+  --nr-paper: #fbfaf7; /* panels, list rows */
+  --nr-surface: #ffffff; /* cards, the live step */
+  --nr-input: #ffffff; /* text inputs: the lightest thing on the page in both faces */
+  --nr-fill: #e4e2dc; /* neutral chips */
+  --nr-line: #dedcd5;
+  --nr-line-soft: #ebe9e3;
+
+  --nr-ink: #1c1b18;
+  --nr-muted: #6b6963;
+  --nr-faint: #a8a59d;
+
+  --nr-accent: #1f7a5c; /* the one action colour: primary buttons, live step, links on hover */
+  --nr-accent-ink: #16604a;
+  --nr-accent-soft: #d9efe5;
+
+  --nr-warn: #8a4b08; /* to-dos, stubs, unread lines */
+  --nr-warn-soft: #fbe9d0;
+  --nr-warn-line: #e6b979;
+
+  --nr-info: #2a4f8a; /* a catalogue's overrides on shared data */
+  --nr-info-soft: #e3ecf7;
+
+  --nr-danger: #8a2408;
+  --nr-danger-soft: #f7d6d0;
+
+  --nr-radius: 6px;
+  --nr-radius-lg: 8px;
+  --nr-shadow: 0 8px 24px rgba(28, 27, 24, 0.14);
+}
+
+html.dark {
+  --nr-bg: #1c1b18;
+  --nr-paper: #242320;
+  --nr-surface: #2b2a26;
+  --nr-input: #35342f; /* lighter than its container, so it reads as a field */
+  --nr-fill: #403f39;
+  --nr-line: #494840;
+  --nr-line-soft: #3a3934;
+
+  --nr-ink: #ecebe6;
+  --nr-muted: #a8a59d;
+  --nr-faint: #6b6963;
+
+  --nr-accent: #3fa57f;
+  --nr-accent-ink: #9fdcc3;
+  --nr-accent-soft: #1f3a30;
+
+  --nr-warn: #e0a15a;
+  --nr-warn-soft: #3d2c14;
+  --nr-warn-line: #6b4a1c;
+
+  --nr-info: #8fb3e8;
+  --nr-info-soft: #1f2c40;
+
+  --nr-danger: #e58a78;
+  --nr-danger-soft: #3d1e18;
+
+  --nr-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* One class on a feature page's root: everything under it uses the tokens, and the app's global
+   input/button rules (blue hover border, brightness filter) stop applying. */
+/* The Tree / Cards switch: first thing after the back chevron on every editor page. */
+#titlebar-content .swap {
+  margin-left: 6px;
+  margin-right: 4px;
+  padding: 1px 8px;
+  font-size: 12px;
+}
+
+.nr-feature {
+  font-family: var(--nr-font);
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--nr-ink);
+  background: var(--nr-bg);
+
+  input,
+  select,
+  button,
+  textarea {
+    font: inherit;
+    color: inherit;
+    box-shadow: none;
+  }
+  input:hover,
+  button:hover,
+  select:hover {
+    filter: none !important;
+    border-color: inherit;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  code {
+    font-family: var(--nr-mono);
+    font-size: 0.8em;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--nr-fill);
+    color: var(--nr-muted);
+  }
+}

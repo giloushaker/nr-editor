@@ -125,6 +125,8 @@ export interface IEditorStore {
   undoStack: { type: string; undo: () => unknown; redo: () => unknown }[];
   undoStackPos: number;
   clipboard: Array<EditorBase | Record<string, any> | string>;
+  /** Plain text pasted over the tree: the catalogue page shows the stat-line reader for it. */
+  textPaste: { text: string; target: EditorBase | Catalogue } | null;
 
   mode: "edit" | "references";
   clipboardmode: "json" | "none";
@@ -230,6 +232,7 @@ export const useEditorStore = defineStore("editor", {
     historyStackPos: 0,
 
     clipboard: [],
+    textPaste: null,
 
     mode: "edit",
     clipboardmode: "json",
