@@ -215,7 +215,9 @@ applies on top of the catalogues at load, to fix data before BSData catches up. 
 job is to fold the good ones into the real data and tell New Recruit which ones to drop.
 1. Home → the ✓ icon beside a system, or the ✓ in the titlebar while editing → `/patch/:id`
    (loads every catalogue first, since an entry can target any file)
-2. Open patch folder… (or files…) → one row per entry, grouped file › unit, with its `$note`,
+2. The patch New Recruit currently ships is downloaded on open (`GET /api/system/patch/:bsid` on
+   nuxt-nr); Open patch folder… (or files…) reviews a local, unpublished one instead → one row
+   per entry, grouped file › unit, with its `$note`,
    operators, and a status: applies / stale (`$expect` or a `$patch*` target no longer
    matches) / already in data / no match
 3. Select a row → human summary (cost, rename, word-level text diff, modifier/condition lines
@@ -228,6 +230,8 @@ job is to fold the good ones into the real data and tell New Recruit which ones 
   ([patch_review.ts](assets/editor/patch_review.ts)).
 - ⚠ Named `patch-review.json`, not `patch.review.json`: New Recruit loads every
   `patch.*.json` as a patch part, so the obvious name would be merged into the patch.
+- ⚠ A downloaded patch has no folder: its decisions live in local storage per system, and reach
+  New Recruit only via the Download button.
 - ⚠ Web without a folder handle (files picked, or Firefox/Safari) cannot write beside the
   patch: decisions only survive via the Download button.
 - ⚠ Pushed children go through `add()`, which merges `get_initial_object` defaults and

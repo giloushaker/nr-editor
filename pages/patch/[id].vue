@@ -13,6 +13,9 @@
     <Loading v-if="loading" :progress="progress" :progress_max="progressMax" :progress_msg="progressMsg" />
     <template v-else>
       <div class="bar">
+        <button class="bouton" :disabled="busy" title="Download this system's current patch from New Recruit" @click="fetchPatch()">
+          Reload from New Recruit
+        </button>
         <button class="bouton" :disabled="!canPickFolder" :title="folderTitle" @click="openFolder">Open patch folder…</button>
         <button class="bouton" title="Pick patch.json and its patch.*.json parts" @click="openFiles">Open patch files…</button>
         <input ref="fileInput" class="hidden" type="file" multiple accept=".json,application/json" @change="filesPicked" />
@@ -21,17 +24,20 @@
         <template v-if="files.length">
           <span v-if="reviewError" class="warn small">{{ reviewError }}</span>
           <span v-else-if="reviewPath" class="muted small" :title="reviewPath">Decisions saved to {{ REVIEW_FILE }}</span>
+          <span v-else-if="reviewKey" class="muted small">Decisions saved in this {{ isElectron ? "app" : "browser" }}</span>
           <span v-else class="muted small">This browser cannot write next to picked files.</span>
-          <button v-if="!reviewPath || reviewError" class="bouton" @click="downloadReview">Download {{ REVIEW_FILE }}</button>
+          <button v-if="!reviewPath || reviewError" class="bouton" title="To send to New Recruit" @click="downloadReview">Download {{ REVIEW_FILE }}</button>
         </template>
       </div>
 
       <div v-if="error" class="issue">{{ error }}</div>
 
       <div v-if="!files.length" class="empty">
+        <p v-if="fetching" class="muted">Downloading the patch from New Recruit…</p>
         <p>
           Review the patch New Recruit applies on top of this system's data: the <code>patch.json</code> and <code>patch.*.json</code>
-          files in its <code>data/settings/&lt;system&gt;/</code> folder.
+          files in its <code>data/settings/&lt;system&gt;/</code> folder. It is downloaded from New Recruit when this page opens; open a
+          local folder instead to review a patch that is not published yet.
         </p>
         <p class="muted">
           Approving an entry makes the same change here as an ordinary unsaved edit: undo it with Ctrl+Z, save it like any other.
@@ -161,6 +167,10 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
 
 const NO_MATCH_FILE = "Matches nothing in this system";
 
+const NR_URL = "https://www.newrecruit.eu";
+/** Decisions on a downloaded patch have no folder to go to, so they are kept per system in local storage. */
+const REVIEW_STORAGE = "patch-review:";
+
 interface Group {
   name: string;
   icon?: string;
@@ -198,6 +208,9 @@ export default defineComponent({
       rows: [] as ReviewRow[],
       review: { version: 1, decisions: {} } as ReviewFile,
       reviewPath: "",
+      /** Local storage key the decisions go to when the patch was downloaded rather than opened from disk. */
+      reviewKey: "",
+      fetching: false,
       reviewError: "",
       selectedKey: "",
       filter: "all" as Filter,
@@ -221,6 +234,7 @@ export default defineComponent({
     } finally {
       this.loading = false;
     }
+    if (this.system) await this.fetchPatch(true);
   },
   mounted() {
     window.addEventListener("beforeunload", this.beforeUnload);
@@ -239,6 +253,9 @@ export default defineComponent({
     window.removeEventListener("beforeunload", this.beforeUnload);
   },
   computed: {
+    isElectron(): boolean {
+      return Boolean(globalThis.electron);
+    },
     canPickFolder(): boolean {
       return Boolean(globalThis.electron) || supported();
     },
@@ -364,7 +381,7 @@ export default defineComponent({
         });
       });
     },
-    load(parts: Array<{ name: string; text: string }>, reviewPath: string) {
+    load(parts: Array<{ name: string; text: string }>, reviewPath: string, reviewKey = "") {
       this.error = "";
       const patches: Array<{ name: string; patch: PatchIndex }> = [];
       let review: ReviewFile = { version: 1, decisions: {} };
@@ -393,9 +410,36 @@ export default defineComponent({
       this.files = patches.map((p) => p.name);
       this.review = review;
       this.reviewPath = reviewPath;
+      this.reviewKey = reviewKey;
       this.reviewError = "";
       this.compute();
       this.selectedKey = this.rows.find((r) => !this.decisionOf(r))?.info.key ?? this.rows[0]?.info.key ?? "";
+    },
+    /** Loads the patch New Recruit currently ships for this system; `quiet` when the page opens, where no patch is not an error. */
+    async fetchPatch(quiet = false) {
+      this.fetching = true;
+      try {
+        const res = await fetch(`${NR_URL}/api/system/patch/${encodeURIComponent(this.systemId)}`);
+        if (!res.ok) throw new Error(res.status === 404 ? "New Recruit does not know this system" : `HTTP ${res.status}`);
+        const { files } = (await res.json()) as { files: Array<{ name: string; text: string }> };
+        if (!files.length) {
+          if (!quiet) this.error = "New Recruit has no patch for this system.";
+          return;
+        }
+        const key = `${REVIEW_STORAGE}${this.systemId}`;
+        let stored: string | null = null;
+        try {
+          stored = localStorage.getItem(key);
+        } catch {
+          // Storage blocked: decisions then only survive via the Download button.
+        }
+        this.load(stored ? [...files, { name: REVIEW_FILE, text: stored }] : files, "", key);
+      } catch (e) {
+        if (!quiet || !this.files.length) this.error = `Could not download the patch from New Recruit: ${(e as Error).message}`;
+        console.error(e);
+      } finally {
+        this.fetching = false;
+      }
     },
     async readParts(paths: string[]): Promise<Array<{ name: string; text: string }>> {
       const parts = [];
@@ -457,6 +501,14 @@ export default defineComponent({
       if (parts.length) this.load(parts, "");
     },
     async saveReview() {
+      if (!this.reviewPath && this.reviewKey) {
+        try {
+          localStorage.setItem(this.reviewKey, serializeReview(this.review));
+          this.reviewError = "";
+        } catch (e) {
+          this.reviewError = `Could not keep the decisions: ${(e as Error).message}`;
+        }
+      }
       if (!this.reviewPath) return;
       try {
         await writeFile(this.reviewPath, serializeReview(this.review));
