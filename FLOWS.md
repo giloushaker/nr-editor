@@ -209,6 +209,38 @@ below:
 - ⚠ Scripts are the only bulk-edit mechanism (C1), and they are gated behind
   being a programmer.
 
+**C5. Review a New Recruit patch**
+New Recruit ships `data/settings/<system>/patch.json` (+ `patch.*.json` parts): overrides it
+applies on top of the catalogues at load, to fix data before BSData catches up. The author's
+job is to fold the good ones into the real data and tell New Recruit which ones to drop.
+1. Home → the ✓ icon beside a system, or the ✓ in the titlebar while editing → `/patch/:id`
+   (loads every catalogue first, since an entry can target any file)
+2. Open patch folder… (or files…) → one row per entry, grouped file › unit, with its `$note`,
+   operators, and a status: applies / stale (`$expect` or a `$patch*` target no longer
+   matches) / already in data / no match
+3. Select a row → human summary (cost, rename, word-level text diff, modifier/condition lines
+   as the tree labels them) + folded before/after JSON + Go to
+4. Approve (replays the entry through `set_field`/`add`/`remove`, one undo entry, file goes
+   unsaved) or Reject (decision only) — per row or per file/unit for pending rows
+5. Save All as usual (B4); decisions are written to `patch-review.json` beside the patch
+- ✓ The preview is the real `patchJson` run on a copy of each target, so it cannot disagree
+  with what New Recruit does; the diff is recovered by tagging the copy back to live nodes
+  ([patch_review.ts](assets/editor/patch_review.ts)).
+- ⚠ Named `patch-review.json`, not `patch.review.json`: New Recruit loads every
+  `patch.*.json` as a patch part, so the obvious name would be merged into the patch.
+- ⚠ Web without a folder handle (files picked, or Firefox/Safari) cannot write beside the
+  patch: decisions only survive via the Download button.
+- ⚠ Pushed children go through `add()`, which merges `get_initial_object` defaults and
+  scrambles taken ids — a pushed categoryLink with no `name` gets "New Category Link", a
+  pushed condition with no `value` gets 1. What lands can differ from what New Recruit applied.
+- ⚠ An entry is previewed in isolation. Two entries hitting the same object (an `id` entry
+  and a `name` entry) are applied by New Recruit in field order; here each sees the data
+  without the other.
+- ? Approving does not remove the entry from the patch — that is a commit in nuxt-nr. Does
+  "approved + already in data" read clearly enough as "now delete it from patch.json"?
+- → B4, F1 (Ctrl+Z on the catalogue page undoes an approval; the row then shows ✓! until
+  re-approved)
+
 ---
 
 ## D. The same work, driven by an AI agent (MCP)
