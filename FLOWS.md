@@ -240,8 +240,10 @@ job is to fold the good ones into the real data and tell New Recruit which ones 
 - ⚠ An entry is previewed in isolation. Two entries hitting the same object (an `id` entry
   and a `name` entry) are applied by New Recruit in field order; here each sees the data
   without the other.
-- ? Approving does not remove the entry from the patch — that is a commit in nuxt-nr. Does
-  "approved + already in data" read clearly enough as "now delete it from patch.json"?
+- ✓ Approving does not remove the entry from the patch, and needs not: once BSData publishes the
+  fix and New Recruit imports it, `npm run patch:prune -- <system>` in nuxt-nr drops every entry
+  the served data already does, and that goes out as a nuxt-nr commit.
+- ? Decisions still stay local (a rejection is not seen by New Recruit). Worth sending them?
 - → B4, F1 (Ctrl+Z on the catalogue page undoes an approval; the row then shows ✓! until
   re-approved)
 
