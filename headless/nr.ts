@@ -12,23 +12,27 @@
  * Global: --system <folder> (else $NR_SYSTEM, else the nearest folder up from here holding a
  * .gst / .gamesystem.json), --max-chars n (result cap, default 30000).
  *
- * Read-only: tools that write files are not offered, and nr_eval runs against memory that is
- * thrown away when the process exits. The one write is `reformat --write`.
+ * Writing: eval, script_run and create_catalogue change the loaded data; nothing reaches the disk
+ * unless --save is given (on the command, or on `batch` for all its lines at once). A save is
+ * refused when the edit created new error diagnostics (--force overrides), and bumps each file's
+ * revision once between two commits (--revision auto|yes|no). create_system writes at once.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname } from "node:path";
-import { findSystemFolder, loadSystem, store } from "./env";
+import { basename } from "node:path";
+import { findSystemFolder, flushWrites, loadSystem, store } from "./env";
 import { compactStringify } from "~/assets/shared/battlescribe/compact_json";
 import { rootToJson } from "~/assets/shared/battlescribe/bs_main";
 
-const { TOOLS } = await import("~/assets/editor/mcp_tools");
+const { TOOLS, errorSnapshot } = await import("~/assets/editor/mcp_tools");
+type Snapshot = ReturnType<typeof errorSnapshot>;
 type Tool = (typeof TOOLS)[number];
 
 /**
- * What a headless session may run. Not offered: the ones that write files or create them
- * (nr_save, nr_create_*, nr_script_write/run), and the ones about choosing a system, which
- * --system does here (nr_systems, nr_load_system, nr_unload_system).
+ * What a headless session may run. Not offered: nr_save (--save does it, behind the diagnostics
+ * guard), nr_script_write (a script file is the user's to keep, not a side effect), and the ones
+ * about choosing a system, which --system does here (nr_systems, nr_load_system, nr_unload_system).
  */
 const OFFERED = new Set([
   "nr_docs",
@@ -42,7 +46,18 @@ const OFFERED = new Set([
   "nr_conventions",
   "nr_diff",
   "nr_scripts",
+  "nr_script_run",
+  "nr_create_catalogue",
+  "nr_create_system",
 ]);
+
+/**
+ * Tools that take the system as an argument: here there is exactly one, so it is filled in.
+ * nr_create_catalogue finds it among the working folder's subfolders, i.e. by folder name; the
+ * script tools take the open system when given nothing.
+ */
+const TAKES_SYSTEM = new Set(["nr_scripts", "nr_script_run", "nr_create_catalogue"]);
+let systemFolder: string | undefined;
 
 function toolNamed(name: string): Tool {
   const wanted = name.startsWith("nr_") ? name : `nr_${name}`;
@@ -79,7 +94,10 @@ function coerce(raw: string | true, type: string | undefined, key: string): unkn
 function parseArgs(tool: Tool, argv: string[]): Record<string, unknown> {
   const schema = tool.inputSchema as Schema;
   const props = schema.properties ?? {};
-  const order = [...(schema.required ?? []), ...Object.keys(props).filter((k) => !schema.required?.includes(k))];
+  // The system is filled in by runTool, so a positional never lands on it.
+  const order = [...(schema.required ?? []), ...Object.keys(props).filter((k) => !schema.required?.includes(k))].filter(
+    (k) => !(k === "system" && TAKES_SYSTEM.has(tool.name)),
+  );
   const args: Record<string, unknown> = {};
   const positional: string[] = [];
   for (let i = 0; i < argv.length; i++) {
@@ -113,34 +131,117 @@ function render(value: unknown): string {
   return `${text.slice(0, maxChars)}\n… [truncated: the result was ${text.length} chars. Narrow it -- limit in find, depth/exclude in json() and tree(), fewer fields -- or raise --max-chars.]`;
 }
 
-/** Edits an eval made live only in this process; saying so beats letting them pass for saved. */
-function discardedEdits(): string[] {
-  return Object.values(store.gameSystems)
-    .flatMap((system) => system.getAllLoadedCatalogues())
-    .filter((catalogue) => store.get_catalogue_state(catalogue)?.unsaved)
-    .map((catalogue) => catalogue.name);
+function loadedCatalogues() {
+  return Object.values(store.gameSystems).flatMap((system) => system.getAllLoadedCatalogues());
+}
+
+/** Catalogues edited in this process and not written yet. */
+function unsavedCatalogues() {
+  return loadedCatalogues().filter((catalogue) => store.get_catalogue_state(catalogue)?.unsaved);
 }
 
 /** Read before the briefing, which is written for the browser host. */
 const HEADLESS_NOTE = `HEADLESS -- read this before the briefing below, which was written for the editor window.
 There is no window and no person watching it. The system is the --system folder, loaded whole
 at start: skip nr_systems / nr_load_system. Every tool is "nr <name without nr_>" on the command
-line ("nr find ...", "nr read <id>"); several on one load with "nr batch". Nothing is saved:
-nr_save does not exist here, and what nr_eval writes lives only until the process exits -- use
-it to ask questions, or to try an edit and read the diagnostics delta, not to change files.`;
+line ("nr find ...", "nr read <id>"); several on one load with "nr batch". There is no nr_save:
+an edit (nr_eval, nr_script_run, nr_create_catalogue) is written only when the command carries
+--save, and the save is refused if the edit created new error diagnostics. Without --save, it is
+a dry run: try the edit, read the diagnostics delta, then run it again with --save.`;
 
 async function runTool(name: string, argv: string[]): Promise<string> {
   const tool = toolNamed(name);
-  let result = await tool.execute(parseArgs(tool, argv));
+  const args = parseArgs(tool, argv);
+  if (tool.name === "nr_create_catalogue" && args.system === undefined && systemFolder) {
+    args.system = basename(systemFolder);
+  }
+  let result = await tool.execute(args);
   if (tool.name === "nr_docs" && result && typeof result === "object" && "briefing" in result) {
     result = { headless: HEADLESS_NOTE, ...result };
   }
-  let out = render(result);
-  const dirty = discardedEdits();
-  if (dirty.length) {
-    out += `\n[headless is read-only: edits to ${dirty.join(", ")} exist only in this process and were discarded]`;
+  return render(result);
+}
+
+/** The revision a file has in git HEAD, or undefined (not in a repository, new file, zipped). */
+function headRevision(path: string): number | undefined {
+  let text: string;
+  try {
+    text = execFileSync("git", ["show", `HEAD:./${basename(path)}`], {
+      cwd: dirname(path),
+      encoding: "utf8",
+      maxBuffer: 1 << 30,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch {
+    return undefined;
   }
-  return out;
+  if (path.endsWith(".json")) {
+    const data = JSON.parse(text);
+    return (data.gameSystem ?? data.catalogue)?.revision;
+  }
+  const found = text.match(/<(?:gameSystem|catalogue)\b[^>]*\brevision="(\d+)"/);
+  return found ? Number(found[1]) : undefined;
+}
+
+type RevisionMode = "auto" | "yes" | "no";
+
+/**
+ * Writes every catalogue the commands edited, unless they created new error diagnostics.
+ *
+ * Revision, "auto": bumped when the file's revision is still the one committed in git -- i.e.
+ * once between two commits, however many saves happen in between. The editor asks this in a
+ * dialog; there is none here. "yes" / "no" force it.
+ */
+async function save(before: Snapshot, force: boolean, revision: RevisionMode): Promise<{ text: string; refused: boolean }> {
+  const after = errorSnapshot();
+  const added = [...after].filter(([key]) => !before.has(key)).map(([, finding]) => finding);
+  const errors = added.filter((finding) => finding.severity === "error");
+  const others = added.filter((finding) => finding.severity !== "error");
+  const lines: string[] = [];
+  const show = (finding: (typeof added)[number]) =>
+    `  ${finding.severity}: ${finding.msg} [${finding.catalogue}${finding.at?.path ? ` / ${finding.at.path}` : ""}]`;
+  const edited = unsavedCatalogues();
+  if (!edited.length) return { text: "[--save: nothing was edited, nothing written]", refused: false };
+  if (errors.length && !force) {
+    lines.push(`NOT SAVED: the edit created ${errors.length} new error diagnostic(s). Fix the edit, or --force if it is meant.`);
+    lines.push(...errors.slice(0, 20).map(show));
+    if (errors.length > 20) lines.push(`  ... and ${errors.length - 20} more`);
+    return { text: lines.join("\n"), refused: true };
+  }
+  lines.push(`SAVED ${edited.length} file(s):`);
+  for (const catalogue of edited) {
+    const system = store.gameSystems[catalogue.gameSystemId ?? catalogue.id];
+    const path = catalogue.fullFilePath;
+    const wasDirty = path ? uncommitted(path) : false;
+    const committed = path ? headRevision(path) : undefined;
+    const bump = revision === "yes" || (revision === "auto" && committed !== undefined && catalogue.revision === committed);
+    const from = catalogue.revision;
+    await store.save_catalogue(system, catalogue, bump ? "yes" : "no");
+    const notes = [
+      committed === undefined ? "not in git HEAD" : "",
+      from !== catalogue.revision ? `revision ${from} -> ${catalogue.revision}` : `revision ${catalogue.revision}`,
+      wasDirty ? "already had uncommitted changes" : "",
+    ].filter(Boolean);
+    lines.push(`  ${path ?? catalogue.name} (${notes.join(", ")})`);
+  }
+  await flushWrites();
+  if (errors.length) lines.push(`Forced past ${errors.length} new error diagnostic(s):`, ...errors.slice(0, 20).map(show));
+  if (others.length) lines.push(`New warnings/notes (not blocking):`, ...others.slice(0, 20).map(show));
+  return { text: lines.join("\n"), refused: false };
+}
+
+/** After the commands: either write, or say plainly that the edits are gone. */
+async function finish(before: Snapshot, options: { save: boolean; force: boolean; revision: RevisionMode }): Promise<boolean> {
+  if (options.save) {
+    const { text, refused } = await save(before, options.force, options.revision);
+    process.stdout.write(`${text}\n`);
+    return !refused;
+  }
+  const dirty = unsavedCatalogues().map((catalogue) => catalogue.name);
+  if (dirty.length) {
+    process.stdout.write(`[not saved: edits to ${dirty.join(", ")} were a dry run. Same command with --save to write them]\n`);
+  }
+  return true;
 }
 
 function help(name?: string): string {
@@ -158,6 +259,10 @@ function help(name?: string): string {
     "",
     "  batch          several commands on one load: one per line on stdin, same syntax (quotes ok)",
     "  reformat       rewrite files the way the editor saves them: dry run, --write to apply",
+    "",
+    "Edits (eval, script_run, create_catalogue) are a dry run unless --save: written only if they",
+    "created no new error diagnostic (--force overrides); revision bumped once per commit",
+    "(--revision auto|yes|no). create_system needs --folder <parent> and writes at once.",
     "",
     "nr help <tool> for the full description and arguments. Start with: nr docs",
   ].join("\n");
@@ -291,42 +396,68 @@ async function reformat(argv: string[]): Promise<string> {
   return lines.join("\n");
 }
 
-async function main(): Promise<void> {
-  const argv = process.argv.slice(2).filter((a) => a !== "--");
-  let systemArg: string | undefined;
-  for (const flag of ["--system", "--max-chars"]) {
-    const i = argv.indexOf(flag);
-    if (i < 0) continue;
-    const value = argv[i + 1];
-    if (value === undefined) throw new Error(`${flag} needs a value`);
-    if (flag === "--system") systemArg = value;
-    else maxChars = Number(value);
-    argv.splice(i, 2);
+/** Pulls a global flag out of argv: its value, true for a bare switch, undefined when absent. */
+function takeFlag(argv: string[], flag: string, withValue: boolean): string | true | undefined {
+  const i = argv.indexOf(flag);
+  if (i < 0) return undefined;
+  if (!withValue) {
+    argv.splice(i, 1);
+    return true;
   }
+  const value = argv[i + 1];
+  if (value === undefined) throw new Error(`${flag} needs a value`);
+  argv.splice(i, 2);
+  return value;
+}
+
+async function main(): Promise<boolean> {
+  const argv = process.argv.slice(2).filter((a) => a !== "--");
+  const systemArg = takeFlag(argv, "--system", true) as string | undefined;
+  const max = takeFlag(argv, "--max-chars", true);
+  if (max !== undefined) maxChars = Number(max);
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
     process.stdout.write(`${help(rest[0])}\n`);
-    return;
+    return true;
   }
+  // reformat has its own --write/--force; everywhere else these are the save switches.
+  const options =
+    command === "reformat"
+      ? { save: false, force: false, revision: "auto" as RevisionMode }
+      : {
+          save: takeFlag(rest, "--save", false) === true,
+          force: takeFlag(rest, "--force", false) === true,
+          revision: (takeFlag(rest, "--revision", true) ?? "auto") as RevisionMode,
+        };
+  if (!["auto", "yes", "no"].includes(options.revision)) throw new Error("--revision is auto, yes or no");
   // Fail on a bad tool name before paying for a load.
-  if (!["batch", "reformat"].includes(command)) toolNamed(command);
+  const tool = ["batch", "reformat"].includes(command) ? undefined : toolNamed(command);
+  // A new system has nothing to load yet: the tool creates the folder and writes the file itself.
+  if (tool?.name === "nr_create_system") {
+    process.stdout.write(`${await runTool(command, rest)}\n`);
+    await flushWrites();
+    return true;
+  }
   const folder = findSystemFolder(systemArg);
+  systemFolder = folder;
   const started = Date.now();
   const system = await loadSystem(folder);
   console.error(
     `[nr] ${system.gameSystem?.gameSystem.name}: ${system.getAllLoadedCatalogues().length} files from ${folder} in ${Date.now() - started} ms`,
   );
-  if (command === "batch") return batch();
   if (command === "reformat") {
     process.stdout.write(`${await reformat(rest)}\n`);
-    return;
+    return true;
   }
-  process.stdout.write(`${await runTool(command, rest)}\n`);
+  const before = errorSnapshot();
+  if (command === "batch") await batch();
+  else process.stdout.write(`${await runTool(command, rest)}\n`);
+  return await finish(before, options);
 }
 
 try {
-  await main();
-  process.exit(0);
+  // Exit 2: a --save refused by the diagnostics guard -- the command ran, nothing was written.
+  process.exit((await main()) ? 0 : 2);
 } catch (error) {
   process.stderr.write(`nr: ${(error as Error).message}\n`);
   process.exit(1);

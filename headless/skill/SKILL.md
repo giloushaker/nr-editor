@@ -1,6 +1,6 @@
 ---
 name: nr-data
-description: Interroger, diagnostiquer et vérifier les données BattleScribe / New Recruit (.gst/.cat/.json) de n'importe quel système de jeu (t9a, The Old World, 40k…) avec l'éditeur NR sans fenêtre (`nr`, le moteur réel de l'éditeur en ligne de commande). À utiliser dès qu'il faut localiser une entrée, lire ce qu'elle fait vraiment (liens résolus, modifiers qui la touchent), lister les erreurs de l'éditeur, comparer deux catalogues, ou vérifier qu'une édition de données n'a rien cassé. Une skill propre à un système (ex. t9a-bsdata-edit) s'appuie dessus et ajoute les sources et conventions du jeu.
+description: Lire, modifier et vérifier les données BattleScribe / New Recruit (.gst/.cat/.json) de n'importe quel système de jeu (t9a, The Old World, 40k…) avec l'éditeur NR sans fenêtre (`nr`, le moteur réel de l'éditeur en ligne de commande). À utiliser dès qu'il faut localiser une entrée, lire ce qu'elle fait vraiment (liens résolus, modifiers qui la touchent), la modifier par les actions de l'éditeur (coût, option, lien, modifier, contrainte, nouveau catalogue ou système), lister les erreurs de l'éditeur ou comparer deux catalogues. Une skill propre à un système (ex. t9a-bsdata-edit) s'appuie dessus et ajoute les sources et conventions du jeu.
 ---
 
 # Données BattleScribe / NR avec l'éditeur sans fenêtre
@@ -8,7 +8,8 @@ description: Interroger, diagnostiquer et vérifier les données BattleScribe / 
 `nr` charge un dossier de système **avec le code de l'éditeur NR lui-même** (store, liens résolus,
 index de références, diagnostics) et expose **les mêmes outils que le MCP de l'éditeur ouvert dans
 le navigateur** (`nr_find`, `nr_read`, `nr_diagnosis`…). Ce qu'il dit est ce que l'utilisateur
-verrait dans l'éditeur. Il ne remplace pas la connaissance du jeu : une skill propre au système
+verrait dans l'éditeur, et ce qu'il enregistre est ce qu'une sauvegarde de l'éditeur écrirait.
+Il ne remplace pas la connaissance du jeu : une skill propre au système
 fournit les sources de vérité, le modèle de données et les recettes.
 
 ```bash
@@ -37,7 +38,7 @@ $NR docs guide/concepts/modifiers   # wiki officiel, récupéré en direct
 $NR help <outil>               # description complète + arguments d'un outil
 ```
 Le briefing a été écrit pour l'éditeur ouvert (fenêtre, `nr_load_system`, `nr_save`). Ici, pas de
-fenêtre, le système est déjà chargé, et **rien n'est jamais enregistré**.
+fenêtre, le système est déjà chargé, et rien n'est écrit sans `--save` (§4).
 
 ## 2. Localiser, puis ouvrir
 
@@ -83,23 +84,47 @@ $NR diff <catalogue> <autre>               # deux catalogues unité par unité
 diagnostic vient de l'édition. Les diagnostics ne voient pas une **valeur** fausse (45 pts au lieu de
 54) : ça, c'est la source du jeu qui le dit.
 
-## 4. Éditer (`nr` ne sauvegarde pas encore)
+## 4. Éditer : `eval`, puis `--save`
 
-`nr` est en lecture seule : `eval` peut appeler les actions d'écriture de l'éditeur (`set_field`,
-`add`, `merge`, `remove`…), mais le résultat vit en mémoire et disparaît à la fin du processus
-(le CLI le rappelle). Usage utile : **essayer** une édition en mémoire et lire le delta de
-diagnostics (`errors: {new, fixed}`) avant de l'écrire pour de bon.
+Une édition passe par les **actions d'écriture de l'éditeur** dans `eval` (`set_field`, `edit`, `add`,
+`merge`, `remove`, `move`… : `$NR docs editor/eval` pour l'API, `$NR docs editor/writing` pour la forme
+des données). Ne jamais affecter une propriété directement (`node.name = …`) : l'éditeur ne le voit pas.
 
-L'écriture se fait sur les fichiers :
-- une valeur, un texte : `Edit` direct du fichier, en respectant sa mise en forme ;
-- plusieurs changements ou une structure : un script, selon les outils de la skill du système ;
-- incrémenter `revision` du fichier modifié (une fois par session d'édition) ;
-- nouvel id : `generateBattlescribeId()` (voir plus haut), jamais inventé à la main.
-
-Puis vérifier :
+1. **Avant** : `$NR diagnosis` (noter le total).
+2. **Essai à blanc** : la commande sans `--save`. La réponse donne le résultat et le delta de
+   diagnostics (`errors: {new, fixed}`) ; rien n'est écrit (le CLI le rappelle).
+3. **Écriture** : la même commande avec `--save`.
 ```bash
-$NR diagnosis                              # pas plus de diagnostics qu'avant
-$NR reformat --catalogue <nom>             # "same" = le fichier est toujours au format de l'éditeur
+$NR eval 'const u = find("is:entry name=Minotaurs", "Beast Herds")[0];
+          set_field(u.costs[0], "value", 26); return u.costs[0].value' --save
+$NR eval - --save < edit.js                       # édition longue : code depuis stdin
+$NR batch --save < edits.txt                      # plusieurs éditions, une seule écriture à la fin
+$NR script_run 'Fix link names' --save            # un script de l'éditeur (liste : $NR scripts)
+$NR create_catalogue 'Nom' [--library] --save     # nouveau catalogue (fichier nommé d'après lui)
+$NR create_system 'Nom' --folder <parent> --format json   # nouveau système : écrit tout de suite
+```
+Ce que fait `--save` :
+- **refuse d'écrire** (code de sortie 2, rien sur le disque) si l'édition a créé une nouvelle
+  **erreur** : lien mort, id en double, scope invalide… La liste est affichée. Corriger l'édition ;
+  `--force` seulement si l'erreur est voulue, et le dire dans le compte rendu. Les nouveaux
+  avertissements sont listés sans bloquer ;
+- écrit les fichiers modifiés exactement comme une sauvegarde de l'éditeur ;
+- **incrémente `revision` une fois entre deux commits** : seulement si la révision du fichier est
+  encore celle de git `HEAD` (`--revision yes|no` pour forcer) ;
+- signale un fichier qui avait déjà des modifications non commitées.
+
+Chaque appel recharge depuis le disque : les éditions s'enchaînent, et l'annulation, c'est git
+(`git -C <dossier> diff` / `checkout`). Les diagnostics ne voient pas une **valeur** fausse :
+relire le diff contre la source du jeu.
+
+Nouvel id (pour `add`/`merge`) : `generateBattlescribeId()` via `$helpers` (§2), jamais inventé.
+
+Pas offert : `nr_save` (c'est `--save`) et `nr_script_write` (un fichier de script reste à
+l'utilisateur ; l'écrire à la main dans le dossier `scripts` du système s'il le demande).
+
+Vérifier :
+```bash
+$NR diagnosis                              # pas plus d'erreurs qu'avant
 git -C <dossier> diff --stat               # le diff ne contient que l'édition (+ revision)
 ```
 
@@ -109,6 +134,7 @@ Les fichiers sont au format de sauvegarde de l'éditeur (`rootToJson` → `compa
 XML pour .cat/.gst). `$NR reformat` (simulation) montre, fichier par fichier, ce qu'une sauvegarde de
 l'éditeur changerait : `same`, `layout` (mise en page seule) ou `CONTENT` (données, regroupées par clé).
 `--write` réécrit les fichiers `layout` ; `--force` aussi les `CONTENT`, après lecture du rapport.
+À ne lancer qu'une fois par système (fichiers d'un ancien format), dans un commit à part.
 Un fichier avec des modifications non commitées n'est jamais touché. À l'enregistrement, l'éditeur
 renomme aussi chaque lien d'après sa cible (`updateLink`) : le nom affiché d'un lien vient d'un
 modifier `set name`, pas du nom du lien.
@@ -116,7 +142,7 @@ modifier `set name`, pas du nom du lien.
 ## 5. Rendre compte
 
 - Pour chaque changement : fichier, entrée (nom + id), ancienne valeur → nouvelle valeur.
-- Diagnostics avant / après (nombre, et toute nouvelle entrée).
+- Diagnostics avant / après (nombre, et toute nouvelle entrée) ; tout `--force` et pourquoi.
 - Ce qui n'a pas été fait et pourquoi (source ambiguë, décision à prendre).
 - Ne pas commiter ni pousser sans demande explicite.
 - Si un outil `nr` a manqué ou gêné, le dire : les outils sont faits à partir de cette liste.

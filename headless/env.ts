@@ -41,11 +41,30 @@ const handlers: Record<string, (...args: any[]) => unknown> = {
   getFolderRemote: () => null,
 };
 
+/**
+ * Calls still running. The store's saveCatalogue starts the file write without awaiting it -- a
+ * window stays open, so nobody needs to -- and a process that exits right after a save would cut
+ * it off. flushWrites() waits them out.
+ */
+const inFlight = new Set<Promise<unknown>>();
+
+export async function flushWrites(): Promise<void> {
+  // A save chains two calls (mkdir, then write), the second started from the first one's
+  // continuation: let that run (a macrotask is past every microtask) and look again.
+  do {
+    await Promise.allSettled([...inFlight]);
+    await new Promise((resolve) => setImmediate(resolve));
+  } while (inFlight.size);
+}
+
 (globalThis as any).electron = {
-  async invoke(channel: string, ...args: unknown[]) {
+  invoke(channel: string, ...args: unknown[]) {
     const handler = handlers[channel] ?? (fs as any)[channel];
-    if (typeof handler !== "function") throw new Error(`headless: no handler for "${channel}"`);
-    return await handler(...args);
+    if (typeof handler !== "function") return Promise.reject(new Error(`headless: no handler for "${channel}"`));
+    const call = (async () => await handler(...args))();
+    inFlight.add(call);
+    void call.finally(() => inFlight.delete(call)).catch(() => undefined);
+    return call;
   },
   send() {},
   receive() {},
@@ -100,9 +119,27 @@ export const store = useEditorStore();
 /** A file that makes a folder a system: what the editor's folder loader would pick up as one. */
 const SYSTEM_FILE = /\.(gst|gstz)$|\.gamesystem\.json$|\.gst\.json$/i;
 
+/**
+ * The editor names a JSON system after the system itself ("My Game.json"), so a plain .json can
+ * be one too: its first bytes say so.
+ */
+function isSystemFile(folder: string, name: string): boolean {
+  if (SYSTEM_FILE.test(name)) return true;
+  if (!name.endsWith(".json")) return false;
+  try {
+    const fd = fs.openSync(`${folder}/${name}`, "r");
+    const head = Buffer.alloc(200);
+    fs.readSync(fd, head, 0, 200, 0);
+    fs.closeSync(fd);
+    return /^\s*\{\s*"gameSystem"\s*:/.test(head.toString("utf8"));
+  } catch {
+    return false;
+  }
+}
+
 function holdsSystem(folder: string): boolean {
   try {
-    return fs.readdirSync(folder).some((name) => SYSTEM_FILE.test(name));
+    return fs.readdirSync(folder).some((name) => isSystemFile(folder, name));
   } catch {
     return false;
   }

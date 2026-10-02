@@ -98,9 +98,11 @@ The catalogue editor uses a three-panel layout:
 tools of `assets/editor/mcp_tools.ts` from the command line -- the same tools `plugins/webmcp.client.ts`
 registers in the browser. `headless/env.ts` answers the `electron.invoke` channels with node's fs, so
 store code that only reaches disk through `electron/node_helpers` works unchanged there; anything
-that imports a `.vue` file or touches `window`/`document` at module load breaks it. Read-only for
-now, except `nr reformat --write`. The Claude skill documenting it is `headless/skill/SKILL.md`
-(symlinked as `~/.claude/skills/nr-data`).
+that imports a `.vue` file or touches `window`/`document` at module load breaks it. Edits (`nr_eval`,
+`nr_script_run`, `nr_create_*`) reach the disk only with `--save`, through `save_catalogue`, and are
+refused when they add an error diagnostic; `env.ts#flushWrites` waits out the writes `saveCatalogue`
+does not await. The Claude skill documenting it is `headless/skill/SKILL.md` (symlinked as
+`~/.claude/skills/nr-data`).
 
 ### Testing & Quality
 **Note**: No automated tests or linting are configured. Manual testing is required.

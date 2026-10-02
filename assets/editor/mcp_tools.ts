@@ -1473,9 +1473,9 @@ function catalogueSummary(catalogue: Catalogue): Record<string, unknown> {
   return out;
 }
 
-type ErrorSnapshot = Map<string, ReturnType<typeof errorRow>>;
+export type ErrorSnapshot = Map<string, ReturnType<typeof errorRow>>;
 
-function errorSnapshot(): ErrorSnapshot {
+export function errorSnapshot(): ErrorSnapshot {
   const out: ErrorSnapshot = new Map();
   for (const catalogue of catalogues()) {
     for (const error of errorsOf(catalogue)) {
