@@ -89,7 +89,7 @@ import {
   isAllowedExtension,
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
-import CatalogueVue from "~/pages/catalogue.vue";
+import type CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { useEditorUIState } from "./editorUIState";
 import type { EditorUIState } from "./editorUIState";

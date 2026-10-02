@@ -93,6 +93,15 @@ The catalogue editor uses a three-panel layout:
 - **New import format**: Add to `scripts/import/` following existing patterns
 - **Script development**: Use the script API in `default-scripts/` as examples
 
+### Headless editor (`headless/`)
+`headless/nr` boots the real editor store in Node (no window) on a system folder and runs the MCP
+tools of `assets/editor/mcp_tools.ts` from the command line -- the same tools `plugins/webmcp.client.ts`
+registers in the browser. `headless/env.ts` answers the `electron.invoke` channels with node's fs, so
+store code that only reaches disk through `electron/node_helpers` works unchanged there; anything
+that imports a `.vue` file or touches `window`/`document` at module load breaks it. Read-only for
+now, except `nr reformat --write`. The Claude skill documenting it is `headless/skill/SKILL.md`
+(symlinked as `~/.claude/skills/nr-data`).
+
 ### Testing & Quality
 **Note**: No automated tests or linting are configured. Manual testing is required.
 
