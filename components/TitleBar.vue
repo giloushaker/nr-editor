@@ -16,7 +16,7 @@
         :title="`New Recruit - Editor v${version}`"
       >
         <h1 class="flex titletext">
-          <img class="logo" src="/assets/favicon.ico" />
+          <img class="logo" src="/assets/icons/logo-menu.svg" />
           <span class="m-auto version">
             New Recruit - Editor <span class="text-slate-300">v{{ version }}</span>
           </span>
@@ -26,6 +26,13 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="10.5" cy="10.5" r="6.2" />
           <path d="M15.2 15.2 L20.5 20.5" />
+        </svg>
+      </NuxtLink>
+      <NuxtLink v-if="patchLink" class="iconbox no-underline unselectable" :to="patchLink" title="Review a New Recruit patch against this system">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3.5 H14.5 L19 8 V20.5 H6 Z" />
+          <path d="M14.5 3.5 V8 H19" />
+          <path d="M9 14 L11.4 16.4 L16 11.8" />
         </svg>
       </NuxtLink>
       <slot />
@@ -120,12 +127,16 @@ export default {
   computed: {
     /** Pages a level below the index: the ones whose titlebar earns a back chevron. */
     nested(): boolean {
-      return ["catalogue", "scripts-id", "search-id"].includes(this.$route.name as string);
+      return ["catalogue", "scripts-id", "search-id", "patch-id"].includes(this.$route.name as string);
     },
     /** The system search page for whatever system is open; the editor is the page that knows one. */
     searchLink(): string | null {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
       return id ? `/search/${id}` : null;
+    },
+    patchLink(): string | null {
+      const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
+      return id ? `/patch/${id}` : null;
     },
     progressText(): string {
       const p = this.scripts.background?.progress;

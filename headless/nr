@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# The headless editor CLI; see headless/nr.ts. Runs from any folder: the working directory is
+# where it looks for a game system when --system is not given.
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+exec "$here/../node_modules/.bin/vite-node" -c "$here/vite.config.mjs" "$here/nr.ts" -- "$@"

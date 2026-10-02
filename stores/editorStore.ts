@@ -89,7 +89,7 @@ import {
   isAllowedExtension,
   isZipExtension,
 } from "~/assets/shared/battlescribe/bs_convert";
-import CatalogueVue from "~/pages/catalogue.vue";
+import type CatalogueVue from "~/pages/catalogue.vue";
 import { LeftPanelDefaults } from "~/components/catalogue/left_panel/LeftPanelDefaults";
 import { useEditorUIState } from "./editorUIState";
 import type { EditorUIState } from "./editorUIState";
@@ -1673,6 +1673,13 @@ export const useEditorStore = defineStore("editor", {
         // Writing targetId/childId/scope/typeId/value moves an edge: reindexing revalidates
         // the target it left as well as the one it arrived at.
         if (catalogue && REFERENCE_FIELDS.has(key)) catalogue.reindexReferences(node);
+        // A link's `target` is resolved once and kept: writing targetId alone left it pointing
+        // at the old node (nothing dead reported, the old cost and profiles shown) until the next
+        // reload. The right panel's Link field re-resolves by hand; doing it here covers every
+        // other writer -- nr_eval, scripts. A catalogueLink is the exception: it needs a reload.
+        if (catalogue && key === "targetId" && node.isLink?.() && (node as unknown as Link).type !== "catalogue") {
+          catalogue.updateLink(node as unknown as Link & EditorBase);
+        }
         catalogue?.revalidate(node);
         this.changed(node);
       };

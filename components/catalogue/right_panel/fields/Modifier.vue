@@ -573,6 +573,15 @@ export default {
           modifierType: "cost",
         });
       }
+      // cosmetic display costs (shown instead of the costs, never summed): same operations, field display::<id>
+      for (const costType of this.catalogue.iterateCostTypes()) {
+        result.push({
+          id: `display::${costType.id}`,
+          name: `${costType.name} (display)`,
+          type: "number" as const,
+          modifierType: "cost",
+        });
+      }
       return result;
     },
     constraints(): ModifierField[] {

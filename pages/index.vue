@@ -19,6 +19,9 @@
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
+              <NuxtLink :to="`/patch/${gst.getId()}`" class="align-bottom imgBt inline-block">
+                <img class="w-24px h-24px" src="assets/icons/check.png" title="Review a New Recruit patch" />
+              </NuxtLink>
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
               <span class="legendLine"></span>
               <span class="legendTools">

@@ -15,6 +15,17 @@ export async function isFile(f: any) {
   return stats.isFile();
 }
 
+// Dirent.isDirectory() is false for a symlink pointing at a folder; stat follows the link
+async function isDirectoryEntry(entry: any, path: string) {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return (await stat(path)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 // newest file mtime in a folder tree (no content reads), skipping git folders
 export async function getFolderMtime(folderPath: string): Promise<number | undefined> {
   let max = 0;
@@ -30,7 +41,7 @@ export async function getFolderMtime(folderPath: string): Promise<number | undef
     for (const entry of entries) {
       if (entry.name === ".git" || entry.name === ".github") continue;
       const path = `${current}/${entry.name}`;
-      if (entry.isDirectory()) {
+      if (await isDirectoryEntry(entry, path)) {
         stack.push(path);
       } else {
         try {
@@ -82,7 +93,7 @@ export async function listFolder(folderPath: string, depth = 0, skip?: string[])
     }
     for (const entry of entries) {
       const path = `${current.path}/${entry.name}`;
-      const directory = entry.isDirectory();
+      const directory = await isDirectoryEntry(entry, path);
       if (directory && current.level < depth && !toSkip.has(entry.name)) {
         stack.push({ path, level: current.level + 1 });
       }
