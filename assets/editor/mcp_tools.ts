@@ -11,6 +11,7 @@ import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_sy
 import { getFolderFolders, readFile } from "~/electron/node_helpers";
 import { permissionState } from "~/electron/web_fs";
 import { useSettingsStore } from "~/stores/settingsState";
+import { actionFailures, actionsInFlight } from "~/stores/editorStore";
 import type { ScriptDef } from "~/stores/scriptsStore";
 import { arrayKeys, Base, getDataObject, goodJsonKeys } from "~/assets/shared/battlescribe/bs_main";
 import { generateBattlescribeId } from "~/assets/shared/battlescribe/bs_helpers";
@@ -1473,6 +1474,23 @@ function catalogueSummary(catalogue: Catalogue): Record<string, unknown> {
   return out;
 }
 
+/**
+ * Waits out the store writes a call started -- an add() or merge() not awaited is still running
+ * when the code returns -- and lists the ones that failed since `from` (actionFailures.length
+ * before the call). do_action only logs a failure, so without this a write that did nothing
+ * reported success, and a save could run before the edit had landed.
+ */
+async function settleWrites(from: number): Promise<string[]> {
+  while (actionsInFlight.size) await Promise.allSettled([...actionsInFlight]);
+  return actionFailures.slice(from).map((error) => (error instanceof Error ? error.message : String(error)));
+}
+
+function failedWrites(failures: string[]): Error {
+  return new Error(
+    `${failures.length} write(s) failed and changed nothing (the rest of the call did run, as one undo entry): ${failures.join("; ")}`,
+  );
+}
+
 export type ErrorSnapshot = Map<string, ReturnType<typeof errorRow>>;
 
 export function errorSnapshot(): ErrorSnapshot {
@@ -2723,12 +2741,15 @@ The result reports the diagnostics delta (new and fixed findings) and which file
       // this body pushed into a single composite. Without it a 200-entry pass is 200 Ctrl+Z, and
       // a wrong pass is unreversible in practice.
       const stackStart = $store.undoStackPos;
+      const failuresBefore = actionFailures.length;
       const names = Object.keys(scope);
       const fn = new Function(...names, `return (async () => {${code}})();`) as (
         ...args: unknown[]
       ) => Promise<unknown>;
       const result = await fn(...names.map((name) => scope[name]));
+      const failures = await settleWrites(failuresBefore);
       $store.collapse_undo(stackStart, "script");
+      if (failures.length) throw failedWrites(failures);
 
       return {
         result: scriptResult(result),
@@ -2880,6 +2901,7 @@ usually what decides how many.`,
       // A "catalogue[]" argument loads the whole system, so findings appear that were always
       // there. The delta is keyed per finding, so those show as "new" only if genuinely new.
       const loadedBefore = catalogues().length;
+      const failuresBefore = actionFailures.length;
       const result = await store().scripts.run_script_with_args(
         system,
         requireString(args.script, "script"),
@@ -2888,6 +2910,8 @@ usually what decides how many.`,
       // invoke() reports and returns what the script threw rather than rethrowing, so that the
       // Run panel can render it. Here it is a failed call.
       if (result instanceof Error) throw result;
+      const failures = await settleWrites(failuresBefore);
+      if (failures.length) throw failedWrites(failures);
       const opened = catalogues().length - loadedBefore;
       return {
         result: scriptResult(result),

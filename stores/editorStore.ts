@@ -107,6 +107,15 @@ import { entries } from "~/assets/shared/battlescribe/entries";
 type CatalogueComponentT = InstanceType<typeof CatalogueVue>;
 type MaybePromise<T> = T | Promise<T>;
 const enableGithubIntegrationWithGitFolder = false;
+
+/**
+ * Undoable actions still running, and the ones that threw. do_action swallows a failure so that a
+ * click cannot take the page down, which left a script with no way to tell: a failed add() read
+ * as done, and one not awaited could still be running when the script's result was read or the
+ * file saved. nr_eval and nr_script_run wait on the first and report the second.
+ */
+export const actionsInFlight = new Set<Promise<unknown>>();
+export const actionFailures: unknown[] = [];
 export interface IEditorStore {
   selectionsParent?: object | null;
   selections: Array<{ obj: any; onunselected: () => unknown; payload?: any }>;
@@ -935,11 +944,18 @@ export const useEditorStore = defineStore("editor", {
     },
     async do_action(type: string, undo: () => void | Promise<void>, redo: () => any | Promise<any>) {
       let result;
+      // An async wrapper rather than redo() itself: a redo that throws before its first await
+      // must land in the catch below, and run synchronously up to there as before.
+      const running = (async () => await redo())();
+      actionsInFlight.add(running);
       try {
-        result = await redo();
+        result = await running;
       } catch (e) {
         console.error(e);
+        actionFailures.push(e);
         return;
+      } finally {
+        actionsInFlight.delete(running);
       }
 
       if (this.undoStackPos < this.undoStack.length) {
@@ -2064,6 +2080,9 @@ export const useEditorStore = defineStore("editor", {
       redo();
     },
     async open(obj: EditorBase, last?: boolean, noLog?: boolean) {
+      // No page, no tree to open: add() and friends call this to reveal what they inserted, and
+      // in the headless editor (headless/nr) `document` does not exist at all.
+      if (typeof document === "undefined") return;
       let current = document.getElementById("editor-entries") as Element;
       if (!current) return;
 
