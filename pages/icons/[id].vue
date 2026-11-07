@@ -18,10 +18,6 @@
       <button class="bouton" @click="grant">Grant access</button>
     </p>
     <template v-else>
-      <p class="gray">
-        Files go in <code>icons/</code> beside the .gst, named by id, which New Recruit reads on install and while the
-        game is selected. Nothing is written to the data files.
-      </p>
       <p v-if="state.error" class="error">{{ state.error }}</p>
 
       <div class="toolbar">
@@ -211,7 +207,6 @@ export default defineComponent({
 <style scoped lang="scss">
 .page {
   padding: 8px 16px;
-  max-width: 1100px;
   overflow: auto;
   height: 100%;
 }
