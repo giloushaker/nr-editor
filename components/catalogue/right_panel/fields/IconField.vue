@@ -7,14 +7,23 @@
       </div>
       <div v-else-if="access === 'prompt'" class="iconfield">
         <span class="gray small">The editor needs access to {{ folder }} again to show and set icons.</span>
-        <button class="bouton" @click="grant">Grant access</button>
+        <button class="link" @click="grant">Grant access</button>
       </div>
       <div v-else-if="state" class="iconfield">
-        <img v-if="url" class="preview" :src="url" alt="" />
-        <span v-else class="preview none" />
-        <span class="path gray" :title="path || ''">{{ path || "None" }}</span>
-        <button class="bouton" @click="picking = true">{{ path ? "Change" : "Set icon" }}</button>
-        <button v-if="removable" class="bouton" :disabled="busy" @click="remove">Remove</button>
+        <!-- The tile is the control: click to pick, like an avatar. The path is in the tooltip. -->
+        <button class="tile" :class="{ empty: !url }" :title="path ? `${path}
+Click to change` : 'Set icon'" @click="picking = true">
+          <img v-if="url" :src="url" alt="" />
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 6 V18 M6 12 H18" />
+          </svg>
+        </button>
+        <button v-if="!path" class="link" @click="picking = true">Set icon</button>
+        <template v-else>
+          <span class="name">{{ fileName }}</span>
+          <button class="link" @click="picking = true">Change</button>
+          <button v-if="removable" class="link" :disabled="busy" @click="remove">Remove</button>
+        </template>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
       <UtilIconPicker v-if="picking && state" :state="state" :targets="[target]" @close="picking = false" />
@@ -61,6 +70,9 @@ export default defineComponent({
     url(): string | null {
       return (this.path && this.state?.urls[this.path.replace(/^\.?\//, "")]) || null;
     },
+    fileName(): string {
+      return this.path?.split("/").pop() ?? "";
+    },
     removable(): boolean {
       return !!this.target && !!this.state && hasRemovableFile(this.state, this.target);
     },
@@ -90,32 +102,68 @@ export default defineComponent({
 .iconfield {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
-.preview {
-  width: 24px;
-  height: 24px;
+.tile {
+  width: 32px;
+  height: 32px;
   flex: none;
-  object-fit: contain;
-  &.none {
-    border: 1px dashed var(--nr-line);
-    border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 1px solid var(--nr-line);
+  border-radius: 4px;
+  background: var(--nr-input, transparent);
+  color: var(--nr-muted);
+  cursor: pointer;
+  &.empty {
+    border-style: dashed;
+  }
+  &:hover,
+  &:focus-visible {
+    border-color: currentColor;
+    color: inherit;
+  }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
-.path {
-  flex: 1;
+.name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.85em;
+  color: var(--nr-muted);
 }
-.bouton {
+// Text actions, so the row reads as one control and not a toolbar
+.link {
   flex: none;
-  width: auto;
-  min-width: 0;
-  padding: 1px 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 0.9em;
+  font-weight: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--nr-line);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    text-decoration-color: currentColor;
+  }
+  &:disabled {
+    opacity: 0.5;
+  }
 }
 .error {
   color: var(--nr-danger);
