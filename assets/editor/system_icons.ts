@@ -1,12 +1,13 @@
-// A system's icons as files beside its .gst (icons/<kind>/<id>.<ext>), the convention NR reads: see
-// assets/shared/battlescribe/icons.ts. The editor only writes files at the default path, never the `icon`
-// attribute, so a schema-checked (BSData) repo stays valid.
+// A system's icons as files beside its .gst, the convention NR reads (assets/shared/battlescribe/icons.ts). Setting one
+// writes the file at the default path (icons/<kind>/<name slug>.<ext>) and always the node's `icon` attribute too, so
+// the data says which file it uses and picking an existing image reuses it instead of copying.
 import { reactive } from "vue";
-import { assetMime, iconKey, iconPath, isAssetPath, scanIconPaths, type IconPaths } from "~/assets/shared/battlescribe/icons";
+import { ASSET_MIME, assetMime, iconKey, iconPath, isAssetPath, scanIconPaths, type IconPaths } from "~/assets/shared/battlescribe/icons";
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { deleteFile, dirname, listFolder, readFile, readFileBytes, writeFile } from "~/electron/node_helpers";
 import { permissionState, requestPermission } from "~/electron/web_fs";
+import { useEditorStore } from "~/stores/editorStore";
 
 /** What the editor accepts after conversion: NR stores every icon of an install for offline use. */
 export const ICON_MAX_BYTES = 100 * 1024;
@@ -21,8 +22,8 @@ export interface IconTarget {
   kind: string;
   label: string;
   keys: string[];
-  /** The node's own `icon` attribute (repos NR owns), which wins over files in NR */
-  icon?: string;
+  /** The node that holds the `icon` attribute; none for parent factions and the weapon icon, which are files only */
+  node?: any;
 }
 
 export interface SystemIcons {
@@ -104,9 +105,62 @@ export async function refreshIcons(state: SystemIcons) {
   state.loaded = true;
 }
 
+const norm = (path: string) => path.replaceAll("\\", "/").replace(/^\.?\//, "");
+
 /** The file NR shows for a target: its attribute, else a file at the default path. */
 export function targetIconPath(state: SystemIcons, target: IconTarget): string | null {
-  return target.icon || iconPath({ icon_paths: state.paths }, target.kind, target.keys);
+  const own = target.node?.icon;
+  return (typeof own === "string" && own ? norm(own) : null) || iconPath({ icon_paths: state.paths }, target.kind, target.keys);
+}
+
+/** Nodes that can hold an `icon`, by kind and id. Loading a file sets prototypes on its raw objects in place, so these
+ * are the nodes the editor edits once the file is loaded. */
+export function nodeIndex(system: GameSystemFiles): Map<string, any> {
+  const byKey = new Map<string, any>();
+  const forces = (list: any[] | undefined) => {
+    for (const f of list ?? []) {
+      byKey.set(`force\n${f.id}`, f);
+      forces(f.forceEntries);
+    }
+  };
+  const systemId = system.gameSystem ? getDataObject(system.gameSystem).id : undefined;
+  for (const c of systemFiles(system) as any[]) {
+    byKey.set(`${c.id === systemId ? "system" : "army"}\n${c.id}`, c);
+    for (const e of c.categoryEntries ?? []) byKey.set(`category\n${e.id}`, e);
+    forces(c.forceEntries);
+  }
+  return byKey;
+}
+
+/** Edits need every file loaded (store.set_field revalidates through the node's catalogue). */
+async function attachNodes(system: GameSystemFiles, targets: IconTarget[]) {
+  if (!system.allLoaded) await system.loadAll();
+  const byKey = nodeIndex(system);
+  for (const t of targets) t.node ??= byKey.get(`${t.kind}\n${t.keys[0]}`);
+}
+
+/** Every path an `icon` attribute points at, so a file still in use is never deleted. */
+function iconRefs(system: GameSystemFiles): Set<string> {
+  const refs = new Set<string>();
+  const seen = new WeakSet<object>();
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object" || seen.has(node)) return;
+    seen.add(node);
+    if (typeof node.icon === "string" && node.icon) refs.add(norm(node.icon));
+    for (const value of Object.values(node)) if (Array.isArray(value)) for (const item of value) walk(item);
+  };
+  for (const file of systemFiles(system)) walk(file);
+  for (const catalogue of system.getAllLoadedCatalogues()) walk(catalogue);
+  return refs;
+}
+
+/** Deletes the files no `icon` attribute points at any more. */
+async function dropUnused(system: GameSystemFiles, state: SystemIcons, paths: string[], keep: Set<string>) {
+  const refs = iconRefs(system);
+  for (const path of new Set(paths)) {
+    if (keep.has(path) || refs.has(path) || !state.files.includes(path)) continue;
+    await deleteFile(`${state.folder}/${path}`);
+  }
 }
 
 /** Files at the default path that NR would match to one of the target's keys, in any spelling. */
@@ -160,33 +214,63 @@ export async function readIcon(state: SystemIcons, path: string): Promise<{ data
   return { data: await readFileBytes(`${state.folder}/${path}`), ext, from: path };
 }
 
-/** One copy per target at its default path. Its other files go (under its id, which would win in NR, or the name in
- * another format), so NR has exactly one to pick. */
-export async function setIcons(state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string; from?: string }) {
+/** Sets one image on every target. A new image is written once per target at its default path; an image already in the
+ * folder is only pointed at. Either way the node's `icon` is set (an unsaved, undoable edit; the files are written now).
+ * The files a target used before go when nothing points at them. ponytail: undo restores the attribute, not a deleted file. */
+export async function setIcons(system: GameSystemFiles, state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string; from?: string }) {
+  await attachNodes(system, targets);
+  const store = useEditorStore();
+  // Its old attribute file and files under its id; a file under its name may be another same-named node's
+  const before = targets.flatMap((t) => [...(t.node?.icon ? [norm(t.node.icon)] : []), ...filesFor(state, { ...t, keys: t.keys.slice(0, 1) })]);
+  const used = new Set<string>();
   for (const target of targets) {
-    const path = defaultPath(target, image.ext);
-    // Picked its own file: nothing to copy. ponytail: any other pick is a copy, since without the `icon` attribute
-    // NR only finds a file under the node's name or id.
-    if (image.from === path) continue;
-    for (const old of filesFor(state, target)) if (old !== path) await deleteFile(`${state.folder}/${old}`);
-    await writeFile(`${state.folder}/${path}`, image.data);
-    // A new file at a path seen before needs a new url
-    if (state.urls[path]) {
-      URL.revokeObjectURL(state.urls[path]);
-      delete state.urls[path];
+    // Nodeless targets (parent factions, weapon) are found by file name alone, so they always get their own copy
+    const path = image.from && target.node ? image.from : defaultPath(target, image.ext);
+    if (path !== image.from && !used.has(path)) {
+      await writeFile(`${state.folder}/${path}`, image.data);
+      // A new file at a path seen before needs a new url
+      if (state.urls[path]) {
+        URL.revokeObjectURL(state.urls[path]!);
+        delete state.urls[path];
+      }
     }
+    used.add(path);
+    if (target.node) store.set_field(target.node, "icon", path);
   }
+  await dropUnused(system, state, before, used);
   await refreshIcons(state);
 }
 
-/** Deletes every file at the default path that NR matches to the targets. The `icon` attribute is left alone. */
-export async function removeIcons(state: SystemIcons, targets: IconTarget[]) {
-  for (const path of new Set(targets.flatMap((t) => filesFor(state, t)))) await deleteFile(`${state.folder}/${path}`);
+/** Moves the target's file to `to` (relative to the .gst folder) and points its `icon` there. */
+export async function renameIcon(system: GameSystemFiles, state: SystemIcons, target: IconTarget, to: string) {
+  const path = norm(to.trim());
+  if (!path.startsWith("icons/") || !isAssetPath(path) || path.split("/").includes("..")) {
+    throw new Error(`Keep icons under icons/ with an image extension (${Object.keys(ASSET_MIME).join(", ")})`);
+  }
+  const from = targetIconPath(state, target);
+  if (from === path) return;
+  await attachNodes(system, [target]);
+  if (!state.files.includes(path)) {
+    if (!from) throw new Error("No icon to rename yet: set one first");
+    await writeFile(`${state.folder}/${path}`, await readFileBytes(`${state.folder}/${from}`));
+  }
+  if (target.node) useEditorStore().set_field(target.node, "icon", path);
+  if (from) await dropUnused(system, state, [from], new Set([path]));
+  await refreshIcons(state);
+}
+
+/** Clears the targets' `icon` and deletes the files NR would still match to them, unless another node points at one. */
+export async function removeIcons(system: GameSystemFiles, state: SystemIcons, targets: IconTarget[]) {
+  await attachNodes(system, targets);
+  const store = useEditorStore();
+  const before = targets.flatMap((t) => [...(t.node?.icon ? [norm(t.node.icon)] : []), ...filesFor(state, t)]);
+  for (const target of targets) if (target.node?.icon) store.set_field(target.node, "icon", undefined);
+  await dropUnused(system, state, before, new Set());
   await refreshIcons(state);
 }
 
 export function hasRemovableFile(state: SystemIcons, target: IconTarget) {
-  return filesFor(state, target).length > 0;
+  return !!target.node?.icon || filesFor(state, target).length > 0;
 }
 
 /** NR splits catalogue names on settings.factionSeparator to group them under parent factions. */
@@ -211,17 +295,17 @@ export function parentFactionName(name: string, divider: string | undefined): st
 export function nodeTarget(node: any): IconTarget | null {
   switch (node?.editorTypeName) {
     case "gameSystem":
-      return { kind: "system", label: "Game icon", keys: [node.id, "system"], icon: node.icon };
+      return { kind: "system", label: "Game icon", keys: [node.id, "system"], node };
     case "catalogue":
-      return { kind: "army", label: node.name, keys: [node.id, node.name], icon: node.icon };
+      return { kind: "army", label: node.name, keys: [node.id, node.name], node };
     case "categoryEntry":
-      return { kind: "category", label: node.name, keys: [node.id, node.name], icon: node.icon };
-    case "categoryLink": {
-      const target = node.target;
-      return { kind: "category", label: target?.name ?? node.name, keys: [node.targetId, target?.name ?? node.name], icon: node.icon || target?.icon };
-    }
     case "forceEntry":
-      return { kind: "force", label: node.name, keys: [node.id, node.name], icon: node.icon };
+      return { kind: node.editorTypeName === "forceEntry" ? "force" : "category", label: node.name, keys: [node.id, node.name], node };
+    case "categoryLink": {
+      // Set on the category itself, so every link to it shows it
+      const target = node.target;
+      return target ? { kind: "category", label: target.name, keys: [target.id, target.name], node: target } : null;
+    }
   }
   return null;
 }

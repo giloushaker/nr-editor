@@ -1,6 +1,6 @@
 <template>
   <tr v-if="target">
-    <td>Icon:</td>
+    <td class="label">Icon:</td>
     <td>
       <div v-if="access === 'missing'" class="gray small">
         Icons are files beside the .gst: open this system from its folder on the Systems page to set one.
@@ -20,19 +20,29 @@ Click to change` : 'Set icon'" @click="picking = true">
         </button>
         <button v-if="!path" class="btn act" @click="picking = true">Set icon</button>
         <template v-else>
-          <span class="name">{{ fileName }}</span>
+          <!-- The node's icon attribute: editing it renames the file -->
+          <input
+            v-model="draft"
+            class="pathinput"
+            type="text"
+            spellcheck="false"
+            title="Path of the image, from the folder holding the .gst. Changing it renames the file."
+            :disabled="busy"
+            @keydown.enter="($event.target as HTMLInputElement).blur()"
+            @change="rename"
+          />
           <button class="btn act" @click="picking = true">Change</button>
           <button v-if="removable" class="btn act" :disabled="busy" @click="remove">Remove</button>
         </template>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
-      <UtilIconPicker v-if="picking && state" :state="state" :targets="[target]" @close="picking = false" />
+      <UtilIconPicker v-if="picking && state && system" :system="system" :state="state" :targets="[target]" @close="picking = false" />
     </td>
   </tr>
 </template>
 
 <script lang="ts">
-import { hasRemovableFile, nodeTarget, removeIcons, systemIcons, targetIconPath, iconFolder, grantFolder, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
+import { hasRemovableFile, nodeTarget, removeIcons, renameIcon, systemIcons, targetIconPath, iconFolder, grantFolder, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
 import { useEditorStore } from "~/stores/editorStore";
 import { itemProp } from "./props";
 
@@ -43,9 +53,15 @@ export default defineComponent({
     return { store: useEditorStore() };
   },
   data() {
-    return { state: null as SystemIcons | null, folder: "", access: "" as "" | "granted" | "prompt" | "missing", picking: false, busy: false, error: "" };
+    return { state: null as SystemIcons | null, systemId: "", folder: "", access: "" as "" | "granted" | "prompt" | "missing", draft: "", picking: false, busy: false, error: "" };
   },
   watch: {
+    path: {
+      immediate: true,
+      handler(path: string | null) {
+        this.draft = path ?? "";
+      },
+    },
     item: {
       immediate: true,
       async handler() {
@@ -53,6 +69,7 @@ export default defineComponent({
         if (!nodeTarget(this.item)) return;
         const catalogue = (this.item as any).getCatalogue?.();
         const systemId = catalogue?.isGameSystem() ? catalogue.id : catalogue?.gameSystemId;
+        this.systemId = systemId;
         const { folder, access } = await iconFolder(this.store.gameSystems[systemId]);
         this.folder = folder ?? "";
         this.access = access;
@@ -70,8 +87,8 @@ export default defineComponent({
     url(): string | null {
       return (this.path && this.state?.urls[this.path.replace(/^\.?\//, "")]) || null;
     },
-    fileName(): string {
-      return this.path?.split("/").pop() ?? "";
+    system() {
+      return this.store.gameSystems[this.systemId];
     },
     removable(): boolean {
       return !!this.target && !!this.state && hasRemovableFile(this.state, this.target);
@@ -83,11 +100,23 @@ export default defineComponent({
       this.access = "granted";
       this.state = systemIcons(this.folder);
     },
+    async rename() {
+      this.busy = true;
+      this.error = "";
+      try {
+        await renameIcon(this.system!, this.state!, this.target!, this.draft);
+      } catch (e) {
+        this.error = (e as Error)?.message ?? String(e);
+        this.draft = this.path ?? "";
+      } finally {
+        this.busy = false;
+      }
+    },
     async remove() {
       this.busy = true;
       this.error = "";
       try {
-        await removeIcons(this.state!, [this.target!]);
+        await removeIcons(this.system!, this.state!, [this.target!]);
       } catch (e) {
         this.error = `Could not delete: ${(e as Error)?.message ?? e}`;
       } finally {
@@ -136,13 +165,10 @@ export default defineComponent({
     height: 16px;
   }
 }
-.name {
+.pathinput {
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.85em;
-  color: var(--nr-muted);
+  max-width: 420px;
 }
 // The panel's own small button (.btn in Basics.vue), at the tile's height
 .act {
@@ -158,7 +184,15 @@ export default defineComponent({
   }
 }
 .error {
+  margin: 2px 0 0;
   color: var(--nr-danger);
+  font-size: 0.85em;
+  font-weight: normal;
+}
+// Stays level with the tile when an error line grows the row
+.label {
+  vertical-align: top;
+  padding-top: 6px;
 }
 .small {
   font-size: 0.85em;

@@ -34,11 +34,13 @@
 <script lang="ts">
 import type { PropType } from "vue";
 import { ASSET_MIME } from "~/assets/shared/battlescribe/icons";
+import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { prepareIcon, readIcon, setIcons, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
 
 /** Sets one image on every target: picked from icons/, or copied in from a file. */
 export default defineComponent({
   props: {
+    system: { type: Object as PropType<GameSystemFiles>, required: true },
     state: { type: Object as PropType<SystemIcons>, required: true },
     targets: { type: Array as PropType<IconTarget[]>, required: true },
   },
@@ -68,7 +70,7 @@ export default defineComponent({
       this.busy = true;
       this.error = "";
       try {
-        await setIcons(this.state, this.targets, await load());
+        await setIcons(this.system, this.state, this.targets, await load());
         this.$emit("done");
         this.open = false;
       } catch (e) {

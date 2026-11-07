@@ -50,7 +50,7 @@
           </label>
         </div>
       </details>
-      <UtilIconPicker v-if="picking" :state="state" :targets="selectedRows" @close="picking = false" @done="selected = {}" />
+      <UtilIconPicker v-if="picking" :system="system" :state="state" :targets="selectedRows" @close="picking = false" @done="selected = {}" />
     </template>
   </div>
 </template>
@@ -68,6 +68,7 @@ import {
   systemFiles,
   systemIcons,
   targetIconPath,
+  nodeIndex,
   iconFolder,
   grantFolder,
   type IconTarget,
@@ -111,22 +112,24 @@ export default defineComponent({
       const files = systemFiles(this.system!);
       const gst = getDataObject(this.system!.gameSystem!);
       const books = files.filter((f) => f !== gst && !f.library);
-      const catalogues = books.map((b) => ({ kind: "army", label: b.name.trim(), keys: [b.id, b.name], icon: b.icon }));
+      const nodes = nodeIndex(this.system!);
+      const node = (kind: string, id: string) => nodes.get(`${kind}\n${id}`);
+      const catalogues = books.map((b) => ({ kind: "army", label: b.name.trim(), keys: [b.id, b.name], node: b }));
       const parents = [...new Set(books.map((b) => parentFactionName(b.name, this.separator)).filter((p): p is string => !!p))];
       const { categories, forces } = collectIconChoices(files);
       const raw = [
         {
           title: "Game",
           rows: [
-            { kind: "system", label: "Game icon", keys: [gst.id, "system"], icon: gst.icon },
+            { kind: "system", label: "Game icon", keys: [gst.id, "system"], node: gst },
             { kind: "weapon", label: "Weapon icon", keys: ["weapon"] },
           ],
         },
         { title: "Catalogues", rows: catalogues.sort((a, b) => a.label.localeCompare(b.label)) },
         // No id to name these by: NR groups catalogues by the part of their name before factionSeparator
         ...(parents.length ? [{ title: "Parent factions", rows: parents.sort().map((p) => ({ kind: "army", label: p, keys: [p] })) }] : []),
-        { title: "Primary categories", rows: categories.map((c) => ({ kind: "category", label: c.name, keys: [c.id, c.name], icon: this.ownIcon(c.id) })) },
-        { title: "Force entries", rows: forces.map((f) => ({ kind: "force", label: f.name, keys: [f.id, f.name], icon: this.ownIcon(f.id) })) },
+        { title: "Primary categories", rows: categories.map((c) => ({ kind: "category", label: c.name, keys: [c.id, c.name], node: node("category", c.id) })) },
+        { title: "Force entries", rows: forces.map((f) => ({ kind: "force", label: f.name, keys: [f.id, f.name], node: node("force", f.id) })) },
       ];
       const needle = this.filter.trim().toLowerCase();
       return raw.map((s) => ({
@@ -144,18 +147,6 @@ export default defineComponent({
     removableSelected(): IconTarget[] {
       return this.selectedRows.filter((r) => hasRemovableFile(this.state!, r));
     },
-    /** `icon` attributes by node id, from repos NR owns; the editor shows them but never writes them */
-    ownIcons(): Map<string, string> {
-      const icons = new Map<string, string>();
-      const walk = (node: any) => {
-        for (const key of ["categoryEntries", "forceEntries", "forceEntryLinks"]) for (const item of node?.[key] ?? []) {
-          if (item.icon) icons.set(item.id, item.icon);
-          walk(item);
-        }
-      };
-      for (const file of systemFiles(this.system!)) walk(file);
-      return icons;
-    },
   },
   methods: {
     async open() {
@@ -167,16 +158,13 @@ export default defineComponent({
       this.access = "granted";
       await this.open();
     },
-    ownIcon(id: string) {
-      return this.ownIcons.get(id);
-    },
     rowId(row: IconTarget): string {
       return `${row.kind}\n${row.keys.join("\n")}`;
     },
     rowTitle(row: IconTarget): string {
       const path = targetIconPath(this.state!, row);
       if (!path) return row.label;
-      return row.icon ? `${row.label}\n${path} (icon attribute; Remove leaves it)` : `${row.label}\n${path}`;
+      return `${row.label}\n${path}`;
     },
     preview(row: IconTarget): string | null {
       const path = targetIconPath(this.state!, row);
@@ -189,10 +177,10 @@ export default defineComponent({
     },
     async remove() {
       const rows = this.removableSelected;
-      if (!confirm(`Delete the icon files of ${rows.length} ${rows.length === 1 ? "node" : "nodes"} from icons/?`)) return;
+      if (!confirm(`Remove the icon of ${rows.length} ${rows.length === 1 ? "node" : "nodes"}? Files nothing else uses are deleted from icons/.`)) return;
       this.busy = true;
       try {
-        await removeIcons(this.state!, rows);
+        await removeIcons(this.system!, this.state!, rows);
         this.selected = {};
       } catch (e) {
         this.state!.error = `Could not delete: ${(e as Error)?.message ?? e}`;
