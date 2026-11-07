@@ -20,17 +20,8 @@ Click to change` : 'Set icon'" @click="picking = true">
         </button>
         <button v-if="!path" class="btn act" @click="picking = true">Set icon</button>
         <template v-else>
-          <!-- The node's icon attribute: editing it renames the file -->
-          <input
-            v-model="draft"
-            class="pathinput"
-            type="text"
-            spellcheck="false"
-            title="Path of the image, from the folder holding the .gst. Changing it renames the file."
-            :disabled="busy"
-            @keydown.enter="($event.target as HTMLInputElement).blur()"
-            @change="rename"
-          />
+          <!-- The file NR shows for this node; its name follows the node's, so there is nothing to type -->
+          <span class="pathinput gray small" :title="path">{{ path }}</span>
           <button class="btn act" @click="picking = true">Change</button>
           <button v-if="removable" class="btn act" :disabled="busy" @click="remove">Remove</button>
         </template>
@@ -42,7 +33,7 @@ Click to change` : 'Set icon'" @click="picking = true">
 </template>
 
 <script lang="ts">
-import { hasRemovableFile, nodeTarget, removeIcons, renameIcon, systemIcons, targetIconPath, iconFolder, grantFolder, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
+import { hasRemovableFile, nodeTarget, removeIcons, systemIcons, targetIconPath, iconFolder, grantFolder, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
 import { useEditorStore } from "~/stores/editorStore";
 import { itemProp } from "./props";
 
@@ -53,15 +44,9 @@ export default defineComponent({
     return { store: useEditorStore() };
   },
   data() {
-    return { state: null as SystemIcons | null, systemId: "", folder: "", access: "" as "" | "granted" | "prompt" | "missing", draft: "", picking: false, busy: false, error: "" };
+    return { state: null as SystemIcons | null, systemId: "", folder: "", access: "" as "" | "granted" | "prompt" | "missing", picking: false, busy: false, error: "" };
   },
   watch: {
-    path: {
-      immediate: true,
-      handler(path: string | null) {
-        this.draft = path ?? "";
-      },
-    },
     item: {
       immediate: true,
       async handler() {
@@ -99,18 +84,6 @@ export default defineComponent({
       if (!(await grantFolder(this.folder))) return;
       this.access = "granted";
       this.state = systemIcons(this.folder);
-    },
-    async rename() {
-      this.busy = true;
-      this.error = "";
-      try {
-        await renameIcon(this.system!, this.state!, this.target!, this.draft);
-      } catch (e) {
-        this.error = (e as Error)?.message ?? String(e);
-        this.draft = this.path ?? "";
-      } finally {
-        this.busy = false;
-      }
     },
     async remove() {
       this.busy = true;
