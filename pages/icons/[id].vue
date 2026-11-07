@@ -195,7 +195,8 @@ export default defineComponent({
 <style scoped lang="scss">
 .page {
   // The bottom gap keeps the last row clear of the scroll end and Nuxt's devtools pill
-  padding: 8px 16px 48px;
+  // Centred at 1200px through the padding, so the scroll container (and its scrollbar) stays full width
+  padding: 8px max(16px, calc((100% - 1200px) / 2)) 48px;
   overflow: auto;
   height: 100%;
 }
