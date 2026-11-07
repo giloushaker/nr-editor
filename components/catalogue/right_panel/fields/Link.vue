@@ -179,6 +179,7 @@ export default {
       if (this.type === "catalogue" && this.item.targetId) {
         const sysId = this.catalogue.gameSystemId || this.catalogue.id;
         await this.catalogue.reload(this.store.get_system(sysId));
+        this.store.treeEpoch++;
         // The catalogueLink's own targetId is the reference; reload() reads the inverse.
         this.catalogue.reindexReferences(this.item as EditorBase);
         const target = this.item.target as (Catalogue & EditorBase) | undefined;

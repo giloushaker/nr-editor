@@ -2304,7 +2304,7 @@ Bare words match name/comment/description text -- all of them, any order. Beyond
   name=Scouts                       exact, not substring (":" is substring). Same as name:=Scouts
   name="Faction: Skaven"            quote a value holding ":" or "=" -- a bare Faction: Skaven is
                                     parsed as a field named Faction
-  value:>0   refs:0                 numeric compare; on an array, its length
+  value>0   refs:0                  numeric compare (value:>0 is the same); on an array, its length
   has:constraint[scope:force]       a descendant matches the bracketed query
   in:entry["bolt rifle"]            an ancestor matches
   has*:  in*:                       the same, following links the way the builder does

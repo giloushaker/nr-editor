@@ -130,7 +130,7 @@ const quote = (s: string) => (/[\s"[\]|:=]/.test(s) ? `"${s}"` : s);
 
 /** Key terms (and negations) become pills; free words stay in the input as the phrase they were typed as. */
 function partition(src: string): { terms: string[]; text: string } {
-  const isTerm = (t: string) => /[:=]/.test(t) || NEGATION.test(t);
+  const isTerm = (t: string) => /[:=<>]/.test(t) || NEGATION.test(t);
   const parts = splitTerms(src);
   return { terms: parts.filter(isTerm), text: parts.filter((t) => !isTerm(t)).join(" ") };
 }
@@ -174,13 +174,14 @@ export default defineComponent({
       return this.terms.map((raw) => {
         const negate = NEGATION.test(raw);
         const body = negate ? raw.slice(1) : raw;
-        const m = /^([^:="[\]]+?)(!?)([:=])(.*)$/s.exec(body);
+        const m = /^([^:="[\]<>]+?)(!?)([:=<>])(.*)$/s.exec(body);
         if (!m) return { raw, negate, key: "", op: "", cmp: "", value: body, bad: [] as string[] };
         const [, key, bang, op, value] = m;
-        // The operator as one glyph: `=` whether spelled name=x or name:=x, else the compare,
-        // else `:`; a ! before the separator shows as != or !:.
-        const valCmp = op === ":" ? (/^(>=|<=|>|<|=)/.exec(value)?.[1] ?? "") : "";
-        const base = op === "=" || valCmp === "=" ? "=" : valCmp || ":";
+        // The operator as one glyph: `=` whether spelled name=x or name:=x, `>=` whether
+        // value>=1 or value:>=1, else the compare, else `:`; a ! before the separator shows
+        // as != or !:.
+        const valCmp = op === ":" ? (/^(>=|<=|>|<|=)/.exec(value)?.[1] ?? "") : op === "=" ? "" : value.startsWith("=") ? "=" : "";
+        const base = op === "=" || (op === ":" && valCmp === "=") ? "=" : op === ":" ? valCmp || ":" : op + valCmp;
         const cmp = bang ? (base === "=" ? "!=" : "!:") : base;
         return { raw, negate, key, op, cmp, value: this.display(value.slice(valCmp.length)), bad: unknownKeys(raw, this.then) };
       });
@@ -366,7 +367,9 @@ export default defineComponent({
       this.allSelected = false;
       this.open = true;
       clearTimeout(this.timer);
-      this.timer = setTimeout(() => this.emit(), 150);
+      // An open bracket or quote is a term still being typed: searching it would only cost a
+      // walk of the tree for a query that cannot mean anything yet.
+      this.timer = setTimeout(() => isBalanced(this.text) && this.emit(), 150);
     },
     commit() {
       clearTimeout(this.timer);
@@ -386,7 +389,7 @@ export default defineComponent({
       const raw = this.terms[i];
       const negate = NEGATION.test(raw) ? raw[0] : "";
       const body = negate ? raw.slice(1) : raw;
-      const m = /^([^:="[\]]+?)(!?)([:=])(.*)$/s.exec(body);
+      const m = /^([^:="[\]<>]+?)(!?)([:=<>])(.*)$/s.exec(body);
       if (!m) return;
       const [, key, , , value] = m;
       const alts = value.split("|").map((a) => a.replace(/^(>=|<=|>|<|=)/, ""));
@@ -508,7 +511,7 @@ export default defineComponent({
           // And only at the end of the text: a space typed inside -- editing a pill, or with the
           // cursor moved back between quotes -- is an edit, not a commit.
           if (!this.text.trim()) e.preventDefault();
-          else if (input.selectionStart === this.text.length && /[:=]/.test(this.text) && isBalanced(this.text)) {
+          else if (input.selectionStart === this.text.length && /[:=<>]/.test(this.text) && isBalanced(this.text)) {
             e.preventDefault();
             this.commit();
           }

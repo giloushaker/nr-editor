@@ -18,8 +18,9 @@
  *   key:shared*                     wildcard, matched against the whole value
  *   name:/\s$/                      regular expression; case-insensitive unless flags are given
  *   parent.type:unit target.name:x  a dotted path steps through parent, target, catalogue, refs
- *   is:constraint type:max value:>0 numeric compare
+ *   is:constraint type:max value:>0 numeric compare; `value>0` and `value>=0` spell the same
  *   has:constraint[scope:force]     a descendant matches the bracketed query
+ *   -is:entry[-child:cost]          a bracket on a plain field is a group on the node itself; negate it as one
  *   in:entry["bolt rifle"]          an ancestor matches
  *   child:profile[typeName:Model]   a direct child matches; parent:entry[has:entry] the direct parent
  *   child*:entry / parent*:entry    the same, a link standing in for its target
@@ -161,26 +162,33 @@ export const NEGATION = /^[-!](?=.)/;
 function parseTerm(tok: string): Term {
   let negate = NEGATION.test(tok);
   const body = negate ? tok.slice(1) : tok;
-  const colon = indexOutside(body, ":");
-  const equals = indexOutside(body, "=");
   /**
-   * `name=Scouts` is `name:=Scouts`. `:` and `=` are both separators and whichever comes first
-   * wins; `=` additionally forces every alternative to exact, so `name=a|b` is two exact matches
-   * rather than one exact and one substring.
+   * `name=Scouts` is `name:=Scouts`, `value>0` is `value:>0`. `:`, `=`, `>` and `<` are all
+   * separators and whichever comes first wins; `=` additionally forces every alternative to
+   * exact, so `name=a|b` is two exact matches rather than one exact and one substring, and
+   * `value>0|5` compares both.
    *
-   * The cost is that an unquoted bare word containing `=` is now read as key=value, so plaintext
-   * `M=6` stops searching text. Quoting is the escape, exactly as it already is for a bare
-   * `"scope:force"`, which is why `=` follows `:` here rather than getting a rule of its own.
+   * The cost is that an unquoted bare word containing one of them is read as key+value, so
+   * plaintext `M=6` stops searching text. Quoting is the escape, exactly as it already is for a
+   * bare `"scope:force"`, which is why they follow `:` here rather than getting a rule of their own.
    */
-  const exact = colon < 0 || (equals >= 0 && equals < colon);
-  const at = exact ? equals : colon;
+  let at = -1;
+  for (const sep of ":=<>") {
+    const i = indexOutside(body, sep);
+    if (i >= 0 && (at < 0 || i < at)) at = i;
+  }
   // A leading separator, or none at all, is plaintext.
   if (at <= 0) return { negate, key: "text", alts: [parseVal(body)] };
+  const sep = body[at];
   // `name!=x` and `name!:x`: the ! rides the operator and negates the term, so with | it reads
   // as "none of these". Composes with a leading - by cancelling, for whoever writes -name!=x.
   const bang = at > 1 && body[at - 1] === "!";
   if (bang) negate = !negate;
-  const alts = splitOutside(body.slice(at + 1), "|").map((alt) => parseVal(exact ? `=${alt}` : alt));
+  // `value<=1|>2`: an alternative carrying its own operator keeps it.
+  const own = /^(>=|<=|>|<)/;
+  const alts = splitOutside(body.slice(at + 1), "|").map((alt) =>
+    parseVal(sep === ":" || (sep !== "=" && own.test(alt)) ? alt : `${sep}${alt}`),
+  );
   return { negate, key: body.slice(0, bang ? at - 1 : at), alts };
 }
 
@@ -924,14 +932,19 @@ function traverse(term: Term, kind: Traversal, universe: EditorBase[], follow: b
       };
     case "in*":
       return isInside(matches);
-    // One level of has/in. The starred forms let a link stand in for its target: a unit whose
-    // models are links to shared entries still has those models as children.
+    // One level of has/in. The starred forms let a link stand in for its target, both ways: a
+    // unit whose models are links to shared entries still has those models as children, and a
+    // link to an entry with a cost has that cost as a child -- which is what `child*:cost`
+    // asks, and what has* already answered.
     case "child":
     case "child*": {
       const parents = new Set<EditorBase>();
       for (const match of matches) {
         if (match.parent) parents.add(match.parent);
-        if (kind === "child*") for (const ref of match.refs ?? []) if (ref.parent) parents.add(ref.parent);
+        if (kind === "child*") {
+          for (const ref of match.refs ?? []) if (ref.parent) parents.add(ref.parent);
+          for (const ref of match.parent?.refs ?? []) parents.add(ref);
+        }
       }
       return (node) => parents.has(node);
     }
@@ -939,7 +952,11 @@ function traverse(term: Term, kind: Traversal, universe: EditorBase[], follow: b
       return (node) => Boolean(node.parent && matches.has(node.parent));
     case "parent*":
       return (node) =>
-        Boolean(node.parent && (matches.has(node.parent) || node.parent.refs?.some((ref) => ref.parent && matches.has(ref.parent))));
+        Boolean(
+          node.parent &&
+            (matches.has(node.parent) ||
+              node.parent.refs?.some((ref) => matches.has(ref) || (ref.parent && matches.has(ref.parent)))),
+        );
     case "target":
       return (node) => Boolean(node.target && matches.has(node.target as EditorBase));
     case "mentions":
@@ -1011,13 +1028,25 @@ function compile(term: Term, universe: EditorBase[], follow: boolean): (node: Ed
     return term.negate ? (node) => !test(node) : test;
   }
   const kind = traversalOf(term, follow);
-  const test = kind
+  let test = kind
     ? traverse(term, kind, universe, follow)
     : (node: EditorBase) => {
         const value = read(node, term.key);
         const mode = fields[term.key]?.match;
         return term.alts.some((alt) => matchValue(value, alt, mode));
       };
+  // A bracket on a plain field runs on the node itself, which makes it a group: the one way
+  // to negate several terms at once. `parent:catalogue -is:entry[-child:cost]` is every root
+  // node except the costless entries; without the group, `-is:entry -child:cost` drops the
+  // priced entries too.
+  //
+  // Per node, not a pass over the universe like the traversals: a pasted JSON blob is hundreds
+  // of bracket groups, and hundreds of passes over 50k nodes froze the editor for a minute.
+  if (term.sub && !kind) {
+    const own = test;
+    const inner = term.sub.map((t) => compile(t, universe, follow));
+    test = (node) => own(node) && inner.every((t) => t(node));
+  }
   return term.negate ? (node) => !test(node) : test;
 }
 
@@ -1040,11 +1069,22 @@ function run(query: Query, universe: EditorBase[], follow: boolean): Set<EditorB
  * The whole tree, not `catalogue.index` -- the index is keyed by id, so it holds none of the
  * conditions, modifiers or repeats this language is largely for.
  *
- * ponytail: rebuilt per search. It is one walk over nodes already in memory, the same order as
- * the index scan today's search box does per keystroke. Cache it on the catalogue behind the
- * revalidation counter if a big system ever feels slow while typing.
+ * The walk is the whole cost of a query on a big system -- 200ms for 40k with its imports,
+ * every keystroke -- so a caller that knows when the tree last changed passes `cacheKey` and
+ * gets the last walk back per root while the key holds. Without it, rebuilt per search.
  */
-function collect(catalogues: Catalogue[], { path, includeImports = true }: SearchOptions): EditorBase[] {
+const universeCache = new WeakMap<Base, { key: unknown; nodes: EditorBase[] }>();
+
+function nodesUnder(root: Base, cacheKey: unknown): EditorBase[] {
+  const cached = cacheKey !== undefined ? universeCache.get(root) : undefined;
+  if (cached && cached.key === cacheKey) return cached.nodes;
+  const nodes: EditorBase[] = [root as EditorBase];
+  walkChildren(root, (child) => void nodes.push(child as EditorBase));
+  if (cacheKey !== undefined) universeCache.set(root, { key: cacheKey, nodes });
+  return nodes;
+}
+
+function collect(catalogues: Catalogue[], { path, includeImports = true, cacheKey }: SearchOptions): EditorBase[] {
   const universe: EditorBase[] = [];
   const seen = new Set<Base>();
   const paths = path === undefined ? undefined : Array.isArray(path) ? path : [path];
@@ -1065,7 +1105,8 @@ function collect(catalogues: Catalogue[], { path, includeImports = true }: Searc
     for (const root of includeImports ? [catalogue, ...(catalogue.imports ?? [])] : [catalogue]) {
       if (!root || seen.has(root)) continue;
       if (!paths) {
-        add(root);
+        seen.add(root);
+        universe.push(...nodesUnder(root, cacheKey));
         continue;
       }
       // Named arrays only: the roots move, the walk below each is the same.
@@ -1092,6 +1133,11 @@ export interface SearchOptions {
    * caller that wants the builder's view of the whole query rather than of one term.
    */
   followLinks?: boolean;
+  /**
+   * Reuse the last walk of each catalogue while this value is unchanged -- a counter the caller
+   * bumps on every edit, undo and load. Undefined (the default) walks every time.
+   */
+  cacheKey?: unknown;
 }
 
 /**

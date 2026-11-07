@@ -20,7 +20,6 @@ import {
   enumerate_zip,
   generateBattlescribeId,
   removeSuffix,
-  textSearchRegex,
   zipCompress,
   forEachParent,
   type MaybeArray,
@@ -125,7 +124,6 @@ export interface IEditorStore {
   selectedItem: VueComponent | null;
 
   filter: string;
-  filterRegex: RegExp;
   filtered: EditorBase[];
 
   historyStack: Array<EditorUIState | null>;
@@ -231,7 +229,6 @@ export const useEditorStore = defineStore("editor", {
     selectedItem: null,
 
     filter: "",
-    filterRegex: RegExp(""),
     filtered: [],
 
     undoStack: [],
@@ -252,6 +249,8 @@ export const useEditorStore = defineStore("editor", {
     unsavedChanges: {} as Record<string, CatalogueState>,
 
     unsavedCount: 0,
+    /** Bumped on every edit, undo, redo and load: the search box's key for reusing its tree walk. */
+    treeEpoch: 0,
     scripts: useScriptsStore(),
   }),
 
@@ -631,6 +630,7 @@ export const useEditorStore = defineStore("editor", {
       return this.unsavedChanges[id];
     },
     set_catalogue_changed(catalogue: Catalogue | BSIDataCatalogue | BSIDataSystem, changedState: boolean = true) {
+      this.treeEpoch++;
       const state = this.get_catalogue_state(catalogue);
       if (changedState) {
         state.changed = true;
@@ -783,7 +783,6 @@ export const useEditorStore = defineStore("editor", {
     },
     set_filter(filter: string) {
       this.$state.filter = filter;
-      this.filterRegex = textSearchRegex(filter);
     },
     /**
      * Sets the active `catalogueComponent` so it can be used by functions in the store
@@ -1023,6 +1022,7 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.undo();
         this.undoStackPos--;
+        this.treeEpoch++;
         this.sync_unsaved_with_undo();
       }
     },
@@ -1049,6 +1049,7 @@ export const useEditorStore = defineStore("editor", {
       if (action) {
         await action.redo();
         this.undoStackPos++;
+        this.treeEpoch++;
         this.sync_unsaved_with_undo();
       }
     },
@@ -2393,7 +2394,14 @@ export const useEditorStore = defineStore("editor", {
       return search(scope, query, options);
     },
     async update_catalogue_search(catalogue: Catalogue, data: { filter: string; ignoreProfilesRules: boolean }) {
-      const { filter, ignoreProfilesRules } = data;
+      let { filter } = data;
+      const { ignoreProfilesRules } = data;
+      // A pasted blob is not a query. Every traversal in it is a pass over the tree, and a file's
+      // worth of JSON is hundreds of them.
+      if (filter.length > 2000) {
+        notify({ type: "error", text: "Search text too long to be a query" });
+        filter = "";
+      }
       const prev = this.filtered as EditorBase[];
       for (const p of prev) {
         delete p.showInEditor;
@@ -2408,7 +2416,7 @@ export const useEditorStore = defineStore("editor", {
         this.set_filter(filter);
         // The query language, bare words included: unlike findOptionsByText it walks every node, so
         // a word is also found in comments, rule descriptions and characteristic text.
-        let results = search(catalogue, filter);
+        let results = search(catalogue, filter, { cacheKey: this.treeEpoch });
         if (ignoreProfilesRules) {
           results = results.filter((o) => !o.isProfile() && !o.isRule() && !o.isInfoGroup() && !o.isCharacteristic());
         }
@@ -2420,11 +2428,16 @@ export const useEditorStore = defineStore("editor", {
         }
         await (globalThis.$nextTick && globalThis.$nextTick());
 
+        // Expand the path to the matches: once per parent, not once per match. open() walks the
+        // DOM and awaits a render per level, so 265 top-level shared entries were 265 walks and
+        // three seconds; their one shared parent is one walk.
         if (results.length < 300) {
+          const opened = new Set<EditorBase>();
           for (const p of results) {
-            if (!p.parent) continue;
+            if (!p.parent || opened.has(p.parent)) continue;
+            opened.add(p.parent);
             try {
-              await this.open(p as EditorBase, false, true);
+              await this.open(p as EditorBase, undefined, true);
             } catch (e) {
               continue;
             }
@@ -2478,6 +2491,7 @@ export const useEditorStore = defineStore("editor", {
         await progress_cb?.(0, 0, `Processing ${imported.name ?? ""}`);
         imported.processForEditor();
       }
+      this.treeEpoch++;
 
       // After processForEditor, not before: a hook that walks the tree needs it indexed, and
       // diagnostics have already run by this point.

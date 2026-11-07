@@ -509,7 +509,25 @@ console.log("child and parent, one level");
   is('child:entry[name:"shared entry"]', "catalogue");
   is('child*:entry[name:"shared entry"]', "catalogue,power fist");
   is('is:constraint parent*:entry[name:"power fist"]', "min0,shared min");
+  // The other way round: the link stands in for its target, so what the target holds, the link holds.
+  is("child:cost[value:>0]", "bolter");
+  // A bracket on a plain field groups terms on the node itself, so several can be negated at once.
+  is("is:entry[child:cost[value:>0]]", "bolter");
+  is("parent:catalogue -is:entry[-child:cost[value:>0]]", "bolter,bolter link,squad,squad link");
+  is("child*:cost[value:>0]", "bolter,bolter link");
+  is("is:cost parent*:entryLink", "pts");
   withOptions("followLinks child:", 'child:entry[name:"shared entry"]', { followLinks: true }, "catalogue,power fist");
+}
+
+console.log("cached walk");
+{
+  const extra = { name: "late", is: "entry", parentKey: "selectionEntries", id: "e9", refs: [], parent: catalogue, catalogue };
+  withOptions("cacheKey: first walk", "name:late", { cacheKey: 1 }, "");
+  catalogue.selectionEntries.push(extra as never);
+  withOptions("cacheKey: same key, stale walk", "name:late", { cacheKey: 1 }, "");
+  withOptions("cacheKey: new key sees the node", "name:late", { cacheKey: 2 }, "late");
+  withOptions("no cacheKey walks every time", "name:late", {}, "late");
+  catalogue.selectionEntries.pop();
 }
 
 console.log("kind, through the profile type");
@@ -580,6 +598,12 @@ console.log("typed values are not substrings");
   is("is:cost value:1", "");
   is("is:cost value:13", "pts");
   is("is:cost value:>10", "pts");
+  // The operator as the separator: value>10 is value:>10.
+  is("is:cost value>10", "pts");
+  is("is:cost value>=13", "pts");
+  is("is:cost value>13", "");
+  is("is:constraint value<1", "min0");
+  is("is:constraint value<=1|>2", "max3,min0,shared min");
   // A raw child-array read holds objects; text must not match their String() form.
   is("is:entry constraints:object", "");
   is("is:entry constraints:*", "bolter,power fist,shared entry");

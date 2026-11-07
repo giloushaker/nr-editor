@@ -84,7 +84,7 @@ const left: Group[] = [
       ["name!=Scouts  name!:scout", "not equal / not containing; with | it means none of them"],
       ["childId:any  childId:*", "the field is set"],
       ["id:none  affects:undefined", "the field is absent — none, undefined and null all mean it"],
-      ["value:>0  value:>=2  value:<10", "numbers compare: > >= < <="],
+      ["value>0  value>=2  value:<10", "numbers compare: > >= < <= — the colon is optional"],
       ["refs:0  refs:>2", "a list answers with its count"],
       ["key:shared*  name:*pistol", "wildcard, against the whole value"],
       ["name:/\\s$/  name:/[’“]/", "regular expression; case-insensitive unless you give flags"],
