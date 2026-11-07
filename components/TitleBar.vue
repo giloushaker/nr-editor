@@ -22,17 +22,12 @@
           </span>
         </h1>
       </NuxtLink>
+      <!-- Shortcuts while editing are only for pages used back and forth with the editor (search, then edit
+           what it found). Pages visited once in a while belong on the system's row on the home page. -->
       <NuxtLink v-if="searchLink" class="iconbox no-underline unselectable" :to="searchLink" title="Search the whole system">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="10.5" cy="10.5" r="6.2" />
           <path d="M15.2 15.2 L20.5 20.5" />
-        </svg>
-      </NuxtLink>
-      <NuxtLink v-if="iconsLink" class="iconbox no-underline unselectable" :to="iconsLink" title="Icons New Recruit shows for this system">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
-          <circle cx="9" cy="10" r="1.8" />
-          <path d="M20.5 15.5 L15.5 10.5 L6 19.5" />
         </svg>
       </NuxtLink>
       <slot />
@@ -135,10 +130,6 @@ export default {
     searchLink(): string | null {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
       return id ? `/search/${id}` : null;
-    },
-    iconsLink(): string | null {
-      const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
-      return id ? `/icons/${id}` : null;
     },
     progressText(): string {
       const p = this.scripts.background?.progress;

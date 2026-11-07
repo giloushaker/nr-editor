@@ -87,6 +87,9 @@ The catalogue editor uses a three-panel layout:
 - **State changes**: Always go through Pinia stores
 - **File operations**: Check if running in Electron vs web mode
 - **Performance**: Test with large catalogues (1000+ entries)
+- **Title bar shortcuts while editing** (`components/TitleBar.vue`): only for pages used back and forth with
+  the editor, like search then edit what it found. Occasional pages (icons, patch review, scripts) go on
+  the system's row on the home page instead
 
 ### Common Tasks
 - **Adding a new field**: Update both the UI component and the corresponding store
