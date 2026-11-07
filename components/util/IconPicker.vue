@@ -4,9 +4,7 @@
     <div class="picker" :class="{ dragging }" @dragover.prevent="dragging = true" @dragleave.self="dragging = false" @drop.prevent="dropped">
       <p v-if="error" class="error">{{ error }}</p>
       <input ref="file" class="hidden" type="file" :accept="accept" @change="fileChosen" />
-      <div v-if="!state.loaded" class="gray">Loading…</div>
-      <!-- Nothing to pick from yet: adding a file is the only thing to do, so it is the whole dialog -->
-      <button v-else-if="!state.files.length" class="dropzone" :disabled="busy" @click="browse">
+      <button class="dropzone" :disabled="busy" @click="browse">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
           <circle cx="9" cy="10" r="1.8" />
@@ -15,15 +13,13 @@
         <span class="strong">Choose an image</span>
         <span class="gray">or drop one here</span>
       </button>
-      <template v-else>
-        <input v-if="state.files.length > 12" v-model="filter" class="filter" type="search" placeholder="Filter" />
+      <div v-if="!state.loaded" class="gray">Loading…</div>
+      <template v-else-if="state.files.length">
+        <div class="existing">
+          <span class="heading">In this folder</span>
+          <input v-if="state.files.length > 12" v-model="filter" class="filter" type="search" placeholder="Filter" />
+        </div>
         <div class="thumbs">
-          <button class="thumb add" :disabled="busy" title="Choose an image, or drop one here" @click="browse">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M12 6 V18 M6 12 H18" />
-            </svg>
-            <span class="label">From a file</span>
-          </button>
           <button v-for="path of shown" :key="path" class="thumb" :title="path" :disabled="busy" @click="choose(path)">
             <img :src="state.urls[path]" alt="" />
             <span class="label">{{ path.split("/").pop() }}</span>
@@ -117,9 +113,19 @@ export default defineComponent({
     outline-offset: 2px;
   }
 }
-.filter {
-  width: 100%;
-  margin-bottom: 6px;
+.existing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  .heading {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .filter {
+    flex: 1;
+    min-width: 0;
+  }
 }
 .dropzone {
   display: flex;
@@ -172,18 +178,10 @@ export default defineComponent({
   &:focus-visible {
     background: var(--nr-fill);
   }
-  img,
-  svg {
+  img {
     width: 40px;
     height: 40px;
     object-fit: contain;
-  }
-  &.add {
-    border-style: dashed;
-    svg {
-      padding: 10px;
-      opacity: 0.7;
-    }
   }
 }
 .label {

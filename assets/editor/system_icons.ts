@@ -117,15 +117,13 @@ function filesFor(state: SystemIcons, target: IconTarget): string[] {
     .map(([, path]) => path);
 }
 
-/** A filename NR matches back to `key`: the characters Windows forbids become _, as iconKey compares. */
-function fileName(key: string) {
-  return key.normalize("NFC").replace(/[<>:"/\\|?*]/g, "_").replace(/[. ]+$/, "");
-}
-
 function defaultPath(target: IconTarget, ext: string) {
   const folder = KIND_FOLDER[target.kind];
-  // Named by the first key: the id where there is one, so a rename keeps the icon
-  return folder ? `icons/${folder}/${fileName(target.keys[0]!)}.${ext}` : `icons/${target.kind}.${ext}`;
+  if (!folder) return `icons/${target.kind}.${ext}`;
+  // The name as NR compares it (lord-of-war-titans), readable in the repo; the id for a name with nothing to slug.
+  // ponytail: a rename loses the icon and same-named nodes share one; name by id (keys[0]) if that bites.
+  const name = iconKey(target.keys[target.keys.length - 1]!) || target.keys[0]!;
+  return `icons/${folder}/${name}.${ext}`;
 }
 
 /** An image ready to write: svg kept as is, anything else scaled down and converted to webp. */
@@ -157,18 +155,20 @@ export async function prepareIcon(file: Blob, name = ""): Promise<{ data: Uint8A
 }
 
 /** Reads an image already in the folder, to copy it under another node's name. */
-export async function readIcon(state: SystemIcons, path: string): Promise<{ data: Uint8Array; ext: string }> {
+export async function readIcon(state: SystemIcons, path: string): Promise<{ data: Uint8Array; ext: string; from: string }> {
   const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
-  return { data: await readFileBytes(`${state.folder}/${path}`), ext };
+  return { data: await readFileBytes(`${state.folder}/${path}`), ext, from: path };
 }
 
-/** One copy per target at its default path. The same key's file in another format goes, so NR has one to pick;
- * a file under the name stays, since other nodes of that name may use it, and the id wins over it in NR. */
-export async function setIcons(state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string }) {
+/** One copy per target at its default path. Its other files go (under its id, which would win in NR, or the name in
+ * another format), so NR has exactly one to pick. */
+export async function setIcons(state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string; from?: string }) {
   for (const target of targets) {
     const path = defaultPath(target, image.ext);
-    const same = filesFor(state, { ...target, keys: target.keys.slice(0, 1) });
-    for (const old of same) if (old !== path) await deleteFile(`${state.folder}/${old}`);
+    // Picked its own file: nothing to copy. ponytail: any other pick is a copy, since without the `icon` attribute
+    // NR only finds a file under the node's name or id.
+    if (image.from === path) continue;
+    for (const old of filesFor(state, target)) if (old !== path) await deleteFile(`${state.folder}/${old}`);
     await writeFile(`${state.folder}/${path}`, image.data);
     // A new file at a path seen before needs a new url
     if (state.urls[path]) {

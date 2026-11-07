@@ -7,7 +7,7 @@
       </div>
       <div v-else-if="access === 'prompt'" class="iconfield">
         <span class="gray small">The editor needs access to {{ folder }} again to show and set icons.</span>
-        <button class="link" @click="grant">Grant access</button>
+        <button class="btn act" @click="grant">Grant access</button>
       </div>
       <div v-else-if="state" class="iconfield">
         <!-- The tile is the control: click to pick, like an avatar. The path is in the tooltip. -->
@@ -18,11 +18,11 @@ Click to change` : 'Set icon'" @click="picking = true">
             <path d="M12 6 V18 M6 12 H18" />
           </svg>
         </button>
-        <button v-if="!path" class="link" @click="picking = true">Set icon</button>
+        <button v-if="!path" class="btn act" @click="picking = true">Set icon</button>
         <template v-else>
           <span class="name">{{ fileName }}</span>
-          <button class="link" @click="picking = true">Change</button>
-          <button v-if="removable" class="link" :disabled="busy" @click="remove">Remove</button>
+          <button class="btn act" @click="picking = true">Change</button>
+          <button v-if="removable" class="btn act" :disabled="busy" @click="remove">Remove</button>
         </template>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
@@ -106,16 +106,16 @@ export default defineComponent({
   min-width: 0;
 }
 .tile {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2px;
-  border: 1px solid var(--nr-line);
-  border-radius: 4px;
-  background: var(--nr-input, transparent);
+  border: 1px solid var(--box-border, #aaa);
+  border-radius: 3px;
+  background: var(--input-background);
   color: var(--nr-muted);
   cursor: pointer;
   &.empty {
@@ -144,23 +144,15 @@ export default defineComponent({
   font-size: 0.85em;
   color: var(--nr-muted);
 }
-// Text actions, so the row reads as one control and not a toolbar
-.link {
+// The panel's own small button (.btn in Basics.vue), at the tile's height
+.act {
   flex: none;
-  padding: 0;
-  border: none;
-  background: none;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 3px;
   color: inherit;
-  font-size: 0.9em;
   font-weight: normal;
-  text-decoration: underline;
-  text-decoration-color: var(--nr-line);
-  text-underline-offset: 2px;
   cursor: pointer;
-  &:hover,
-  &:focus-visible {
-    text-decoration-color: currentColor;
-  }
   &:disabled {
     opacity: 0.5;
   }
