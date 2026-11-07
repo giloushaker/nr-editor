@@ -1,24 +1,36 @@
 <template>
   <PopupDialog v-model="open" x slotstyle="width: min(720px, 92vw)">
     <template #header>{{ title }}</template>
-    <div class="picker">
+    <div class="picker" :class="{ dragging }" @dragover.prevent="dragging = true" @dragleave.self="dragging = false" @drop.prevent="dropped">
       <p v-if="error" class="error">{{ error }}</p>
-      <div class="bar">
-        <input v-if="state.files.length" v-model="filter" type="search" placeholder="Filter" />
-        <span v-else class="spacer" />
-        <button class="bouton" :disabled="busy" @click="($refs.file as HTMLInputElement).click()">From a file…</button>
-        <input ref="file" class="hidden" type="file" :accept="accept" @change="fileChosen" />
-      </div>
+      <input ref="file" class="hidden" type="file" :accept="accept" @change="fileChosen" />
       <div v-if="!state.loaded" class="gray">Loading…</div>
-      <div v-else-if="!shown.length" class="gray">
-        {{ state.files.length ? "No icon matches the filter." : "No icons in this folder yet." }}
-      </div>
-      <div class="thumbs">
-        <button v-for="path of shown" :key="path" class="thumb" :title="path" :disabled="busy" @click="choose(path)">
-          <img :src="state.urls[path]" alt="" />
-          <span class="label">{{ path.slice("icons/".length) }}</span>
-        </button>
-      </div>
+      <!-- Nothing to pick from yet: adding a file is the only thing to do, so it is the whole dialog -->
+      <button v-else-if="!state.files.length" class="dropzone" :disabled="busy" @click="browse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+          <circle cx="9" cy="10" r="1.8" />
+          <path d="M20.5 15.5 L15.5 10.5 L6 19.5" />
+        </svg>
+        <span class="strong">Choose an image</span>
+        <span class="gray">or drop one here</span>
+      </button>
+      <template v-else>
+        <input v-if="state.files.length > 12" v-model="filter" class="filter" type="search" placeholder="Filter" />
+        <div class="thumbs">
+          <button class="thumb add" :disabled="busy" title="Choose an image, or drop one here" @click="browse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M12 6 V18 M6 12 H18" />
+            </svg>
+            <span class="label">From a file</span>
+          </button>
+          <button v-for="path of shown" :key="path" class="thumb" :title="path" :disabled="busy" @click="choose(path)">
+            <img :src="state.urls[path]" alt="" />
+            <span class="label">{{ path.split("/").pop() }}</span>
+          </button>
+        </div>
+        <p v-if="!shown.length" class="gray">No icon matches the filter.</p>
+      </template>
     </div>
   </PopupDialog>
 </template>
@@ -36,7 +48,7 @@ export default defineComponent({
   },
   emits: ["close", "done"],
   data() {
-    return { open: true, filter: "", busy: false, error: "" };
+    return { open: true, filter: "", busy: false, error: "", dragging: false };
   },
   watch: {
     open(v: boolean) {
@@ -72,6 +84,14 @@ export default defineComponent({
     choose(path: string) {
       return this.apply(() => readIcon(this.state, path));
     },
+    browse() {
+      (this.$refs.file as HTMLInputElement).click();
+    },
+    dropped(event: DragEvent) {
+      this.dragging = false;
+      const file = event.dataTransfer?.files?.[0];
+      if (file && !this.busy) return this.apply(() => prepareIcon(file, file.name));
+    },
     fileChosen(event: Event) {
       const input = event.target as HTMLInputElement;
       const file = input.files?.[0];
@@ -90,20 +110,42 @@ export default defineComponent({
 .error {
   color: var(--nr-danger);
 }
-.bouton {
-  flex: none;
-  width: auto;
-  min-width: 0;
-  padding: 2px 12px;
+.picker {
+  border-radius: 6px;
+  &.dragging {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
 }
-.bar {
-  display: flex;
-  gap: 8px;
+.filter {
+  width: 100%;
   margin-bottom: 6px;
-  input,
-  .spacer {
-    flex: 1;
-    min-width: 0;
+}
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 28px 12px;
+  border: 1px dashed var(--nr-muted);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-weight: normal;
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    border-color: currentColor;
+    background: var(--nr-fill);
+  }
+  svg {
+    width: 32px;
+    height: 32px;
+    opacity: 0.7;
+  }
+  .strong {
+    font-weight: bold;
   }
 }
 .thumbs {
@@ -124,15 +166,24 @@ export default defineComponent({
   border-radius: 4px;
   background: transparent;
   color: inherit;
+  font-weight: normal;
   cursor: pointer;
   &:hover,
   &:focus-visible {
     background: var(--nr-fill);
   }
-  img {
+  img,
+  svg {
     width: 40px;
     height: 40px;
     object-fit: contain;
+  }
+  &.add {
+    border-style: dashed;
+    svg {
+      padding: 10px;
+      opacity: 0.7;
+    }
   }
 }
 .label {
