@@ -1,6 +1,5 @@
-// A system's icons as files beside its .gst, the convention NR reads (assets/shared/battlescribe/icons.ts). Setting one
-// writes a file at the node's default path and never an `icon` attribute: BSData's schema check rejects unknown
-// attributes, and a file the data does not name cannot be left dangling by an unsaved or discarded edit.
+// A system's icons as files beside its .gst, the convention NR reads (assets/shared/battlescribe/icons.ts). A new image
+// is written at the node's default path; reusing one already in the folder points the node's `icon` attribute at it.
 import { reactive } from "vue";
 import { assetMime, iconPath, isAssetPath, scanIconPaths, type IconPaths } from "~/assets/shared/battlescribe/icons";
 import { iconFilePath, ownFiles, type IconOwner } from "~/assets/editor/icon_files";
@@ -193,25 +192,31 @@ export async function prepareIcon(file: Blob, name = ""): Promise<{ data: Uint8A
   return { data: new Uint8Array(await data.arrayBuffer()), ext };
 }
 
-/** Reads an image already in the folder, to copy it under another node's name. Copies are free: git and NR store
- * identical files once. A file over the limit was put there by hand and is refused like a new one. */
-export async function readIcon(state: SystemIcons, path: string): Promise<{ data: Uint8Array; ext: string }> {
+/** An image already in the folder, to point nodes at (or copy, for those with no node to hold the attribute).
+ * A file over the limit was put there by hand and is refused like a new one. */
+export async function readIcon(state: SystemIcons, path: string): Promise<{ data: Uint8Array; ext: string; from: string }> {
   const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
   const data = await readFileBytes(`${state.folder}/${path}`);
   if (data.byteLength > ICON_MAX_BYTES) throw new Error(`${path} is ${Math.ceil(data.byteLength / 1024)}KB; icons must be under ${ICON_MAX_BYTES / 1024}KB`);
-  return { data, ext };
+  return { data, ext, from: path };
 }
 
 /**
- * Sets one image on every target, each in its own file at its default path. The target's older files go (another
- * spelling or extension of its name, its id file), but never a file another node matches or an attribute names.
- * An `icon` attribute the node already had would win over the new file, so it is cleared (an unsaved, undoable edit).
+ * Sets one image on every target. An image already in the folder (`from`) is pointed at through the node's `icon`
+ * attribute, an unsaved, undoable edit that touches no file, so discarding it loses nothing.
+ * A new image is written to each target's default path; the target's older files go (another spelling or extension of
+ * its name, its id file), never a file another node matches or an attribute names, and an attribute that would win
+ * over the new file is cleared. Parent factions and the weapon icon have no node, so they always get their own file.
  */
-export async function setIcons(system: GameSystemFiles, state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string }) {
+export async function setIcons(system: GameSystemFiles, state: SystemIcons, targets: IconTarget[], image: { data: Uint8Array; ext: string; from?: string }) {
   await attachNodes(system, targets);
   const store = useEditorStore();
   const refs = iconRefs(system);
   for (const target of targets) {
+    if (image.from && target.node) {
+      store.set_field(target.node, "icon", image.from);
+      continue;
+    }
     const others = othersOf(system, target);
     const path = iconFilePath(target, others, image.ext);
     const stale = ownFiles(state.files, target, others, refs).filter((p) => p.toLowerCase() !== path.toLowerCase());
