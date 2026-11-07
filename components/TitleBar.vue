@@ -28,13 +28,6 @@
           <path d="M15.2 15.2 L20.5 20.5" />
         </svg>
       </NuxtLink>
-      <NuxtLink v-if="patchLink" class="iconbox no-underline unselectable" :to="patchLink" title="Review a New Recruit patch against this system">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 3.5 H14.5 L19 8 V20.5 H6 Z" />
-          <path d="M14.5 3.5 V8 H19" />
-          <path d="M9 14 L11.4 16.4 L16 11.8" />
-        </svg>
-      </NuxtLink>
       <NuxtLink v-if="iconsLink" class="iconbox no-underline unselectable" :to="iconsLink" title="Icons New Recruit shows for this system">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
@@ -110,7 +103,6 @@
 import { useSettingsStore } from "~/stores/settingsState";
 import { useScriptsStore } from "~/stores/scriptsStore";
 import { useEditorStore } from "~/stores/editorStore";
-import { writableFolder } from "~/assets/editor/system_icons";
 import Settings from "./Settings.vue";
 import Prompt from "./Prompt.vue";
 
@@ -124,19 +116,7 @@ export default {
       text: "",
       text1: "",
       text2: "",
-      iconsLink: null as string | null,
     };
-  },
-  watch: {
-    // Writes need the folder, which only a load from one gives; checking it is async on the web
-    iconsFolderKey: {
-      immediate: true,
-      async handler(key: string) {
-        const id = key.split("|")[0];
-        const folder = id ? await writableFolder(this.store.gameSystems[id]) : null;
-        if (key === this.iconsFolderKey) this.iconsLink = folder ? `/icons/${id}` : null;
-      },
-    },
   },
   setup() {
     return {
@@ -156,13 +136,9 @@ export default {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
       return id ? `/search/${id}` : null;
     },
-    patchLink(): string | null {
+    iconsLink(): string | null {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
-      return id ? `/patch/${id}` : null;
-    },
-    iconsFolderKey(): string {
-      const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
-      return id ? `${id}|${this.store.gameSystems[id]?.gameSystem?.gameSystem?.fullFilePath ?? ""}` : "";
+      return id ? `/icons/${id}` : null;
     },
     progressText(): string {
       const p = this.scripts.background?.progress;

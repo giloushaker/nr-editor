@@ -19,8 +19,20 @@
               <NuxtLink :to="`/scripts/${gst.getId()}`" class="align-bottom imgBt inline-block">
                 <img class="w-24px h-24px" src="assets/icons/right2.png" title="Scripts" />
               </NuxtLink>
+              <NuxtLink :to="`/icons/${gst.getId()}`" class="align-bottom imgBt inline-block" title="Icons New Recruit shows for this system">
+                <svg class="w-24px h-24px lineicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+                  <circle cx="9" cy="10" r="1.8" />
+                  <path d="M20.5 15.5 L15.5 10.5 L6 19.5" />
+                </svg>
+              </NuxtLink>
               <NuxtLink :to="`/patch/${gst.getId()}`" class="align-bottom imgBt inline-block">
-                <img class="w-24px h-24px" src="assets/icons/check.png" title="Review a New Recruit patch" />
+                <svg class="w-24px h-24px lineicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <title>Review a New Recruit patch</title>
+                  <path d="M6 3.5 H14.5 L19 8 V20.5 H6 Z" />
+                  <path d="M14.5 3.5 V8 H19" />
+                  <path d="M9 14 L11.4 16.4 L16 11.8" />
+                </svg>
               </NuxtLink>
               <span class="legendName">{{ gst.gameSystem?.gameSystem.name || "Unknown GameSystem" }}</span>
               <span class="legendLine"></span>
@@ -349,6 +361,11 @@ use a publication name="Github", url="https://github.com/{owner}/{repo}" in the 
 </script>
 
 <style scope>
+/* Line icons in the system row: the text colour, not the link blue */
+.systemLegend .lineicon {
+  color: var(--nr-ink);
+  display: block;
+}
 .scrollable {
   height: 100%;
   overflow-y: auto;

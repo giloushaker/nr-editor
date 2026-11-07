@@ -6,7 +6,7 @@ import { assetMime, iconKey, iconPath, isAssetPath, scanIconPaths, type IconPath
 import { getDataObject } from "~/assets/shared/battlescribe/bs_main";
 import type { GameSystemFiles } from "~/assets/shared/battlescribe/local_game_system";
 import { deleteFile, dirname, listFolder, readFile, readFileBytes, writeFile } from "~/electron/node_helpers";
-import { hasRoot } from "~/electron/web_fs";
+import { permissionState, requestPermission } from "~/electron/web_fs";
 
 /** What the editor accepts after conversion: NR stores every icon of an install for offline use. */
 export const ICON_MAX_BYTES = 100 * 1024;
@@ -36,13 +36,23 @@ export interface SystemIcons {
   error: string;
 }
 
-/** The folder holding the .gst, when the system was opened from one the editor can write to. */
-export async function writableFolder(system: GameSystemFiles | undefined): Promise<string | null> {
+/** The folder holding the .gst, and whether the editor may write there: "prompt" is a web folder whose access
+ * lapsed with a reload (one click grants it), "missing" a system not opened from a folder at all. */
+export async function iconFolder(system: GameSystemFiles | undefined): Promise<{ folder: string | null; access: "granted" | "prompt" | "missing" }> {
   const path = system?.gameSystem?.gameSystem?.fullFilePath;
-  if (!path) return null;
+  if (!path) return { folder: null, access: "missing" };
   const folder = dirname(path);
-  if (globalThis.electron) return folder;
-  return (await hasRoot(folder)) ? folder : null;
+  if (globalThis.electron) return { folder, access: "granted" };
+  const access = await permissionState(folder);
+  return { folder, access: access === "granted" ? "granted" : access === "missing" ? "missing" : "prompt" };
+}
+
+/** Asks for readwrite on the folder; must run from a click. */
+export async function grantFolder(folder: string): Promise<boolean> {
+  const ok = await requestPermission(folder);
+  const state = states.get(folder);
+  if (ok && state) await refreshIcons(state);
+  return ok;
 }
 
 const states = new Map<string, SystemIcons>();
@@ -67,7 +77,11 @@ function rel(folder: string, path: string) {
 /** Re-reads icons/ and makes urls for images not seen before. ponytail: re-reads only on open and after own writes; NR-style polling if devs edit icons/ by hand mid-session. */
 export async function refreshIcons(state: SystemIcons) {
   try {
-    const listing = await listFolder(`${state.folder}/icons`, 1).catch(() => []);
+    // No icons/ yet is the normal start; anything else (no permission) is shown
+    const listing = await listFolder(`${state.folder}/icons`, 1).catch((e) => {
+      if ((e as Error)?.name === "NotFoundError") return [];
+      throw e;
+    });
     const files = listing.filter((e) => !e.directory && isAssetPath(e.name)).map((e) => rel(state.folder, e.path));
     files.sort((a, b) => a.localeCompare(b));
     for (const file of files) {

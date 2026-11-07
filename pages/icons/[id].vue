@@ -9,9 +9,13 @@
     </Teleport>
 
     <p v-if="!system" class="gray">Loading…</p>
-    <p v-else-if="!state" class="error">
-      Icons are files beside the .gst, so this system has to be opened from a folder the editor can write to. Open its
-      folder from the Systems page, then come back.
+    <p v-else-if="access === 'missing'" class="error">
+      Icons are files beside the .gst, so this system has to be opened from its folder. Open the folder from the
+      Systems page, then come back.
+    </p>
+    <p v-else-if="access === 'prompt'">
+      The editor needs access to <code>{{ folder }}</code> again to read and write its icons.
+      <button class="bouton" @click="grant">Grant access</button>
     </p>
     <template v-else>
       <p class="gray">
@@ -68,7 +72,8 @@ import {
   systemFiles,
   systemIcons,
   targetIconPath,
-  writableFolder,
+  iconFolder,
+  grantFolder,
   type IconTarget,
   type SystemIcons,
 } from "~/assets/editor/system_icons";
@@ -83,6 +88,8 @@ export default defineComponent({
     return {
       system: null as GameSystemFiles | null,
       state: null as SystemIcons | null,
+      folder: "",
+      access: "" as "" | "granted" | "prompt" | "missing",
       separator: undefined as string | undefined,
       selected: {} as Record<string, boolean>,
       filter: "",
@@ -93,11 +100,10 @@ export default defineComponent({
   },
   async created() {
     const system = await this.store.get_or_load_system((this.$route.params as { id: string }).id);
-    const folder = await writableFolder(system);
-    if (folder) {
-      this.separator = await factionSeparator(folder);
-      this.state = systemIcons(folder);
-    }
+    const { folder, access } = await iconFolder(system);
+    this.folder = folder ?? "";
+    this.access = access;
+    if (folder && access === "granted") await this.open();
     this.system = system;
   },
   // Kept alive: a file added by hand while away shows on return
@@ -156,6 +162,15 @@ export default defineComponent({
     },
   },
   methods: {
+    async open() {
+      this.separator = await factionSeparator(this.folder);
+      this.state = systemIcons(this.folder);
+    },
+    async grant() {
+      if (!(await grantFolder(this.folder))) return;
+      this.access = "granted";
+      await this.open();
+    },
     ownIcon(id: string) {
       return this.ownIcons.get(id);
     },
