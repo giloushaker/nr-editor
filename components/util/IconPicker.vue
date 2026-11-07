@@ -4,17 +4,14 @@
     <div class="picker">
       <p v-if="error" class="error">{{ error }}</p>
       <div class="bar">
-        <input v-model="filter" type="search" placeholder="Filter images in icons/" />
+        <input v-if="state.files.length" v-model="filter" type="search" placeholder="Filter" />
+        <span v-else class="spacer" />
         <button class="bouton" :disabled="busy" @click="($refs.file as HTMLInputElement).click()">From a file…</button>
         <input ref="file" class="hidden" type="file" :accept="accept" @change="fileChosen" />
       </div>
-      <p class="gray small">
-        A file is converted to webp (svg kept as is) and must be under {{ maxKb }}KB. Picking an image already in
-        the folder copies it under each node's id.
-      </p>
-      <div v-if="!state.loaded" class="gray">Reading icons/…</div>
+      <div v-if="!state.loaded" class="gray">Loading…</div>
       <div v-else-if="!shown.length" class="gray">
-        {{ state.files.length ? "No image matches the filter." : "No images in icons/ yet: add one from a file." }}
+        {{ state.files.length ? "No icon matches the filter." : "No icons in this folder yet." }}
       </div>
       <div class="thumbs">
         <button v-for="path of shown" :key="path" class="thumb" :title="path" :disabled="busy" @click="choose(path)">
@@ -29,7 +26,7 @@
 <script lang="ts">
 import type { PropType } from "vue";
 import { ASSET_MIME } from "~/assets/shared/battlescribe/icons";
-import { ICON_MAX_BYTES, prepareIcon, readIcon, setIcons, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
+import { prepareIcon, readIcon, setIcons, type IconTarget, type SystemIcons } from "~/assets/editor/system_icons";
 
 /** Sets one image on every target: picked from icons/, or copied in from a file. */
 export default defineComponent({
@@ -39,7 +36,7 @@ export default defineComponent({
   },
   emits: ["close", "done"],
   data() {
-    return { open: true, filter: "", busy: false, error: "", maxKb: ICON_MAX_BYTES / 1024 };
+    return { open: true, filter: "", busy: false, error: "" };
   },
   watch: {
     open(v: boolean) {
@@ -93,9 +90,6 @@ export default defineComponent({
 .error {
   color: var(--nr-danger);
 }
-.small {
-  font-size: 0.85em;
-}
 .bouton {
   flex: none;
   width: auto;
@@ -105,7 +99,9 @@ export default defineComponent({
 .bar {
   display: flex;
   gap: 8px;
-  input {
+  margin-bottom: 6px;
+  input,
+  .spacer {
     flex: 1;
     min-width: 0;
   }
