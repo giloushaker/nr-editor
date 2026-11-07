@@ -206,7 +206,8 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .page {
-  padding: 8px 16px;
+  // The bottom gap keeps the last row clear of the scroll end and Nuxt's devtools pill
+  padding: 8px 16px 48px;
   overflow: auto;
   height: 100%;
 }
