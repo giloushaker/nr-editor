@@ -113,6 +113,12 @@ Ce que fait `--save` :
   encore celle de git `HEAD` (`--revision yes|no` pour forcer) ;
 - signale un fichier qui avait déjà des modifications non commitées.
 
+`add`, `merge`, `remove`, `move`… sont asynchrones : les `await`er. Un oubli n'est plus grave (l'`eval`
+attend toutes les écritures lancées avant de répondre ou d'enregistrer), et une écriture qui échoue
+fait échouer la commande (code 1, « N write(s) failed », rien d'enregistré) au lieu de passer pour
+réussie. Si l'outil lui-même bloque une édition, le signaler plutôt que de contourner par un Edit
+du JSON : c'est un bug de `nr` à corriger.
+
 Chaque appel recharge depuis le disque : les éditions s'enchaînent, et l'annulation, c'est git
 (`git -C <dossier> diff` / `checkout`). Les diagnostics ne voient pas une **valeur** fausse :
 relire le diff contre la source du jeu.
