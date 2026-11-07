@@ -31,6 +31,7 @@ const handlers: Record<string, (...args: any[]) => unknown> = {
   listFolder: files.listFolder,
   getFolderFolders: files.getFolderFolders,
   getFile: files.getFile,
+  getFileBytes: (path: string) => fs.readFileSync(path),
   getFolderMtime: files.getFolderMtime,
   isDirectory: (path: string) => fs.existsSync(path) && fs.statSync(path).isDirectory(),
   isFile: (path: string) => fs.existsSync(path) && fs.statSync(path).isFile(),

@@ -35,6 +35,13 @@
           <path d="M9 14 L11.4 16.4 L16 11.8" />
         </svg>
       </NuxtLink>
+      <NuxtLink v-if="iconsLink" class="iconbox no-underline unselectable" :to="iconsLink" title="Icons New Recruit shows for this system">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+          <circle cx="9" cy="10" r="1.8" />
+          <path d="M20.5 15.5 L15.5 10.5 L6 19.5" />
+        </svg>
+      </NuxtLink>
       <slot />
     </div>
     <div class="titlebar-content titlebar-right" id="titlebar-content-right">
@@ -102,6 +109,8 @@
 <script lang="ts">
 import { useSettingsStore } from "~/stores/settingsState";
 import { useScriptsStore } from "~/stores/scriptsStore";
+import { useEditorStore } from "~/stores/editorStore";
+import { writableFolder } from "~/assets/editor/system_icons";
 import Settings from "./Settings.vue";
 import Prompt from "./Prompt.vue";
 
@@ -115,19 +124,32 @@ export default {
       text: "",
       text1: "",
       text2: "",
+      iconsLink: null as string | null,
     };
+  },
+  watch: {
+    // Writes need the folder, which only a load from one gives; checking it is async on the web
+    iconsFolderKey: {
+      immediate: true,
+      async handler(key: string) {
+        const id = key.split("|")[0];
+        const folder = id ? await writableFolder(this.store.gameSystems[id]) : null;
+        if (key === this.iconsFolderKey) this.iconsLink = folder ? `/icons/${id}` : null;
+      },
+    },
   },
   setup() {
     return {
       version: useRuntimeConfig().public.clientVersion,
       settings: useSettingsStore(),
       scripts: useScriptsStore(),
+      store: useEditorStore(),
     };
   },
   computed: {
     /** Pages a level below the index: the ones whose titlebar earns a back chevron. */
     nested(): boolean {
-      return ["catalogue", "scripts-id", "search-id", "patch-id"].includes(this.$route.name as string);
+      return ["catalogue", "scripts-id", "search-id", "patch-id", "icons-id"].includes(this.$route.name as string);
     },
     /** The system search page for whatever system is open; the editor is the page that knows one. */
     searchLink(): string | null {
@@ -137,6 +159,10 @@ export default {
     patchLink(): string | null {
       const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
       return id ? `/patch/${id}` : null;
+    },
+    iconsFolderKey(): string {
+      const id = this.$route.name === "catalogue" && (this.$route.query as Record<string, string>).systemId;
+      return id ? `${id}|${this.store.gameSystems[id]?.gameSystem?.gameSystem?.fullFilePath ?? ""}` : "";
     },
     progressText(): string {
       const p = this.scripts.background?.progress;

@@ -121,6 +121,11 @@ export async function readFile(path: string) {
   return { name: file.name, path, data: await readFileData(file) };
 }
 
+export async function readFileBytes(path: string) {
+  const file = await (await resolveFile(path)).getFile();
+  return new Uint8Array(await file.arrayBuffer());
+}
+
 export async function writeFile(path: string, data: string | Blob | Uint8Array) {
   const handle = await resolveFile(path, true);
   const writable = await (handle as any).createWritable();

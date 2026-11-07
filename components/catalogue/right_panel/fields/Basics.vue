@@ -26,6 +26,8 @@
           </div>
         </EditorField>
 
+        <IconField :item="item" />
+
         <EditorField
           v-if="item.editorTypeName === 'forceEntry'"
           :item="item"
@@ -62,11 +64,12 @@ import type { EditorBase } from "~/assets/shared/battlescribe/bs_main_catalogue"
 import InputStringArray from "./InputStringArray.vue";
 import EditorField from "./EditorField.vue";
 import EditorFieldControl from "./EditorFieldControl.vue";
+import IconField from "./IconField.vue";
 import { itemProp } from "./props";
 import { useEditorStore } from "~/stores/editorStore";
 
 export default {
-  components: { InputStringArray, EditorField, EditorFieldControl },
+  components: { InputStringArray, EditorField, EditorFieldControl, IconField },
   setup() {
     return { store: useEditorStore() };
   },

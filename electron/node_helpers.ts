@@ -55,6 +55,10 @@ export async function readFile(filePath: string) {
     data: string;
   };
 }
+export async function readFileBytes(filePath: string): Promise<Uint8Array> {
+  if (!electron) return web_fs.readFileBytes(filePath);
+  return (await electron.invoke("getFileBytes", filePath)) as Uint8Array;
+}
 export async function showOpenDialog(options: OpenDialogOptions) {
   if (!electron) return;
   return electron.invoke("showOpenDialog", options) as OpenDialogReturnValue;

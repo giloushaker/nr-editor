@@ -122,6 +122,10 @@ export function init_handlers(handle: (channel: string, listener: ListenerCallba
   handle("getFile", async (event: null | any, path: any) => {
     return await getFile(path);
   });
+  // Raw bytes, for images: getFile decodes text
+  handle("getFileBytes", async (event: null | any, path: any) => {
+    return readFileSync(path);
+  });
   handle("getFolderMtime", async (event: null | any, path: any) => {
     return await getFolderMtime(path);
   });
