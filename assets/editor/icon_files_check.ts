@@ -17,6 +17,10 @@ assert.equal(iconFilePath({ kind: "system", keys: ["sys", "system"] }, [], "svg"
 assert.equal(iconFilePath(lordOfWarHyphen, [lordOfWarSpaced, hq], "webp"), "icons/categories/c-bl2.webp");
 // A name with nothing to slug falls back to the id
 assert.equal(iconFilePath({ kind: "force", keys: ["f-1", "!!!"] }, [], "webp"), "icons/forces/f-1.webp");
+// A profile type's icon goes where NR reads it, icons/profiles, and a file there is matched back to the type by name
+const ranged: IconOwner = { kind: "profile", keys: ["pt-ranged", "Ranged Weapons"] };
+assert.equal(iconFilePath(ranged, [{ kind: "profile", keys: ["pt-melee", "Melee Weapons"] }], "svg"), "icons/profiles/ranged-weapons.svg");
+assert.deepEqual(ownFiles(["icons/profiles/ranged-weapons.svg", "icons/profiles/melee-weapons.svg"], ranged, [], new Set()), ["icons/profiles/ranged-weapons.svg"]);
 
 const files = ["icons/categories/hq.webp", "icons/categories/HQ.png", "icons/categories/lord-of-war.webp", "icons/categories/c-bl2.webp", "icons/categories/shared.png", "icons/system.svg", "icons/notes.txt"];
 

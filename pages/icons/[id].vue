@@ -117,6 +117,9 @@ export default defineComponent({
       const catalogues = books.map((b) => ({ kind: "army", label: b.name.trim(), keys: [b.id, b.name], node: b }));
       const parents = [...new Set(books.map((b) => parentFactionName(b.name, this.separator)).filter((p): p is string => !!p))];
       const { categories, forces } = collectIconChoices(files);
+      // Declared at the root of the .gst (sometimes a catalogue); one per id even when a library repeats it
+      const profileTypes = new Map<string, IconTarget>();
+      for (const f of files) for (const t of f.profileTypes ?? []) if (!profileTypes.has(t.id)) profileTypes.set(t.id, { kind: "profile", label: t.name, keys: [t.id, t.name], node: node("profile", t.id) });
       const raw = [
         {
           title: "Game",
@@ -125,6 +128,7 @@ export default defineComponent({
             { kind: "weapon", label: "Weapon icon", keys: ["weapon"] },
           ],
         },
+        { title: "Profiles", rows: [...profileTypes.values()].sort((a, b) => a.label.localeCompare(b.label)) },
         { title: "Catalogues", rows: catalogues.sort((a, b) => a.label.localeCompare(b.label)) },
         // No id to name these by: NR groups catalogues by the part of their name before factionSeparator
         ...(parents.length ? [{ title: "Parent factions", rows: parents.sort().map((p) => ({ kind: "army", label: p, keys: [p] })) }] : []),

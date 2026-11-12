@@ -9,7 +9,7 @@ export interface IconOwner {
 }
 
 /** Where a new file goes, per kind. system and weapon are single files directly in icons/. */
-export const KIND_FOLDER: Record<string, string> = { category: "categories", force: "forces", army: "factions" };
+export const KIND_FOLDER: Record<string, string> = { category: "categories", force: "forces", army: "factions", profile: "profiles" };
 
 /** Whether NR would show the file named `base` for this owner. */
 export function fileMatches(base: string, owner: IconOwner): boolean {

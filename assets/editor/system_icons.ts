@@ -132,6 +132,7 @@ export function nodeIndex(system: GameSystemFiles): Map<string, any> {
   for (const c of systemFiles(system) as any[]) {
     byKey.set(`${c.id === systemId ? "system" : "army"}\n${c.id}`, c);
     for (const e of c.categoryEntries ?? []) byKey.set(`category\n${e.id}`, e);
+    for (const t of c.profileTypes ?? []) byKey.set(`profile\n${t.id}`, t);
     forces(c.forceEntries);
   }
   return byKey;
@@ -321,6 +322,9 @@ export function nodeTarget(node: any): IconTarget | null {
     case "categoryEntry":
     case "forceEntry":
       return { kind: node.editorTypeName === "forceEntry" ? "force" : "category", label: node.name, keys: [node.id, node.name], node };
+    // NR shows it at the head of the type's table in a datasheet
+    case "profileType":
+      return { kind: "profile", label: node.name, keys: [node.id, node.name], node };
     case "categoryLink": {
       // Set on the category itself, so every link to it shows it
       const target = node.target;
